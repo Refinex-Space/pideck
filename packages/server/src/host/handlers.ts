@@ -259,6 +259,7 @@ import {
 import { startPlanReview } from "./requestReview";
 import { withChangeLock, withReviewLock } from "./reviewLock";
 import { runObservation } from "./runAnalytics";
+import { hostSearch } from "./search";
 import { scheduleLifecyclePass } from "./settledLifecycle";
 import { taskObservation } from "./taskAnalytics";
 import {
@@ -1242,6 +1243,9 @@ const handlers: WsHandlers = {
 			limit: clampLimit(p.limit),
 		});
 	},
+
+	"search.query": (p, ctx) => hostSearch().query(ctx.clientKey, p),
+	"search.preview": (p) => hostSearch().preview(p),
 
 	"review.get": async (p) => {
 		ensureWatch(p.workspaceId);

@@ -21,10 +21,10 @@ opens its Settings section), and every verb runs through the command it was list
 
 ## Boundary
 
-- **Public surface:** `SearchPalette`, `SearchPaletteProps`, `PaletteHost`, `SearchSettings`,
-  `initSearchPreferences`, `createDoubleShiftDetector`, `buildWorkItems`, `waitingItems`,
-  `WorkItemsState`, `commandItems`, `SearchScope`, `PaletteItem`, `PaletteItemKind`, `PalettePreview`,
-  `PaletteFile`.
+- **Public surface:** `SearchPalette`, `SearchPaletteProps`, `PaletteHost`, `PaletteStart`,
+  `SearchSettings`, `initSearchPreferences`, `createDoubleShiftDetector`, `buildWorkItems`,
+  `waitingItems`, `WorkItemsState`, `commandItems`, `SearchScope`, `PaletteItem`, `PaletteItemKind`,
+  `PalettePreview`, `PaletteFile`.
 - **Allowed deps:** `contracts` (the shared matcher and the search DTOs), `commands`, `store`,
   `transport` (`search.query` / `search.preview` behind `supportsHostSearch`, and the backend endpoint
   for browser preference keys), `clientPreferences`, `constants`, `components`, `lib`,
@@ -94,13 +94,26 @@ and sandboxed HTML display, and a `SPEC.md` renders as markdown, the same path a
 local **metadata card** (`PaletteItem.preview`) for a project, workspace or chat without a transcript
 hit. A plan row and a command have no preview. The pane never fetches a text head from the host.
 
+## Start from the typed text
+
+Whenever the query has text in the All or Work scope (`startEligible`, the one rule the row, the
+shortcut and its footer hint share), the last section is **Start work**: one row «Start work with
+“<text>”…», badged with the `Mod+N` dialog. `↵` on it, or `Mod+↵` from any row, closes the palette and
+calls the injected `PaletteStart.openDialog(text)` — shell opens its Create-workspace dialog with the
+text as the prompt, so the target, base branch and model are chosen where they always are. The prompt
+is the text as typed (`startPrompt`: only the scope prefix stripped — inner whitespace, quotes and
+tokens untouched), never the matcher's normalized terms. Nothing starts without the dialog (the field keeps creation out of the finder: Warp walked its
+"search and run" box back, Claude bound creation to an explicit `n:` mode). The row carries the offline
+reason like every host mutation and is never remembered by the learning store.
+
 ## Interaction
 
 DOM focus stays in the input (WAI-ARIA combobox + listbox with `aria-activedescendant` and a polite
 result count; chips and footer buttons are not tabbable, and Tab is always consumed). ↑/↓ select, ↵
 opens or runs the row and closes the palette, Tab/Shift+Tab and `Alt+1…n` change scope (a chip writes
 its prefix into the query, so the prefix is the one source of scope), `Mod+I` toggles the preview pane,
-`Mod+K` closes the palette (the chord that opened it). Escape clears the query, then closes; an
+`Mod+K` closes the palette (the chord that opened it), `Mod+↵` starts work from the typed text (above).
+Escape clears the query, then closes; an
 untrusted (synthetic) Escape — the desktop close-item command — closes outright. `Ctrl+R` is swallowed
 while the palette is open. Mutating rows are disabled while offline or before the current welcome.
 The palette has one level: no pages, no per-row action panel — a row is a destination or a command.

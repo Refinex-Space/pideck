@@ -28,7 +28,7 @@ import { hasPlatformModifier } from "../lib";
 import { hostItems, hostOverflow } from "./hostItems";
 import { createHostPreviewLoader, type HostPreviewLoader, useHostSearch } from "./hostSearch";
 import { recordPick } from "./learning";
-import type { PaletteFile, PaletteItem, PaletteRow, PaletteSection } from "./model";
+import type { PaletteFile, PaletteItem, PaletteRow, PaletteSection, PaletteStart } from "./model";
 import { readLearning, readPreviewOpen, writeLearning, writePreviewOpen } from "./preferences";
 import {
 	parseSearchQuery,
@@ -38,7 +38,7 @@ import {
 	stripScopePrefix,
 	withScopePrefix,
 } from "./query";
-import { buildSections, flattenRows } from "./sections";
+import { buildSections, flattenRows, startEligible, startPrompt } from "./sections";
 
 const SCOPE_LABELS: Record<SearchScope, MessageKey> = {
 	all: "search.scope.all",
@@ -64,6 +64,7 @@ export interface SearchPaletteProps {
 	readonly actions: readonly PaletteItem[];
 	readonly scopes: readonly SearchScope[];
 	readonly host?: PaletteHost;
+	readonly start?: PaletteStart;
 	readonly notice?: string;
 }
 
@@ -101,6 +102,7 @@ function PaletteBody({
 	actions: emptyActions,
 	scopes,
 	host,
+	start,
 	notice,
 }: SearchPaletteProps) {
 	const t = useT();
@@ -168,12 +170,18 @@ function PaletteBody({
 		() => (hostState.groups ? hostOverflow(hostState.groups) : {}),
 		[hostState.groups],
 	);
+	const startText = startEligible(parsed) ? startPrompt(query, parsed) : "";
+	const startInput = useMemo(
+		() => (start && startText ? { start, text: startText } : undefined),
+		[start, startText],
+	);
 	const sections = useMemo(
 		() =>
 			buildSections({
 				t,
 				parsed,
 				hostOverflow: overflow,
+				...(startInput ? { start: startInput } : {}),
 				rootItems: allItems,
 				waiting,
 				actions: emptyActions,
@@ -181,7 +189,7 @@ function PaletteBody({
 				learning,
 				nowMs,
 			}),
-		[t, parsed, overflow, allItems, waiting, emptyActions, expanded, learning, nowMs],
+		[t, parsed, overflow, startInput, allItems, waiting, emptyActions, expanded, learning, nowMs],
 	);
 	const rows = useMemo(() => flattenRows(sections), [sections]);
 	const selectedIndex = Math.max(
@@ -238,10 +246,16 @@ function PaletteBody({
 			return;
 		}
 		if (item.run) {
-			remember(item);
+			if (item.kind !== "start") remember(item);
 			onClose();
 			item.run();
 		}
+	};
+
+	const startFromText = () => {
+		if (!startInput || startInput.start.disabledReason) return;
+		onClose();
+		startInput.start.openDialog(startInput.text);
 	};
 
 	const cycleScope = (delta: number) => {
@@ -279,6 +293,12 @@ function PaletteBody({
 		if (event.key === "Tab") {
 			event.preventDefault();
 			cycleScope(event.shiftKey ? -1 : 1);
+			return;
+		}
+		if (mod && event.key === "Enter" && !event.altKey && !event.shiftKey) {
+			if (event.nativeEvent.isComposing) return;
+			event.preventDefault();
+			startFromText();
 			return;
 		}
 		if (mod && event.code === "KeyI") {
@@ -386,6 +406,9 @@ function PaletteBody({
 				<Hint keys={["↑", "↓"]} label={t("search.hint.select")} />
 				<Hint keys={["↵"]} label={t(enterLabel(selected?.item))} />
 				<Hint keys={["Tab"]} label={t("search.hint.scope")} />
+				{startInput && !startInput.start.disabledReason ? (
+					<Hint keys={shortcutKeys({ key: "↵", mod: true })} label={t("search.hint.start")} />
+				) : null}
 				{hostState.pending ? (
 					<span
 						data-testid="search-host-pending"
@@ -427,6 +450,7 @@ function keepInputFocus(event: ReactMouseEvent): void {
 function enterLabel(item: PaletteItem | undefined): MessageKey {
 	if (!item) return "search.hint.open";
 	if (item.kind === "command") return "search.hint.run";
+	if (item.kind === "start") return "search.hint.start";
 	return "search.hint.open";
 }
 

@@ -11,7 +11,7 @@ import {
 	serializeLearning,
 } from "./learning";
 import type { PaletteItem } from "./model";
-import { parseSearchQuery, stripScopePrefix, withScopePrefix } from "./query";
+import { parseSearchQuery, scopeKinds, stripScopePrefix, withScopePrefix } from "./query";
 import { pickTopHit, rankItems } from "./rank";
 
 const DAY = 86_400_000;
@@ -37,6 +37,12 @@ describe("parseSearchQuery", () => {
 		expect(parseSearchQuery('"is:running filter" unread')).toMatchObject({
 			terms: ["is:running filter", "unread"],
 		});
+	});
+
+	test("spec sections are asked for only in the specs scope, never in All", () => {
+		expect(scopeKinds("specs")).toEqual(["spec", "section"]);
+		expect(scopeKinds("all")).not.toContain("section");
+		expect(scopeKinds("all")).toContain("spec");
 	});
 
 	test("scope prefixes round-trip, so a chip can write its prefix back", () => {

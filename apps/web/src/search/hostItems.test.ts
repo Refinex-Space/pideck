@@ -95,7 +95,65 @@ function items(lateIds: string[] = []) {
 	return { result, opened };
 }
 
+const sectionGroup: SearchGroup = {
+	kind: "section",
+	state: "ready",
+	total: 2,
+	hits: [
+		hit({
+			id: "section:w1:agent/SPEC.md:876",
+			kind: "section",
+			title: "agent",
+			subtitle: "agent/SPEC.md",
+			snippet: "renameSession validates one title",
+			tier: MATCH_TIER.content,
+			score: 3.2,
+			workspaceId: "w1",
+			path: "agent/SPEC.md",
+			specId: "module-agent",
+			ranges: { title: [], heading: [[8, 14]], snippet: [[0, 13]] },
+			section: { heading: "Session titles", line: 876, matched: 2, terms: 3 },
+		}),
+		hit({
+			id: "section:missing-workspace",
+			kind: "section",
+			title: "agent",
+			path: "agent/SPEC.md",
+			section: { heading: "", line: 1, matched: 1, terms: 1 },
+		}),
+	],
+};
+
 describe("hostItems", () => {
+	test("maps a section hit to a Sections row titled by its spec and heading, with the snippet beneath", () => {
+		const opened: SearchHit[] = [];
+		const [section, ...rest] = hostItems(
+			{
+				t: currentTranslator(),
+				openHit: (target) => opened.push(target),
+				projectName: () => "One",
+				workspaceName: () => "Auth refresh",
+				localIds: new Set(),
+				lateIds: new Set(),
+			},
+			[sectionGroup],
+		);
+		expect(rest).toEqual([]);
+		expect(section).toMatchObject({
+			kind: "section",
+			title: "agent › Session titles",
+			subtitle: "renameSession validates one title",
+			group: "sections",
+			scope: "specs",
+			file: { workspaceId: "w1", path: "agent/SPEC.md" },
+		});
+		const titleRanges = section?.match?.ranges.title ?? [];
+		expect(titleRanges.map(([start, end]) => section?.title.slice(start, end))).toEqual(["titles"]);
+		expect(section?.match?.ranges.subtitle).toEqual([[0, 13]]);
+		section?.run?.();
+		expect(opened[0]?.section?.line).toBe(876);
+	});
+
 	test("maps a file hit with its path highlight split between name and folder, and names the file to render", () => {
 		const { result, opened } = items();
 		const file = result.find((item) => item.kind === "file");

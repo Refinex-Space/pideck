@@ -90,6 +90,7 @@ async function openHostHit(hit: SearchHit): Promise<void> {
 			if (hit.path) await openFileInTab(workspace.id, hit.path, "keep");
 			return;
 		case "spec":
+		case "section":
 			navigateToWorkspace(workspace);
 			if (hit.path) store.requestSpecView(workspace.id, hit.path);
 			return;

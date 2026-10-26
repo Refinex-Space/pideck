@@ -175,6 +175,7 @@ describe("SearchService.text", () => {
 				workspaces: () => [workspace],
 				sessions: async () => ({ sessions: [], indexing: false }),
 				specs: () => ({ entries: [], rebuilding: false }),
+				sections: () => ({ hits: [], total: 0, indexing: false }),
 				plans: () => [],
 				invalidateSpecs: () => {},
 			});

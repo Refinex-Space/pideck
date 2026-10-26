@@ -25,8 +25,9 @@ history index, spec snapshots, stored plans), the same shape as `host/historySco
 - **Internals:** the file-list cache, root resolution, the providers and the text search are composed
   by the service and reached by tests per file, never through the barrel.
 - **Allowed deps:** `contracts` (DTOs + the matcher), `history` (`HistoryIndex.sessions()` — the
-  narrow read of titles and entries), `spec` (`specSnapshot` / `invalidateSpecSnapshot`), `todos`
-  (`listStoredPlans`), `git` (`gitAsyncStream` for `ls-files` and `grep`), Node `fs/promises`.
+  narrow read of titles and entries), `spec` (`specSnapshot` / `invalidateSpecSnapshot` /
+  `searchSpecSections`), `todos` (`listStoredPlans`), `git` (`gitAsyncStream` for `ls-files` and
+  `grep`), Node `fs/promises`.
 - **Forbidden:** `host`, `workspaces`, `projects`, `persistence`, `agent` (projects and records are
   injected; a preview never attaches a pi session); writing anything; a second matcher.
 
@@ -74,8 +75,17 @@ plan files whose session has no transcript on disk (orphans).
   and subsequence tiers), both passes bounded by the deadline. 100k paths answer in tens of milliseconds.
 - **Specs:** the `spec` module's per-root snapshot — built synchronously only on a root's first read,
   afterwards rebuilt off the request path (`setImmediate`) when its TTL lapses or the worktree changes,
-  the previous snapshot answering meanwhile (title / id / path through the matcher; a body match from
-  three characters becomes a `content`-tier hit with the matching line as `snippet`).
+  the previous snapshot answering meanwhile — title / id / path through the matcher.
+- **Sections:** the spec bodies, through the `spec` module's `searchSpecSections` — the ranked section
+  engine of `pi-spec-graph/core` that the agent's `spec_search` also uses, so both surfaces answer a
+  question with the same sections. The provider hands it the query **as typed** (the engine has its own
+  tokenizer; the matcher's terms would lose a phrase), and maps each hit to a `section` hit: one per
+  section, `content` tier with the engine's score (so `buildGroup`'s order is the engine's), the spec
+  title as `title`, the path as `subtitle`, the best line as `snippet`, `ranges` for the title, the
+  heading and the snippet, and `section: { heading, line, matched, terms }`; the id carries the heading
+  line as its locator. The group is `indexing` until the root's first index lands and while the
+  snapshot is being re-read. Sections replaced the old line-substring `content` spec hits — a body hit
+  is a section, never a line.
 - **Chats and transcripts:** title hits through the matcher; transcript hits are substring-AND over
   entries (the history index's rule), one per message, `content` tier with an equal score so the
   timestamp alone orders them newest first (a user message never outranks a newer assistant one),

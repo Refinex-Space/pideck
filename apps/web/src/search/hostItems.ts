@@ -3,6 +3,7 @@ import {
 	RiChatHistoryLine,
 	RiFileTextLine,
 	RiGitBranchLine,
+	RiHeading,
 	RiListCheck3,
 	RiNodeTree,
 } from "@remixicon/react";
@@ -16,6 +17,7 @@ export const HOST_GROUP_OF_KIND: Readonly<Record<SearchKind, string>> = {
 	workspace: "workspaces",
 	file: "files",
 	spec: "specs",
+	section: "sections",
 	plan: "plans",
 };
 
@@ -58,6 +60,10 @@ function splitPathRanges(
 
 function matchOf(hit: SearchHit, ranges: PaletteMatch["ranges"]): PaletteMatch {
 	return { tier: hit.tier, score: hit.score, ranges };
+}
+
+function shifted(ranges: readonly MatchRange[] | undefined, by: number): MatchRange[] {
+	return (ranges ?? []).map(([start, end]) => [start + by, end + by]);
 }
 
 function where(context: HostItemContext, hit: SearchHit): string {
@@ -117,6 +123,27 @@ function hostItem(context: HostItemContext, hit: SearchHit): PaletteItem | null 
 				),
 				file: { workspaceId: hit.workspaceId, path: hit.path },
 			};
+		case "section": {
+			if (!hit.workspaceId || !hit.path || !hit.section) return null;
+			const heading = hit.section.heading;
+			return {
+				...base,
+				kind: "section",
+				title: heading ? `${hit.title} › ${heading}` : hit.title,
+				subtitle: hit.snippet ?? hit.path,
+				group: "sections",
+				scope: "specs",
+				icon: RiHeading,
+				match: matchOf(hit, {
+					title: [
+						...(hit.ranges?.title ?? []),
+						...(heading ? shifted(hit.ranges?.heading, hit.title.length + 3) : []),
+					],
+					subtitle: hit.snippet ? (hit.ranges?.snippet ?? []) : [],
+				}),
+				file: { workspaceId: hit.workspaceId, path: hit.path },
+			};
+		}
 		case "plan":
 			return {
 				...base,

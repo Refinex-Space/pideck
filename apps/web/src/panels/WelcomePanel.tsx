@@ -2,16 +2,19 @@ import {
 	RiFolderOpenLine as FolderOpen,
 	RiHome2Line as House,
 	type RemixiconComponentType as LucideIcon,
+	RiChat3Line,
 	RiRocketLine as Rocket,
 	RiSparkling2Line as Sparkles,
 } from "@remixicon/react";
 import { useT } from "@thinkrail/locales/react";
 import { cn } from "@thinkrail/ui/utils";
 import { type ComponentPropsWithoutRef, forwardRef, useEffect, useState } from "react";
+import { useShallow } from "zustand/react/shallow";
 import { PRODUCT_NAME } from "../constants/branding";
-import { useAppStore } from "../store";
+import { selectRepoProjects, useAppStore } from "../store";
 import { getTransport } from "../transport";
 import { AddProjectMenu } from "./AddProjectMenu";
+import { canStartProjectlessChat, startProjectlessChat } from "./chatActions";
 import { enterDefaultWorkspace } from "./defaultWorkspace";
 import { NewWorkspaceDialog } from "./NewWorkspaceDialog";
 import { ProjectTrustNotice } from "./ProjectTrustNotice";
@@ -22,7 +25,7 @@ const SETUP_PROMPT = "/skill:setting-up-a-project ";
 
 export function WelcomePanel() {
 	const t = useT();
-	const projects = useAppStore((s) => s.projects);
+	const projects = useAppStore(useShallow(selectRepoProjects));
 	const recentProjects = useAppStore((s) => s.recentProjects);
 	const selectedProjectId = useAppStore((s) => s.selectedProjectId);
 	const [dialog, setDialog] = useState<{
@@ -59,6 +62,7 @@ export function WelcomePanel() {
 		useAppStore.getState().selectProject(opened.id, { reveal: true }),
 	);
 	const noProjects = project == null;
+	const canStartChat = useAppStore(canStartProjectlessChat);
 
 	const projectFolderCard = (projectId: string) => (
 		<Card
@@ -105,7 +109,18 @@ export function WelcomePanel() {
 
 			<div className="mt-24 flex flex-wrap justify-center gap-12">
 				{noProjects ? (
-					openProjectCard()
+					<>
+						{openProjectCard()}
+						{canStartChat ? (
+							<Card
+								icon={RiChat3Line}
+								title={t("panels.welcome.chatTitle")}
+								subtitle={t("panels.welcome.chatSubtitle")}
+								onClick={() => void startProjectlessChat()}
+								className="motion-safe:animate-reveal"
+							/>
+						) : null}
+					</>
 				) : hasSpecs === null ? (
 					<>
 						<CardSkeleton />

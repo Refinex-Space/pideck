@@ -118,11 +118,12 @@ function PaletteBody({
 		const result = parseSearchQuery(query);
 		return scopes.includes(result.scope) ? result : parseSearchQuery(stripScopePrefix(query));
 	}, [query, scopes]);
+	const hostEnabled = host !== undefined;
 	const hostProjectId = host?.context.projectId;
 	const hostWorkspaceId = host?.context.workspaceId;
 	const hostInput = useMemo(
 		() => ({
-			enabled: host !== undefined,
+			enabled: hostEnabled,
 			text: parsed.text,
 			kinds: scopeKinds(parsed.scope),
 			context: {
@@ -130,7 +131,7 @@ function PaletteBody({
 				...(hostWorkspaceId ? { workspaceId: hostWorkspaceId } : {}),
 			},
 		}),
-		[host !== undefined, hostProjectId, hostWorkspaceId, parsed.text, parsed.scope],
+		[hostEnabled, hostProjectId, hostWorkspaceId, parsed.text, parsed.scope],
 	);
 	const hostState = useHostSearch(hostInput);
 	const [previews] = useState(createHostPreviewLoader);
@@ -759,7 +760,7 @@ function HostPreview({
 			<PreviewHeading item={item} title={result?.kind === "transcript" ? result.title : ""} />
 			{result === null ? (
 				<p className="mt-12 tr-text-ui text-text-subtle">{t("search.palette.previewLoading")}</p>
-			) : result.kind !== "transcript" ? (
+			) : result.kind === "unavailable" ? (
 				<p className="mt-12 tr-text-ui text-text-subtle">{t("search.palette.noPreview")}</p>
 			) : (
 				<ol className="mt-12 flex flex-col gap-8">

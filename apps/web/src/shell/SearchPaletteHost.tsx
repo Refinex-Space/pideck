@@ -1,8 +1,20 @@
+import { ResourcePreview } from "@thinkrail/resource-renderers";
 import { useOpenProject } from "../panels/useOpenProject";
 import { goToProjectHome } from "../panels/workspaceActions";
-import { SearchPalette } from "../search";
+import { type PaletteFile, SearchPalette } from "../search";
 import { useAppStore } from "../store";
 import { type SearchPaletteOptions, useSearchPalette } from "./useSearchPalette";
+
+function renderFilePreview(file: PaletteFile) {
+	return (
+		<ResourcePreview
+			key={`${file.workspaceId}\u0000${file.path}`}
+			workspaceId={file.workspaceId}
+			path={file.path}
+			className="h-full min-h-0"
+		/>
+	);
+}
 
 export interface SearchPaletteHostProps {
 	readonly onNewWorkspace: (projectId: string) => void;
@@ -25,6 +37,7 @@ export function SearchPaletteHost({
 					toggleProjectsHome={onToggleProjectsHome}
 					pickAndOpenProject={openProject.pickAndOpen}
 					hasUpdateSettings={hasUpdateSettings}
+					renderFilePreview={renderFilePreview}
 				/>
 			) : null}
 			{openProject.dialogs}

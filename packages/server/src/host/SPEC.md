@@ -583,6 +583,25 @@ channel fan-out, and the process-boot wrapper both launchers share.
   `turn.changed`, `mcp.status`, `session.resourcesChanged`, `pi.event`) goes through one
   `publishScoped` sender that iterates the sockets for a chat or container id and broadcasts otherwise;
   `recentProjects` never carries the container. Run analytics classify `workspace_kind: "chat"`.
+- **Continue in workspace (`continuations.ts`):** one **in-memory** operation per user gesture and
+  source chat (`chat.continue { workspaceId, projectId } → { operationId }`; a second gesture while one
+  is `requested`/`summarizing` joins it). The host validates the source (a chat without a project with a
+  conversation) and the target (an open repository, never the container), publishes `requested`, then
+  delivers a `continue-in-workspace-request` custom message to the source session as a **follow-up**
+  (`sendHostMessageToSession` — a card in the transcript, queued behind a running turn, never a steer),
+  moving to `summarizing`; the request's acceptance is awaited only for `REQUEST_ACK_MS` (a refusal
+  before the turn fails the operation; the turn itself is not awaited). The agent answers through the
+  `continue_in_workspace({ summary })` tool ([[submodule-server-agent]]): `applyContinuation` revalidates
+  the binding and the project, moves to `creating`, creates the workspace (default base, the shared
+  initial-terminal provisioning) and records its id at once, then the chat (host default model) and its
+  id, then sends the `chat-handoff` custom message — the clamped summary plus a link back, the new chat's
+  first turn — reporting `firstMessage: sent | failed` apart from the phase, remembers the link on the
+  source record (`continuedTo`, [[submodule-server-workspaces]]) and ends `started`; a second call returns
+  the recorded ids, so a same-host retry reuses partial work. A source turn that settles without the
+  call (`observeContinuation` on `agent_settled`) fails the operation ("…without a summary"); a host
+  restart loses the binding, so the tool refuses and the UI offers Retry. Phases travel on the scoped
+  `chat.continuation` push (sockets ≥ `CONTINUATION_PROTOCOL_VERSION`), `chat.continuationStatus`
+  answers after reconnect. Only the initiating client navigates — a web-side rule.
 - **Search composition (`search.ts`):** `search.query` / `search.preview` go to one lazily created
   `SearchService` ([[submodule-server-search]]) fed with `listProjects`, `listAllWorkspaceRecords`, the
   history index's `sessions()`, `specSnapshot` and `listStoredPlans`; the handler passes the socket's

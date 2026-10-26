@@ -7,6 +7,8 @@ import {
 	customMessageText,
 	isAskUserAnswersMessage,
 	isBackgroundCommandCompletionMessage,
+	isChatHandoffMessage,
+	isContinueInWorkspaceRequestMessage,
 	isControlMessage,
 	isRetriedAttempt,
 	isSubagentCompletionMessage,
@@ -99,6 +101,22 @@ export function messagesToRuntime(
 				id: turnId,
 				details: message.details,
 				text: customMessageText(message.content),
+				timestamp: message.timestamp,
+			});
+		} else if (isContinueInWorkspaceRequestMessage(message)) {
+			turnId = transcriptTurnId(message, index, options);
+			turns.push({
+				kind: "continuationRequest",
+				id: turnId,
+				details: message.details,
+				timestamp: message.timestamp,
+			});
+		} else if (isChatHandoffMessage(message)) {
+			turnId = transcriptTurnId(message, index, options);
+			turns.push({
+				kind: "handoff",
+				id: turnId,
+				details: message.details,
 				timestamp: message.timestamp,
 			});
 		}

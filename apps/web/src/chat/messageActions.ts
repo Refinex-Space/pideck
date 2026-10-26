@@ -41,6 +41,8 @@ export function deriveMessageActions(
 			case "backgroundCommandCompletion":
 			case "subagentCompletion":
 			case "reviewFix":
+			case "continuationRequest":
+			case "handoff":
 				roundHasLaterContent = false;
 				break;
 		}

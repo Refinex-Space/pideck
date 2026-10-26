@@ -1,4 +1,11 @@
-import type { AskUserQuestionResult, McpReadOutputResult, WireModel } from "@thinkrail/contracts";
+import type {
+	AskUserQuestionResult,
+	ChatContinuation,
+	ChatHandoffDetails,
+	ContinueInWorkspaceRequestDetails,
+	McpReadOutputResult,
+	WireModel,
+} from "@thinkrail/contracts";
 import { createContext, useContext } from "react";
 import type { RevealBlock } from "./scrollGeometry";
 
@@ -25,6 +32,11 @@ export interface ChatActions {
 	openMcpSettings?: (() => void) | undefined;
 	openProviderSettings?: (() => void) | undefined;
 	findModel?: ((ref: string) => WireModel | null) | undefined;
+	/** Continue in workspace: the host-owned phase of an operation, where it went, and how to ask again. */
+	continuationOf?: ((operationId: string) => ChatContinuation | undefined) | undefined;
+	openContinuation?: ((continuation: ChatContinuation) => void) | undefined;
+	retryContinuation?: ((details: ContinueInWorkspaceRequestDetails) => void) | undefined;
+	openHandoffSource?: ((details: ChatHandoffDetails) => void) | undefined;
 }
 
 export const ChatActionsContext = createContext<ChatActions | null>(null);

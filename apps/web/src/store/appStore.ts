@@ -1,6 +1,7 @@
 import type {
 	AppConfig,
 	AskUserQuestionResult,
+	ChatContinuation,
 	ComposerGrowthLimit,
 	ExtUiRequest,
 	GitDiffScope,
@@ -45,6 +46,8 @@ import {
 	DEFAULT_CONFIG,
 	isAskUserAnswersMessage,
 	isBackgroundCommandCompletionMessage,
+	isChatHandoffMessage,
+	isContinueInWorkspaceRequestMessage,
 	isControlMessage,
 	isLineWidth,
 	isLocalePreference,
@@ -766,6 +769,34 @@ export function reduceSessionEvent(rt: SessionRuntime, event: PiEvent): SessionR
 					],
 				};
 			}
+			if (isContinueInWorkspaceRequestMessage(event.message)) {
+				return {
+					...rt,
+					turns: [
+						...rt.turns,
+						{
+							kind: "continuationRequest",
+							id: crypto.randomUUID(),
+							details: event.message.details,
+							timestamp: event.message.timestamp,
+						},
+					],
+				};
+			}
+			if (isChatHandoffMessage(event.message)) {
+				return {
+					...rt,
+					turns: [
+						...rt.turns,
+						{
+							kind: "handoff",
+							id: crypto.randomUUID(),
+							details: event.message.details,
+							timestamp: event.message.timestamp,
+						},
+					],
+				};
+			}
 			if (event.message.role !== "assistant" || !rt.currentAssistantId) return rt;
 			const id = rt.currentAssistantId;
 			const turn: ChatTurn = { kind: "assistant", id, message: event.message, streaming: false };
@@ -957,6 +988,8 @@ interface AppState {
 	recentProjects: Project[];
 	workspaces: Record<string, Workspace[]>;
 	removedWorkspaceIds: Record<string, true>;
+	/** Continue-in-workspace operations this client heard about, by operation id (host-owned phases). */
+	chatContinuations: Record<string, ChatContinuation>;
 	expandedProjectIds: Record<string, true>;
 	workspaceSettlingSupported: boolean;
 	settledShelfExpanded: Record<string, true>;
@@ -1084,6 +1117,7 @@ interface AppState {
 	updateWorkspace: (workspace: Workspace) => void;
 	removeWorkspace: (projectId: string, workspaceId: string) => void;
 	applyWorkspaceRemoved: (projectId: string, workspaceId: string) => void;
+	applyChatContinuation: (continuation: ChatContinuation) => void;
 	selectProject: (projectId: string, opts?: { reveal?: boolean }) => void;
 	toggleProjectExpanded: (projectId: string) => void;
 	toggleSettledShelf: (projectId: string, expanded?: boolean) => void;
@@ -2221,6 +2255,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 	recentProjects: [],
 	workspaces: {},
 	removedWorkspaceIds: Object.create(null) as Record<string, true>,
+	chatContinuations: {},
 	expandedProjectIds: Object.create(null) as Record<string, true>,
 	workspaceSettlingSupported: false,
 	settledShelfExpanded: Object.create(null) as Record<string, true>,
@@ -2563,6 +2598,10 @@ export const useAppStore = create<AppState>((set, get) => ({
 				workspaces: { ...s.workspaces, [projectId]: list.filter((w) => w.id !== workspaceId) },
 			};
 		}),
+	applyChatContinuation: (continuation) =>
+		set((s) => ({
+			chatContinuations: { ...s.chatContinuations, [continuation.operationId]: continuation },
+		})),
 	applyWorkspaceRemoved: (projectId, workspaceId) => {
 		const s = get();
 		const wasActive = s.activeWorkspaceId === workspaceId;

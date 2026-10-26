@@ -4956,3 +4956,30 @@ test("authority can be given up without replacing the list (a consumer activatin
 	expect(s().modelsFresh).toBe(false);
 	expect(s().models).toBe(refreshed);
 });
+
+test("revealFileTab stamps a reveal on the file tab, repeats through tick, and switches the renderer when asked", () => {
+	const s = () => useAppStore.getState();
+	useAppStore.setState({ activeWorkspaceId: "ws1" });
+	s().openTab({ ...fileTab("ws1", "src/a.ts"), rendererId: "thinkrail/markdown" }, "keep");
+	s().setTabViewState("ws1", "ws1:src/a.ts", { scrollTop: 7 });
+
+	s().revealFileTab("ws1", "src/a.ts", { line: 12, column: 3, length: 6 });
+	const first = s().tabsByWorkspace.ws1?.[0];
+	expect(first?.kind === "file" && first.reveal).toEqual({
+		line: 12,
+		column: 3,
+		length: 6,
+		tick: 1,
+	});
+	expect(first?.kind === "file" && first.rendererId).toBe("thinkrail/markdown");
+	expect(first?.kind === "file" && first.viewState).toEqual({ scrollTop: 7 });
+
+	s().revealFileTab("ws1", "src/a.ts", { line: 12 }, "thinkrail/code");
+	const second = s().tabsByWorkspace.ws1?.[0];
+	expect(second?.kind === "file" && second.reveal).toEqual({ line: 12, tick: 2 });
+	expect(second?.kind === "file" && second.rendererId).toBe("thinkrail/code");
+	expect(second).not.toHaveProperty("viewState");
+
+	s().revealFileTab("ws1", "src/missing.ts", { line: 1 });
+	expect(s().tabsByWorkspace.ws1).toHaveLength(1);
+});

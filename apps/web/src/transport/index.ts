@@ -23,5 +23,6 @@ export {
 	supportsPlanReview,
 	supportsPlanSummaryGeneration,
 	supportsRichAnchors,
+	supportsTextSearch,
 	supportsTurnChanges,
 } from "./wireTransport";

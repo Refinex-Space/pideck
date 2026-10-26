@@ -150,7 +150,10 @@ The browser never scrubs or holds a vendor client: the host is the only sanitize
   `TransportOptions`, `runHostUpdate`, `supportsHostUpdateRun`, `supportsPlanReview`,
   `supportsPlanSummaryGeneration`, `supportsChangeMutations`, `supportsRichAnchors`, `supportsTurnChanges`,
   `supportsHostSearch` (v92 — the search palette asks `search.query` / `search.preview` only of a host that
-  serves them; an older host gets the local providers and a notice),
+  serves them; an older host gets the local providers and a notice), `supportsTextSearch` (v95 —
+  Find in Files asks `search.text` and listens on `search.textResults` only of a host that serves them;
+  against an older host the palette hides the command and the window opened by the chord says the host
+  needs an update),
   `installClientErrorReporting`, `reportClientError`, `clientErrorReport`. `runHostUpdate` is the typed empty host action
   and `supportsHostUpdateRun` lets `Shell` inject it only for protocol v70+; `supportsPlanReview` is exported
   because a sibling panel (`PlanPane`) gates the plan-review UI on it — an older host serves no

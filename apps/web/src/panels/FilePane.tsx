@@ -108,6 +108,7 @@ export function FilePane({ tab }: { tab: FileTab }) {
 						onPlacedThreadIds={onPlacedThreadIds}
 						viewState={tab.viewState}
 						onViewState={saveViewState}
+						{...(tab.reveal ? { reveal: tab.reveal } : {})}
 					/>
 				</Suspense>
 			</div>

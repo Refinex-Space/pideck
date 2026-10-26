@@ -23,6 +23,8 @@ import {
 } from "react";
 import { shortcutKeys } from "../commands";
 import { AttentionDot } from "../components/AttentionDot";
+import { Keycaps, KeyHint } from "../components/Keycaps";
+import { highlightRanges } from "../components/MatchHighlight";
 import { RunningIcon } from "../components/RunningIcon";
 import { hasPlatformModifier } from "../lib";
 import { hostItems, hostOverflow } from "./hostItems";
@@ -403,11 +405,11 @@ function PaletteBody({
 				{previewItem ? <Preview t={t} item={previewItem} previews={previews} host={host} /> : null}
 			</div>
 			<footer className="flex h-32 shrink-0 items-center gap-12 overflow-hidden border-border-muted border-t px-12 tr-text-metadata text-text-subtle">
-				<Hint keys={["↑", "↓"]} label={t("search.hint.select")} />
-				<Hint keys={["↵"]} label={t(enterLabel(selected?.item))} />
-				<Hint keys={["Tab"]} label={t("search.hint.scope")} />
+				<KeyHint keys={["↑", "↓"]} label={t("search.hint.select")} />
+				<KeyHint keys={["↵"]} label={t(enterLabel(selected?.item))} />
+				<KeyHint keys={["Tab"]} label={t("search.hint.scope")} />
 				{startInput && !startInput.start.disabledReason ? (
-					<Hint keys={shortcutKeys({ key: "↵", mod: true })} label={t("search.hint.start")} />
+					<KeyHint keys={shortcutKeys({ key: "↵", mod: true })} label={t("search.hint.start")} />
 				) : null}
 				{hostState.pending ? (
 					<span
@@ -418,7 +420,7 @@ function PaletteBody({
 						{t("search.palette.searching")}
 					</span>
 				) : null}
-				<Hint keys={["esc"]} label={t(query ? "search.hint.clear" : "search.hint.close")} />
+				<KeyHint keys={["esc"]} label={t(query ? "search.hint.clear" : "search.hint.close")} />
 				<span className="flex-1" />
 				<button
 					type="button"
@@ -452,30 +454,6 @@ function enterLabel(item: PaletteItem | undefined): MessageKey {
 	if (item.kind === "command") return "search.hint.run";
 	if (item.kind === "start") return "search.hint.start";
 	return "search.hint.open";
-}
-
-function Keycaps({ keys }: { keys: readonly string[] }) {
-	return (
-		<span className="flex shrink-0 items-center gap-2">
-			{keys.map((key) => (
-				<kbd
-					key={key}
-					className="inline-flex h-16 min-w-16 items-center justify-center rounded-xs border border-border-default px-4 tr-text-metadata text-text-muted"
-				>
-					{key}
-				</kbd>
-			))}
-		</span>
-	);
-}
-
-function Hint({ keys, label }: { keys: readonly string[]; label: string }) {
-	return (
-		<span className="flex shrink-0 items-center gap-4">
-			<Keycaps keys={keys} />
-			{label}
-		</span>
-	);
 }
 
 function ScopeChips({
@@ -567,26 +545,6 @@ function Sections({
 	));
 }
 
-function highlight(
-	text: string,
-	ranges: readonly (readonly [number, number])[] | undefined,
-): ReactNode {
-	if (!ranges || ranges.length === 0) return text;
-	const parts: ReactNode[] = [];
-	let cursor = 0;
-	for (const [start, end] of ranges) {
-		if (start > cursor) parts.push(text.slice(cursor, start));
-		parts.push(
-			<mark key={start} className="rounded-xs bg-primary-soft text-text-default">
-				{text.slice(start, end)}
-			</mark>,
-		);
-		cursor = end;
-	}
-	if (cursor < text.length) parts.push(text.slice(cursor));
-	return parts;
-}
-
 function Row({
 	row,
 	id,
@@ -656,11 +614,11 @@ function Row({
 						item.disabledReason ? "text-text-disabled" : "text-text-default",
 					)}
 				>
-					{highlight(item.title, row.ranges.title)}
+					{highlightRanges(item.title, row.ranges.title)}
 				</span>
 				{item.subtitle ? (
 					<span className="truncate tr-text-metadata text-text-subtle">
-						{highlight(item.subtitle, row.ranges.subtitle)}
+						{highlightRanges(item.subtitle, row.ranges.subtitle)}
 					</span>
 				) : null}
 			</span>

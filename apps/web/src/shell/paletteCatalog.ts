@@ -4,6 +4,7 @@ import {
 	RiChatNewLine,
 	RiCheckDoubleLine,
 	RiFileList3Line,
+	RiFileSearchLine,
 	RiFolderLine,
 	RiFolderOpenLine,
 	RiHistoryLine,
@@ -49,6 +50,7 @@ export interface PaletteCatalogDeps {
 	readonly context: CommandContext;
 	readonly activeWorkspace: Workspace | null;
 	readonly historyAvailable: boolean;
+	readonly findInFilesAvailable: boolean;
 	readonly readAction: "markRead" | "markUnread" | null;
 	readonly canSettle: boolean;
 	readonly settled: boolean;
@@ -65,6 +67,7 @@ export interface PaletteCatalogActions {
 	readonly toggleBottom: (workspaceId: string) => void;
 	readonly showTool: (workspaceId: string, tool: PaletteTool) => void;
 	readonly openHistory: () => void;
+	readonly findInFiles: () => void;
 	readonly markRead: (workspaceId: string) => void;
 	readonly markUnread: (workspaceId: string) => void;
 	readonly settle: (workspaceId: string) => void;
@@ -111,6 +114,16 @@ export function buildCommands(deps: PaletteCatalogDeps): Command[] {
 			keywords: ["add", "repository", "folder"],
 			mutates: true,
 			run: () => actions.openProject(),
+		},
+		{
+			id: "files.findInFiles",
+			title: t("commands.files.findInFiles"),
+			group: "navigation",
+			icon: RiFileSearchLine,
+			keywords: ["grep", "text", "content", "occurrences"],
+			shortcut: { key: "F", mod: true, shift: true },
+			when: () => deps.findInFilesAvailable,
+			run: () => actions.findInFiles(),
 		},
 		{
 			id: "chat.history",

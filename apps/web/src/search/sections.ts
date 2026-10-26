@@ -9,6 +9,8 @@ import { compareRanked, pickTopHit, plainRow, type RankedItem, rankItems, toRow 
 export interface SectionsInput {
 	readonly t: Translator;
 	readonly parsed: ParsedQuery;
+	/** Host hits per group beyond the page the host returned (`total − hits`), so a cap can say how many more exist. */
+	readonly hostOverflow?: Readonly<Record<string, number>>;
 	readonly rootItems: readonly PaletteItem[];
 	readonly waiting: readonly PaletteItem[];
 	readonly actions: readonly PaletteItem[];
@@ -49,8 +51,10 @@ function inScope(item: PaletteItem, scope: SearchScope): boolean {
 function moreRow(
 	t: Translator,
 	group: string,
+	scope: SearchScope,
 	hidden: readonly PaletteRow[],
 	scoped: boolean,
+	overflow: number,
 ): PaletteRow {
 	const first = hidden[0]?.item;
 	return plainRow({
@@ -58,13 +62,11 @@ function moreRow(
 		kind: "more",
 		title: scoped
 			? t("search.more.scoped", { count: hidden.length })
-			: t("search.more.inGroup", { count: hidden.length, group: groupLabel(t, group) }),
+			: t("search.more.inGroup", { count: hidden.length + overflow, group: groupLabel(t, group) }),
 		group,
-		scope: first?.scope ?? "all",
+		scope,
 		icon: RiMoreLine,
-		more: scoped
-			? { kind: "expand", group, nextId: first?.id ?? "" }
-			: { kind: "scope", scope: first?.scope ?? "all" },
+		more: scoped ? { kind: "expand", group, nextId: first?.id ?? "" } : { kind: "scope", scope },
 	});
 }
 
@@ -74,15 +76,27 @@ function cappedSection(
 	rows: readonly PaletteRow[],
 	scoped: boolean,
 	expanded: ReadonlySet<string>,
+	overflow: number,
 ): PaletteSection {
 	const cap = expanded.has(group) ? rows.length : scoped ? SCOPED_CAP : ALL_SCOPE_CAP;
 	const title = groupLabel(t, group);
-	if (rows.length <= cap) return { id: group, title, items: rows };
+	if (rows.length <= cap && overflow === 0) return { id: group, title, items: rows };
+	const scope = rows[0]?.item.scope ?? "all";
+	const hidden = rows.slice(cap);
+	const shown = rows.slice(0, cap);
+	const total = rows.length + overflow;
+	const items =
+		scoped && hidden.length === 0
+			? shown
+			: [...shown, moreRow(t, group, scope, hidden, scoped, overflow)];
 	return {
 		id: group,
 		title,
-		meta: String(rows.length),
-		items: [...rows.slice(0, cap), moreRow(t, group, rows.slice(cap), scoped)],
+		meta:
+			scoped && overflow > 0
+				? t("search.group.hostCapped", { count: total, shown: rows.length })
+				: String(total),
+		items,
 	};
 }
 
@@ -91,6 +105,7 @@ function groupRanked(
 	ranked: readonly RankedItem[],
 	scoped: boolean,
 	expanded: ReadonlySet<string>,
+	hostOverflow: Readonly<Record<string, number>>,
 ): PaletteSection[] {
 	const groups = new Map<string, RankedItem[]>();
 	for (const entry of ranked) {
@@ -107,6 +122,7 @@ function groupRanked(
 				entries.map((entry) => toRow(entry)),
 				scoped,
 				expanded,
+				hostOverflow[group] ?? 0,
 			),
 		);
 }
@@ -142,7 +158,7 @@ function emptyRootSections(input: SectionsInput): PaletteSection[] {
 		groups.set(item.group, rows);
 	}
 	return [...groups.entries()].map(([group, rows]) =>
-		cappedSection(t, group, rows, true, input.expanded),
+		cappedSection(t, group, rows, true, input.expanded, 0),
 	);
 }
 
@@ -154,7 +170,7 @@ export function buildSections(input: SectionsInput): PaletteSection[] {
 	const scoped = parsed.scope !== "all";
 	const top = scoped ? null : pickTopHit(ranked);
 	const rest = top ? ranked.filter((entry) => entry !== top) : ranked;
-	const sections = groupRanked(t, rest, scoped, input.expanded);
+	const sections = groupRanked(t, rest, scoped, input.expanded, input.hostOverflow ?? {});
 	return top
 		? [{ id: "top", title: groupLabel(t, "top"), items: [toRow(top, true)] }, ...sections]
 		: sections;

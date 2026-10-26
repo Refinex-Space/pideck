@@ -58,6 +58,7 @@ import {
 	setSubagentsEnabledResolver,
 	setTitleToolHost,
 	settleSessionsForShutdown,
+	setWorkspaceToolsHost,
 	watchUserMcpConfig,
 } from "../agent";
 import {
@@ -161,6 +162,7 @@ import {
 } from "./terminalSend";
 import { titleToolHost } from "./titleTool";
 import { markClientStale, reconcilePendingReviewsOnBoot } from "./todoReview";
+import { workspaceToolsHost } from "./workspaceTools";
 
 export interface CreateServerOptions {
 	port?: number;
@@ -784,6 +786,7 @@ export async function createServer(options: CreateServerOptions = {}): Promise<R
 			belowProtocol: CONTINUATION_PROTOCOL_VERSION,
 		}),
 	);
+	setWorkspaceToolsHost(workspaceToolsHost);
 	reconcilePendingReviewsOnBoot();
 
 	setSettingsPublisher((config, appliedUpdate) => {

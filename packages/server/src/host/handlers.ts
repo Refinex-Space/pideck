@@ -29,7 +29,6 @@ import {
 	clampThinkingForModel,
 	clearQueueSession,
 	compactSession,
-	createSession,
 	deleteSession,
 	ensureSessionAttached,
 	followUpSession,
@@ -200,7 +199,6 @@ import {
 	assertNotChatsContainer,
 	assertNotChatWorkspace,
 	createWorkspace,
-	ensureWorkspaceScratchDir,
 	forgetWorkspace,
 	getWorkspace,
 	isChatsContainer,
@@ -224,7 +222,8 @@ import {
 	workspaceDiffStats,
 } from "../workspaces";
 import { ackSend } from "./ackSend";
-import { sessionProviderAnalytics, trackChatStarted } from "./authAnalytics";
+import { sessionProviderAnalytics } from "./authAnalytics";
+import { startChatSession } from "./chatSession";
 import {
 	assertChatAcceptsSession,
 	assertSessionDeletable,
@@ -449,18 +448,7 @@ async function sendToFileChat(
 			`review ${workspaceId}: linked chat ${existing} is no longer on disk — starting a new review chat`,
 		);
 	}
-	ensureWorkspaceScratchDir(ws);
-	const defaults = await resolveNewChatModel(opts);
-	const created = await createSession({
-		cwd: ws.worktreePath,
-		workspaceId,
-		...(defaults.model ? { model: defaults.model } : {}),
-		thinkingLevel: defaults.thinkingLevel,
-	});
-	trackChatStarted({
-		sessionId: created.sessionId,
-		model: defaults.model ? created.model : null,
-	});
+	const created = await startChatSession(ws, opts);
 	await markCommentsSent(workspaceId, ids, created.sessionId);
 	fireReviewPrompt(workspaceId, comments, created.sessionId, pkg, capture);
 	return { ...created, reused: false };
@@ -1013,19 +1001,8 @@ const handlers: WsHandlers = {
 			const { workspace: _workspace, ...created } = await ensureChatSession(ws.id);
 			return created;
 		}
-		ensureWorkspaceScratchDir(ws);
-		const defaults = await resolveNewChatModel(p);
-		const created = await createSession({
-			cwd: ws.worktreePath,
-			workspaceId: p.workspaceId,
-			...(defaults.model ? { model: defaults.model } : {}),
-			thinkingLevel: defaults.thinkingLevel,
-		});
+		const created = await startChatSession(ws, p);
 		if (p.model && created.model) noteRecentModel(created.model);
-		trackChatStarted({
-			sessionId: created.sessionId,
-			model: defaults.model ? created.model : null,
-		});
 		return created;
 	},
 	"session.prompt": (p, ctx) => {

@@ -106,8 +106,6 @@ export function supportsChatContinuation(protocolVersion: number | null): boolea
 	return protocolVersion !== null && protocolVersion >= CONTINUATION_PROTOCOL_VERSION;
 }
 
-const initiatedContinuations = new Set<string>();
-
 /**
  * Asks the host to continue a chat in a new workspace of `projectId`; this client remembers the
  * operation so that, alone among clients, it follows the new chat when the host reports `started`.
@@ -121,7 +119,7 @@ export async function continueChatInWorkspace(
 			workspaceId,
 			projectId,
 		});
-		initiatedContinuations.add(operationId);
+		useAppStore.getState().noteInitiatedContinuation(operationId);
 		return operationId;
 	} catch (err) {
 		toast.error(errorText(err), t("panels.chats.continueFailed"));
@@ -131,9 +129,10 @@ export async function continueChatInWorkspace(
 
 /** Called for every `chat.continuation` push: only the initiating client navigates, once, when the new chat exists. */
 export function followContinuation(continuation: ChatContinuation): void {
-	if (!initiatedContinuations.has(continuation.operationId)) return;
+	const store = useAppStore.getState();
+	if (!store.initiatedContinuations[continuation.operationId]) return;
 	if (continuation.phase === "failed" || continuation.phase === "lost") {
-		initiatedContinuations.delete(continuation.operationId);
+		store.forgetInitiatedContinuation(continuation.operationId);
 		toast.error(
 			continuation.reason ?? t("panels.chats.continueFailed"),
 			t("panels.chats.continueFailed"),
@@ -141,7 +140,7 @@ export function followContinuation(continuation: ChatContinuation): void {
 		return;
 	}
 	if (continuation.phase !== "started" || !continuation.workspaceId) return;
-	initiatedContinuations.delete(continuation.operationId);
+	store.forgetInitiatedContinuation(continuation.operationId);
 	const { workspaceId, projectId, sessionId } = continuation;
 	void loadProjectWorkspaces(projectId)
 		.catch(() => {})
@@ -153,7 +152,8 @@ export function followContinuation(continuation: ChatContinuation): void {
 /** Mounted once by the shell: every continuation push the store records is offered to `followContinuation`. */
 export function useFollowContinuations(): void {
 	const continuations = useAppStore((s) => s.chatContinuations);
+	const initiated = useAppStore((s) => s.initiatedContinuations);
 	useEffect(() => {
 		for (const continuation of Object.values(continuations)) followContinuation(continuation);
-	}, [continuations]);
+	}, [continuations, initiated]);
 }

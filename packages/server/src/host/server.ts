@@ -17,6 +17,7 @@ import {
 	LOCALES_PROTOCOL_VERSION,
 	MCP_PROTOCOL_VERSION,
 	PROTOCOL_VERSION,
+	TEXT_SEARCH_PROTOCOL_VERSION,
 	WS_CHANNELS,
 } from "@thinkrail/contracts";
 import { errorCodeOf } from "@thinkrail/shared/codedError";
@@ -145,7 +146,7 @@ import {
 	setReviewFailedPublisher,
 } from "./requestReview";
 import { runObservation } from "./runAnalytics";
-import { hostSearch } from "./search";
+import { hostSearch, setSearchTextPublisher } from "./search";
 import {
 	REVIEW_REFRESH_INTERVAL_MS,
 	refreshOpenProjectReviews,
@@ -582,6 +583,16 @@ export async function createServer(options: CreateServerOptions = {}): Promise<R
 		}
 	});
 
+	setSearchTextPublisher((clientKey, batch) => {
+		const ws = sockets.get(clientKey);
+		if (!ws || ws.data.protocolVersion < TEXT_SEARCH_PROTOCOL_VERSION) return;
+		try {
+			ws.send(JSON.stringify({ channel: WS_CHANNELS.searchTextResults, data: batch }));
+		} catch {
+			ws.close();
+		}
+	});
+
 	setFeedbackPublisher((clientKey) => {
 		const ws = sockets.get(clientKey);
 		if (!ws || ws.data.protocolVersion < FEEDBACK_INTERVIEW_PROTOCOL_VERSION) return false;
@@ -949,6 +960,7 @@ export async function createServer(options: CreateServerOptions = {}): Promise<R
 		persistTerminalSessions();
 		closeAllTerminals();
 		setFeedbackPublisher(null);
+		setSearchTextPublisher(null);
 		setSettingsPublisher(null);
 		setModelContextPublisher(null);
 		setJbcentralAppliedPublisher(() => {});

@@ -1,3 +1,4 @@
+import type { TextSearchBatch } from "@thinkrail/contracts";
 import { getHistoryIndex } from "../history";
 import { listProjects } from "../projects";
 import { createSearchService, type SearchService } from "../search";
@@ -19,4 +20,16 @@ export function hostSearch(): SearchService {
 		});
 	}
 	return service;
+}
+
+type TextSearchPublisher = (clientKey: string, batch: TextSearchBatch) => void;
+
+let textPublisher: TextSearchPublisher | null = null;
+
+export function setSearchTextPublisher(publisher: TextSearchPublisher | null): void {
+	textPublisher = publisher;
+}
+
+export function publishSearchText(clientKey: string, batch: TextSearchBatch): void {
+	textPublisher?.(clientKey, batch);
 }

@@ -46,6 +46,7 @@ import {
 	SESSION_TITLE_MAX_LENGTH,
 	SUBAGENT_CONCURRENCY_PROTOCOL_VERSION,
 	SUBAGENT_SETTINGS_PROTOCOL_VERSION,
+	TEXT_SEARCH_PROTOCOL_VERSION,
 	THEME_SYSTEM_PROTOCOL_VERSION,
 	TODO_REVIEW_FIX_CUSTOM_TYPE,
 	TURN_CHANGES_PROTOCOL_VERSION,
@@ -240,8 +241,15 @@ test("host search and its previews are pinned to v92", () => {
 	expect(WS_METHODS.searchPreview).toBe("search.preview");
 });
 
+test("find in files is pinned to v95", () => {
+	expect(PROTOCOL_VERSION).toBe(95);
+	expect(TEXT_SEARCH_PROTOCOL_VERSION).toBe(95);
+	expect(WS_METHODS.searchText).toBe("search.text");
+	expect(WS_CHANNELS.searchTextResults).toBe("search.textResults");
+});
+
 test("continue in workspace is pinned to v94", () => {
-	expect(PROTOCOL_VERSION).toBe(94);
+	expect(PROTOCOL_VERSION).toBeGreaterThanOrEqual(CONTINUATION_PROTOCOL_VERSION);
 	expect(CONTINUATION_PROTOCOL_VERSION).toBe(94);
 	expect(WS_METHODS.chatContinue).toBe("chat.continue");
 	expect(WS_METHODS.chatContinuationStatus).toBe("chat.continuationStatus");

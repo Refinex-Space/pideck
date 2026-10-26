@@ -17,6 +17,7 @@ import {
 	CHATS_PROTOCOL_VERSION,
 	CLIENT_ERROR_REPORT_PROTOCOL_VERSION,
 	CONTEXT_WINDOW_SETTINGS_PROTOCOL_VERSION,
+	CONTINUATION_PROTOCOL_VERSION,
 	customMessageText,
 	DEFAULT_MODEL_PROTOCOL_VERSION,
 	EXTENSION_CATALOG_PROTOCOL_VERSION,
@@ -239,8 +240,16 @@ test("host search and its previews are pinned to v92", () => {
 	expect(WS_METHODS.searchPreview).toBe("search.preview");
 });
 
+test("continue in workspace is pinned to v94", () => {
+	expect(PROTOCOL_VERSION).toBe(94);
+	expect(CONTINUATION_PROTOCOL_VERSION).toBe(94);
+	expect(WS_METHODS.chatContinue).toBe("chat.continue");
+	expect(WS_METHODS.chatContinuationStatus).toBe("chat.continuationStatus");
+	expect(WS_CHANNELS.chatContinuation).toBe("chat.continuation");
+});
+
 test("chats without a project are pinned to v93", () => {
-	expect(PROTOCOL_VERSION).toBe(93);
+	expect(PROTOCOL_VERSION).toBeGreaterThanOrEqual(CHATS_PROTOCOL_VERSION);
 	expect(CHATS_PROTOCOL_VERSION).toBe(93);
 	expect(WS_METHODS.chatCreate).toBe("chat.create");
 	expect(WS_METHODS.chatDelete).toBe("chat.delete");

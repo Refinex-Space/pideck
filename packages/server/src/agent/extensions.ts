@@ -26,6 +26,7 @@ import {
 } from "../extensions";
 import { type BundledTrashHelpers, setBundledTrashHelpers } from "../trash";
 import { askUserQuestionExtension } from "./askUserQuestion";
+import { continueInWorkspaceExtension } from "./continueTool";
 import { oversizedImageGuard } from "./imageGuard";
 import { requestReviewExtension } from "./requestReviewTool";
 import { reviewToolExtension } from "./reviewTool";
@@ -238,6 +239,7 @@ export async function buildResourceLoader(
 		reviewToolExtension,
 		requestReviewExtension,
 		setTitleExtension,
+		continueInWorkspaceExtension,
 		oversizedImageGuard,
 		...extraFactories,
 	];

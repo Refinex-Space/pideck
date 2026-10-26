@@ -29,6 +29,7 @@ import {
 	selectChatAttended,
 	selectChatsContainer,
 	selectReadyCompletionAck,
+	selectWorkspaceById,
 	specPathMatcher,
 	toast,
 	useAppStore,
@@ -36,7 +37,7 @@ import {
 import { errorText, getTransport, wsErrorCode } from "@/transport";
 import { ACTIVITY_BREADCRUMB_HEIGHT, ActivityBreadcrumbTrail } from "./activityBreadcrumbs";
 import { AskStatesContext, deriveAskStates } from "./askState";
-import { type ChatActions, ChatActionsContext } from "./ChatActions";
+import { type ChatActions, ChatActionsContext, type WorkspaceChatTarget } from "./ChatActions";
 import type { ChatMessageOrder } from "./chatPreferences";
 import { type PendingExtUi, PendingExtUiContext, PendingExtUiPrompt } from "./ExtUiPrompt";
 import { FoldGeometryProvider } from "./foldState";
@@ -150,6 +151,20 @@ function useVirtualRows(
 	);
 	setStoredVirtualRows(virtualRows);
 	return virtualRows;
+}
+
+function LiveWorkspaceName({ workspaceId, fallback }: { workspaceId: string; fallback: string }) {
+	const name = useAppStore((state) => selectWorkspaceById(state, workspaceId)?.name);
+	return name ?? fallback;
+}
+
+function openWorkspace({ workspaceId, projectId, sessionId }: WorkspaceChatTarget): void {
+	const state = useAppStore.getState();
+	const known = selectWorkspaceById(state, workspaceId);
+	state.activateWorkspaceFromRoute(
+		{ id: workspaceId, projectId: known?.projectId ?? projectId },
+		sessionId,
+	);
 }
 
 export type ChatTranscriptHandle = {
@@ -641,6 +656,8 @@ const ChatTranscript = forwardRef<
 						details.sourceSessionId,
 					);
 			},
+			openWorkspace,
+			WorkspaceName: LiveWorkspaceName,
 		}),
 		[
 			cancelAutomaticReveal,

@@ -21,7 +21,7 @@ opens its Settings section), and every verb runs through the command it was list
 
 ## Boundary
 
-- **Public surface:** `SearchPalette`, `SearchPaletteProps`, `PaletteHost`, `PaletteStart`,
+- **Public surface:** `SearchPalette`, `SearchPaletteProps`, `PaletteHost`, `PaletteStart`, `PaletteAsk`,
   `SearchSettings`, `initSearchPreferences`, `createDoubleShiftDetector`, `buildWorkItems`,
   `waitingItems`, `WorkItemsState`, `commandItems`, `SearchScope`, `PaletteItem`, `PaletteItemKind`,
   `PalettePreview`, `PaletteFile`.
@@ -84,13 +84,37 @@ the selection never reorder and the selected row never drops out of a capped gro
 hit without a workspace is dropped (nothing could read or open it). A host row opens through the
 injected `PaletteHost.openHit`.
 
+## Spec sections
+
+`#` asks the host for spec titles **and** sections; All never asks for sections (`scopeKinds`), so they
+stay out of the mixed list. A section row is the host's `section` hit — ranked by words by the engine the
+agent's `spec_search` uses, so both answer a question with the same sections — titled `Spec › Heading`
+with the spec's name muted (`PaletteItem.titleLead`), the section's best line beneath with the matched
+words highlighted, and an `n/m words` badge. Its group, **Sections**, follows the title matches by tier.
+`↵` opens the spec in the Specs tool scrolled to the heading (`requestSpecView` with the heading line);
+`Mod+I` previews the rendered spec at the section (`PaletteFile.line`).
+
+## Ask the agent
+
+Word search cannot meet a question that shares no words with the spec (a paraphrase, another language),
+so whenever `#` has text its **last** row is «Ask the agent: “<text>”», naming the workspace it opens
+in. `↵` on it, or `Alt+↵` from any row (`askEligible`, the one rule the row, the shortcut and its footer
+hint share), closes the palette and calls the injected `PaletteAsk.ask(text)`: shell starts a **new**
+chat in the context workspace — the active one, on Project Home the project's Default — with the text
+as typed and the visible note «Find the answer in this project's specs and cite the sections.», so the
+agent searches with its own model's words and the current chat is not interrupted. The row is always
+there rather than only when results look weak: a fixed place keeps muscle memory, where a "weak results"
+heuristic misfires both ways. It needs no offline state — `#` itself exists only while the host serves
+search — and like Start work it is never remembered by the learning store.
+
 ## Preview pane
 
 `Mod+I` opens a pane with one of three renderings, chosen by the selected row: a **transcript window**
 around a chat or transcript hit (`search.preview`, memoized per target for the open palette, with the
 focused message marked); a **file or spec** rendered by the shell-injected `renderFilePreview` over
-`PaletteItem.file` (`{ workspaceId, path }`) — the shared resource renderers, so code highlights, images
-and sandboxed HTML display, and a `SPEC.md` renders as markdown, the same path as a preview tab; or the
+`PaletteItem.file` (`{ workspaceId, path, line? }`) — the shared resource renderers, so code highlights,
+images and sandboxed HTML display, and a `SPEC.md` renders as markdown (scrolled to `line` for a
+section), the same path as a preview tab; or the
 local **metadata card** (`PaletteItem.preview`) for a project, workspace or chat without a transcript
 hit. A plan row and a command have no preview. The pane never fetches a text head from the host.
 
@@ -112,7 +136,8 @@ DOM focus stays in the input (WAI-ARIA combobox + listbox with `aria-activedesce
 result count; chips and footer buttons are not tabbable, and Tab is always consumed). ↑/↓ select, ↵
 opens or runs the row and closes the palette, Tab/Shift+Tab and `Alt+1…n` change scope (a chip writes
 its prefix into the query, so the prefix is the one source of scope), `Mod+I` toggles the preview pane,
-`Mod+K` closes the palette (the chord that opened it), `Mod+↵` starts work from the typed text (above).
+`Mod+K` closes the palette (the chord that opened it), `Mod+↵` starts work from the typed text and
+`Alt+↵` asks the agent from a `#` query (above).
 Escape clears the query, then closes; an
 untrusted (synthetic) Escape — the desktop close-item command — closes outright. `Ctrl+R` is swallowed
 while the palette is open. Mutating rows are disabled while offline or before the current welcome.

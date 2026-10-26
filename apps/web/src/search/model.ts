@@ -17,6 +17,7 @@ export type PaletteItemKind =
 	| "plan"
 	| "transcript"
 	| "start"
+	| "ask"
 	| "more";
 
 export type PaletteMore =
@@ -29,10 +30,11 @@ export interface PalettePreview {
 	readonly fields: readonly (readonly [label: string, value: string])[];
 }
 
-/** A workspace file the shell renders in the preview pane through the shared resource renderers. */
+/** A workspace file the shell renders in the preview pane through the shared resource renderers, scrolled to `line` when set. */
 export interface PaletteFile {
 	readonly workspaceId: string;
 	readonly path: string;
+	readonly line?: number;
 }
 
 /** A match the host already scored with the shared matcher; the client ranks it as-is. */
@@ -49,6 +51,8 @@ export interface PaletteItem {
 	readonly group: string;
 	readonly scope: SearchScope;
 	readonly icon: RemixiconComponentType;
+	/** How many leading characters of `title` are context (a section's spec name) and render muted. */
+	readonly titleLead?: number;
 	readonly subtitle?: string;
 	readonly titleSource?: ChatTitleSource;
 	readonly titleTooltip?: string;
@@ -75,6 +79,13 @@ export interface PaletteItem {
 export interface PaletteStart {
 	readonly openDialog: (text: string) => void;
 	readonly disabledReason?: string;
+}
+
+/** Ask the agent from the typed text: the shell starts a new chat in the context workspace with the question. */
+export interface PaletteAsk {
+	readonly ask: (text: string) => void;
+	/** The workspace the new chat opens in, named on the row. */
+	readonly target?: string;
 }
 
 export interface PaletteSection {

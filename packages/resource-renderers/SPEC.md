@@ -52,8 +52,11 @@ One barrel, `@thinkrail/resource-renderers` (`src/index.ts`):
   `revealLineNow` on a fresh mount — the same immediate-scroll rule as a review focus — or
   `revealLineInCenter` later, selecting `column`..`column + length`); a caller repeats a reveal of the same
   line by bumping `tick`, and names the source renderer by id so a Markdown or HTML file opens at a line
-  rather than as its rendered document. Only the code renderer's views honour `reveal`; the others ignore
-  it, so a reveal through a rich renderer is a plain open;
+  rather than as its rendered document. The rendered Markdown view honours `reveal` too, without a mark:
+  it scrolls the block whose source-line stamp (`data-md-line-start`, frontmatter offset applied — both
+  of its branches stamp) is the last one at or before `line` to the top, waiting for the document to render
+  if it has not yet, so a spec opens at a heading; the other rich renderers ignore `reveal`, so a reveal
+  through them is a plain open;
 - the pieces every surface composes a renderer from, so a file tab, a diff tab, a Changes section and
   `ResourcePreview` run one sequence:
   - `useRendererSelection(resource, intent, rendererId)` — candidates for the environment's phone class, the

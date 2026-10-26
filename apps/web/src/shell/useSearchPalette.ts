@@ -31,6 +31,7 @@ import {
 import {
 	buildWorkItems,
 	commandItems,
+	type PaletteAsk,
 	type PaletteHost,
 	type PaletteItem,
 	type PaletteStart,
@@ -39,6 +40,7 @@ import {
 	waitingItems,
 } from "../search";
 import {
+	isDefaultWorkspace,
 	selectActiveWorkspace,
 	selectContextProject,
 	selectContextRepoProject,
@@ -92,7 +94,7 @@ async function openHostHit(hit: SearchHit): Promise<void> {
 		case "spec":
 		case "section":
 			navigateToWorkspace(workspace);
-			if (hit.path) store.requestSpecView(workspace.id, hit.path);
+			if (hit.path) store.requestSpecView(workspace.id, hit.path, hit.section?.line);
 			return;
 		case "transcript":
 			if (hit.sessionId && hit.messageIndex !== undefined && hit.anchorText !== undefined) {
@@ -114,6 +116,16 @@ async function openHostHit(hit: SearchHit): Promise<void> {
 			navigateToWorkspace(workspace, hit.sessionId);
 			return;
 	}
+}
+
+async function askTheAgent(
+	workspaceId: string | null,
+	projectId: string | null,
+	text: string,
+): Promise<void> {
+	const target =
+		workspaceId ?? (projectId ? ((await enterDefaultWorkspace(projectId))?.id ?? null) : null);
+	if (target) await startChatInTab(target, undefined, `${text}\n\n${globalT("search.ask.note")}`);
 }
 
 function backfillOrder(state: ReturnType<typeof useAppStore.getState>) {
@@ -289,6 +301,19 @@ export function useSearchPalette(options: SearchPaletteOptions): SearchPalettePr
 		};
 	}, [contextRepoProject, canStartChat, online, openNewWorkspace, t]);
 
+	const ask = useMemo<PaletteAsk | undefined>(() => {
+		const projectId = contextRepoProject?.id ?? null;
+		if (!hostSearch || (!activeWorkspaceId && !projectId)) return undefined;
+		const target =
+			activeWorkspace ??
+			(projectId ? workspaces[projectId]?.find(isDefaultWorkspace) : undefined) ??
+			null;
+		return {
+			ask: (text) => void askTheAgent(activeWorkspaceId, projectId, text),
+			...(target ? { target: workspaceName(t, target) } : {}),
+		};
+	}, [hostSearch, activeWorkspaceId, activeWorkspace, contextRepoProject, workspaces, t]);
+
 	const binding = useMemo(() => {
 		const store = () => useAppStore.getState();
 		const deps = {
@@ -458,6 +483,7 @@ export function useSearchPalette(options: SearchPaletteOptions): SearchPalettePr
 		scopes: hostSearch ? HOST_SCOPES : LOCAL_SCOPES,
 		...(host ? { host } : {}),
 		...(start ? { start } : {}),
+		...(ask ? { ask } : {}),
 		...(online
 			? hostSearch
 				? {}

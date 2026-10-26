@@ -1,14 +1,19 @@
-import { RiMoreLine, RiSparkling2Line } from "@remixicon/react";
+import { RiChatAiLine, RiMoreLine, RiSparkling2Line } from "@remixicon/react";
 import type { MessageKey } from "@thinkrail/locales";
 import type { Translator } from "@thinkrail/locales/react";
 import { shortcutLabel } from "../commands";
 import { frecencyScore, type LearningSnapshot } from "./learning";
-import type { PaletteItem, PaletteRow, PaletteSection, PaletteStart } from "./model";
+import type { PaletteAsk, PaletteItem, PaletteRow, PaletteSection, PaletteStart } from "./model";
 import type { ParsedQuery, SearchScope } from "./query";
 import { compareRanked, pickTopHit, plainRow, type RankedItem, rankItems, toRow } from "./rank";
 
 export interface StartInput {
 	readonly start: PaletteStart;
+	readonly text: string;
+}
+
+export interface AskInput {
+	readonly ask: PaletteAsk;
 	readonly text: string;
 }
 
@@ -18,6 +23,7 @@ export interface SectionsInput {
 	/** Host hits per group beyond the page the host returned (`total − hits`), so a cap can say how many more exist. */
 	readonly hostOverflow?: Readonly<Record<string, number>>;
 	readonly start?: StartInput;
+	readonly ask?: AskInput;
 	readonly rootItems: readonly PaletteItem[];
 	readonly waiting: readonly PaletteItem[];
 	readonly actions: readonly PaletteItem[];
@@ -37,6 +43,7 @@ const GROUP_LABELS: Readonly<Record<string, MessageKey>> = {
 	commands: "search.group.commands",
 	settings: "search.group.settings",
 	start: "search.group.start",
+	ask: "search.group.ask",
 	files: "search.group.files",
 	specs: "search.group.specs",
 	sections: "search.group.sections",
@@ -210,7 +217,44 @@ function withStart(sections: PaletteSection[], input: SectionsInput): PaletteSec
 	];
 }
 
+export const ASK_ROW_ID = "ask";
+
+export function askRow(t: Translator, input: AskInput): PaletteItem {
+	const { ask, text } = input;
+	return {
+		id: ASK_ROW_ID,
+		kind: "ask",
+		title: t("search.ask.title", { text }),
+		subtitle: ask.target
+			? t("search.ask.subtitle", { workspace: ask.target })
+			: t("search.ask.subtitleHere"),
+		group: "ask",
+		scope: "specs",
+		icon: RiChatAiLine,
+		shortcut: { key: "↵", alt: true },
+		run: () => ask.ask(text),
+	};
+}
+
+/** The one rule for the Ask the agent row and `Alt+↵`: typed text in the specs scope. */
+export function askEligible(parsed: ParsedQuery): boolean {
+	return parsed.text.trim().length > 0 && parsed.scope === "specs";
+}
+
+function withAsk(sections: PaletteSection[], input: SectionsInput): PaletteSection[] {
+	const { ask, parsed, t } = input;
+	if (!ask || !askEligible(parsed)) return sections;
+	return [
+		...sections,
+		{ id: "ask", title: groupLabel(t, "ask"), items: [plainRow(askRow(t, ask))] },
+	];
+}
+
 export function buildSections(input: SectionsInput): PaletteSection[] {
+	return withAsk(rankedSections(input), input);
+}
+
+function rankedSections(input: SectionsInput): PaletteSection[] {
 	const { t, parsed } = input;
 	if (parsed.terms.length === 0) return emptyRootSections(input);
 	const candidates = input.rootItems.filter((item) => inScope(item, parsed.scope));

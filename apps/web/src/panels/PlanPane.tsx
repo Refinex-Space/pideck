@@ -60,6 +60,7 @@ import { StatusIcon } from "../chat/TodoList";
 import { AskUserQuestionCard } from "../chat/tools/AskUserQuestionCard";
 import { hydrateSessionRuntime, useChatTodos } from "../chat/useChatTodos";
 import {
+	isChatWorkspace,
 	selectAgentReviewCommentCount,
 	selectChatName,
 	selectChatTitle,
@@ -861,6 +862,7 @@ export default function PlanPane({
 	const pushToast = useAppStore((s) => s.pushToast);
 	const requestToolView = useAppStore((s) => s.requestToolView);
 	const workspace = useAppStore((s) => selectWorkspaceById(s, workspaceId));
+	const chat = workspace !== null && isChatWorkspace(workspace);
 	const glance = useAppStore((s): PlanGlance => {
 		const rt = s.sessions[sessionId];
 		return rt ? sessionGlance(rt) : "waiting";
@@ -880,7 +882,7 @@ export default function PlanPane({
 		status: branchStatus,
 		noteOpenReview,
 		refreshBranchStatus,
-	} = useBranchStatus(workspace, connection);
+	} = useBranchStatus(chat ? null : workspace, connection);
 	const branchReviewWithUrl =
 		branchReview && branchReviewUrl ? { ...branchReview, url: branchReviewUrl } : branchReview;
 	const resolvedBranchReview = resolveBranchReview(
@@ -1097,7 +1099,7 @@ export default function PlanPane({
 								{openReview ? openReviewLabel(openReview) : t("plan.header.pr")}
 							</span>
 						</div>
-						{workspace ? (
+						{workspace && !chat ? (
 							<div
 								data-testid="plan-context"
 								className="mt-2 flex flex-wrap items-center gap-8 tr-text-metadata text-text-subtle"
@@ -1154,44 +1156,46 @@ export default function PlanPane({
 							</span>
 						)
 					) : null}
-					<button
-						type="button"
-						data-testid="plan-open-pr"
-						data-diverged={openReview && diverged ? "" : undefined}
-						disabled={prBusy || sameBranch || (!!openReview && diverged && !integrateCommand)}
-						onClick={openReview && diverged ? copyIntegrateCommand : () => void openPrFlow(false)}
-						title={
-							sameBranch
-								? t("plan.openPr.sameBranch")
-								: openReview && diverged
-									? integrateCommand
-										? t("plan.openPr.divergedCopy", { command: integrateCommand })
-										: t("plan.openPr.divergedManual", { branch })
-									: openReview
-										? t("plan.openPr.pushTitle")
-										: t("plan.openPr.openTitle")
-						}
-						className={`flex h-32 shrink-0 items-center gap-4 rounded-sm px-8 tr-text-ui transition-colors ${
-							(planReady && !openReview) || unpushed > 0 || (openReview && diverged)
-								? "bg-control-primary-bg text-control-primary-text hover:bg-control-primary-bg-hovered disabled:bg-control-primary-disabled-bg disabled:text-control-primary-disabled-text"
-								: "text-text-muted hover:bg-control-bg-hovered hover:text-text-default disabled:text-control-disabled-text"
-						}`}
-					>
-						{prBusy ? (
-							<Loader2 className="size-14 animate-spin" />
-						) : (
-							<GitPullRequestArrow className="size-14" />
-						)}
-						{ship.submitting
-							? t("plan.openPr.pushing")
-							: openReview
-								? diverged
-									? t("plan.openPr.diverged")
-									: unpushed > 0
-										? t("plan.openPr.pushUpdatesCount", { count: unpushed })
-										: t("plan.openPr.pushUpdates")
-								: t("plan.openPr.open")}
-					</button>
+					{chat ? null : (
+						<button
+							type="button"
+							data-testid="plan-open-pr"
+							data-diverged={openReview && diverged ? "" : undefined}
+							disabled={prBusy || sameBranch || (!!openReview && diverged && !integrateCommand)}
+							onClick={openReview && diverged ? copyIntegrateCommand : () => void openPrFlow(false)}
+							title={
+								sameBranch
+									? t("plan.openPr.sameBranch")
+									: openReview && diverged
+										? integrateCommand
+											? t("plan.openPr.divergedCopy", { command: integrateCommand })
+											: t("plan.openPr.divergedManual", { branch })
+										: openReview
+											? t("plan.openPr.pushTitle")
+											: t("plan.openPr.openTitle")
+							}
+							className={`flex h-32 shrink-0 items-center gap-4 rounded-sm px-8 tr-text-ui transition-colors ${
+								(planReady && !openReview) || unpushed > 0 || (openReview && diverged)
+									? "bg-control-primary-bg text-control-primary-text hover:bg-control-primary-bg-hovered disabled:bg-control-primary-disabled-bg disabled:text-control-primary-disabled-text"
+									: "text-text-muted hover:bg-control-bg-hovered hover:text-text-default disabled:text-control-disabled-text"
+							}`}
+						>
+							{prBusy ? (
+								<Loader2 className="size-14 animate-spin" />
+							) : (
+								<GitPullRequestArrow className="size-14" />
+							)}
+							{ship.submitting
+								? t("plan.openPr.pushing")
+								: openReview
+									? diverged
+										? t("plan.openPr.diverged")
+										: unpushed > 0
+											? t("plan.openPr.pushUpdatesCount", { count: unpushed })
+											: t("plan.openPr.pushUpdates")
+									: t("plan.openPr.open")}
+						</button>
+					)}
 					<DropdownMenu>
 						<DropdownMenuTrigger
 							data-testid="plan-menu"

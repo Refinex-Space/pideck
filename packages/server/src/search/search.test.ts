@@ -115,12 +115,28 @@ describe("resolveSearchRoot", () => {
 				projectId: "p1",
 				workspaceId: "w-feature",
 			}),
-		).toEqual({ root: "/repos/one-auth", projectId: "p1", workspaceId: "w-feature" });
+		).toEqual({ root: "/repos/one-auth", projectId: "p1", workspaceId: "w-feature", git: true });
 		expect(resolveSearchRoot([other, project], [defaultOne], { projectId: "p1" })).toEqual({
 			root: "/repos/one",
 			projectId: "p1",
 			workspaceId: "w-default",
+			git: true,
 		});
+		const chats: Project = { ...other, id: "c", path: "/data/chats", kind: "chats" };
+		const chat: Workspace = {
+			...feature,
+			id: "w-chat",
+			projectId: "c",
+			kind: "chat",
+			worktreePath: "/data/chats/2026-10-26-ab12cd",
+		};
+		expect(resolveSearchRoot([chats], [chat], { projectId: "c", workspaceId: "w-chat" })).toEqual({
+			root: "/data/chats/2026-10-26-ab12cd",
+			projectId: "c",
+			workspaceId: "w-chat",
+			git: false,
+		});
+		expect(resolveSearchRoot([chats], [chat], { projectId: "c" })).toBeNull();
 	});
 
 	test("no root without a context project, a closed project, or a project whose Default record is not known yet", () => {

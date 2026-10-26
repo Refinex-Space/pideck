@@ -139,8 +139,8 @@ function isHiddenFromSearch(path: string): boolean {
 	return path.split("/").some((segment) => WALK_IGNORED.has(segment));
 }
 
-export async function listRootFiles(root: string): Promise<FileList> {
-	const list = (await gitFileList(root)) ?? (await walkFileList(root));
+export async function listRootFiles(root: string, git = true): Promise<FileList> {
+	const list = (git ? await gitFileList(root) : null) ?? (await walkFileList(root));
 	return {
 		paths: list.paths.filter((path) => !isHiddenFromSearch(path)),
 		truncated: list.truncated,
@@ -152,7 +152,7 @@ export class FileListCache {
 	private readonly loading = new Map<string, Promise<IndexedFileList>>();
 
 	constructor(
-		private readonly loader: (root: string) => Promise<FileList> = listRootFiles,
+		private readonly loader: (root: string, git: boolean) => Promise<FileList> = listRootFiles,
 		private readonly now: () => number = Date.now,
 	) {}
 
@@ -171,10 +171,10 @@ export class FileListCache {
 		return this.loading.has(root);
 	}
 
-	load(root: string): Promise<IndexedFileList> {
+	load(root: string, git = true): Promise<IndexedFileList> {
 		const inFlight = this.loading.get(root);
 		if (inFlight) return inFlight;
-		const promise = this.loader(root)
+		const promise = this.loader(root, git)
 			.then((list) => indexFileList(list))
 			.catch((): IndexedFileList | null => null)
 			.then((loaded) => {

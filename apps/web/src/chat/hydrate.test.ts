@@ -379,7 +379,7 @@ test("a resolved toolResult keeps its structured `details` (a legacy blocking-er
 		},
 	] as unknown as Message[]);
 	expect(toolResults.ask2?.status).toBe("done");
-	expect((toolResults.ask2?.raw as { details: unknown }).details).toEqual(details);
+	expect((toolResults.ask2?.raw as { details: unknown } | undefined)?.details).toEqual(details);
 });
 
 test("an ask-user-answers custom message indexes into askAnswers and never becomes a turn", () => {

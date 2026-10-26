@@ -2,7 +2,7 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { RiCloseLine as X } from "@remixicon/react";
 import { useT } from "@thinkrail/locales/react";
 import type * as React from "react";
-import { useSyncExternalStore } from "react";
+import { useId, useSyncExternalStore } from "react";
 import { cn } from "./utils";
 
 const OPEN_MODAL_LAYER = '[data-modal-layer][data-state="open"]';
@@ -24,6 +24,22 @@ function modalLayerOpen(): boolean {
 
 function useModalLayerOpen(): boolean {
 	return useSyncExternalStore(subscribeModalLayers, modalLayerOpen, () => false);
+}
+
+function useForeignEscapeGuard(onEscapeKeyDown: ((event: KeyboardEvent) => void) | undefined): {
+	"data-dialog-id": string;
+	onEscapeKeyDown: (event: KeyboardEvent) => void;
+} {
+	const id = useId();
+	return {
+		"data-dialog-id": id,
+		onEscapeKeyDown: (event) => {
+			onEscapeKeyDown?.(event);
+			const target = event.target instanceof Element ? event.target : null;
+			const owner = target?.closest("[data-dialog-id]")?.getAttribute("data-dialog-id");
+			if (owner !== undefined && owner !== null && owner !== id) event.preventDefault();
+		},
+	};
 }
 
 const Dialog = DialogPrimitive.Root;
@@ -48,9 +64,11 @@ function DialogContent({
 	className,
 	children,
 	hideClose = false,
+	onEscapeKeyDown,
 	...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & { hideClose?: boolean }) {
 	const t = useT();
+	const escapeGuard = useForeignEscapeGuard(onEscapeKeyDown);
 	return (
 		<DialogPrimitive.Portal>
 			<DialogOverlay />
@@ -60,6 +78,7 @@ function DialogContent({
 					className,
 				)}
 				{...props}
+				{...escapeGuard}
 			>
 				{children}
 				{hideClose ? null : (
@@ -75,8 +94,10 @@ function DialogContent({
 
 function DialogPanel({
 	className,
+	onEscapeKeyDown,
 	...props
 }: React.ComponentProps<typeof DialogPrimitive.Content>) {
+	const escapeGuard = useForeignEscapeGuard(onEscapeKeyDown);
 	return (
 		<DialogPrimitive.Content
 			className={cn(
@@ -84,6 +105,7 @@ function DialogPanel({
 				className,
 			)}
 			{...props}
+			{...escapeGuard}
 		/>
 	);
 }

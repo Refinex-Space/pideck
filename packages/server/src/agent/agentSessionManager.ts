@@ -21,7 +21,6 @@ import {
 } from "@earendil-works/pi-coding-agent";
 import type {
 	AgentSettlement,
-	AskUserQuestionResult,
 	ImageContent,
 	Model,
 	PiEvent,
@@ -46,7 +45,6 @@ import type {
 	WireModelAuth,
 } from "@thinkrail/contracts";
 import {
-	assistantToolCallsAreExecutable,
 	canMarkCompletionUnread,
 	firstPromptOfTexts,
 	isTranscriptMessageRole,
@@ -62,7 +60,7 @@ import {
 } from "pi-background-commands";
 import type { ParentContext } from "pi-delegation";
 import { RECURSION_GUARD_TOOLS, type Subagents } from "pi-subagents";
-import { registryExtensionName, serverExtensions } from "../extensions";
+import { interactiveTools, registryExtensionName, serverExtensions } from "../extensions";
 import { logger } from "../log";
 import {
 	dataDir,
@@ -76,16 +74,6 @@ import {
 	saveSessionReceipts,
 } from "../persistence";
 import { trashFile } from "../trash";
-import {
-	ANSWERABILITY_ERRORS,
-	ASK_USER_QUESTION_TOOL_NAME,
-	type AskUserQuestionWaiters,
-	assessAnswerability,
-	buildAnswersMessage,
-	createAskUserQuestionTool,
-	createAskUserQuestionWaiters,
-	hasQuestionAck,
-} from "./askUserQuestion";
 import { publishSessionResourcesChanged } from "./chatResources";
 import {
 	disposeSessionChildren,
@@ -127,6 +115,16 @@ import { projectSessionEvent } from "./sessionEventProjection";
 import { repairDanglingToolCalls } from "./sessionRepair";
 import { deriveSessionState } from "./sessionState";
 import type { SkillAdmissionContext } from "./skillAdmission";
+import {
+	assessRespondability,
+	buildToolResponseMessage,
+	createToolResponseWaiters,
+	describeToolResponse,
+	hasPendingToolResult,
+	RESPONDABILITY_ERRORS,
+	type ToolResponseWaiters,
+	toolResponseSessionServices,
+} from "./toolResponses";
 import {
 	cancelExtUiForSession,
 	createWebUiContext,
@@ -176,7 +174,7 @@ interface Entry {
 	lastPublishedState: string | null;
 	firstPrompt: string | null;
 	firstPromptScanned: number;
-	askUserQuestionWaiters: AskUserQuestionWaiters;
+	toolResponseWaiters: ToolResponseWaiters;
 	mcpHost: McpSessionHost;
 }
 
@@ -390,11 +388,18 @@ function stateFromEntry(entry: Entry): SessionState {
 		lastSettlement: entry.lastSettlement,
 		lifecycleCompletion:
 			entry.lastSettlement === undefined ? persistedCompletion(sessionId) : undefined,
-		liveQuestion: entry.askUserQuestionWaiters.currentQuestion(),
+		liveInteraction: entry.toolResponseWaiters.currentInteraction(),
+		liveRegistry: true,
+		interactiveTools: enabledInteractiveTools(),
 		pendingDialog: pendingExtUiDialog(sessionId),
 		handledCompletionId: receipts()?.handledCompletionBySession[sessionId],
 		cancelledRunId: lifecycle().cancelledRunBySession[sessionId],
 	});
+}
+
+function enabledInteractiveTools() {
+	const disabled = disabledExtensions();
+	return interactiveTools((name) => disabled.has(name));
 }
 
 function* userTextsOf(entries: readonly SessionEntry[]): Generator<string> {
@@ -472,7 +477,9 @@ function stateFromDisk(sessionId: string, manager: SessionManager, legacy = fals
 		backgroundWorkActive: false,
 		lastSettlement: undefined,
 		lifecycleCompletion: legacy ? undefined : persistedCompletion(sessionId),
-		liveQuestion: null,
+		liveInteraction: null,
+		liveRegistry: false,
+		interactiveTools: enabledInteractiveTools(),
 		pendingDialog: null,
 		handledCompletionId: receipts()?.handledCompletionBySession[sessionId],
 		cancelledRunId: lifecycle().cancelledRunBySession[sessionId],
@@ -562,7 +569,9 @@ function recordSettlement(entry: Entry, terminal: AgentSettlement | null): void 
 		backgroundWorkActive: false,
 		lastSettlement: terminal,
 		lifecycleCompletion: undefined,
-		liveQuestion: entry.askUserQuestionWaiters.currentQuestion(),
+		liveInteraction: entry.toolResponseWaiters.currentInteraction(),
+		liveRegistry: true,
+		interactiveTools: enabledInteractiveTools(),
 		pendingDialog: pendingExtUiDialog(sessionId),
 		handledCompletionId: receipts()?.handledCompletionBySession[sessionId],
 		cancelledRunId: lifecycle().cancelledRunBySession[sessionId],
@@ -776,7 +785,7 @@ function enabledExtensionMissing(session: AgentSession, disabled: ReadonlySet<st
 	);
 	return serverExtensions.some(
 		({ extension }) =>
-			extension.extensions.length > 0 &&
+			(extension.extensions.length > 0 || extension.sessionExtensions !== undefined) &&
 			!disabled.has(extension.name) &&
 			!present.has(extension.name),
 	);
@@ -786,6 +795,7 @@ export function refreshExtensionTools(): void {
 	for (const entry of sessions.values()) {
 		if (entry.session.isStreaming) entry.extensionToolsRefreshPending = true;
 		else applyExtensionTools(entry);
+		scheduleEntryStatePublish(entry);
 	}
 }
 
@@ -1077,7 +1087,7 @@ async function prepareSessionEntry(
 	generation: PiRuntimeGeneration,
 	commands: BackgroundCommands,
 	subagents: Subagents,
-	askUserQuestionWaiters: AskUserQuestionWaiters,
+	toolResponseWaiters: ToolResponseWaiters,
 	mcpHost: McpSessionHost,
 	lastSettlement: AgentSettlement | null | undefined = undefined,
 ): Promise<PreparedSessionEntry> {
@@ -1112,7 +1122,7 @@ async function prepareSessionEntry(
 		lastPublishedState: null,
 		firstPrompt: null,
 		firstPromptScanned: 0,
-		askUserQuestionWaiters,
+		toolResponseWaiters,
 		mcpHost,
 	};
 	entry.unsubscribeCommands = commands.onChange(() => {
@@ -1121,18 +1131,8 @@ async function prepareSessionEntry(
 		scheduleEntryStatePublish(entry);
 	});
 	entry.unsubscribe = session.subscribe((event) => {
-		if (
-			event.type === "message_end" &&
-			event.message.role === "assistant" &&
-			assistantToolCallsAreExecutable(event.message.stopReason)
-		) {
-			for (const block of event.message.content) {
-				if (block.type === "toolCall" && block.name === ASK_USER_QUESTION_TOOL_NAME)
-					entry.askUserQuestionWaiters.expect(block.id);
-			}
-		}
 		if (event.type === "turn_end") {
-			entry.askUserQuestionWaiters.persistTurn(event.toolResults);
+			entry.toolResponseWaiters.persistTurn(event.toolResults);
 			entry.commands.flushCompletions({ atTurnEnd: true });
 			entry.subagents.flushCompletions({ atTurnEnd: true });
 		}
@@ -1259,7 +1259,7 @@ function abandonPreparedEntry(entry: Entry): void {
 	const { sessionId } = entry.session;
 	cancelExtUiForSession(sessionId);
 	forgetMcpStatus(sessionId);
-	entry.askUserQuestionWaiters.abandon();
+	entry.toolResponseWaiters.abandon();
 	entry.unsubscribe();
 	entry.unsubscribeCommands();
 	entry.disposed = true;
@@ -1274,7 +1274,7 @@ async function registerSession(
 	generation: PiRuntimeGeneration,
 	commands: BackgroundCommands,
 	subagents: Subagents,
-	askUserQuestionWaiters: AskUserQuestionWaiters,
+	toolResponseWaiters: ToolResponseWaiters,
 	mcpHost: McpSessionHost,
 	lifecycleToken: WorkspaceLifecycleToken,
 	announceCreation = false,
@@ -1285,7 +1285,7 @@ async function registerSession(
 		generation,
 		commands,
 		subagents,
-		askUserQuestionWaiters,
+		toolResponseWaiters,
 		mcpHost,
 	);
 	if (
@@ -1375,7 +1375,7 @@ async function createParentSessionInternal(
 ): Promise<CreateSessionResult> {
 	const { sessionManager, settingsManager, cwd } = options;
 	const sessionId = sessionManager.getSessionId();
-	const askUserQuestionWaiters = createAskUserQuestionWaiters();
+	const toolResponseWaiters = createToolResponseWaiters();
 	const mcpHost = createMcpSessionHost({
 		policy: () => mcpPolicyResolver(workspaceId),
 		onCommandSettled: scheduleMcpStatusRefresh,
@@ -1397,7 +1397,7 @@ async function createParentSessionInternal(
 	});
 	const canDeliverCompletion = () =>
 		canUseSessionResources(sessionId, workspaceId) &&
-		!askUserQuestionWaiters.hasRecoverableCall() &&
+		!toolResponseWaiters.hasRecoverableCall() &&
 		!sessions.get(sessionId)?.reloadRunning;
 	let session: AgentSession | undefined;
 	const subagents = subagentsFor(
@@ -1426,7 +1426,6 @@ async function createParentSessionInternal(
 		const result = await createAgentSession({
 			...options,
 			modelRuntime: generation.runtime,
-			customTools: [createAskUserQuestionTool(askUserQuestionWaiters)],
 			resourceLoader: await buildResourceLoader(
 				cwd,
 				settingsManager,
@@ -1437,6 +1436,7 @@ async function createParentSessionInternal(
 					createBackgroundCommandsExtension({ service: commands }),
 					...mcpHost.extensions,
 				],
+				toolResponseSessionServices(toolResponseWaiters),
 			),
 		});
 		session = result.session;
@@ -1446,7 +1446,7 @@ async function createParentSessionInternal(
 			generation,
 			commands,
 			subagents,
-			askUserQuestionWaiters,
+			toolResponseWaiters,
 			mcpHost,
 			lifecycleToken,
 			announceCreation,
@@ -1462,7 +1462,7 @@ async function createParentSessionInternal(
 				workspaceId,
 				commands.dispose().catch(() => {}),
 			);
-			askUserQuestionWaiters.abandon();
+			toolResponseWaiters.abandon();
 		}
 		throw error;
 	}
@@ -1979,7 +1979,7 @@ async function openDiskSession(
 				exactModel = preferredDefaultModel(settledAvailableModels(generation.runtime));
 		}
 	}
-	repairDanglingToolCalls(sessionManager);
+	repairDanglingToolCalls(sessionManager, enabledInteractiveTools());
 	await createParentSession(
 		{
 			cwd,
@@ -2057,26 +2057,28 @@ export function getSessionMessages(
 	return getSessionMessagesInternal(sessionId, workspaceId, cwd);
 }
 
-export async function answerQuestion(
+export async function respondToTool(
 	sessionId: string,
 	toolCallId: string,
-	result: AskUserQuestionResult,
+	response: unknown,
 ): Promise<void> {
 	const entry = mustGetEntry(sessionId);
-	const live = entry.askUserQuestionWaiters.answer(toolCallId, result);
+	const live = entry.toolResponseWaiters.respond(toolCallId, response);
 	if (live.handled) {
 		publishEntryState(entry);
 		await live.persisted;
 		return;
 	}
-	const verdict = assessAnswerability(entry.session.messages, toolCallId);
-	if (!verdict.ok) throw new Error(`${ANSWERABILITY_ERRORS[verdict.reason]}: ${toolCallId}`);
-	if (!hasQuestionAck(entry.session.messages, toolCallId)) {
-		throw new Error(`${ANSWERABILITY_ERRORS.not_awaiting}: ${toolCallId}`);
+	const interactive = enabledInteractiveTools();
+	const verdict = assessRespondability(entry.session.messages, toolCallId, interactive);
+	if (!verdict.ok) throw new Error(`${RESPONDABILITY_ERRORS[verdict.reason]}: ${toolCallId}`);
+	if (!hasPendingToolResult(entry.session.messages, toolCallId)) {
+		throw new Error(`${RESPONDABILITY_ERRORS.not_awaiting}: ${toolCallId}`);
 	}
+	const content = describeToolResponse(verdict.toolName, verdict.args, response, interactive);
 	const release = admitPreflight(entry);
 	try {
-		await entry.session.sendCustomMessage(buildAnswersMessage(toolCallId, verdict.args, result), {
+		await entry.session.sendCustomMessage(buildToolResponseMessage(content, toolCallId, response), {
 			triggerTurn: true,
 		});
 	} finally {
@@ -2228,7 +2230,7 @@ async function steerEntry(
 	);
 	if (disposition !== "queued") return;
 	cancelExtUiForSession(entry.session.sessionId);
-	if (entry.askUserQuestionWaiters.supersede()) publishEntryState(entry);
+	if (entry.toolResponseWaiters.supersede()) publishEntryState(entry);
 }
 
 export async function promptSession(
@@ -2434,7 +2436,7 @@ async function abortEntry(
 	acceptedAnswerGraceMs = ACCEPTED_ANSWER_STOP_GRACE_MS,
 ): Promise<SessionQueueContent | undefined> {
 	let restoredQueue = restoreQueue ? clearEntryQueue(entry) : undefined;
-	const acceptedResult = entry.askUserQuestionWaiters.prepareAbort();
+	const acceptedResult = entry.toolResponseWaiters.prepareAbort();
 	await waitForAcceptedAnswerGrace(acceptedResult, acceptedAnswerGraceMs);
 	if (sessions.get(entry.session.sessionId) !== entry) return restoredQueue;
 	if (restoredQueue) {
@@ -2809,7 +2811,7 @@ function disposeSession(sessionId: string): Promise<void> {
 	});
 	cancelExtUiForSession(sessionId);
 	forgetMcpStatus(sessionId);
-	entry.askUserQuestionWaiters.abandon();
+	entry.toolResponseWaiters.abandon();
 	entry.unsubscribe();
 	entry.unsubscribeCommands();
 	clearEntryQueue(entry);
@@ -2844,7 +2846,7 @@ export function disposeAllSessions(): void {
 	for (const [sessionId, entry] of sessions) {
 		cancelExtUiForSession(sessionId);
 		forgetMcpStatus(sessionId);
-		entry.askUserQuestionWaiters.abandon();
+		entry.toolResponseWaiters.abandon();
 		entry.unsubscribe();
 		entry.unsubscribeCommands();
 		entry.disposed = true;
@@ -2863,7 +2865,7 @@ export async function settleSessionsForShutdown(
 	for (const entry of sessions.values()) settling.add(closeSessionResources(entry, timeoutMs));
 	for (const [sessionId, entry] of sessions) {
 		clearEntryQueue(entry);
-		const acceptedResult = entry.askUserQuestionWaiters.prepareShutdown();
+		const acceptedResult = entry.toolResponseWaiters.prepareShutdown();
 		if (acceptedResult) {
 			settling.add(
 				acceptedResult
@@ -2876,7 +2878,7 @@ export async function settleSessionsForShutdown(
 					}),
 			);
 		}
-		if (entry.session.isStreaming && !entry.askUserQuestionWaiters.hasRecoverableCall()) {
+		if (entry.session.isStreaming && !entry.toolResponseWaiters.hasRecoverableCall()) {
 			settling.add(entry.session.abort());
 		}
 	}

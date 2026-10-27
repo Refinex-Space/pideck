@@ -737,7 +737,12 @@ a project picker, the prompt hero, and the reused
   disclosed by a warning notice under the mode control — outside the disclosure, so it is always visible —
   naming the effective same-appearance fallback, and is never silently written back. The panel never owns
   a theme list, media-query logic, pair derivation, or fallback — all come from `themes`; it derives only
-  the family/contrast counterpart the two controls move to. An **Editor** group hosts the file
+  the family/contrast counterpart the two controls move to. A **Custom themes** group
+  (`CustomThemesSettings.tsx`, props-driven like `LanguagePage`, hidden below
+  `USER_THEMES_PROTOCOL_VERSION`) gives the copy-a-bundled-file steps with a version-pinned link to
+  `dark.theme.json`, the `<dataDir>/themes` folder with **Copy path** / **Open folder** (`themes.reveal`),
+  and one warning notice per unusable file (`themes`' issue list). The page reads the catalog and issues
+  through `onThemesChange`, so a dropped file appears in the lists without reopening. An **Editor** group hosts the file
   `LineWidthControl`); **`LineWidthControl({kind})`** (`LineWidthSettings.tsx`, no page of its own — the
   `chat` control sits in Chat, the `file` one in Appearance → Editor — a 40–240 integer **Line width** field
   on the auto-save input pattern plus an independent host-synchronized **Fit to pane** switch
@@ -1016,10 +1021,16 @@ a project picker, the prompt hero, and the reused
   that **opens the chat** (`openChatInTab`) so you can jump from the plan into the conversation: `working`
   → a `Working on this` spinner, `waiting_question` → a `Question` chip. The awaiting question is ALSO
   **answerable in place**: the Session body's **live slot** (`PlanSessionLive`, which subscribes to the
-  session runtime so its re-renders stay off the heavy PlanPane) hosts the SAME **`AskUserQuestionCard`**
-  as the chat (`plan-ask`, found via `planView.pendingAsk`) inside a minimal `ChatActionsContext` (a real
-  `session.answerQuestion`; the chat-only actions — reveal/focus/subagent — are no-ops) plus a derived
-  `AskStatesContext`, so an answer submitted from the plan flows through the identical path as the chat.
+  session runtime so its re-renders stay off the heavy PlanPane) hosts the SAME card as the chat
+  (`plan-ask`, found via `planView.pendingInteraction` and rendered through the tool registry's
+  `getToolRenderer(toolName)` — any interactive tool, not only the questionnaire; the pane imports no
+  extension). It sits inside a minimal `ChatActionsContext` and a derived `InteractionStatesContext`:
+  - the actions carry a real `session.respondToTool`;
+  - the chat-only actions (reveal, focus, subagent) are no-ops.
+
+  `PlanInteractionCard` turns these into the card's `interaction` through the same `useToolInteraction`
+  adapter the chat uses, so a response submitted from the plan flows through the identical path as the
+  chat.
   When there's no pending question, the same slot instead shows the **agent's
   latest message** (`plan-agent-message`, `planView.lastAgentText` rendered Markdown inside a bounded
   scroll area — `max-h-[12rem] overflow-y-auto` so the full message stays readable without pushing

@@ -48,7 +48,10 @@ default, narrow cross-ring guards, and the quit-confirmation rule both clients d
   `DEFAULT_CONFIG`, `DEFAULT_WORKSPACE_NAME` (the host's name for a project's default workspace; clients
   word it in their language until it is renamed), `SYSTEM_LOCALE_PREFERENCE` + **`isLocalePreference(value)`** (`"system"` or a canonical
   BCP-47 tag — the `AppConfig.locale` contract; local language file shapes are `LocalLocalesSnapshot` /
-  `LocalLocaleFile` with closed error codes, served by `locales.list` from `LOCALES_PROTOCOL_VERSION`, v89),
+  `LocalLocaleFile` with closed error codes, served by `locales.list` from `LOCALES_PROTOCOL_VERSION`, v89;
+  user theme files are `UserThemesSnapshot` / `UserThemeFile`, served by `themes.list` from
+  `USER_THEMES_PROTOCOL_VERSION`, v92, with each ok file's `manifest` deliberately `unknown` because the
+  theme schema is owned by [[submodule-web-themes]]),
   `THEME_MODES`, `isThemeMode`, `isSystemThemePair`, `normalizeThemePreference`,
   `JBCENTRAL_QUOTA_REFRESH_SECONDS`, `isJbcentralQuotaRefreshSeconds`, `isJbcentralConnected`,
   `SESSION_RENAME_PROTOCOL_VERSION`, `SESSION_TITLE_MAX_LENGTH`, `normalizeSessionTitle`,
@@ -205,24 +208,31 @@ default, narrow cross-ring guards, and the quit-confirmation rule both clients d
     client's `session.extUiReply` or a host `dismiss` frame; the host dismisses it on abort, dispose, or
     when it accepts a user message for that chat (a message an extension handles or preflight rejects
     leaves it pending), so a client never treats its own message send as an answer.
-  - the **`ask_user_question`** wire types — **`AskUserQuestionArgs`** (`AskUserQuestionItem` + `AskUserQuestionOption`
-    — the latter carries an optional `recommendedReason` the card renders inline as a `Why:` line under the
-    option: the questions the agent authors, what the tool card reads from the `toolCall` block),
-    **`AskUserQuestionResult`** (`AskUserQuestionAnswer[]` + `cancelled`: the browser's reply),
-    **`AskUserQuestionAckDetails`** (the tool result's `details` used only when restart repair closes a
-    dangling live-blocking call before attach) and **`AskUserAnswersDetails`** + the
-    **`ASK_USER_ANSWERS_CUSTOM_TYPE`** constant, **`AskUserAnswersMessage`** (the correctly-paired
-    tag↔details shape the host's builder is compile-held to) and the shared **`isAskUserAnswersMessage`**
-    guard (all in `wsProtocol`, the value-bearing half): an eligible live reply becomes the native tool
-    result; a `length`/`error`/`aborted` assistant call is terminal and never answerable; after restart, the
-    reply travels as an `ask-user-answers` custom message paired by `details.toolCallId`.
+  - the **interactive-tool** wire shapes — **`ToolResponsePendingDetails`** `{ kind: "ack" }` + the
+    **`isToolResponsePending`** guard (a tool result's `details` meaning "the person's response is still
+    pending": written by restart repair, returned by a tool that defers), the **`TOOL_RESPONSE_CUSTOM_TYPE`**
+    constant, **`ToolResponseMessage`** / **`ToolResponseDetails`** `{ toolCallId, response: unknown }`
+    (the late response the host appends when no live tool awaits it) and **`readToolResponseMessage`**
+    (the shared reader; it also reads the retired `ask-user-answers` shape — `details.result` — so answered
+    questions in existing transcripts stay answered; the legacy literal is private to the reader). All in
+    `wsProtocol`. The shapes name **no tool**: which tools are interactive is declared by the server
+    extension descriptor and the web renderer registration ([[module-extension-api]]); the tool's own
+    argument/result types live in its pi package (`@thinkrail/pi-ask-user-question/core`), not here.
     `WireCustomMessage.customType` itself stays
     `string` — the namespace is open (any pi extension can mint custom messages and they all cross the
     wire), so strictness lives at the producer + the guard, which validates the details *shape* (wire
-    data is untrusted — another process, possibly another protocol version). The capability
-    is a **host-owned pi custom tool** (server `agent/askUserQuestion` — see its SPEC for the design
-    rationale); the chat renders the questionnaire **inline** and replies via `session.answerQuestion`
-    (correlated by the tool call id; rejected loud when the call is unknown/answered/superseded).
+    data is untrusted — another process, possibly another protocol version). The first interactive tool
+    is the ask-user-question extension's ([[module-ext-ask-user-question]]), answered through the host's
+    mailbox (server `agent/toolResponses` — see its SPEC for the design rationale); the chat renders the
+    card **inline** and replies via `session.respondToTool` (correlated by the tool call id; the value is
+    opaque to the wire and validated by the tool; rejected loud when the call is unknown/responded/
+    superseded). `TOOL_RESPONSE_PROTOCOL_VERSION` (93) marks the rename from the ask-only
+    `session.answerQuestion` and the `needsInput` arm `question` → `tool-response`. **One compatibility
+    window, both directions:** the request registry keeps `session.answerQuestion` (`result: unknown`)
+    forwarding to the same delivery, so an already-loaded older client still answers; and the client
+    sends `session.answerQuestion` to a host below v93 (`supportsToolResponses`) and reads that host's
+    `needsInput.kind: "question"` / `question:<toolCallId>` as the awaiting call, because the UI ships
+    independently of the host (Decision 3). Both go when the window closes.
   - the **todo plan-review fix** wire types — the **`TODO_REVIEW_FIX_CUSTOM_TYPE`** constant,
     **`TodoReviewFixMessage`** (the tag↔details shape) + its **`isTodoReviewFixMessage`** guard (in
     `wsProtocol`), and **`ReviewFixDetails`** / **`ReviewFixComment`** (in `domain`): a plan-review
@@ -473,7 +483,7 @@ default, narrow cross-ring guards, and the quit-confirmation rule both clients d
   `(workspaceId, parentSessionId, childSessionId)` — its result also carries the run's current
   registry `status` (absent once the host no longer knows the run), the client's poll-while-live
   signal. The completion message's tag + pairing live in
-  `wsProtocol` (the value-bearing half), mirroring the ask-user-answers posture exactly: the
+  `wsProtocol` (the value-bearing half), mirroring the tool-response posture exactly: the
   **`SUBAGENT_COMPLETION_CUSTOM_TYPE`** constant (mirrors `pi-subagents`' `SUBAGENT_COMPLETION_MESSAGE`,
   never imported — the DTO posture again), **`SubagentCompletionMessage`** (the compile-held tag↔details
   shape, its details **`SubagentCompletionDetails`**: the run details plus the optional
@@ -697,8 +707,8 @@ default, narrow cross-ring guards, and the quit-confirmation rule both clients d
   `clearQueue`, see the server agent SPEC)/**`abort`** (ordinary abort preserves queued lanes for Interrupt;
   `{ restoreQueue: true }` atomically drains complete content before signalling abort and returns it after the
   session reaches idle, which is Stop's lossless path)/`dispose`/**`delete`**/`setModel`/
-  `setThinkingLevel`/`compact`/`getStats`/`getCommands`/`extUiReply`/**`answerQuestion`** (the inline
-  `ask_user_question` reply, correlated by tool call id)/**`list`**/**`getMessages`** (the
+  `setThinkingLevel`/`compact`/`getStats`/`getCommands`/`extUiReply`/**`respondToTool`** (the inline
+  reply to an interactive tool call, correlated by tool call id)/**`list`**/**`getMessages`** (the
   read side) / **`settings.update`** (merge + validate + persist a top-level partial `AppConfig`; rejects a
   non-object payload or unknown key and drops retired keys; when present, `customLayoutPresets` and
   `systemThemePair` are complete replacements; entering system mode requires a complete existing-or-incoming
@@ -986,8 +996,8 @@ contracts only.
 ## Normalized session state
 
 `SessionState` carries orthogonal host facts: `execution` (`idle | running`) plus stable `runId`, nullable
-`needsInput` (stable `interactionId`, `question | dialog`; a pending dialog also carries its exact replayable
-request), nullable latest `completion` (stable id and explicit
+`needsInput` (stable `interactionId`, `tool-response | dialog`; a waiting tool call carries its `toolCallId`, a
+pending dialog its exact replayable request), nullable latest `completion` (stable id and explicit
 `succeeded | failed(error|length) | interrupted | cancelled` outcome), Pi's queue count, the live
 `backgroundWork` flag (the session still owns running background commands or subagents), and the
 owner-global `completionUnread` receipt projection (held false while an idle session has background work).

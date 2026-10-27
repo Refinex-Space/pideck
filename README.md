@@ -56,10 +56,11 @@ create the tools it needs based on how you actually work.
 - **Skills and workflows.** Portable Agent Skills you already keep for other coding agents are read in
   place, and bundled workflows guide project setup, design brainstorming, and shipping a pull request —
   pushing the workspace branch and opening or updating its GitHub PR through your own `gh`.
-- **Agent tools beyond the shell.** Web research, and inline diagrams, option comparisons and file previews
-  rendered right in the chat — when the agent proposes a UI change it shows a before/after mockup you can
-  comment on like a diff. Settings → Extensions lists the ThinkRail extensions the agent gets and lets you switch
-  each one off.
+- **Agent tools beyond the shell.** Web research, structured multiple-choice questions the agent asks you
+  in the chat instead of guessing, and inline diagrams, option comparisons and file previews rendered right
+  in the chat — when the agent proposes a UI change it shows a before/after mockup you can comment on like
+  a diff. Settings → Extensions lists the ThinkRail extensions the agent gets and lets you switch each one
+  off.
 - **MCP servers.** Connect the MCP servers in your `pi` `mcp.json` (or add them, and a few presets, from
   Settings): ThinkRail asks in the chat before calls the server does not mark read-only (or always allows
   the tools you trust in a project), keeps servers a repository
@@ -74,9 +75,11 @@ create the tools it needs based on how you actually work.
 - **Desktop app or browser.** A native desktop app, or the `thinkrail` CLI that opens the same app in your
   browser. Both embed the same engine host; app state lives under `~/.thinkrail`.
 - **Your language.** Settings → Language follows your system language or a language you pick; English,
-  Simplified Chinese and Spanish are built in. Add a language ThinkRail doesn't ship yet by dropping a
-  translated `en.json` into `~/.thinkrail/locales` — it applies as you save. Agent replies and tool
-  output stay as the agent wrote them.
+  Japanese, Simplified Chinese, and Spanish are built in. Add a language ThinkRail doesn't ship yet by
+  dropping a translated `en.json` into `~/.thinkrail/locales` — it applies as you save. Agent replies and
+  tool output stay as the agent wrote them.
+- **Your themes.** Settings → Appearance ships dark, light, minimal and high-contrast themes. Make your own
+  by copying a bundled `*.theme.json`, changing its id and colors, and saving it to `~/.thinkrail/themes`.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset=".github/readme-assets/specs-dark.png">

@@ -297,11 +297,12 @@ blocks in order into rows; `ChatTurnView` dispatches on row kind:
   (`isContinueInWorkspaceRequestMessage` / `isChatHandoffMessage`, both open a round like `reviewFix`):
   `ContinuationRequestCard` names the target project and shows the operation's host-owned phase from
   `ChatActions.continuationOf` — asking, summarizing, creating, "Continued in a new workspace" with
-  **Open** (`openContinuation`), or the failure reason / "host restarted" with **Retry**
+  **Open** (`openWorkspace`), or the failure reason / "host restarted" with **Retry**
   (`retryContinuation` asks the host again for the same project); `HandoffCard` renders the clamped
   summary as Markdown under "Continued from “<title>”" with **Open the original chat**
-  (`openHandoffSource`). The renderers stay props-driven: `ChatTranscript` supplies the three actions and
-  the phase lookup from the store's `chatContinuations` slice — an operation the slice does not know
+  (`openHandoffSource`, which opens through `openWorkspace` once it has the Chats container's id). The
+  renderers stay props-driven: `ChatTranscript` supplies the actions and the phase lookup from the
+  store's `chatContinuations` slice — an operation the slice does not know
   (a reload) is asked of `chat.continuationStatus` once, and the host's `NOT_A_CHAT` (a restart lost the
   binding) becomes the `lost` phase — and it never imports `panels`; a Retry from the card registers the
   new operation as initiated, so this client follows it like the original gesture.
@@ -475,8 +476,12 @@ both message orders. *Rejected:* keeping the modal for non-MCP extensions — ev
   stranding the history overlay's dismiss refocus avoids). Only the card's own reply path calls it, and
   only while the card still holds focus. Plus `openSubagentTranscript(childSessionId)` — the subagent
   cards' transcript link (no provider → the cards hide the action).
-  Plus `openWorkspace({ workspaceId, projectId, sessionId })` (route-style activation of another
-  workspace's chat) and `WorkspaceName` — an injected component that renders a workspace's **live** store
+  Plus `openWorkspace({ workspaceId, projectId, sessionId? })` (`openWorkspace.ts`), the one way a card
+  opens another workspace's chat: the `start_workspace` card, Continue in workspace's Open, and the
+  handoff's source. A workspace the store holds is activated under its own project. An unknown one
+  first reloads that project's `workspace.list`, because `addWorkspace` drops a `workspace.created`
+  push for a project whose list was never loaded, and is activated even if the reload fails. Next to
+  it sits `WorkspaceName` — an injected component that renders a workspace's **live** store
   name, so a renderer can show an up-to-date name without importing the store. The `start_workspace`
   card uses both and hides the open action when there is no provider.
   The optional MCP actions — `readMcpOutput(toolCallId)` (`mcp.readOutput` for this chat),

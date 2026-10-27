@@ -24,7 +24,7 @@ export type ResultTarget =
 export interface WorkspaceChatTarget {
 	workspaceId: string;
 	projectId: string;
-	sessionId: string;
+	sessionId?: string | undefined;
 }
 
 export interface ChatActions {
@@ -40,7 +40,6 @@ export interface ChatActions {
 	findModel?: ((ref: string) => WireModel | null) | undefined;
 	/** Continue in workspace: the host-owned phase of an operation, where it went, and how to ask again. */
 	continuationOf?: ((operationId: string) => ChatContinuation | undefined) | undefined;
-	openContinuation?: ((continuation: ChatContinuation) => void) | undefined;
 	retryContinuation?: ((details: ContinueInWorkspaceRequestDetails) => void) | undefined;
 	openHandoffSource?: ((details: ChatHandoffDetails) => void) | undefined;
 	openWorkspace?: ((target: WorkspaceChatTarget) => void) | undefined;

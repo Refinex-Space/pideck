@@ -349,7 +349,10 @@ and pre-v76 hiding.
 General and private-restart fixtures seed additional analytics off with consent already confirmed, so
 unrelated scenarios stay unblocked. They also seed the automatic interview invitation as permanently
 dismissed: the serial agent lane intentionally accumulates accepted prompts across scenarios, while dedicated
-feedback coverage injects and asserts the addressed invitation channel directly. Before any fixture reset
+feedback coverage injects and asserts the addressed invitation channel directly. The cold-start onboarding
+wizard is likewise seeded dismissed (`onboardingDismissed: true`, in the config file and again over the
+settings wire, since the host may have loaded its config first) — every reset is a cold start with no
+provider — and only `onboarding.spec.ts` re-arms it over the settings wire, restoring it afterwards. Before any fixture reset
 deletes transcript storage, it lists and disposes every live session through the public wire; disposal aborts
 and settles an unfinished provider turn first, so a test ending mid-turn cannot recreate a headerless JSONL
 behind the next scenario. Consent tests reset the choice over the real settings wire and cover on-by-default preference priming,
@@ -407,7 +410,10 @@ explicit agent-mode setup is the narrow exception: it reads one known global Cen
 lane-owned copy, never runs from or writes to the source, and removes the copy on setup failure or teardown.
 A sandboxed home is handed to every host as **both `HOME` and `USERPROFILE`**: `homedir()` — pi's own home
 resolution — reads `USERPROFILE` on Windows and ignores `HOME`, so `HOME` alone would silently leak a
-Windows lane into the real profile (see `module-shared`).
+Windows lane into the real profile (see `module-shared`). Every spawner — the Playwright web server, the
+artifact and live-restart hosts, the workflow harness, and the artifact probes — takes that home through
+`@thinkrail/shared/toolHomes`' `toolHomeEnv`, so each agent tool's config home (what account detection reads)
+lands in the sandbox and a new detection source is pinned everywhere at once.
 
 ## Boundary
 

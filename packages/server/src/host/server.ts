@@ -72,6 +72,7 @@ import {
 	setJbcentralAppliedPublisher,
 	setJbcentralChangedPublisher,
 	setLoginPublisher,
+	setLogoutPublisher,
 	stopJbcentralRuntime,
 } from "../auth";
 import { forgetOpenBranchReview } from "../branch-review";
@@ -839,11 +840,18 @@ export async function createServer(options: CreateServerOptions = {}): Promise<R
 		}
 	});
 
+	const publishProviderChanged = () => {
+		server.publish(
+			WS_CHANNELS.providerChanged,
+			JSON.stringify({ channel: WS_CHANNELS.providerChanged, data: {} }),
+		);
+	};
 	setLoginPublisher((push, generation) => {
 		server.publish(
 			WS_CHANNELS.providerLogin,
 			JSON.stringify({ channel: WS_CHANNELS.providerLogin, data: push }),
 		);
+		if (push.frame.kind === "success" && !push.target) publishProviderChanged();
 		trackLoginOutcome(push, generation);
 	});
 	setJbcentralAppliedPublisher(() => {
@@ -852,13 +860,8 @@ export async function createServer(options: CreateServerOptions = {}): Promise<R
 			params: { provider: "jbcentral", method: "central", auth_method: "central" },
 		});
 	});
-	const publishProviderChanged = () => {
-		server.publish(
-			WS_CHANNELS.providerChanged,
-			JSON.stringify({ channel: WS_CHANNELS.providerChanged, data: {} }),
-		);
-	};
 	setJbcentralChangedPublisher(publishProviderChanged);
+	setLogoutPublisher(publishProviderChanged);
 	setModelContextPublisher(publishProviderChanged);
 	setModelListingPublisher(publishProviderChanged);
 
@@ -916,6 +919,7 @@ export async function createServer(options: CreateServerOptions = {}): Promise<R
 		setModelListingPublisher(null);
 		setJbcentralAppliedPublisher(() => {});
 		setJbcentralChangedPublisher(() => {});
+		setLogoutPublisher(() => {});
 		server.stop(true);
 	};
 	const shutdown = (): Promise<void> => {

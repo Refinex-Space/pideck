@@ -459,10 +459,15 @@ re-read while a server starts. The state vocabulary and the attention/active pre
   a flag an earlier consumer set can otherwise straddle the activation and let an inherited list pass as
   this opening's own truth before its own `model.list` reply lands. **`providerVersion`** is the monotonic,
   data-free `provider.changed` generation observed from the host; **`noteProviderChanged()`** atomically
-  increments it and clears `models`, freshness, and any old refresh spinner. Both `model.list` and
+  increments it and clears `models`, freshness, and any old refresh spinner. **`providerStatus`** is the one
+  `provider.status` snapshot (`{ version, report, failed }`); **`providerStatusVersion`** is its invalidation
+  generation, bumped by `noteProviderChanged`, every welcome, every successful untargeted login frame (also one
+  for another login that `applyLoginFrame` keeps out of this client's open dialog), and
+  `invalidateProviderStatus()`. **`installProviderStatus(version, report | null)`** installs only an answer to
+  the current version (`null` = failed read: keep the last report, set `failed`); the single-flight read lives in
+  `panels/useProviderStatus`. Both `model.list` and
   `model.refresh` replies install through version-guarded store actions, so no picker or older async reply can
-  offer a removed runtime generation. Transport owns the guarded re-read; the Providers settings pane observes
-  the version and re-reads status, while shell's quota controller treats it as an immediate closed-snapshot
+  offer a removed runtime generation. Transport owns the guarded re-read; shell's quota controller treats it as an immediate closed-snapshot
   invalidation. Other catalog transport work lives in `chat/useModelCatalog`, not here (the
   store→transport edge stays type-only). The **in-app login** state
   **`activeLogin: LoginState | null`** (type from `auth`) is **flat + session-less** (a login runs on the
@@ -517,14 +522,19 @@ re-read while a server starts. The state vocabulary and the attention/active pre
   **`notificationsEnabled: boolean`** (the attention-notification master toggle),
   **`subagentsEnabled: boolean`**, **`subagentMaxConcurrent: number`**, **`disabledExtensions: string[]`**
   (defaulting to `[]` so a pre-v82 host reads as "all on"), **`jbcentralQuotaEnabled: boolean`**,
-  and **`jbcentralQuotaRefreshSeconds: number`** ride the same `applyConfig` fold (host-owned, fieldwise
+  **`jbcentralQuotaRefreshSeconds: number`**, and **`onboardingDismissed: boolean`** (absent ⇒ `false`) ride the same `applyConfig` fold (host-owned, fieldwise
   defaulted/validated from the contracts helpers so an older or malformed host snapshot cannot poison
   the store). `terminalWindowsShell` narrows through `isTerminalWindowsShell` and otherwise uses
   `DEFAULT_CONFIG.terminalWindowsShell`; `TerminalSettings` consumes both terminal fields, while terminal
   spawning remains server-owned — the Terminal, Line width, Chat, shared Layout catalog, Privacy, provider
   controls, and shell quota read sides. Analytics preference and confirmation default independently to false;
   the store never upgrades a preference to confirmation. A selector combines host capability, hydrated
-  configuration, and absent confirmation to drive the one first-launch prompt. Persisted preference priming
+  configuration, and absent confirmation to drive the one first-launch prompt; `selectOnboardingActive`
+holds it (and the interview invitation) while the client-local **`onboardingWizard`** gate
+(`pending | shown | hidden`, set by Welcome through `setOnboardingWizard`) is shown — including its done
+screen, after `onboardingDismissed` is already persisted, until a project opens — or still pending on a
+cold-start-shaped store (capable host, not dismissed, no open or recent projects). Project Home reads the same
+selector to hide its Projects rail and pane, so onboarding has the whole window. Persisted preference priming
   and final choice updates converge through `applyConfig`; the dialog's visual draft remains component-local.
   **`chatMessageOrder: ChatMessageOrder`** and **`streamingResponseMovement:
   StreamingResponseMovement`** are instead client-local presentation preferences, hydrated together by

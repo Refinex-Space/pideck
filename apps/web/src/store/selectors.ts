@@ -10,6 +10,7 @@ import {
 	MCP_PROTOCOL_VERSION,
 	type McpServerResourceSummary,
 	MODEL_PICKER_PROTOCOL_VERSION,
+	ONBOARDING_PROTOCOL_VERSION,
 	PROJECT_TRUST_PROTOCOL_VERSION,
 	type Project,
 	SESSION_RENAME_PROTOCOL_VERSION,
@@ -110,6 +111,32 @@ export function selectCanRenameChat(state: ProtocolState): boolean {
 
 export function selectSupportsProjectTrust(state: ProtocolState): boolean {
 	return state.protocolVersion !== null && state.protocolVersion >= PROJECT_TRUST_PROTOCOL_VERSION;
+}
+
+export function selectSupportsOnboarding(state: ProtocolState): boolean {
+	return state.protocolVersion !== null && state.protocolVersion >= ONBOARDING_PROTOCOL_VERSION;
+}
+
+type OnboardingState = ProtocolState & {
+	onboardingDismissed: boolean;
+	projects: readonly unknown[];
+	recentProjects: readonly unknown[];
+};
+
+export function selectOnboardingEligible(state: OnboardingState): boolean {
+	return (
+		!state.onboardingDismissed &&
+		selectSupportsOnboarding(state) &&
+		state.projects.length === 0 &&
+		state.recentProjects.length === 0
+	);
+}
+
+export function selectOnboardingActive(
+	state: OnboardingState & { onboardingWizard: "pending" | "shown" | "hidden" },
+): boolean {
+	if (state.onboardingWizard === "shown") return state.projects.length === 0;
+	return state.onboardingWizard === "pending" && selectOnboardingEligible(state);
 }
 
 export function selectSupportsMcp(state: ProtocolState): boolean {

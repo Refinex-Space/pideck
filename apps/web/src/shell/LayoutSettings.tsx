@@ -12,7 +12,7 @@ import {
 	RiDeleteBin6Line as Trash2,
 	RiCloseLine as X,
 } from "@remixicon/react";
-import type { LayoutPreset } from "@thinkrail/contracts";
+import { LAYOUT_PLAN_PRESET_PROTOCOL_VERSION, type LayoutPreset } from "@thinkrail/contracts";
 import type { MessageKey } from "@thinkrail/locales";
 import { t as translate, useT } from "@thinkrail/locales/react";
 import { Button, IconButton } from "@thinkrail/ui/button";
@@ -32,6 +32,7 @@ import {
 	layoutPresetName,
 	minimumBottomGroupLimit,
 	minimumSideGroupLimit,
+	presetPlacesTool,
 	resolveLayoutPreset,
 } from "./layout";
 import { applyLayoutPresetLocally } from "./layoutState";
@@ -54,6 +55,17 @@ const PRESET_ICONS: Record<string, typeof RiDashboardLine> = {
 };
 
 async function updateCustomPresets(customLayoutPresets: LayoutPreset[]): Promise<boolean> {
+	const protocolVersion = useAppStore.getState().protocolVersion ?? 0;
+	if (
+		protocolVersion < LAYOUT_PLAN_PRESET_PROTOCOL_VERSION &&
+		customLayoutPresets.some((preset) => presetPlacesTool(preset, "plan"))
+	) {
+		toast.error(
+			translate("workbench.layoutSettings.planNeedsNewerHost"),
+			translate("workbench.layoutSettings.saveFailed"),
+		);
+		return false;
+	}
 	try {
 		await getTransport().request("settings.update", {
 			config: { customLayoutPresets },

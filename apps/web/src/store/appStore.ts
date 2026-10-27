@@ -13,6 +13,7 @@ import type {
 	McpStatusSnapshot,
 	PiEvent,
 	Project,
+	ProviderStatusReport,
 	RefreshedModels,
 	ResourceMeta,
 	ReviewChangedPayload,
@@ -936,6 +937,12 @@ function withHostState(runtime: SessionRuntime, hostState: SessionState | null):
 }
 
 export type ReviewFocusSurface = { kind: "inline" } | { kind: "diff"; scope: GitDiffScope };
+export type OnboardingWizardGate = "pending" | "shown" | "hidden";
+export interface ProviderStatusSnapshot {
+	version: number;
+	report: ProviderStatusReport | null;
+	failed: boolean;
+}
 
 interface AppState {
 	resourceSnapshots: ChatResourceSnapshots;
@@ -1000,6 +1007,8 @@ interface AppState {
 	models: WireModel[];
 	hiddenModels: ModelRef[];
 	providerVersion: number;
+	providerStatusVersion: number;
+	providerStatus: ProviderStatusSnapshot;
 	templatesVersion: number;
 	modelsRefreshing: boolean;
 	modelsFresh: boolean;
@@ -1067,9 +1076,12 @@ interface AppState {
 	installLocalLocales: (snapshot: LocalLocalesSnapshot | null) => void;
 	userThemes: UserThemesSnapshot | null;
 	installUserThemes: (snapshot: UserThemesSnapshot | null) => void;
+	onboardingDismissed: boolean;
+	onboardingWizard: OnboardingWizardGate;
 	customLayoutPresets: LayoutPreset[];
 	toasts: Toast[];
 	setStatus: (status: ConnectionStatus) => void;
+	setOnboardingWizard: (gate: OnboardingWizardGate) => void;
 	installWelcomeSnapshot: (
 		protocolVersion: number,
 		projects: Project[],
@@ -1324,6 +1336,8 @@ interface AppState {
 	setModelVisibility: (model: ModelRef, visible: boolean) => void;
 	toggleModelVisibility: (model: ModelRef) => void;
 	noteProviderChanged: () => void;
+	invalidateProviderStatus: () => void;
+	installProviderStatus: (version: number, report: ProviderStatusReport | null) => void;
 	bumpTemplatesVersion: () => void;
 	beginModelsRefresh: () => number;
 	finishModelsRefresh: (providerVersion: number, result: RefreshedModels | null) => void;
@@ -1443,6 +1457,7 @@ function configPatch(config: AppConfig) {
 			? config.disabledExtensions
 			: DEFAULT_CONFIG.disabledExtensions,
 		locale: isLocalePreference(config.locale) ? config.locale : DEFAULT_CONFIG.locale,
+		onboardingDismissed: config.onboardingDismissed === true,
 	};
 }
 
@@ -2264,6 +2279,8 @@ export const useAppStore = create<AppState>((set, get) => ({
 	models: [],
 	hiddenModels: [],
 	providerVersion: 0,
+	providerStatusVersion: 0,
+	providerStatus: { version: -1, report: null, failed: false },
 	templatesVersion: 0,
 	modelsRefreshing: false,
 	modelsFresh: false,
@@ -2325,6 +2342,8 @@ export const useAppStore = create<AppState>((set, get) => ({
 	installLocalLocales: (snapshot) => set({ localLocales: snapshot }),
 	userThemes: null,
 	installUserThemes: (snapshot) => set({ userThemes: snapshot }),
+	onboardingDismissed: DEFAULT_CONFIG.onboardingDismissed,
+	onboardingWizard: "pending",
 	toasts: [],
 	resourceSnapshots: {},
 	resourceRevision: 0,
@@ -2456,6 +2475,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 				),
 			},
 		})),
+	setOnboardingWizard: (onboardingWizard) => set({ onboardingWizard }),
 	setStatus: (status) =>
 		set((state) => ({
 			status,
@@ -2492,6 +2512,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 				...reconcileProjectNavigation(state, openProjects),
 				...pruneExpandedProjects(state, openProjects),
 				welcomeGeneration: state.welcomeGeneration + 1,
+				providerStatusVersion: state.providerStatusVersion + 1,
 			};
 		}),
 	applyHostUpdate: (hostUpdate) => set({ hostUpdate }),
@@ -4192,7 +4213,22 @@ export const useAppStore = create<AppState>((set, get) => ({
 			modelsFresh: false,
 			modelsRefreshing: false,
 			providerVersion: s.providerVersion + 1,
+			providerStatusVersion: s.providerStatusVersion + 1,
 		})),
+	invalidateProviderStatus: () =>
+		set((s) => ({ providerStatusVersion: s.providerStatusVersion + 1 })),
+	installProviderStatus: (version, report) =>
+		set((s) =>
+			s.providerStatusVersion === version
+				? {
+						providerStatus: {
+							version,
+							report: report ?? s.providerStatus.report,
+							failed: report === null,
+						},
+					}
+				: s,
+		),
 	bumpTemplatesVersion: () => set((s) => ({ templatesVersion: s.templatesVersion + 1 })),
 	beginModelsRefresh: () => {
 		const providerVersion = get().providerVersion;
@@ -4254,13 +4290,17 @@ export const useAppStore = create<AppState>((set, get) => ({
 	applyLoginFrame: (push) =>
 		set((s) => {
 			if (push.target && s.removedWorkspaceIds[push.target.workspaceId]) return {};
+			const statusChanged =
+				push.frame.kind === "success" && !push.target
+					? { providerStatusVersion: s.providerStatusVersion + 1 }
+					: {};
 			const cur = s.activeLogin;
-			if (cur && cur.loginId !== push.loginId && cur.status === "active") return {};
+			if (cur && cur.loginId !== push.loginId && cur.status === "active") return statusChanged;
 			const base =
 				cur && cur.loginId === push.loginId
 					? cur
 					: newLoginState(push.loginId, push.providerId, push.target);
-			return { activeLogin: foldLoginFrame(base, push.frame) };
+			return { activeLogin: foldLoginFrame(base, push.frame), ...statusChanged };
 		}),
 	clearLoginInput: () =>
 		set((s) => {

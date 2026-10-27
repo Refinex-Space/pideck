@@ -1,0 +1,119 @@
+import type { ProviderStatusReport } from "@thinkrail/contracts";
+import { t as translate } from "@thinkrail/locales/react";
+import { type ReactNode, useCallback, useEffect, useState } from "react";
+import { LoginDialog } from "@/auth";
+import { selectLoginBusy, toast, useAppStore } from "@/store";
+import { errorText, getTransport } from "@/transport";
+import { reloadProviderStatus, useProviderStatus } from "./useProviderStatus";
+
+/** Cancels and clears a pending target-less provider login left open when a connect surface closes. */
+export function cancelUnownedLogin(): void {
+	const login = useAppStore.getState().activeLogin;
+	if (!login || login.target) return;
+	if (login.status === "active") {
+		getTransport()
+			.request("provider.loginCancel", { loginId: login.loginId })
+			.catch(() => {});
+	}
+	useAppStore.getState().clearLogin();
+}
+
+export interface ProviderAuth {
+	report: ProviderStatusReport | null;
+	failed: boolean;
+	refreshing: boolean;
+	load: () => Promise<void>;
+	startLogin: (providerId: string, type: "oauth" | "api_key") => Promise<void>;
+	logout: (providerId: string) => Promise<void>;
+	rowBusy: (providerId: string) => boolean;
+	busyProvider: string | null;
+	loginDialog: ReactNode;
+}
+
+export function useProviderAuth({ ownsLoginDialog }: { ownsLoginDialog: boolean }): ProviderAuth {
+	const { report, failed, refreshing } = useProviderStatus();
+	const [busyProvider, setBusyProvider] = useState<string | null>(null);
+	const activeLogin = useAppStore((s) => (s.activeLogin?.target ? null : s.activeLogin));
+	const loginBusy = useAppStore(selectLoginBusy);
+	const load = reloadProviderStatus;
+
+	useEffect(() => {
+		void reloadProviderStatus();
+	}, []);
+
+	const startLogin = useCallback(async (providerId: string, type: "oauth" | "api_key") => {
+		if (!useAppStore.getState().reserveLogin()) return;
+		setBusyProvider(providerId);
+		const start = async () => {
+			const { loginId } = await getTransport().request("provider.loginStart", { providerId, type });
+			useAppStore.getState().beginLogin(loginId, providerId);
+		};
+		await start()
+			.catch((err: unknown) =>
+				toast.error(errorText(err), translate("settings.providers.startFailed")),
+			)
+			.finally(() => {
+				useAppStore.getState().finishLoginStart();
+				setBusyProvider(null);
+			});
+	}, []);
+
+	const logout = useCallback(async (providerId: string) => {
+		setBusyProvider(providerId);
+		const signOut = async () => {
+			await getTransport().request("provider.logout", { providerId });
+			return true;
+		};
+		const signedOut = await signOut()
+			.catch((err: unknown) => {
+				toast.error(errorText(err), translate("settings.providers.signOutFailed"));
+				return false;
+			})
+			.finally(() => setBusyProvider(null));
+		if (signedOut) await reloadProviderStatus();
+	}, []);
+
+	const loginProviderName =
+		report?.providers.find((p) => p.id === activeLogin?.providerId)?.name ??
+		activeLogin?.providerId ??
+		"";
+
+	const loginDialog =
+		activeLogin && ownsLoginDialog ? (
+			<LoginDialog
+				key={activeLogin.loginId}
+				state={activeLogin}
+				providerName={loginProviderName}
+				onReply={(value) => {
+					getTransport()
+						.request("provider.loginReply", { loginId: activeLogin.loginId, value })
+						.catch((err) =>
+							toast.error(errorText(err), translate("settings.providers.submitFailed")),
+						);
+					useAppStore.getState().clearLoginInput();
+				}}
+				onCancel={() => {
+					getTransport()
+						.request("provider.loginCancel", { loginId: activeLogin.loginId })
+						.catch(() => {});
+					useAppStore.getState().clearLogin();
+				}}
+				onClose={() => {
+					useAppStore.getState().clearLogin();
+					void load();
+				}}
+			/>
+		) : null;
+
+	return {
+		report,
+		failed,
+		refreshing,
+		load,
+		startLogin,
+		logout,
+		rowBusy: (id) => busyProvider === id || loginBusy,
+		busyProvider,
+		loginDialog,
+	};
+}

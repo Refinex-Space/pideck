@@ -378,6 +378,17 @@ test("agentReviewEnabled defaults off; an old config loads the default; toggling
 	expect(() => updateConfig(invalid)).toThrow("agentReviewEnabled must be a boolean");
 });
 
+test("onboardingDismissed defaults off; an old config loads the default; dismissing round-trips; non-boolean rejected", () => {
+	writeFileSync(join(dataDir, "config.json"), JSON.stringify({ theme: "dark" }));
+	resetConfigCache();
+	expect(getConfig().onboardingDismissed).toBe(false);
+	expect(updateConfig({ onboardingDismissed: true }).onboardingDismissed).toBe(true);
+	resetConfigCache();
+	expect(getConfig().onboardingDismissed).toBe(true);
+	const invalid = { onboardingDismissed: "yes" } as unknown as AppConfigUpdate;
+	expect(() => updateConfig(invalid)).toThrow("onboardingDismissed must be a boolean");
+});
+
 test("subagents default on; an old config inherits that default; toggling off round-trips", () => {
 	expect(DEFAULT_CONFIG.subagentsEnabled).toBe(true);
 	writeFileSync(join(dataDir, "config.json"), JSON.stringify({ theme: "dark" }));
@@ -765,6 +776,22 @@ test("custom preset updates validate the complete catalog and permit empty struc
 	expect(() => validateCustomLayoutPresets([preset("same"), preset("same")])).toThrow(
 		"ids must be unique",
 	);
+});
+
+test("a custom preset may place every layout tool, the TODO List included", () => {
+	const withTools: LayoutPreset = {
+		...preset(),
+		right: {
+			visible: true,
+			width: 0.28,
+			groups: [
+				{ id: "custom-right", weight: 1, folded: false, tools: ["specs", "plan", "review"] },
+			],
+		},
+	};
+	expect(updateConfig({ customLayoutPresets: [withTools] }).customLayoutPresets).toEqual([
+		withTools,
+	]);
 });
 
 test("stored custom presets keep only complete current-schema entries", () => {

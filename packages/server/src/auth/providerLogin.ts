@@ -9,6 +9,11 @@ export function setLoginPublisher(
 	publish = fn;
 }
 
+let publishLogout: () => void = () => {};
+export function setLogoutPublisher(fn: () => void): void {
+	publishLogout = fn;
+}
+
 let seq = 0;
 const nextId = (): string => `login_${++seq}`;
 
@@ -46,6 +51,9 @@ function frameForPrompt(prompt: AuthPrompt): LoginFrame {
 }
 
 export function startLogin(providerId: string, type: AuthType = "oauth"): { loginId: string } {
+	for (const [id, pending] of [...logins]) {
+		if (pending.providerId === providerId) cancelLogin(id);
+	}
 	const loginId = nextId();
 	const entry: Pending = { providerId, abort: new AbortController(), settled: false };
 	logins.set(loginId, entry);
@@ -142,6 +150,7 @@ export function cancelAllLogins(): void {
 	for (const loginId of [...logins.keys()]) cancelLogin(loginId);
 }
 
-export function logoutProvider(providerId: string): Promise<void> {
-	return usePiRuntime((runtime) => runtime.logout(providerId));
+export async function logoutProvider(providerId: string): Promise<void> {
+	await usePiRuntime((runtime) => runtime.logout(providerId));
+	publishLogout();
 }

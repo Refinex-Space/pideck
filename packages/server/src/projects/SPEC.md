@@ -19,7 +19,7 @@ bootstrap it into one so it can be opened.
 - **Owns:** resolve every external project-folder input against the **host filesystem** before inspecting
   or mutating it: host-absolute paths pass, exact `~` and `~/…` (on Windows also `~\…`) expand against the host account, and every
   other relative path is rejected rather than interpreted against the host process cwd. The same resolved
-  path feeds `openProject`, `inspectProjectPath`, and `initProject`, so their classifications and actions
+  path feeds `openProject`, `inspectProjectPath`, `initProject`, and `createProject`, so their classifications and actions
   cannot disagree. It then validates a path is a repo (`git rev-parse --show-toplevel`; a non-repo rejects
   with the named `NOT_GIT` code), records the root in the host's resolved spelling (git prints `C:/…` on
   Windows; architecture Decision 22), dedupes by root,
@@ -51,6 +51,15 @@ bootstrap it into one so it can be opened.
   (bootstrap a plain directory: `git init` + `git add -A` + an **allow-empty** initial commit — committing
   the folder's contents, or an empty commit when it is empty, so the repo gets a HEAD and `git worktree
   add` works; an already-a-repo path short-circuits to `openProject`; a missing / non-dir path throws).
+  **`createProject(parentPath, name)`** is the start-from-nothing path: `name` must be one plain folder
+  name (no separators, not `.`/`..`), the resolved parent is created when missing, the target folder is
+  made — an existing **empty** folder is reused, a non-empty one or a file rejects — and then gets the same
+  bootstrap as `initProject`, run in that folder even when it sits inside an enclosing repository (a
+  dotfiles repo in `~` must not swallow the new project); a failed bootstrap or open removes the folder
+  this call made only while it is still empty (anything written into it meanwhile survives), and always the
+  `.git` it added. An optional display name — what the user typed, before slugging — is passed through to
+  `openProject` and becomes the project name (whitespace-collapsed, trimmed) in the one record it publishes,
+  so creation emits a single project event rather than a folder-named one followed by a rename.
   The commit supplies a **fallback `user.name`/`user.email` only for a field git has none configured for**,
   so a real global identity is never overridden. ("Does the project have specs?" is **not** computed here
   — `host` answers the lazy `project.hasSpecs` query via `spec.projectHasSpecs`, keeping this module free
@@ -84,7 +93,7 @@ bootstrap it into one so it can be opened.
   (an open chat could not reload).
 - **Public surface (barrel):** `openProject`, `listProjects`, `listRecentProjects`,
   `refreshRecentProjectFolders`, `closeProject`, `renameProject`,
-  `getProjects`, `setProjectPublisher`, `inspectProjectPath`, `initProject`, `setProjectTrust`,
+  `getProjects`, `setProjectPublisher`, `inspectProjectPath`, `initProject`, `createProject`, `setProjectTrust`,
   `setProjectSkillEnabled`, `setProjectGroupEnabled`, `acknowledgeProjectSkills`,
   `approveProjectMcpServer`, `setProjectMcpOverride`, `grantProjectMcpTool`, `revokeProjectMcpTool`,
   `setPiTrustSeed`.

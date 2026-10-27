@@ -14,7 +14,6 @@ import {
 import { CodedError } from "@thinkrail/shared/codedError";
 import {
 	type ContinueToolHost,
-	createSession,
 	ensureSessionAttached,
 	getSessionWorkspaceId,
 	listSessions,
@@ -24,16 +23,14 @@ import { logger } from "../log";
 import { listProjects } from "../projects";
 import {
 	createWorkspace,
-	ensureWorkspaceScratchDir,
 	getChatWorkspace,
 	getWorkspace,
 	isChatsContainer,
 	recordChatContinuation,
 } from "../workspaces";
 import { ackSend } from "./ackSend";
-import { trackChatStarted } from "./authAnalytics";
+import { startChatSession } from "./chatSession";
 import { provisionInitialTerminal } from "./initialTerminal";
-import { resolveNewChatModel } from "./newChatModel";
 
 const log = logger("host");
 
@@ -199,16 +196,7 @@ export async function applyContinuation(sessionId: string, summary: string): Pro
 	let targetSessionId = state.sessionId;
 	if (!targetSessionId) {
 		try {
-			ensureWorkspaceScratchDir(workspace);
-			const defaults = await resolveNewChatModel({});
-			const created = await createSession({
-				cwd: workspace.worktreePath,
-				workspaceId: workspace.id,
-				...(defaults.model ? { model: defaults.model } : {}),
-				thinkingLevel: defaults.thinkingLevel,
-			});
-			trackChatStarted({ sessionId: created.sessionId, model: created.model });
-			targetSessionId = created.sessionId;
+			targetSessionId = (await startChatSession(workspace, {})).sessionId;
 		} catch (error) {
 			emit(operation, { phase: "failed", reason: String(error) });
 			throw error;

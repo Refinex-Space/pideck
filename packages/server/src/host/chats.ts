@@ -1,8 +1,8 @@
 import { existsSync, lstatSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import type { ChatCreateResult, ChatInspection, Workspace } from "@thinkrail/contracts";
+import type { ChatCreateResult, ChatInspection } from "@thinkrail/contracts";
 import { CodedError } from "@thinkrail/shared/codedError";
-import { createSession, deleteSession, getSessionWorkspaceId, listSessions } from "../agent";
+import { deleteSession, getSessionWorkspaceId, listSessions } from "../agent";
 import { forgetWorkspaceChanges } from "../changes";
 import { logger } from "../log";
 import { removeWorkspaceReviews } from "../reviews";
@@ -14,14 +14,13 @@ import { stopWatch } from "../watch";
 import {
 	createChatRecord,
 	dropChatRecord,
-	ensureWorkspaceScratchDir,
 	getChatWorkspace,
 	isChatWorkspaceId,
 	markChatDeletionPending,
 } from "../workspaces";
-import { trackChatStarted } from "./authAnalytics";
+import { startChatSession } from "./chatSession";
 import { provisionInitialTerminal } from "./initialTerminal";
-import { type NewChatModelRequest, resolveNewChatModel } from "./newChatModel";
+import type { NewChatModelRequest } from "./newChatModel";
 import { runObservation } from "./runAnalytics";
 import { taskObservation } from "./taskAnalytics";
 
@@ -39,7 +38,8 @@ function assertNotDeleting(workspaceId: string): void {
 
 /** The chat's folder, record and the one session that owns it, in one operation. */
 export async function createChat(requested: NewChatModelRequest = {}): Promise<ChatCreateResult> {
-	return startChatSession(provisionInitialTerminal(createChatRecord()), requested);
+	const workspace = provisionInitialTerminal(createChatRecord());
+	return { workspace, ...(await startChatSession(workspace, requested)) };
 }
 
 /** A chat whose session never came up (crash between folder and session) gets its session here; idempotent. */
@@ -58,23 +58,7 @@ export async function ensureChatSession(workspaceId: string): Promise<ChatCreate
 			thinkingLevel: "medium",
 		};
 	}
-	return startChatSession(workspace);
-}
-
-async function startChatSession(
-	workspace: Workspace,
-	requested: NewChatModelRequest = {},
-): Promise<ChatCreateResult> {
-	ensureWorkspaceScratchDir(workspace);
-	const defaults = await resolveNewChatModel(requested);
-	const created = await createSession({
-		cwd: workspace.worktreePath,
-		workspaceId: workspace.id,
-		...(defaults.model ? { model: defaults.model } : {}),
-		thinkingLevel: defaults.thinkingLevel,
-	});
-	trackChatStarted({ sessionId: created.sessionId, model: created.model });
-	return { workspace, ...created };
+	return { workspace, ...(await startChatSession(workspace, {})) };
 }
 
 /** A chat owns exactly one top-level session; a second one is refused — a new chat is a new folder. */

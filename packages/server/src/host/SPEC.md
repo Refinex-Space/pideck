@@ -117,7 +117,7 @@ channel fan-out, and the process-boot wrapper both launchers share.
   reconstruct pre-consent work; campaign-only enrichment is inactive while off and restored from its strict
   server record when on without retrying a consumed claim.
   `shutdownAnalytics()` remains a best-effort drain in `stop()` and awaited by graceful shutdown;
-  every capture site lives here, including the existing basic events: `chat_started` in `session.create` (the host's new-chat
+  every capture site lives here, including the existing basic events: `chat_started` in `chatSession.ts#startChatSession` (the host's new-chat
   resolution decides `none` for a chat created with no usable model instead of pi's placeholder; otherwise
   the created session's actual model is reported), `message_sent` (via the
   local `trackSend(mode, text)`) after an **accepted** `session.prompt`/`session.steer`/`session.followUp`
@@ -188,8 +188,11 @@ channel fan-out, and the process-boot wrapper both launchers share.
   is reported with its registered method (CodedErrors included), and `observeLoggedErrors` routes host
   `log.warn/error(msg, err)` calls as `host_logged` — so host diagnostics that carry an error go through
   the logger, never `console.*`. The host's `resolveNewChatModel` composes AppConfig settings with the agent's settled available
-  model list and Pi thinking clamp; `model.default`, `session.create`, and newly-created review chats share
-  that resolver, and creation passes its model and effort explicitly. A `session.create` that **named** a
+  model list and Pi thinking clamp; `model.default` and chat creation share that resolver.
+  `chatSession.ts#startChatSession` is the host's only `createSession` call. `session.create`, the
+  review chat, `chat.create` (and its session repair), Continue in workspace and `start_workspace` all
+  start their chat through it, so the scratch folder, the explicitly passed model and effort, and
+  `chat_started` cannot diverge between them. A `session.create` that **named** a
   model and every `session.setModel` also record the resolved model as recent through `settings`'
   `noteRecentModel` — a default-resolved creation is the host's choice, not the user's, and is not
   recorded. `model.contextSettings` and `model.setContextWindow` delegate to agent's `modelContext`
@@ -431,8 +434,8 @@ channel fan-out, and the process-boot wrapper both launchers share.
     `projects` + `workspaces` + `git` + `watch` for `start_workspace` / `workspace_status`:
     - A spawned workspace is indistinguishable from a hand-made one: the New Workspace dialog's defaults
       (`listBranches().defaultBranch` plus its prefetch — not `createWorkspace`'s checkout-HEAD fallback;
-      the new-chat model via `chatSession.ts#startChatSession`, shared with `session.create` and the
-      review-chat path), the initial terminal, `ensureWatch`, and an auto `workspace-N` name that the
+      the new-chat model via the shared `chatSession.ts#startChatSession`), the initial terminal,
+      `ensureWatch`, and an auto `workspace-N` name that the
       child renames itself through `set_title`. The first prompt is plain text, so pi's own `/template`
       and `/skill:` expansion applies.
     - Projects are any open registry entry, matched by id, slug or name (default: the caller's).

@@ -18,8 +18,9 @@ test("navigation aligns labels and keeps the application menu at the foot of its
 	]);
 	if (!projectBox || !workspaceBox || !sidebarBox || !footerBox || !contextBox)
 		throw new Error("Missing navigation geometry");
-	expect(projectBox.x - workspaceBox.x).toBe(24);
-	expect(workspaceBox.x - sidebarBox.x).toBe(16);
+	// Workspace names start on the same text edge as the project name above them.
+	expect(projectBox.x - workspaceBox.x).toBe(0);
+	expect(workspaceBox.x - sidebarBox.x).toBe(40);
 	expect(footerBox.y + footerBox.height).toBe(900);
 	expect(contextBox.x).toBeGreaterThanOrEqual(sidebarBox.x + sidebarBox.width);
 	expect(contextBox.y).toBe(0);
@@ -52,6 +53,8 @@ test("navigation aligns labels and keeps the application menu at the foot of its
 		"aria-orientation",
 		"horizontal",
 	);
+	await page.mouse.move(640, 450);
+	await page.getByTestId("tool-rail-projects").hover();
 	await page.getByTestId("app-menu").click();
 	await expect(page.getByTestId("open-settings")).toBeVisible();
 });

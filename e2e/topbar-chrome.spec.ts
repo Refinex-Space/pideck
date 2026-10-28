@@ -62,23 +62,25 @@ async function expectUsableHeader(
 	const actions = page.getByTestId("navigation-footer");
 	await expect(header).toHaveCSS("height", "40px");
 	await expect(header).toHaveCSS("-webkit-app-region", dragRegion);
-	await expect(actions).toHaveCSS("-webkit-app-region", "no-drag");
-	for (const id of buttonIds) await expect(actions.getByTestId(id)).toBeVisible();
 	const headerBox = await bounds(header);
-	const actionsBox = await bounds(actions);
-	const logoBox = await bounds(page.getByTestId("brand-logo"));
 	const leftInsetBox = await bounds(page.getByTestId("window-chrome-inset-left"));
 	const rightInsetBox = await bounds(page.getByTestId("window-chrome-inset-right"));
 	expect(headerBox.x).toBeGreaterThanOrEqual(0);
 	expect(headerBox.y).toBe(0);
 	expect(headerBox.right).toBeLessThanOrEqual(page.viewportSize()?.width ?? 0);
+	expect(leftInsetBox.width).toBeGreaterThanOrEqual(0);
+	expect(rightInsetBox.right).toBeLessThanOrEqual(headerBox.right);
+	// A collapsed sidebar leaves no footer behind (it peeks in on hover), so only check it when shown.
+	if ((await actions.count()) === 0 || (await page.getByTestId("left-peek").count()) > 0) return;
+	await expect(actions).toHaveCSS("-webkit-app-region", "no-drag");
+	for (const id of buttonIds) await expect(actions.getByTestId(id)).toBeVisible();
+	const actionsBox = await bounds(actions);
+	const logoBox = await bounds(page.getByTestId("brand-logo"));
 	expect(logoBox.width).toBe(20);
 	expect(logoBox.height).toBe(20);
 	expect(actionsBox.bottom).toBeCloseTo(page.viewportSize()?.height ?? 0, 0);
 	expect(logoBox.x).toBeGreaterThanOrEqual(actionsBox.x);
 	expect(logoBox.right).toBeLessThanOrEqual(actionsBox.right);
-	expect(leftInsetBox.width).toBeGreaterThanOrEqual(0);
-	expect(rightInsetBox.right).toBeLessThanOrEqual(headerBox.right);
 
 	for (const testId of buttonIds) {
 		const button = actions.getByTestId(testId);
@@ -181,8 +183,9 @@ test("live safe areas on either edge preserve header and workbench geometry", as
 		)
 			await page.getByTestId("tool-rail-projects").click();
 		await setInsets(page, 0, 0);
-		const baselineLogo = await bounds(logo);
-		const baselineActions = await bounds(actions);
+		const footerShown = (await actions.count()) > 0;
+		const baselineLogo = footerShown ? await bounds(logo) : null;
+		const baselineActions = footerShown ? await bounds(actions) : null;
 		const baselineWorkbench = await bounds(workbench);
 		for (const [left, right] of [
 			[80, 138],
@@ -192,8 +195,10 @@ test("live safe areas on either edge preserve header and workbench geometry", as
 		] as const) {
 			await setInsets(page, left, right);
 			await expectUsableHeader(page);
-			expect((await bounds(logo)).x).toBeCloseTo(baselineLogo.x, 1);
-			expect((await bounds(actions)).right).toBeCloseTo(baselineActions.right, 1);
+			if (baselineLogo && baselineActions) {
+				expect((await bounds(logo)).x).toBeCloseTo(baselineLogo.x, 1);
+				expect((await bounds(actions)).right).toBeCloseTo(baselineActions.right, 1);
+			}
 			const workbenchBox = await bounds(workbench);
 			expect(workbenchBox).toEqual(baselineWorkbench);
 			expect(workbenchBox.y).toBe(0);
@@ -250,6 +255,9 @@ test("native updates progress from explicit download through install and restart
 	});
 	await openAppFresh(page);
 
+	// The collapsed sidebar peeks in while its toggle is hovered; the footer lives there.
+	await page.mouse.move(640, 450);
+	await page.getByTestId("tool-rail-projects").hover();
 	await page.getByTestId("update-ready").click();
 	await expect(page.getByTestId("settings-updates")).toBeVisible();
 	await expect(page.getByTestId("update-download")).toHaveText("Download");
@@ -333,6 +341,9 @@ test("the action cluster keeps Update, quota Retry and Settings out of the drag 
 		await page.getByTestId("tool-rail-projects").click();
 	await expectUsableHeader(page, buttons, "drag");
 
+	// The collapsed sidebar peeks in while its toggle is hovered; the footer lives there.
+	await page.mouse.move(200, 400);
+	await page.getByTestId("tool-rail-projects").hover();
 	await page.getByTestId("update-ready").click();
 	await expect(page.getByTestId("settings-updates")).toBeVisible();
 	await page.keyboard.press("Escape");

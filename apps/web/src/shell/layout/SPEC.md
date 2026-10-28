@@ -316,3 +316,17 @@ The memoization assumes the injected render callbacks are referentially stable: 
 ## Internal module structure
 
 The renderer is one submodule behind `index.ts`; its files are internal and import each other directly. `workbenchShared` holds the public prop contracts (`WorkbenchProps`, `SharedGroupProps`, `LayoutTabFocusRequest`), the drag-and-drop primitives, the resize/size/overflow/settle hooks, the DOM-id helpers (group, tab, rail group, rail control), and the shared leaf primitives (`DropZone`, `CenterSplitTarget`, `PanelWithHandle`, `GroupTabBody`). `workbenchTabs` owns the tab strip and tab (including a tab's rail mode); `workbenchCenter`, `workbenchSide` (also the `AuxiliaryGroupHeader` both edge families share), and `workbenchBottom` own their region view families; `workbenchRails` owns the region rail and its droppable entry button; `tabIcon` is the one Line/Fill icon resolver, shared with the shell's Project Home; `Workbench` is the root that composes them and owns state. The rail is the one leaf that renders from `attention` (its entries' selected state), so the root passes it the overlay explicitly like a stack, while its activation runs through `onApply` and the shared `onUserNavigation`. `index.ts` re-exports the component, its public types, and the rail/pane-header primitives Project Home composes.
+
+## Collapsed sidebar and hover peek
+
+A collapsed left region leaves **nothing behind** — no icon strip and no footer. Its toggle (the `projects`
+tool entry in the top bar) never wears a selected fill; the icon and `aria-pressed` carry the state, and
+its tooltip reads *Show / Hide sidebar* with the shortcut (`Mod+B`). All rail and history tooltips open
+downward. While the pointer **hovers** the toggle (a click is unchanged), `LeftPeek` slides the sidebar
+back in as a full-height floating panel through a projected, unfolded copy of the document — nothing is
+committed. It stays while the pointer is on the toolbar cluster or the panel (plus an invisible strip
+along its right edge), while any menu, dialog, listbox or text field opened from it is live, and for a
+400 ms grace period after the pointer leaves; `Esc` retracts it. Collapsing with the pointer still on the
+toggle suppresses the peek until the pointer leaves it, so a click never bounces the panel back. The
+footer (app menu, updates, connection) is reachable only in the expanded sidebar or the peek. `Mod+[` and
+`Mod+]` step the toolbar history back and forward (never inside a terminal, where `Ctrl+[` is Escape).

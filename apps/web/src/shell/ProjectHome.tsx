@@ -10,9 +10,11 @@ import {
 	type AuxiliaryRailToolEntry,
 	DEFAULT_LAYOUT_PRESET_ID,
 	LAYOUT_LIMITS,
+	LeftPeekPanel,
 	layoutPresetForViewport,
 	projectWorkbenchRatio,
 	resolveLayoutPreset,
+	useLeftPeek,
 } from "./layout";
 import type { CollapsibleRegion } from "./useCollapsibleRegion";
 
@@ -28,13 +30,11 @@ export function ProjectHome({
 	workspaceHeader,
 	navigationActions,
 	navigationFooter,
-	collapsedNavigationFooter,
 }: {
 	projects: CollapsibleRegion<HTMLDivElement>;
 	workspaceHeader: (historyControls?: ReactNode) => ReactNode;
 	navigationActions: ReactNode;
 	navigationFooter: ReactNode;
-	collapsedNavigationFooter: ReactNode;
 }) {
 	const t = useT();
 	const [defaultProjectsPercent] = useState(() => {
@@ -56,6 +56,7 @@ export function ProjectHome({
 		regionRef,
 		toggle,
 	} = projects;
+	const peek = useLeftPeek(collapsed);
 	const entry: AuxiliaryRailToolEntry = {
 		key: PROJECTS_RAIL_ENTRY_KEY,
 		region: "left",
@@ -68,6 +69,7 @@ export function ProjectHome({
 	};
 	const rail = () => (
 		<AuxiliaryRail
+			pointerHandlers={peek.triggerProps}
 			orientation="horizontal"
 			region="left"
 			entries={[entry]}
@@ -87,14 +89,8 @@ export function ProjectHome({
 			data-testid="welcome-shell-layout"
 			data-left-collapsed={collapsed}
 			data-navigation-expanded={!collapsed}
-			className="flex h-full min-h-0 min-w-0"
+			className="relative flex h-full min-h-0 min-w-0"
 		>
-			{collapsed ? (
-				<div className="flex h-full w-40 shrink-0 flex-col bg-container-sidebar-bg">
-					<div className="min-h-0 flex-1" />
-					{collapsedNavigationFooter}
-				</div>
-			) : null}
 			<ResizablePanelGroup
 				direction="horizontal"
 				autoSaveId={PROJECT_HOME_AUTOSAVE_ID}
@@ -168,10 +164,10 @@ export function ProjectHome({
 					<div className="flex h-full min-h-0 flex-col bg-container-content-bg">
 						{workspaceHeader(
 							collapsed ? (
-								<>
+								<div {...peek.zoneProps} className="relative z-50 flex shrink-0 items-center">
 									{rail()}
 									{navigationActions}
-								</>
+								</div>
 							) : undefined,
 						)}
 						<div className="min-h-0 flex-1">
@@ -180,6 +176,14 @@ export function ProjectHome({
 					</div>
 				</ResizablePanel>
 			</ResizablePanelGroup>
+			{peek.open ? (
+				<LeftPeekPanel peek={peek}>
+					<QuietScrollArea className="min-h-0 flex-1" viewportClassName="px-8 py-12">
+						<ProjectTree />
+					</QuietScrollArea>
+					{navigationFooter}
+				</LeftPeekPanel>
+			) : null}
 		</div>
 	);
 }

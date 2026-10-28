@@ -20,6 +20,7 @@ import { useCallback, useEffect, useInsertionEffect, useMemo, useRef, useState }
 import { readLayoutNavigationClock, readLayoutSelection, tupleKey } from "../../lib";
 import { projectWorkbenchRatio, restoreWorkbenchRatio } from "./auxiliaryPresentation";
 import { closeRequestTarget } from "./closeRequest";
+import { LeftPeekPanel, useLeftPeek } from "./LeftPeek";
 import {
 	focusLayoutElement,
 	type LayoutFocusIntent,
@@ -96,7 +97,6 @@ export function Workbench({
 	workspaceLocation,
 	navigationActions,
 	navigationFooter,
-	collapsedNavigationFooter,
 	workspaceId,
 	document,
 	attention,
@@ -464,6 +464,7 @@ export function Workbench({
 	};
 
 	const leftVisible = document.left.visible && document.left.groups.some((group) => !group.folded);
+	const peek = useLeftPeek(!leftVisible);
 	const rightVisible =
 		document.right.visible && document.right.groups.some((group) => !group.folded);
 	const visibleSideMinimums = (leftVisible ? 8 : 0) + (rightVisible ? 8 : 0);
@@ -800,6 +801,19 @@ export function Workbench({
 		chatFirstPrompts,
 		canFocusAdjacentGroup,
 	};
+	// While peeking, the collapsed left region is shown through a projected, unfolded copy of the
+	// document; nothing is committed, so the saved layout keeps the sidebar collapsed.
+	const peekDocument = useMemo(
+		() => ({
+			...document,
+			left: {
+				...document.left,
+				visible: true,
+				groups: document.left.groups.map((group) => ({ ...group, folded: false })),
+			},
+		}),
+		[document],
+	);
 	const sideStack = (side: LayoutSide) => (
 		<div
 			data-testid={`${side}-column`}
@@ -849,12 +863,16 @@ export function Workbench({
 				className="workspace-chrome-inset w-window-chrome-inset-left shrink-0"
 			/>
 			{!leftVisible ? (
-				<div className="window-no-drag flex shrink-0 items-center gap-4 self-center">
+				<div
+					{...peek.zoneProps}
+					className="window-no-drag relative z-50 flex shrink-0 items-center gap-4 self-center"
+				>
 					<AuxiliaryRegionRail
 						region="left"
 						orientation="horizontal"
 						shared={shared}
 						attention={attention}
+						pointerHandlers={peek.triggerProps}
 					/>
 					{navigationActions}
 				</div>
@@ -1115,7 +1133,7 @@ export function Workbench({
 				ref={workbenchRef}
 				data-testid="workbench"
 				data-navigation-expanded={leftVisible}
-				className="flex h-full min-h-0 min-w-0 overflow-hidden"
+				className="relative flex h-full min-h-0 min-w-0 overflow-hidden"
 				onPointerDownCapture={() => {
 					tabSelectionEpoch.current += 1;
 					const active = globalThis.document.activeElement;
@@ -1135,15 +1153,24 @@ export function Workbench({
 					focusAdjacentGroup(event.shiftKey ? -1 : 1);
 				}}
 			>
-				{!leftVisible ? (
-					<div className="flex h-full w-40 shrink-0 flex-col bg-container-sidebar-bg">
-						<div className="min-h-0 flex-1" />
-						{collapsedNavigationFooter}
-					</div>
-				) : null}
 				<div ref={columnsRef} className="min-h-0 min-w-0 flex-1">
 					{workbenchColumns}
 				</div>
+				{peek.open ? (
+					<LeftPeekPanel peek={peek}>
+						<div className="min-h-0 flex-1">
+							<SideStack
+								side="left"
+								attention={attention}
+								projectionEpoch={projectionEpoch}
+								onCommit={onCommit}
+								{...shared}
+								document={peekDocument}
+							/>
+						</div>
+						{navigationFooter}
+					</LeftPeekPanel>
+				) : null}
 			</div>
 			<DragOverlay dropAnimation={null}>
 				{draggingTab ? (

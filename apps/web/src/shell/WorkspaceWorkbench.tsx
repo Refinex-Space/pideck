@@ -312,13 +312,11 @@ export function WorkspaceWorkbench({
 	workspaceLocation,
 	navigationActions,
 	navigationFooter,
-	collapsedNavigationFooter,
 }: {
 	workspaceId: string;
 	workspaceLocation: ReactNode;
 	navigationActions: ReactNode;
 	navigationFooter: ReactNode;
-	collapsedNavigationFooter: ReactNode;
 }) {
 	const t = useT();
 	const status = useAppStore((state) => state.status);
@@ -833,7 +831,6 @@ export function WorkspaceWorkbench({
 				workspaceLocation={workspaceLocation}
 				navigationActions={navigationActions}
 				navigationFooter={navigationFooter}
-				collapsedNavigationFooter={collapsedNavigationFooter}
 				workspaceId={workspaceId}
 				document={rendered.document}
 				attention={rendered.attention}

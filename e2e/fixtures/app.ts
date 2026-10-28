@@ -40,6 +40,11 @@ export async function workspaceDetail(page: Page, testId: string): Promise<Locat
 }
 
 export async function openAppSettings(page: Page): Promise<void> {
+	// A collapsed sidebar keeps no footer on screen; it peeks in while its toggle is hovered.
+	if ((await page.getByTestId("app-menu").filter({ visible: true }).count()) === 0) {
+		await page.mouse.move(200, 400);
+		await page.getByTestId("tool-rail-projects").hover();
+	}
 	await page.getByTestId("app-menu").filter({ visible: true }).click();
 	await page.getByTestId("open-settings").click();
 }

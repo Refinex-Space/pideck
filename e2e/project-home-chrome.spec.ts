@@ -13,7 +13,8 @@ async function expectProjectsShown(page: Page): Promise<void> {
 		"false",
 	);
 	await expect(page.getByTestId("tool-rail-projects")).toHaveAttribute("aria-pressed", "true");
-	await expect(page.getByTestId("tool-rail-projects")).toHaveAttribute("data-selected", "true");
+	// The sidebar toggle never rests on a selected fill; its icon and aria-pressed carry the state.
+	await expect(page.getByTestId("tool-rail-projects")).not.toHaveAttribute("data-selected", /.*/);
 	await expect(page.getByTestId("auxiliary-pane-header")).toHaveCount(0);
 	await expect(page.getByTestId("navigation-chrome")).toBeVisible();
 	await expect(page.getByTestId("left-nav")).toBeVisible();

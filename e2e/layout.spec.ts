@@ -1252,7 +1252,11 @@ test("layout survives a transport reconnect and remains writable", async ({ page
 	await expect(page.getByTestId("left-layout-rail")).toBeVisible();
 	await socket?.close();
 	await expect.poll(() => socketsOpened).toBeGreaterThan(1);
+	// A collapsed sidebar leaves no strip behind; the status shows while the toggle is hovered.
+	await page.mouse.move(640, 450);
+	await page.getByTestId("tool-rail-projects").hover();
 	await expect(page.getByTestId("connection-status")).toHaveAttribute("data-status", "connected");
+	await page.mouse.move(600, 400);
 	await expect(page.getByTestId("left-layout-rail")).toBeVisible();
 
 	await pressPlatformShortcut(page, "b");

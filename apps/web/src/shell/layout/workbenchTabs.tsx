@@ -28,6 +28,7 @@ import {
 	RAIL_ENTRY_FRAME_CLASS,
 	RAIL_ICON,
 	railEntryButtonProps,
+	railTooltipLabel,
 	railTooltipSide,
 } from "./AuxiliaryRail";
 import { focusLayoutElement, type LayoutFocusIntent, readLayoutFocusIntent } from "./layoutFocus";
@@ -631,7 +632,11 @@ export const WorkbenchTab = memo(function WorkbenchTab({
 			type="button"
 			id={tabDomId(location, tab.id)}
 			{...(rail
-				? { "aria-label": name, "aria-pressed": active, ...railEntryButtonProps(active) }
+				? {
+						"aria-label": name,
+						"aria-pressed": active,
+						...railEntryButtonProps(active, tab.kind === "tool" ? tab.tool : undefined),
+					}
 				: { role: "tab", "aria-selected": active })}
 			aria-keyshortcuts={
 				rail
@@ -746,7 +751,10 @@ export const WorkbenchTab = memo(function WorkbenchTab({
 							/>
 						</div>
 					) : rail ? (
-						<IconTooltip label={name} side={railTooltipSide(location.area)}>
+						<IconTooltip
+							label={railTooltipLabel(t, tab.kind === "tool" ? tab.tool : undefined, name, active)}
+							side={railTooltipSide(location.area)}
+						>
 							{tabButton}
 						</IconTooltip>
 					) : (

@@ -45,6 +45,17 @@ describe("global hotkey routing", () => {
 		expect(globalHotkeyCommand(key("KeyB", { altKey: true }), all, false, "Linux")).toBeNull();
 	});
 
+	test("routes Mod+[ and Mod+] to back and forward, never with Shift, when unavailable or behind a modal", () => {
+		const nav = { ...all, back: true, forward: true } as const;
+		expect(globalHotkeyCommand(key("BracketLeft"), nav, false, "Linux")).toBe("back");
+		expect(globalHotkeyCommand(key("BracketRight"), nav, false, "Linux")).toBe("forward");
+		expect(
+			globalHotkeyCommand(key("BracketLeft", { shiftKey: true }), nav, false, "Linux"),
+		).toBeNull();
+		expect(globalHotkeyCommand(key("BracketLeft"), all, false, "Linux")).toBeNull();
+		expect(globalHotkeyCommand(key("BracketLeft"), nav, true, "Linux")).toBeNull();
+	});
+
 	test("routes Mod+K to session-switcher when available, suppressed behind modal", () => {
 		expect(globalHotkeyCommand(key("KeyK"), all, false, "Linux")).toBe("session-switcher");
 		expect(

@@ -59,7 +59,6 @@ export interface WorkbenchProps {
 	workspaceLocation?: ReactNode;
 	navigationActions?: ReactNode;
 	navigationFooter?: ReactNode;
-	collapsedNavigationFooter?: ReactNode;
 	workspaceId: string;
 	document: WorkspaceLayoutDocument;
 	attention: LayoutAttention;

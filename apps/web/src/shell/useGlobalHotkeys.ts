@@ -9,6 +9,8 @@ type GlobalHotkeyActions = {
 	onBottom?: () => void;
 	onNewWorkspace?: () => void;
 	onSessionSwitcher?: () => void;
+	onBack?: () => void;
+	onForward?: () => void;
 };
 
 type GlobalHotkeyCommand =
@@ -16,7 +18,9 @@ type GlobalHotkeyCommand =
 	| "workspace"
 	| "bottom"
 	| "new-workspace"
-	| "session-switcher";
+	| "session-switcher"
+	| "back"
+	| "forward";
 
 type GlobalHotkeyAvailability = {
 	projects: boolean;
@@ -24,6 +28,8 @@ type GlobalHotkeyAvailability = {
 	bottom: boolean;
 	newWorkspace: boolean;
 	sessionSwitcher: boolean;
+	back?: boolean;
+	forward?: boolean;
 };
 
 type GlobalHotkeyEvent = Pick<
@@ -42,6 +48,8 @@ export function globalHotkeyCommand(
 	if (!event.shiftKey && !event.altKey && event.code === "KeyK" && available.sessionSwitcher)
 		return "session-switcher";
 	if (event.altKey) return null;
+	if (!event.shiftKey && event.code === "BracketLeft" && available.back) return "back";
+	if (!event.shiftKey && event.code === "BracketRight" && available.forward) return "forward";
 	if (!event.shiftKey && event.code === "KeyB" && available.projects) return "projects";
 	if (!event.shiftKey && event.code === "KeyJ" && available.workspace) return "workspace";
 	if (event.shiftKey && event.code === "KeyJ" && available.bottom) return "bottom";
@@ -68,9 +76,13 @@ export function useGlobalHotkeys(actions: GlobalHotkeyActions): void {
 					bottom: actionsRef.current.onBottom !== undefined,
 					newWorkspace: actionsRef.current.onNewWorkspace !== undefined,
 					sessionSwitcher: actionsRef.current.onSessionSwitcher !== undefined,
+					back: actionsRef.current.onBack !== undefined,
+					forward: actionsRef.current.onForward !== undefined,
 				},
 				hasOpenModal(),
 			);
+			// Ctrl+[ is Escape in a terminal; never swallow it there.
+			if ((command === "back" || command === "forward") && isInTerminal(event.target)) return;
 			if (command) {
 				event.preventDefault();
 				event.stopPropagation();
@@ -79,6 +91,8 @@ export function useGlobalHotkeys(actions: GlobalHotkeyActions): void {
 					else if (command === "workspace") actionsRef.current.onWorkspace?.();
 					else if (command === "bottom") actionsRef.current.onBottom?.();
 					else if (command === "session-switcher") actionsRef.current.onSessionSwitcher?.();
+					else if (command === "back") actionsRef.current.onBack?.();
+					else if (command === "forward") actionsRef.current.onForward?.();
 					else actionsRef.current.onNewWorkspace?.();
 				}
 				return;

@@ -1,5 +1,6 @@
 import { DropdownMenu } from "@thinkrail/ui/dropdown-menu";
 import { type ReactNode, useEffect, useState } from "react";
+import { getNavigationHistory, goBack, goForward } from "../navigation";
 import { NotificationPermissionPrompt, useAttentionNotifications } from "../notifications";
 import { AnalyticsConsentDialog } from "../panels/AnalyticsConsentDialog";
 import { InterviewPromptDialog } from "../panels/InterviewPromptDialog";
@@ -127,6 +128,12 @@ export function Shell() {
 			: {}),
 		...(contextProject ? { onNewWorkspace: () => startNewWorkspace(contextProject.id) } : {}),
 		onSessionSwitcher: () => useAppStore.getState().toggleSessionSwitcher(),
+		onBack: () => {
+			if (getNavigationHistory().canGoBack) goBack();
+		},
+		onForward: () => {
+			if (getNavigationHistory().canGoForward) goForward();
+		},
 	});
 	const footer = (compact: boolean) => (
 		<ApplicationMenu compact={compact}>
@@ -184,7 +191,6 @@ export function Shell() {
 							workspaceLocation={workspaceLocation}
 							navigationActions={navigationActions}
 							navigationFooter={footer(false)}
-							collapsedNavigationFooter={footer(true)}
 						/>
 					</div>
 				) : (
@@ -193,7 +199,6 @@ export function Shell() {
 						workspaceHeader={workspaceHeader}
 						navigationActions={navigationActions}
 						navigationFooter={footer(false)}
-						collapsedNavigationFooter={footer(true)}
 					/>
 				)}
 				{windowControls ? (

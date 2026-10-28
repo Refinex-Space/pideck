@@ -5,7 +5,7 @@ import { useT } from "@thinkrail/locales/react";
 import { IconTooltip } from "@thinkrail/ui/tooltip";
 import { cn } from "@thinkrail/ui/utils";
 import { Terminal } from "lucide-react";
-import type { ReactNode } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import { type LayoutAttention, tupleKey } from "../../lib";
 import {
 	AuxiliaryRail,
@@ -14,6 +14,7 @@ import {
 	RAIL_ENTRY_FRAME_CLASS,
 	RAIL_ICON,
 	railEntryButtonProps,
+	railTooltipLabel,
 	railTooltipSide,
 } from "./AuxiliaryRail";
 import {
@@ -116,7 +117,7 @@ export function AuxiliaryRailButton({
 							{entry.tabs.map((tab) => layoutTabName(t, tab)).join(", ")}
 						</span>
 					) : (
-						name
+						railTooltipLabel(t, entry.kind === "tool" ? entry.tool : undefined, name, active)
 					)
 				}
 				side={railTooltipSide(entry.region)}
@@ -138,7 +139,7 @@ export function AuxiliaryRailButton({
 					aria-controls={
 						group ? groupPanelId({ area: entry.region, groupId: group.id }) : undefined
 					}
-					{...railEntryButtonProps(active)}
+					{...railEntryButtonProps(active, entry.kind === "tool" ? entry.tool : undefined)}
 					{...control}
 					onClick={onActivate}
 					data-drop-label={
@@ -182,12 +183,14 @@ export function AuxiliaryRegionRail({
 	attention,
 	trailing,
 	orientation,
+	pointerHandlers,
 }: {
 	region: LayoutAuxiliaryRegion;
 	shared: SharedGroupProps;
 	attention: LayoutAttention;
 	trailing?: ReactNode;
 	orientation?: "horizontal" | "vertical";
+	pointerHandlers?: ComponentProps<typeof AuxiliaryRail>["pointerHandlers"];
 }) {
 	const t = useT();
 	const horizontal = orientation ? orientation === "horizontal" : region === "bottom";
@@ -249,6 +252,7 @@ export function AuxiliaryRegionRail({
 	return (
 		<>
 			<AuxiliaryRail
+				{...(pointerHandlers ? { pointerHandlers } : {})}
 				{...(orientation ? { orientation } : {})}
 				region={region}
 				entries={entries}

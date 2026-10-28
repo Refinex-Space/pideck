@@ -1,9 +1,11 @@
 import type { MessageKey } from "@thinkrail/locales";
-import { useT } from "@thinkrail/locales/react";
+import { type Translator, useT } from "@thinkrail/locales/react";
 import { buttonDataAttributes, buttonVariants } from "@thinkrail/ui/button";
 import { IconTooltip } from "@thinkrail/ui/tooltip";
 import { cn } from "@thinkrail/ui/utils";
-import { Fragment, forwardRef, type ReactNode, useRef, useState } from "react";
+import { Fragment, forwardRef, type HTMLAttributes, type ReactNode, useRef, useState } from "react";
+import { TooltipShortcut } from "../../components/TooltipShortcut";
+import { platformShortcutLabel } from "../../lib";
 import {
 	type AuxiliaryRailEntry,
 	type AuxiliaryRailToolEntry,
@@ -11,7 +13,7 @@ import {
 } from "./auxiliaryPresentation";
 import { layoutTabName, toolTab } from "./model";
 import { tabIcon } from "./tabIcon";
-import type { LayoutAuxiliaryRegion } from "./types";
+import type { LayoutAuxiliaryRegion, LayoutToolId } from "./types";
 
 export interface AuxiliaryRailControlProps {
 	tabIndex: number;
@@ -32,14 +34,40 @@ export const RAIL_ENTRY_BUTTON_CLASS = cn(
 	"data-[layout-focus-intent=keyboard]:focus:ring-1 data-[layout-focus-intent=restore]:focus-visible:ring-0 data-[layout-focus-intent=restore]:focus-visible:outline-none",
 );
 
-export function railEntryButtonProps(active: boolean) {
-	return buttonDataAttributes({ variant: "ghost", size: "m", iconOnly: true, selected: active });
+/**
+ * The sidebar toggle never wears the selected fill — its icon already flips with the state, and a
+ * resting fill would read as a stuck hover.
+ */
+export function railEntryButtonProps(active: boolean, tool?: LayoutToolId) {
+	return buttonDataAttributes({
+		variant: "ghost",
+		size: "m",
+		iconOnly: true,
+		selected: active && tool !== "projects",
+	});
 }
 
 export const RAIL_ICON = "size-16 shrink-0";
 
-export function railTooltipSide(region: LayoutAuxiliaryRegion | "center"): "right" | "bottom" {
-	return region === "left" ? "right" : "bottom";
+/** Every rail sits in a horizontal top bar, so its tooltips open downward. */
+export function railTooltipSide(_region: LayoutAuxiliaryRegion | "center"): "bottom" {
+	return "bottom";
+}
+
+/** The Projects entry is the sidebar toggle: name it for what it does and show its shortcut. */
+export function railTooltipLabel(
+	t: Translator,
+	tool: LayoutToolId | undefined,
+	name: string,
+	active: boolean,
+): ReactNode {
+	if (tool !== "projects") return name;
+	return (
+		<TooltipShortcut
+			label={t(active ? "workbench.rail.hideSidebar" : "workbench.rail.showSidebar")}
+			shortcut={platformShortcutLabel("B")}
+		/>
+	);
 }
 
 export const AuxiliaryRailToolButton = forwardRef<
@@ -58,7 +86,10 @@ export const AuxiliaryRailToolButton = forwardRef<
 	const name = layoutTabName(t, tab);
 	return (
 		<div data-active={active} className={RAIL_ENTRY_FRAME_CLASS}>
-			<IconTooltip label={name} side={railTooltipSide(region)}>
+			<IconTooltip
+				label={railTooltipLabel(t, entry.tool, name, active)}
+				side={railTooltipSide(region)}
+			>
 				<button
 					ref={ref}
 					type="button"
@@ -67,7 +98,7 @@ export const AuxiliaryRailToolButton = forwardRef<
 					aria-label={name}
 					aria-pressed={active}
 					aria-controls={controls}
-					{...railEntryButtonProps(active)}
+					{...railEntryButtonProps(active, entry.tool)}
 					{...control}
 					onClick={onActivate}
 					className={RAIL_ENTRY_BUTTON_CLASS}
@@ -86,9 +117,11 @@ export function AuxiliaryRail({
 	renderBoundary,
 	trailing,
 	orientation,
+	pointerHandlers,
 }: {
 	region: LayoutAuxiliaryRegion;
 	orientation?: "horizontal" | "vertical";
+	pointerHandlers?: Pick<HTMLAttributes<HTMLDivElement>, "onPointerOver" | "onPointerOut">;
 	entries: readonly AuxiliaryRailEntry[];
 	renderEntry: (entry: AuxiliaryRailEntry, control: AuxiliaryRailControlProps) => ReactNode;
 	renderBoundary?: (paneIndex: number) => ReactNode;
@@ -112,6 +145,7 @@ export function AuxiliaryRail({
 	return (
 		<div
 			ref={root}
+			{...pointerHandlers}
 			role="toolbar"
 			aria-label={t(RAIL_TOOLBAR_LABELS[region])}
 			aria-orientation={horizontal ? "horizontal" : "vertical"}
@@ -121,7 +155,7 @@ export function AuxiliaryRail({
 				horizontal
 					? "window-no-drag h-32 min-w-0 overflow-x-auto overflow-y-hidden"
 					: "h-full w-40 flex-col overflow-x-hidden overflow-y-auto py-4",
-				(!horizontal || region === "left") && "bg-container-sidebar-bg",
+				!horizontal && "bg-container-sidebar-bg",
 			)}
 			onKeyDown={(event) => {
 				if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;

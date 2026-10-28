@@ -111,9 +111,9 @@ test("the location segments name the active workspace and switch through their m
 	// New workspace from the menu opens the shell-owned dialog.
 	await page.getByTestId("scope-workspace").click();
 	await workspaceMenu.getByTestId("scope-workspace-new").click();
-	await expect(page.getByTestId("new-workspace-dialog")).toBeVisible();
+	await expect(page.getByTestId("new-workspace-page")).toBeVisible();
 	await page.keyboard.press("Escape");
-	await expect(page.getByTestId("new-workspace-dialog")).toBeHidden();
+	await expect(page.getByTestId("new-workspace-page")).toBeHidden();
 
 	// Project menu → Project home.
 	await (await workspaceDetail(page, "scope-project")).click();

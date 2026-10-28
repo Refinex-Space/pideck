@@ -7,7 +7,7 @@ test.describe("new workspace keyboard shortcut", () => {
 	}) => {
 		await openFixtureProject(page);
 
-		const dialog = page.getByTestId("new-workspace-dialog");
+		const dialog = page.getByTestId("new-workspace-page");
 		await expect(page.getByTestId("add-workspace").first()).toHaveAttribute(
 			"aria-label",
 			/^Create workspace \(.*N.*\)$/,
@@ -29,7 +29,7 @@ test.describe("new workspace keyboard shortcut", () => {
 	test("The Mod+Alt+N alias opens the same dialog and Mod+Shift+N does not", async ({ page }) => {
 		await openFixtureProject(page);
 
-		const dialog = page.getByTestId("new-workspace-dialog");
+		const dialog = page.getByTestId("new-workspace-page");
 		await page.getByTestId("welcome-title").click();
 
 		await page.keyboard.press("ControlOrMeta+Shift+n");
@@ -47,7 +47,7 @@ test.describe("new workspace keyboard shortcut", () => {
 		await openFixtureProject(page);
 		await createWorkspaceViaDialog(page);
 
-		const dialog = page.getByTestId("new-workspace-dialog");
+		const dialog = page.getByTestId("new-workspace-page");
 		await page.keyboard.press("Escape");
 		await page.keyboard.press("ControlOrMeta+n");
 		await expect(dialog).toBeVisible();

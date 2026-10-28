@@ -5,6 +5,7 @@ import {
 	modelGroupToggle,
 	openAppFresh,
 	openFixtureProject,
+	openNewSessionPage,
 	revealModelGroups,
 } from "./fixtures/app";
 import {
@@ -32,8 +33,8 @@ function signedOutNotice(page: Page) {
 }
 
 async function centralModelsOfferedToNewChats(page: Page): Promise<number> {
-	await page.getByTestId("add-workspace").first().click();
-	const dialog = page.getByTestId("new-workspace-dialog");
+	await openNewSessionPage(page);
+	const dialog = page.getByTestId("new-workspace-page");
 	await expect(dialog).toBeVisible();
 	await dialog.getByTestId("model-selector").click();
 	// Groups other than the current model's start collapsed; a withdrawn provider has no group at all.

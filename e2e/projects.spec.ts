@@ -442,9 +442,9 @@ test("project context actions stay compact and close/reopen is lossless across c
 
 	await openProjectActions(page, fixtureRow);
 	await page.getByTestId("project-menu-create-workspace").click();
-	await expect(page.getByTestId("new-workspace-dialog")).toBeVisible();
+	await expect(page.getByTestId("new-workspace-page")).toBeVisible();
 	await page.keyboard.press("Escape");
-	await expect(fixtureName).toBeFocused();
+	await expect(page.getByTestId("new-workspace-page")).toHaveCount(0);
 
 	const secondRepo = seedSecondRepo();
 	await page.getByTestId("add-project-menu").click();
@@ -543,7 +543,8 @@ test("project names toggle their rows while keeping home navigation and independ
 	await name.press("Space");
 	await expect(icon).toHaveAttribute("aria-expanded", "false");
 	await row.getByTestId("add-workspace").click();
-	await expect(page.getByTestId("new-workspace-dialog")).toBeVisible();
+	await page.getByTestId("new-session-isolated").click();
+	await expect(page.getByTestId("new-workspace-page")).toBeVisible();
 	await expect(name).toHaveAttribute("aria-expanded", "false");
 	await page.keyboard.press("Escape");
 	await name.click({ button: "right" });

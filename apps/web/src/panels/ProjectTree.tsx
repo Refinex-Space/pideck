@@ -7,6 +7,7 @@ import {
 	RiExternalLinkLine as ExternalLink,
 	RiFolderOpenLine as FolderOpen,
 	RiGitBranchLine as GitBranch,
+	RiHome2Line as House,
 	RiLoader4Line as Loader2,
 	RiMailOpenLine as MailOpen,
 	RiMailUnreadLine as MailUnread,
@@ -73,7 +74,6 @@ import { errorText, getTransport } from "../transport";
 import { AddProjectMenu } from "./AddProjectMenu";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { ExistingWorktreeDialog } from "./ExistingWorktreeDialog";
-import { NewWorkspaceDialog } from "./NewWorkspaceDialog";
 import { RemoveWorkspaceDialog } from "./RemoveWorkspaceDialog";
 import {
 	announceSettledShelf,
@@ -124,12 +124,10 @@ export function ProjectTree() {
 	const editors = useEditors();
 
 	const expandedProjectIds = useAppStore((s) => s.expandedProjectIds);
-	const [dialogProjectId, setDialogProjectId] = useState<string | null>(null);
 	const [existingDialogProjectId, setExistingDialogProjectId] = useState<string | null>(null);
 	const addProjectButtonRef = useRef<HTMLButtonElement>(null);
 	const projectNameButtonsRef = useRef(new Map<string, HTMLButtonElement>());
 	const pendingCloseFocusProjectIdRef = useRef<string | null>(null);
-	const workspaceDialogReturnFocusIdRef = useRef<string | null>(null);
 	const existingDialogReturnFocusIdRef = useRef<string | null>(null);
 
 	const registerProjectNameButton = useCallback(
@@ -255,9 +253,8 @@ export function ProjectTree() {
 			});
 	};
 
-	const openWorkspaceDialog = (projectId: string, returnFocusToProject: boolean) => {
-		workspaceDialogReturnFocusIdRef.current = returnFocusToProject ? projectId : null;
-		setDialogProjectId(projectId);
+	const startNewSession = (projectId: string, target: "worktree" | "default") => {
+		useAppStore.getState().openNewSession({ projectId, target, prompt: "" });
 	};
 
 	const openExistingWorktreeDialog = (projectId: string) => {
@@ -322,8 +319,7 @@ export function ProjectTree() {
 								canRename={canRenameProject(protocolVersion)}
 								onRename={(name) => renameProject(project, name)}
 								onClose={() => closeProject(project)}
-								onAddWorkspace={() => openWorkspaceDialog(project.id, false)}
-								onAddWorkspaceFromMenu={() => openWorkspaceDialog(project.id, true)}
+								onNewSession={(target) => startNewSession(project.id, target)}
 								onOpenExistingWorktree={() => openExistingWorktreeDialog(project.id)}
 								onRegisterNameButton={(element) => registerProjectNameButton(project.id, element)}
 								onRestoreFocus={() => focusProjectNameOrAdd(project.id)}
@@ -381,20 +377,6 @@ export function ProjectTree() {
 					);
 				})}
 			</ul>
-
-			{dialogProjectId !== null ? (
-				<NewWorkspaceDialog
-					open
-					projectId={dialogProjectId}
-					onOpenChange={(o) => {
-						if (o) return;
-						setDialogProjectId(null);
-						const returnFocusId = workspaceDialogReturnFocusIdRef.current;
-						workspaceDialogReturnFocusIdRef.current = null;
-						if (returnFocusId) focusProjectNameOrAdd(returnFocusId);
-					}}
-				/>
-			) : null}
 
 			{existingDialogProjectId !== null ? (
 				<ExistingWorktreeDialog
@@ -506,8 +488,7 @@ function ProjectRow({
 	canRename,
 	onRename,
 	onClose,
-	onAddWorkspace,
-	onAddWorkspaceFromMenu,
+	onNewSession,
 	onOpenExistingWorktree,
 	onRegisterNameButton,
 	onRestoreFocus,
@@ -523,8 +504,7 @@ function ProjectRow({
 	canRename: boolean;
 	onRename: (name: string) => void;
 	onClose: () => void;
-	onAddWorkspace: () => void;
-	onAddWorkspaceFromMenu: () => void;
+	onNewSession: (target: "worktree" | "default") => void;
 	onOpenExistingWorktree: () => void;
 	onRegisterNameButton: (element: HTMLButtonElement | null) => void;
 	onRestoreFocus: () => void;
@@ -620,15 +600,34 @@ function ProjectRow({
 					{workspaceCount}
 				</span>
 			)}
-			<IconButton
-				icon={Plus}
-				label={createWorkspaceLabel}
-				variant="ghost"
-				size="s"
-				className={HOVER_CONTROL_CLASS}
-				data-testid="add-workspace"
-				onClick={onAddWorkspace}
-			/>
+			<DropdownMenu>
+				<DropdownMenuTrigger asChild>
+					<IconButton
+						icon={Plus}
+						label={createWorkspaceLabel}
+						variant="ghost"
+						size="s"
+						className={HOVER_CONTROL_CLASS}
+						data-testid="add-workspace"
+					/>
+				</DropdownMenuTrigger>
+				<DropdownMenuContent align="start" data-testid="new-session-menu">
+					<DropdownMenuItem
+						data-testid="new-session-isolated"
+						onSelect={() => onNewSession("worktree")}
+					>
+						<GitBranch />
+						{t("panels.newWorkspace.targetIsolated")}
+					</DropdownMenuItem>
+					<DropdownMenuItem
+						data-testid="new-session-default"
+						onSelect={() => onNewSession("default")}
+					>
+						<House />
+						{t("panels.newWorkspace.targetDefault")}
+					</DropdownMenuItem>
+				</DropdownMenuContent>
+			</DropdownMenu>
 		</div>
 	);
 	return (
@@ -661,10 +660,7 @@ function ProjectRow({
 				>
 					<ContextMenuItem
 						data-testid="project-menu-create-workspace"
-						onSelect={(event) => {
-							event.preventDefault();
-							openDialogAfterMenu(onAddWorkspaceFromMenu);
-						}}
+						onSelect={() => onNewSession("worktree")}
 					>
 						<Plus />
 						{t("panels.projectTree.createWorkspace")}

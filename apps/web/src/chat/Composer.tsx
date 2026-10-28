@@ -490,7 +490,7 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 			data-testid="chat-composer"
 			data-expanded={expanded}
 			data-streaming={isStreaming}
-			className="relative mx-auto flex w-full max-w-[calc(var(--chat-composer-max-width)+2*var(--chat-gutter))] shrink-0 flex-col bg-container-workspace-bg"
+			className="relative mx-auto flex w-full max-w-[var(--chat-transcript-width)] shrink-0 flex-col bg-container-workspace-bg"
 		>
 			{mentionOpen ? (
 				<div

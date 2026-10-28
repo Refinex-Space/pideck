@@ -72,6 +72,26 @@ async function restoreLineWidthDefaults(page: Page): Promise<void> {
 	await closeSettings(page);
 }
 
+async function expectComposerAligned(row: Locator): Promise<void> {
+	await expect
+		.poll(() =>
+			row.evaluate((element) => {
+				const surface = document.querySelector('[data-testid="chat-input-surface"]');
+				if (!surface) throw new Error("Input surface missing");
+				const rect = element.getBoundingClientRect();
+				const input = surface.getBoundingClientRect();
+				const style = getComputedStyle(element);
+				const left = Number.parseFloat(style.paddingLeft);
+				const right = Number.parseFloat(style.paddingRight);
+				return Math.max(
+					Math.abs(input.x - (rect.x + left)),
+					Math.abs(input.width - (rect.width - left - right)),
+				);
+			}),
+		)
+		.toBeLessThanOrEqual(2);
+}
+
 async function expectWrapped(viewLines: Locator): Promise<void> {
 	await expect(viewLines).toBeVisible();
 	await expect.poll(() => viewLines.locator(":scope > .view-line").count()).toBeGreaterThan(1);
@@ -209,6 +229,7 @@ test("chat uses the selected measure and optionally exceeds a narrow pane", asyn
 			)
 			.toBeLessThanOrEqual(2);
 
+		await expectComposerAligned(row);
 		await openLineWidthSettings(page, "chat");
 		await saveWidth(chat.input, 240);
 		await closeSettings(page);
@@ -223,6 +244,7 @@ test("chat uses the selected measure and optionally exceeds a narrow pane", asyn
 			})
 			.toBe(true);
 
+		await expectComposerAligned(row);
 		await openLineWidthSettings(page, "chat");
 		await chat.bounded.click();
 		await expect(chat.bounded).toHaveAttribute("data-active", "false");

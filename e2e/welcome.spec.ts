@@ -2,6 +2,7 @@ import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
 import { expect, type Page, test } from "@playwright/test";
 import {
+	chooseNewSessionTarget,
 	createWorkspaceViaDialog,
 	openAppFresh,
 	openAppSettings,
@@ -214,18 +215,17 @@ test("a project without specs suggests setting it up", async ({ page }) => {
 		).toBeVisible();
 
 		await page.getByTestId("welcome-cta").click();
-		const dialog = page.getByTestId("new-workspace-dialog");
+		const dialog = page.getByTestId("new-workspace-page");
 		await expect(dialog).toBeVisible();
 		await expect(dialog.getByTestId("ws-prompt")).toHaveValue("/skill:setting-up-a-project ");
 		await expect(dialog.getByTestId("slash-menu")).toHaveCount(0);
-		await expect(dialog.getByTestId("ws-target-worktree")).toHaveAttribute("data-active", "true");
+		await expect(dialog.getByTestId("ws-target")).toHaveText("Isolated workspace");
 		await expect(dialog.getByRole("heading", { name: "Create workspace" })).toBeVisible();
 		await expect(dialog.getByTestId("ws-branch-picker")).toBeVisible();
 		await expect(dialog.getByTestId("ws-prompt-note")).toContainText("setting-up-a-project skill");
 
-		await dialog.getByTestId("ws-target-default").click();
+		await chooseNewSessionTarget(page, "default");
 		await expect(dialog.getByRole("heading", { name: "Work in project folder" })).toBeVisible();
-		await expect(dialog).toContainText("no isolation");
 		await expect(dialog.getByTestId("ws-branch-picker")).toHaveCount(0);
 
 		await dialog.getByTestId("ws-prompt").fill("");

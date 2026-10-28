@@ -3,9 +3,11 @@ import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, type Page, test } from "@playwright/test";
 import {
+	chooseNewSessionTarget,
 	createWorkspaceViaDialog,
 	openAppFresh,
 	openFixtureProject,
+	openNewSessionPage,
 	worktreeRows,
 } from "./fixtures/app";
 import { git, gitAs, gitText } from "./fixtures/git";
@@ -45,8 +47,8 @@ async function openPickedProjectWorkspaceDialog(page: Page, repo: string) {
 	await page.getByTestId("add-project-menu").click();
 	await page.getByTestId("menu-open-project").click();
 	await expect(page.getByTestId("project-item").first()).toBeVisible();
-	await page.getByTestId("add-workspace").first().click();
-	const dialog = page.getByTestId("new-workspace-dialog");
+	await openNewSessionPage(page);
+	const dialog = page.getByTestId("new-workspace-page");
 	await expect(dialog).toBeVisible();
 	return dialog;
 }
@@ -63,22 +65,19 @@ test("the dialog lists local branches (no stray origin) and creates a worktree",
 }) => {
 	await openFixtureProject(page);
 
-	await page.getByTestId("add-workspace").first().click();
-	const dialog = page.getByTestId("new-workspace-dialog");
+	await openNewSessionPage(page);
+	const dialog = page.getByTestId("new-workspace-page");
 	await expect(dialog).toBeVisible();
 
 	await expect(dialog.getByRole("heading", { name: "Create workspace" })).toBeVisible();
-	await expect(dialog).toContainText("A separate checkout on its own new branch");
 	await expect(dialog.getByTestId("ws-prompt-note")).toHaveCount(0);
-	await expect(dialog).toContainText("Files, chats, changes, and terminals stay scoped to it");
-	await expect(dialog.getByTestId("ws-target-worktree")).toHaveAttribute("data-active", "true");
+	await expect(dialog.getByTestId("ws-target")).toHaveText("Isolated workspace");
 
-	await dialog.getByTestId("ws-target-default").click();
+	await chooseNewSessionTarget(page, "default");
 	await expect(dialog.getByRole("heading", { name: "Work in project folder" })).toBeVisible();
-	await expect(dialog).toContainText("no isolation");
 	await expect(dialog.getByTestId("ws-branch-picker")).toHaveCount(0);
 	await expect(page.getByTestId("create-workspace")).toHaveText(/Start/);
-	await dialog.getByTestId("ws-target-worktree").click();
+	await chooseNewSessionTarget(page, "worktree");
 	await expect(dialog.getByRole("heading", { name: "Create workspace" })).toBeVisible();
 	await expect(dialog.getByTestId("ws-branch-picker")).toBeVisible();
 	await expect(page.getByTestId("create-workspace")).toHaveText(/Create/);
@@ -133,8 +132,7 @@ test("the dialog lists local branches (no stray origin) and creates a worktree",
 	await expect(dialog).toBeHidden();
 	await expect(worktreeRows(page)).toHaveCount(0);
 
-	await page.getByTestId("add-workspace").first().click();
-	await expect(dialog).toBeVisible();
+	await openNewSessionPage(page);
 	await page.getByTestId("create-workspace").click();
 	await expect(dialog).toBeHidden();
 	await expect(worktreeRows(page)).toHaveCount(1);
@@ -155,10 +153,10 @@ test("folder-mode Start with an empty prompt lands in a fresh chat in the Defaul
 	page,
 }) => {
 	await openFixtureProject(page);
-	await page.getByTestId("add-workspace").first().click();
-	const dialog = page.getByTestId("new-workspace-dialog");
+	await openNewSessionPage(page);
+	const dialog = page.getByTestId("new-workspace-page");
 	await expect(dialog).toBeVisible();
-	await dialog.getByTestId("ws-target-default").click();
+	await chooseNewSessionTarget(page, "default");
 	await page.getByTestId("create-workspace").click();
 	await expect(dialog).toBeHidden();
 
@@ -172,8 +170,8 @@ test("folder-mode Start with an empty prompt lands in a fresh chat in the Defaul
 test("a project's committed skills are gated behind trust, then autocomplete", async ({ page }) => {
 	await openFixtureProject(page);
 
-	await page.getByTestId("add-workspace").first().click();
-	const dialog = page.getByTestId("new-workspace-dialog");
+	await openNewSessionPage(page);
+	const dialog = page.getByTestId("new-workspace-page");
 	await expect(dialog).toBeVisible();
 	const prompt = dialog.getByTestId("ws-prompt");
 	const portable = dialog.getByTestId("slash-command").filter({ hasText: "/skill:e2e-portable" });
@@ -211,8 +209,8 @@ test("a project whose only gated resources are subagent definitions still asks f
 	);
 	try {
 		await openFixtureProject(page);
-		await page.getByTestId("add-workspace").first().click();
-		const dialog = page.getByTestId("new-workspace-dialog");
+		await openNewSessionPage(page);
+		const dialog = page.getByTestId("new-workspace-page");
 		const notice = dialog.getByTestId("ws-trust-notice");
 		await expect(notice).toContainText("1 skill and its own Pi resources");
 		await expect(notice).toContainText("subagent definitions");
@@ -241,8 +239,8 @@ Prepare $1 and verify \${2:-tests}.
 
 	try {
 		await openFixtureProject(page);
-		await page.getByTestId("add-workspace").first().click();
-		const dialog = page.getByTestId("new-workspace-dialog");
+		await openNewSessionPage(page);
+		const dialog = page.getByTestId("new-workspace-page");
 		const prompt = dialog.getByTestId("ws-prompt");
 
 		await prompt.fill("/compact");
@@ -282,15 +280,12 @@ Prepare $1 and verify \${2:-tests}.
 test("Enter in the prompt creates; Shift+Enter inserts a newline", async ({ page }) => {
 	await openFixtureProject(page);
 
-	await page.getByTestId("add-workspace").first().click();
-	const dialog = page.getByTestId("new-workspace-dialog");
+	await openNewSessionPage(page);
+	const dialog = page.getByTestId("new-workspace-page");
 	await expect(dialog).toBeVisible();
 	const prompt = dialog.getByTestId("ws-prompt");
 
 	await prompt.fill("first line");
-	await expect(dialog.getByTestId("workspace-naming-hint")).toContainText(
-		"name the workspace and branch from your request",
-	);
 	await prompt.press("Shift+Enter");
 	await prompt.pressSequentially("second line");
 	await expect(prompt).toHaveValue("first line\nsecond line");
@@ -298,7 +293,6 @@ test("Enter in the prompt creates; Shift+Enter inserts a newline", async ({ page
 	await expect(worktreeRows(page)).toHaveCount(0);
 
 	await prompt.fill("");
-	await expect(dialog.getByTestId("workspace-naming-hint")).toHaveCount(0);
 	await prompt.press("Enter");
 	await expect(dialog).toBeHidden();
 	await expect(worktreeRows(page)).toHaveCount(1);
@@ -325,8 +319,8 @@ test("a base whose fetch fails reports git's error, not a request timeout", asyn
 		await page.getByTestId("menu-open-project").click();
 		await expect(page.getByTestId("project-item").first()).toBeVisible();
 
-		await page.getByTestId("add-workspace").first().click();
-		const dialog = page.getByTestId("new-workspace-dialog");
+		await openNewSessionPage(page);
+		const dialog = page.getByTestId("new-workspace-page");
 		await expect(dialog).toBeVisible();
 		await expect(dialog.getByTestId("ws-branch-picker")).toContainText("origin/main");
 
@@ -435,8 +429,8 @@ test("a pasted image in the workspace dialog rides along into the first chat tur
 	page,
 }) => {
 	await openFixtureProject(page);
-	await page.getByTestId("add-workspace").first().click();
-	const dialog = page.getByTestId("new-workspace-dialog");
+	await openNewSessionPage(page);
+	const dialog = page.getByTestId("new-workspace-page");
 	await expect(dialog).toBeVisible();
 
 	await dialog.getByTestId("ws-prompt").fill("Look at this");

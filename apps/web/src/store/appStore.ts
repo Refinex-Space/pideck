@@ -1033,6 +1033,7 @@ interface AppState {
 	interviewPromptOpen: boolean;
 	notificationPromptOpen: boolean;
 	sessionSwitcherOpen: boolean;
+	newSessionDraft: NewSessionDraft | null;
 	theme: ThemeId;
 	themeMode: ThemeMode;
 	systemThemePair: SystemThemePair | undefined;
@@ -1351,6 +1352,9 @@ interface AppState {
 	hideInterviewPrompt: () => void;
 	openNotificationPrompt: () => void;
 	closeNotificationPrompt: () => void;
+	openNewSession: (draft: Omit<NewSessionDraft, "key" | "returnTo">) => void;
+	closeNewSession: () => void;
+	cancelNewSession: () => void;
 	openSessionSwitcher: () => void;
 	closeSessionSwitcher: () => void;
 	toggleSessionSwitcher: () => void;
@@ -1466,6 +1470,17 @@ function withWorkspaceSelected(history: string[], workspaceId: string): string[]
 	return history[0] === workspaceId
 		? history
 		: [workspaceId, ...history.filter((id) => id !== workspaceId)];
+}
+
+export interface NewSessionDraft {
+	projectId: string;
+	target: "worktree" | "default";
+	prompt: string;
+	note?: string;
+	/** The workspace that was open when the page was requested; cancelling returns to it. */
+	returnTo?: { id: string; projectId: string };
+	/** Bumps on every open so the page resets its form even when the same project is requested twice. */
+	key: number;
 }
 
 function workspaceActivationPatch(
@@ -2293,6 +2308,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 	interviewPromptOpen: false,
 	notificationPromptOpen: false,
 	sessionSwitcherOpen: false,
+	newSessionDraft: null,
 	theme: DEFAULT_CONFIG.theme,
 	themeMode: DEFAULT_CONFIG.themeMode,
 	systemThemePair: DEFAULT_CONFIG.systemThemePair,
@@ -2623,6 +2639,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 		set((state) => ({
 			selectedProjectId,
 			activeWorkspaceId: null,
+			newSessionDraft: null,
 			...(opts?.toggleExpansion
 				? {
 						expandedProjectIds: state.expandedProjectIds[selectedProjectId]
@@ -4285,6 +4302,37 @@ export const useAppStore = create<AppState>((set, get) => ({
 	openNotificationPrompt: () =>
 		set((state) => (state.notificationPromptOpen ? state : { notificationPromptOpen: true })),
 	closeNotificationPrompt: () => set({ notificationPromptOpen: false }),
+	openNewSession: (draft) =>
+		set((state) => {
+			const previous = state.newSessionDraft;
+			if (
+				previous?.projectId === draft.projectId &&
+				previous.target === draft.target &&
+				state.activeWorkspaceId === null
+			)
+				return state;
+			const returnTo = state.activeWorkspaceId
+				? (Object.values(state.workspaces)
+						.flat()
+						.find((workspace) => workspace.id === state.activeWorkspaceId) ?? undefined)
+				: previous?.returnTo;
+			return {
+				selectedProjectId: draft.projectId,
+				activeWorkspaceId: null,
+				newSessionDraft: {
+					...draft,
+					...(returnTo ? { returnTo: { id: returnTo.id, projectId: returnTo.projectId } } : {}),
+					key: (previous?.key ?? 0) + 1,
+				},
+			};
+		}),
+	closeNewSession: () =>
+		set((state) => (state.newSessionDraft ? { newSessionDraft: null } : state)),
+	cancelNewSession: () => {
+		const returnTo = get().newSessionDraft?.returnTo;
+		set({ newSessionDraft: null });
+		if (returnTo) get().activateWorkspace(returnTo);
+	},
 	openSessionSwitcher: () =>
 		set((state) => (state.sessionSwitcherOpen ? state : { sessionSwitcherOpen: true })),
 	closeSessionSwitcher: () => set({ sessionSwitcherOpen: false }),

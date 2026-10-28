@@ -172,11 +172,30 @@ async function disposeLiveSessions(page: Page): Promise<void> {
 	}
 }
 
+/** The project's + opens a type menu; picking an entry opens the new-session page in the main panel. */
+export async function openNewSessionPage(
+	page: Page,
+	target: "isolated" | "default" = "isolated",
+): Promise<void> {
+	await page.getByTestId("add-workspace").first().click();
+	await page.getByTestId(`new-session-${target}`).click();
+	await expect(page.getByTestId("new-workspace-page")).toBeVisible();
+}
+
+/** Switches the target pill on an open new-session page. */
+export async function chooseNewSessionTarget(
+	page: Page,
+	target: "worktree" | "default",
+): Promise<void> {
+	await page.getByTestId("ws-target").click();
+	await page.getByTestId(`ws-target-${target}`).click();
+}
+
 export async function createWorkspaceViaDialog(page: Page): Promise<Workspace> {
 	const before = new Set(loadPersistedWorkspaces().map((w) => w.id));
-	const dialog = page.getByTestId("new-workspace-dialog");
+	const dialog = page.getByTestId("new-workspace-page");
 	await expect(async () => {
-		if (!(await dialog.isVisible())) await page.getByTestId("add-workspace").first().click();
+		if (!(await dialog.isVisible())) await openNewSessionPage(page);
 		await expect(dialog).toBeVisible({ timeout: 5_000 });
 	}).toPass({ timeout: 30_000 });
 	await page.getByTestId("create-workspace").click();

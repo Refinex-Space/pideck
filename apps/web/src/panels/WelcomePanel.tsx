@@ -15,7 +15,7 @@ import { useAppStore } from "../store";
 import { getTransport } from "../transport";
 import { AddProjectMenu } from "./AddProjectMenu";
 import { enterDefaultWorkspace } from "./defaultWorkspace";
-import { NewWorkspaceDialog } from "./NewWorkspaceDialog";
+import { NewSessionPage } from "./NewSessionPage";
 import { ProjectTrustNotice } from "./ProjectTrustNotice";
 import { ProviderWarningBanner } from "./ProviderWarningBanner";
 import { useOpenProject } from "./useOpenProject";
@@ -27,11 +27,14 @@ export function WelcomePanel() {
 	const projects = useAppStore((s) => s.projects);
 	const recentProjects = useAppStore((s) => s.recentProjects);
 	const selectedProjectId = useAppStore((s) => s.selectedProjectId);
-	const [dialog, setDialog] = useState<{
-		projectId: string;
-		prompt: string;
-		note?: string;
-	} | null>(null);
+	const draft = useAppStore((s) => s.newSessionDraft);
+	const startWorkspace = (projectId: string, prompt: string, note?: string) =>
+		useAppStore.getState().openNewSession({
+			projectId,
+			target: "worktree",
+			prompt,
+			...(note !== undefined ? { note } : {}),
+		});
 	const [hasSpecs, setHasSpecs] = useState<boolean | null>(null);
 
 	const project = projects.find((p) => p.id === selectedProjectId) ?? projects[0] ?? null;
@@ -89,6 +92,16 @@ export function WelcomePanel() {
 		</AddProjectMenu>
 	);
 
+	if (draft) {
+		return (
+			<NewSessionPage
+				key={draft.key}
+				draft={draft}
+				onClose={() => useAppStore.getState().closeNewSession()}
+				onCancel={() => useAppStore.getState().cancelNewSession()}
+			/>
+		);
+	}
 	const showBrand = !project || project.name.toLowerCase() === PRODUCT_NAME.toLowerCase();
 	return (
 		<div
@@ -128,7 +141,7 @@ export function WelcomePanel() {
 							icon={Rocket}
 							title={t("panels.welcome.startBuildingTitle")}
 							subtitle={t("panels.welcome.startBuildingSubtitle")}
-							onClick={() => setDialog({ projectId: project.id, prompt: "" })}
+							onClick={() => startWorkspace(project.id, "")}
 						/>
 						{projectFolderCard(project.id)}
 					</>
@@ -142,35 +155,20 @@ export function WelcomePanel() {
 							tag={t("panels.welcome.setupTag")}
 							subtitle={t("panels.welcome.setupSubtitle")}
 							onClick={() =>
-								setDialog({
-									projectId: project.id,
-									prompt: SETUP_PROMPT,
-									note: t("panels.welcome.setupNote"),
-								})
+								startWorkspace(project.id, SETUP_PROMPT, t("panels.welcome.setupNote"))
 							}
 						/>
 						<Card
 							icon={Rocket}
 							title={t("panels.welcome.startBuildingTitle")}
 							subtitle={t("panels.welcome.startBuildingSecondarySubtitle")}
-							onClick={() => setDialog({ projectId: project.id, prompt: "" })}
+							onClick={() => startWorkspace(project.id, "")}
 						/>
 						{projectFolderCard(project.id)}
 					</>
 				)}
 			</div>
 
-			{dialog ? (
-				<NewWorkspaceDialog
-					open
-					projectId={dialog.projectId}
-					initialPrompt={dialog.prompt}
-					{...(dialog.note !== undefined ? { promptNote: dialog.note } : {})}
-					onOpenChange={(o) => {
-						if (!o) setDialog(null);
-					}}
-				/>
-			) : null}
 			{dialogs}
 		</div>
 	);

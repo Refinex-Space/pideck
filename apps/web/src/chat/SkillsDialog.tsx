@@ -57,7 +57,7 @@ function groupCatalog(t: Translator, entries: SkillCatalogEntry[]): Group[] {
 				hint: group.isPlugin ? t("chat.skills.pluginHint") : meta ? t(meta.hint) : "",
 				isPlugin: group.isPlugin,
 				items: group.items,
-				rank: group.isPlugin ? 3 : (meta?.rank ?? 5),
+				rank: group.isPlugin ? 9 : (meta?.rank ?? 5),
 			};
 		})
 		.sort((a, b) => a.rank - b.rank || a.label.localeCompare(b.label));
@@ -170,32 +170,29 @@ export function SkillsDialog({
 	);
 	const trustEnables = trustNotice.kind === "untrusted" ? trustEnablesText(t, trustNotice) : null;
 	const groups = groupCatalog(t, entries ?? []);
-	const hasPlugins = groups.some((g) => g.isPlugin);
-	const isLeadingKey = (key: string) => key === "bundled" || key === "pi";
-	const leadingGroups = groups.filter((g) => isLeadingKey(g.key));
-	const otherGroups = groups.filter((g) => !isLeadingKey(g.key));
+	const pluginGroups = groups.filter((g) => g.isPlugin);
+	const regularGroups = groups.filter((g) => !g.isPlugin);
 
-	const renderGroup = (group: Group) => {
+	const renderGroup = (group: Group, nested = false) => {
 		const lockedByMaster = group.isPlugin && pluginsDisabled;
 		const groupOn = !lockedByMaster && !disabledGroups.has(group.key);
 		return (
 			<div key={group.key} data-testid="skill-group" data-group={group.key} data-on={groupOn}>
-				<div
-					className={cn(
-						"sticky z-10 flex items-center gap-8 border-border-default border-y bg-container-header-bg px-8 py-8",
-						hasPlugins && !isLeadingKey(group.key) ? "top-32" : "top-0",
-					)}
-				>
+				<div className={cn("flex items-center gap-8 px-16 pt-16 pb-4", nested && "pt-8")}>
 					{group.isPlugin ? (
 						<Puzzle className="size-14 shrink-0 text-text-muted" aria-hidden />
 					) : null}
-					<span className="tr-text-eyebrow text-text-default">{group.label}</span>
-					<span className="min-w-0 flex-1 truncate text-text-muted tr-text-metadata">
-						{group.hint}
+					<span
+						title={group.hint || undefined}
+						className={cn(
+							"min-w-0 truncate",
+							nested ? "tr-text-ui text-text-default" : "tr-text-emphasis text-text-default",
+						)}
+					>
+						{group.label}
 					</span>
-					<span className="shrink-0 rounded-full bg-control-bg-selected px-8 text-text-muted tr-text-metadata">
-						{group.items.length}
-					</span>
+					<span className="shrink-0 tr-text-metadata text-text-subtle">{group.items.length}</span>
+					<span className="flex-1" />
 					<SkillSwitch
 						checked={groupOn}
 						busy={busy}
@@ -205,7 +202,7 @@ export function SkillsDialog({
 						onCheckedChange={(enabled) => setGroupEnabled(group.key, enabled)}
 					/>
 				</div>
-				<div className="ml-8 divide-y divide-border-default border-border-default border-l">
+				<div className="px-8">
 					{group.items.map((entry) => (
 						<SkillRow
 							key={`${group.key}:${entry.name}`}
@@ -238,9 +235,12 @@ export function SkillsDialog({
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent data-testid="skills-dialog" className="max-w-[560px] gap-12 p-12">
-				<div className="flex items-center justify-between gap-8 pr-[2rem]">
-					<DialogTitle className="tr-text-ui text-text-default">
+			<DialogContent
+				data-testid="skills-dialog"
+				className="max-w-[720px] gap-0 overflow-hidden p-0"
+			>
+				<div className="flex items-center justify-between gap-8 pt-16 pr-[2rem] pb-8 pl-16">
+					<DialogTitle className="tr-title-dialog text-text-default">
 						{t("chat.skills.title")}
 					</DialogTitle>
 					{workspace ? (
@@ -267,7 +267,7 @@ export function SkillsDialog({
 				{workspace?.stale ? (
 					<div
 						data-testid="skills-stale"
-						className="rounded-sm border border-border-default bg-container-elevated-bg px-12 py-8 text-text-muted tr-text-metadata"
+						className="mx-16 mb-8 rounded-sm border border-border-default bg-container-elevated-bg px-12 py-8 text-text-muted tr-text-metadata"
 					>
 						<T
 							i18nKey="chat.skills.staleNotice"
@@ -279,7 +279,7 @@ export function SkillsDialog({
 				{trustNotice.kind === "untrusted" ? (
 					<div
 						data-testid="skills-trust-all"
-						className="flex flex-col gap-8 rounded-sm border border-feedback-warning-muted bg-container-elevated-bg px-12 py-8"
+						className="mx-16 mb-8 flex flex-col gap-8 rounded-sm border border-feedback-warning-muted bg-container-elevated-bg px-12 py-8"
 					>
 						<div className="flex items-start gap-8">
 							<TriangleAlert className="mt-2 size-14 shrink-0 text-feedback-warning" aria-hidden />
@@ -314,32 +314,34 @@ export function SkillsDialog({
 					</div>
 				) : null}
 
-				<div className="max-h-[50vh] overflow-y-auto">
+				<div className="max-h-[60vh] overflow-y-auto border-border-default border-t pb-8">
 					{entries === null ? (
-						<LoadingRegion rows={4} className="px-8 py-12" />
+						<LoadingRegion rows={4} className="px-16 py-12" />
 					) : entries.length === 0 ? (
-						<p className="px-8 py-12 text-text-muted tr-text-ui">{t("chat.skills.empty")}</p>
+						<p className="px-16 py-12 text-text-muted tr-text-ui">{t("chat.skills.empty")}</p>
 					) : (
 						<>
-							{leadingGroups.map(renderGroup)}
-							{hasPlugins ? (
-								<div
-									data-testid="skills-all-plugins"
-									className="sticky top-0 z-20 flex h-32 items-center gap-8 border-border-default border-y bg-container-header-bg px-8"
-								>
-									<span className="min-w-0 flex-1 tr-text-eyebrow text-text-default">
-										{t("chat.skills.allPlugins")}
-									</span>
-									<SkillSwitch
-										checked={!pluginsDisabled}
-										busy={busy}
-										label={t("chat.skills.enableAllPlugins")}
-										testId="all-plugins-toggle"
-										onCheckedChange={(enabled) => setGroupEnabled("@plugins", enabled)}
-									/>
-								</div>
+							{regularGroups.map((group) => renderGroup(group))}
+							{pluginGroups.length > 0 ? (
+								<>
+									<div
+										data-testid="skills-all-plugins"
+										className="flex items-center gap-8 px-16 pt-16 pb-4"
+									>
+										<span className="min-w-0 flex-1 truncate tr-text-emphasis text-text-default">
+											{t("chat.skills.allPlugins")}
+										</span>
+										<SkillSwitch
+											checked={!pluginsDisabled}
+											busy={busy}
+											label={t("chat.skills.enableAllPlugins")}
+											testId="all-plugins-toggle"
+											onCheckedChange={(enabled) => setGroupEnabled("@plugins", enabled)}
+										/>
+									</div>
+									{pluginGroups.map((group) => renderGroup(group, true))}
+								</>
 							) : null}
-							{otherGroups.map(renderGroup)}
 						</>
 					)}
 				</div>
@@ -403,7 +405,7 @@ function SkillRow({
 			data-testid="skill-row"
 			data-skill={entry.name}
 			data-decision={entry.decision}
-			className="flex items-center gap-8 py-8 pr-8 pl-12 hover:bg-control-bg-hovered"
+			className="flex items-center gap-12 rounded-md px-8 py-8 hover:bg-control-bg-hovered"
 		>
 			<span className="flex min-w-0 flex-1 flex-col">
 				<span className="truncate tr-text-ui text-text-default">{entry.name}</span>

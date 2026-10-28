@@ -1,6 +1,6 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "@playwright/test";
-import { openFixtureProject } from "./fixtures/app";
+import { openFixtureProject, openNewSessionPage } from "./fixtures/app";
 
 const BOGUS_MODEL_ID = "definitely-not-a-real-model-9x";
 
@@ -38,8 +38,8 @@ test("a bad model surfaces a visible error toast, not a false ✓ Done", {
 	await forceBadModelOnCreate(page);
 	await openFixtureProject(page);
 
-	await page.getByTestId("add-workspace").first().click();
-	const dialog = page.getByTestId("new-workspace-dialog");
+	await openNewSessionPage(page);
+	const dialog = page.getByTestId("new-workspace-page");
 	await expect(dialog).toBeVisible();
 	await expect(dialog.getByTestId("thinking-selector")).toBeVisible();
 	await page.getByTestId("ws-prompt").fill("Reply with the single word: pong");

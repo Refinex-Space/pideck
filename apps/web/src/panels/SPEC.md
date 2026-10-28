@@ -79,7 +79,7 @@ treatment.
   removal; success is the
   row disappearing with no toast, while rejection keeps it and raises an error toast. Menu/dialog dismissal
   restores the source project-name focus; successful close focuses the fallback project name or the Projects
-  view's Add project control. `ProjectTree` also owns the `NewWorkspaceDialog` the per-project `+` opens **and** each
+  view's Add project control. `ProjectTree` also owns the per-project `+` menu that opens `NewSessionPage` **and** each
   workspace row's hover-revealed **kebab menu** (`MoreVertical`, controlled `DropdownMenu`) — right-clicking
   anywhere on the row opens that exact menu at the kebab without selecting/activating the workspace, while
   the kebab remains the touch and keyboard-focus path. Its actions are a `DropdownMenuSub` **"Open in"**
@@ -371,9 +371,9 @@ trigger. **"Work in project folder"**
 (`House` icon, matching the rail's Default row) **direct-enters** the Default workspace — no dialog: the
 shared `enterDefaultWorkspace` helper lists the project's workspaces, stores them, and activates the
 `kind === "default"` row; an older host with no Default row degrades to an error toast. **"Start building"** is the
-intent-first framing of the create-and-kick-off flow — it opens `NewWorkspaceDialog` preselected to the
+intent-first framing of the create-and-kick-off flow — it opens `NewSessionPage` preselected to the
 **Isolated workspace** target; *workspace* is the mechanism, not the label. **"Set up
-project"** opens the same dialog with an `initialPrompt` seed **and a `promptNote`** — the note is the
+project"** opens the same page with a seed prompt **and a `promptNote`** — the note is the
 card's own copy (the dialog stays skill-agnostic), saying what the seeded command does: the agent drafts
 the project's specs, starting from its goal, before building — deliberately **not** an enumeration of
 artifacts, since the dispatcher's routes differ (starting-a-new-project stops at goal-and-requirements;
@@ -432,9 +432,17 @@ resources stop loading, running subagents stop and open chats reload only when `
 pre-session half of the user's skill settings; the chat header opens the same dialog in workspace mode
 (with Reload).
 
-**`NewWorkspaceDialog`** is the start-working surface: **a target control** (a two-option segment — a
-native radio group, `fieldset` + sr-only `legend` over visually-hidden radio inputs, so assistive tech
-hears one mutually-exclusive choice — both always visible: the two-mode model in one glance) chooses **where** the work runs, and the header is
+**`NewSessionPage`** (`panels/NewSessionPage.tsx`) is the start-working surface. It is a page in the
+Project Home main panel, **not a dialog**: a project's `+` opens a two-item menu (*Isolated workspace* /
+*Project folder*), and the choice calls the store's `openNewSession`, which leaves the active workspace
+(`activeWorkspaceId: null`) and records the draft (`newSessionDraft`: project, target, seed prompt, note,
+the workspace to return to, and a `key` that resets the form). `WelcomePanel` renders the page in place of
+its cards while a draft exists. Cancel/`Esc` (`cancelNewSession`) returns to the workspace that was open;
+creating, or any workspace activation, simply clears the draft; picking a project in the tree clears it
+too. The composer card holds the prompt and the model pill with Cancel/Create; below it a pill row
+carries **a target control** (a dropdown with the two modes, so the choice can still be changed), the
+project picker, the base-branch picker (isolated only) and Skills. The legacy description of that
+control follows: **a target control** chooses **where** the work runs, and the header is
 **mode-aware** so it always names the operation truthfully: **Isolated workspace** → title **“Create
 workspace”**, description **“A separate checkout on its own new branch. Files, chats, changes, and
 terminals stay scoped to it.”**; **Project folder** → title **“Work in project folder”**, description
@@ -1389,7 +1397,7 @@ own section. The kebab menu (`plan-menu`, a
 - **Allowed deps:** `store`, `transport`, `components` (`SkeletonRows` — every async panel's pending
   state renders content-shaped skeleton rows, never a bare "Loading…" line), `@thinkrail/ui/*` (incl. `popover`/`command`/`textarea` for the
   dialog), `chat` (`ModelEffortPicker` + the `useModelCatalog`/`useModelPreferences` hooks that feed it,
-  reused by `NewWorkspaceDialog`; `ModelSelector`/`ThinkingSelector`, still mounted by
+  reused by `NewSessionPage`; `ModelSelector`/`ThinkingSelector`, still mounted by
   `ModelsSettings`; `modelPicker`'s `AUTH_KIND_LABEL`, the one connection-kind vocabulary (catalog keys)
   `ProvidersSettings` shares with the picker, and its `formatContext` plus `ProviderGlyph`, reused by
   `VisibleModelsSettings`' rows; `TemplateEditorDialog`, reused by `TemplatesSettings`), `auth` (`LoginDialog`, mounted by

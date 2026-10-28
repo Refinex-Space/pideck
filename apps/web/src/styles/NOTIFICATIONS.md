@@ -11,7 +11,7 @@ references: [web-color, web-spacing, web-typography]
 
 One visual language for every transient or inline message the app shows inside its own window: toasts
 (`packages/ui/toast.tsx` composed by `panels/Toaster`) and inline notices such as `ProjectTrustNotice`,
-`ProviderWarningBanner`, the trust notices in `SkillsDialog` / `NewWorkspaceDialog`, and the chat
+`ProviderWarningBanner`, the trust notices in `SkillsDialog` / `NewSessionPage`, and the chat
 `ErrorTurn` / `CompactionNotice`. OS-level notifications are a different thing, owned by the `notifications`
 module.
 

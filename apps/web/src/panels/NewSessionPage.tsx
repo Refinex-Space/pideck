@@ -1,13 +1,4 @@
 import {
-	RiBox3Line as Box,
-	RiArrowDownSLine as ChevronDown,
-	RiGitBranchLine as GitBranch,
-	RiHome2Line as House,
-	type RemixiconComponentType as LucideIcon,
-	RiSparkling2Line as Sparkles,
-	RiAlertLine as TriangleAlert,
-} from "@remixicon/react";
-import {
 	type ModelDefault,
 	PROJECT_TEMPLATE_PREVIEW_PROTOCOL_VERSION,
 	type SlashCommandInfo,
@@ -17,7 +8,7 @@ import {
 	type WireModel,
 	type Workspace,
 } from "@thinkrail/contracts";
-import { i18n, T, useT } from "@thinkrail/locales/react";
+import { i18n, useT } from "@thinkrail/locales/react";
 import { Button } from "@thinkrail/ui/button";
 import {
 	Command,
@@ -28,16 +19,16 @@ import {
 	CommandList,
 } from "@thinkrail/ui/command";
 import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogHeader,
-	DialogTitle,
-} from "@thinkrail/ui/dialog";
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuRadioGroup,
+	DropdownMenuRadioItem,
+	DropdownMenuTrigger,
+} from "@thinkrail/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@thinkrail/ui/popover";
 import { Textarea } from "@thinkrail/ui/textarea";
-import { cn } from "@thinkrail/ui/utils";
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { Box, ChevronDown, GitBranch, House, Sparkles, TriangleAlert } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { type DefaultPairOption, ModelEffortPicker } from "@/chat/ModelEffortPicker";
 import {
 	deriveProjectTrustNotice,
@@ -75,7 +66,13 @@ import {
 	useSlashCommandCompletion,
 	useTemplateCommandPicker,
 } from "@/prompt";
-import { selectCatalogModel, selectPickerModels, toast, useAppStore } from "@/store";
+import {
+	type NewSessionDraft,
+	selectCatalogModel,
+	selectPickerModels,
+	toast,
+	useAppStore,
+} from "@/store";
 import { createSessionWithSkillBaseline, errorText, getTransport } from "@/transport";
 import { BranchPicker } from "./BranchPicker";
 import { useBranchList } from "./branches";
@@ -102,27 +99,25 @@ async function refreshProjectWorkspaces(projectId: string): Promise<void> {
 	useAppStore.getState().setWorkspaces(projectId, rows);
 }
 
-export function NewWorkspaceDialog({
-	open,
-	projectId,
-	initialPrompt,
-	promptNote,
-	onOpenChange,
+export function NewSessionPage({
+	draft,
+	onClose,
+	onCancel,
 }: {
-	open: boolean;
-	projectId: string;
-	initialPrompt?: string;
-	promptNote?: string;
-	onOpenChange: (open: boolean) => void;
+	draft: NewSessionDraft;
+	/** The page is finished with (a workspace was created, or its project went away). */
+	onClose: () => void;
+	/** The user backed out; the caller returns to wherever they came from. */
+	onCancel: () => void;
 }) {
 	const t = useT();
 	const projects = useAppStore((s) => s.projects);
 	const protocolVersion = useAppStore((s) => s.protocolVersion);
 
-	const [selectedProjectId, setSelectedProjectId] = useState(projectId);
-	const [target, setTarget] = useState<WorkspaceTarget>("worktree");
+	const [selectedProjectId, setSelectedProjectId] = useState(draft.projectId);
+	const [target, setTarget] = useState<WorkspaceTarget>(draft.target);
 	const [baseRef, setBaseRef] = useState<string>("");
-	const [prompt, setPrompt] = useState("");
+	const [prompt, setPrompt] = useState(draft.prompt);
 	const [skillCommands, setSkillCommands] = useState<SlashCommandInfo[]>([]);
 	const [templates, setTemplates] = useState<TemplateInfo[]>([]);
 	const [slotSession, setSlotSession] = useState<TemplateSlotSessionState | null>(null);
@@ -142,8 +137,6 @@ export function NewWorkspaceDialog({
 	const [manageSkills, setManageSkills] = useState(false);
 	const promptRef = useRef<HTMLTextAreaElement>(null);
 	const hostDefaultAsked = useRef(false);
-	const targetGroupName = useId();
-	const [dialogEl, setDialogEl] = useState<HTMLElement | null>(null);
 	const updatePromptDraft = useCallback(
 		(nextPrompt: string, nextSlotSession: TemplateSlotSessionState | null) => {
 			setPrompt(nextPrompt);
@@ -202,25 +195,12 @@ export function NewWorkspaceDialog({
 	};
 
 	useEffect(() => {
-		if (!open) return;
-		setSelectedProjectId(projectId);
-		updatePromptDraft(initialPrompt ?? "", null);
-		setTarget("worktree");
-		setCreating(false);
-		attachedImages.reset();
-		hostDefaultAsked.current = false;
-		setExplicitPair(false);
-	}, [open, projectId, initialPrompt, updatePromptDraft, attachedImages.reset]);
-
-	useEffect(() => {
-		if (!open) return;
 		if (projects.some((p) => p.id === selectedProjectId)) return;
-		onOpenChange(false);
+		onClose();
 		toast.info(i18n.t("panels.newWorkspace.projectClosed"));
-	}, [open, projects, selectedProjectId, onOpenChange]);
+	}, [projects, selectedProjectId, onClose]);
 
 	useEffect(() => {
-		if (!open) return;
 		let cancelled = false;
 		setSkillCommands([]);
 		setTemplates([]);
@@ -232,10 +212,10 @@ export function NewWorkspaceDialog({
 		return () => {
 			cancelled = true;
 		};
-	}, [open, selectedProjectId]);
+	}, [selectedProjectId]);
 
 	useEffect(() => {
-		if (!open || !slashActive) return;
+		if (!slashActive) return;
 		let cancelled = false;
 		const location: TemplateReadLocation = supportsProjectTemplatePreview
 			? { projectId: selectedProjectId }
@@ -251,16 +231,16 @@ export function NewWorkspaceDialog({
 		return () => {
 			cancelled = true;
 		};
-	}, [open, selectedProjectId, slashActive, supportsProjectTemplatePreview]);
+	}, [selectedProjectId, slashActive, supportsProjectTemplatePreview]);
 
-	const trustSummary = useProjectTrustSummary(selectedProjectId, open);
+	const trustSummary = useProjectTrustSummary(selectedProjectId, true);
 
 	const {
 		models: allModels,
 		refreshing: modelsRefreshing,
 		refresh: onRefreshModels,
 		fresh: catalogFresh,
-	} = useModelCatalog(open);
+	} = useModelCatalog(true);
 	const hiddenModels = useAppStore((s) => s.hiddenModels);
 	const visibleModels = useMemo(
 		() => selectPickerModels(allModels, hiddenModels, []),
@@ -302,12 +282,11 @@ export function NewWorkspaceDialog({
 	};
 
 	useEffect(() => {
-		if (!open) return;
 		return applyHostDefault();
-	}, [open, applyHostDefault]);
+	}, [applyHostDefault]);
 
 	useEffect(() => {
-		if (!open || !model) return;
+		if (!model) return;
 		const next = reconcileModel(allModels, model, catalogFresh);
 		if (next === null) return;
 		if (next !== "unavailable") {
@@ -317,10 +296,10 @@ export function NewWorkspaceDialog({
 		if (hostDefaultAsked.current) return;
 		hostDefaultAsked.current = true;
 		return applyHostDefault();
-	}, [open, allModels, model, catalogFresh, applyHostDefault]);
+	}, [allModels, model, catalogFresh, applyHostDefault]);
 
 	useEffect(() => {
-		if (!open || !model) return;
+		if (!model) return;
 		if (model.thinkingLevels.includes(thinkingLevel)) return;
 		let cancelled = false;
 		getTransport()
@@ -336,7 +315,7 @@ export function NewWorkspaceDialog({
 		return () => {
 			cancelled = true;
 		};
-	}, [open, model, thinkingLevel]);
+	}, [model, thinkingLevel]);
 
 	const prefetchBase = (ref: string) => {
 		if (!ref) return;
@@ -354,10 +333,24 @@ export function NewWorkspaceDialog({
 		branches,
 		refreshing,
 		refresh: refreshBranches,
-	} = useBranchList(open ? selectedProjectId : null, (list) => {
+	} = useBranchList(selectedProjectId, (list) => {
 		setBaseRef(list.defaultBranch);
 		prefetchBase(list.defaultBranch);
 	});
+	useEffect(() => {
+		const onKeyDown = (event: KeyboardEvent) => {
+			if (event.key !== "Escape" || event.defaultPrevented) return;
+			if (
+				document.querySelector(
+					'[role="dialog"], [role="menu"], [role="listbox"], [data-radix-popper-content-wrapper]',
+				)
+			)
+				return;
+			onCancel();
+		};
+		window.addEventListener("keydown", onKeyDown);
+		return () => window.removeEventListener("keydown", onKeyDown);
+	}, [onCancel]);
 	const submitEnabled = !creating && !templatePending && attachedImages.pending === 0;
 
 	const create = async () => {
@@ -396,7 +389,7 @@ export function NewWorkspaceDialog({
 			void refreshProjectWorkspaces(workspace.projectId).catch(() => {});
 			store.activateWorkspace(workspace);
 		}
-		onOpenChange(false);
+		onClose();
 
 		store.beginChatStart(workspace.id);
 		const startChat = async () => {
@@ -457,94 +450,25 @@ export function NewWorkspaceDialog({
 	const isolated = target === "worktree";
 
 	return (
-		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent
-				ref={setDialogEl}
-				hideClose
-				data-testid="new-workspace-dialog"
-				className="max-w-[600px] gap-12 p-12"
-				onEscapeKeyDown={(event) => {
-					if (slashCompletion.open) {
-						event.preventDefault();
-						slashCompletion.dismiss();
-						return;
-					}
-					if (!slotSession) return;
-					event.preventDefault();
-					updatePromptDraft(prompt, null);
-				}}
-				onOpenAutoFocus={(e) => {
-					e.preventDefault();
-					promptRef.current?.focus();
-				}}
-			>
-				<DialogHeader>
-					<DialogTitle>
-						{isolated
-							? t("panels.newWorkspace.titleIsolated")
-							: t("panels.newWorkspace.titleDefault")}
-					</DialogTitle>
-					<DialogDescription>
-						{isolated
-							? t("panels.newWorkspace.descriptionIsolated")
-							: t("panels.newWorkspace.descriptionDefault")}
-					</DialogDescription>
-				</DialogHeader>
-
-				<fieldset
-					data-testid="ws-target"
-					className="flex w-fit items-center gap-2 rounded-md border border-control-border-default bg-control-bg p-2"
-				>
-					<legend className="sr-only">{t("panels.newWorkspace.targetLegend")}</legend>
-					<TargetOption
-						icon={GitBranch}
-						label={t("panels.newWorkspace.targetIsolated")}
-						name={targetGroupName}
-						active={isolated}
-						testid="ws-target-worktree"
-						onSelect={() => setTarget("worktree")}
-					/>
-					<TargetOption
-						icon={House}
-						label={t("panels.newWorkspace.targetDefault")}
-						name={targetGroupName}
-						active={!isolated}
-						testid="ws-target-default"
-						onSelect={() => setTarget("default")}
-					/>
-				</fieldset>
-
-				<div className="flex flex-wrap items-center gap-8">
-					<ProjectPicker
-						projects={projects}
-						current={selectedProject?.name ?? t("panels.newWorkspace.projectFallback")}
-						container={dialogEl}
-						onSelect={setSelectedProjectId}
-					/>
-					{isolated ? (
-						<BranchPicker
-							branches={branches}
-							selected={baseRef}
-							label={t("panels.newWorkspace.baseLabel")}
-							testid="ws-branch-picker"
-							triggerClassName={`${PILL} max-w-[220px]`}
-							refreshing={refreshing}
-							container={dialogEl}
-							onSelect={selectBaseRef}
-							onRefresh={refreshBranches}
-						/>
-					) : null}
-					<SkillsButton
-						onOpen={() => setManageSkills(true)}
-						testId="ws-manage-skills"
-						className="ml-auto"
-					/>
-				</div>
+		<form
+			aria-label={
+				isolated ? t("panels.newWorkspace.titleIsolated") : t("panels.newWorkspace.titleDefault")
+			}
+			onSubmit={(event) => event.preventDefault()}
+			data-testid="new-workspace-page"
+			className="flex h-full min-h-0 flex-col items-center overflow-auto px-24 py-24"
+		>
+			<div className="my-auto flex w-full max-w-[720px] flex-col gap-16">
+				<h1 className="sr-only">
+					{isolated
+						? t("panels.newWorkspace.titleIsolated")
+						: t("panels.newWorkspace.titleDefault")}
+				</h1>
 
 				{trustNotice.kind === "untrusted" ? (
 					<div
 						data-testid="ws-trust-notice"
-						className="flex w-full flex-col gap-8 rounded-sm border border-feedback-warning-muted bg-container-elevated-bg px-12 py-8 text-left"
+						className="flex w-full flex-col gap-8 rounded-lg border border-feedback-warning-muted bg-container-elevated-bg px-12 py-8 text-left"
 					>
 						<div className="flex items-start gap-8">
 							<TriangleAlert className="mt-2 size-14 shrink-0 text-feedback-warning" aria-hidden />
@@ -571,14 +495,14 @@ export function NewWorkspaceDialog({
 					</div>
 				) : null}
 
-				<div className="relative">
-					{promptNote ? (
+				<div className="relative flex flex-col rounded-xl border border-control-border-default bg-control-bg focus-within:border-control-border-active">
+					{draft.note ? (
 						<p
 							data-testid="ws-prompt-note"
-							className="mb-4 flex items-start gap-8 rounded-sm border border-primary-muted bg-clip-padding bg-primary-subtle px-12 py-8 text-left text-text-muted tr-text-metadata leading-snug"
+							className="m-8 mb-0 flex items-start gap-8 rounded-md border border-primary-muted bg-clip-padding bg-primary-subtle px-12 py-8 text-left text-text-muted tr-text-metadata leading-snug"
 						>
 							<Sparkles className="mt-2 size-14 shrink-0 text-primary" />
-							<span>{promptNote}</span>
+							<span>{draft.note}</span>
 						</p>
 					) : null}
 					<PromptImageChips
@@ -588,6 +512,7 @@ export function NewWorkspaceDialog({
 					/>
 					<Textarea
 						ref={promptRef}
+						autoFocus
 						data-testid="ws-prompt"
 						value={prompt}
 						disabled={creating}
@@ -601,8 +526,8 @@ export function NewWorkspaceDialog({
 						}}
 						placeholder={t("panels.newWorkspace.promptPlaceholder")}
 						spellCheck={false}
-						rows={6}
-						className="min-h-[160px]"
+						rows={5}
+						className="min-h-[136px] rounded-none border-0 bg-transparent px-16 pt-16 focus-visible:border-0"
 						onKeyDown={(e) => {
 							if (isPromptKeyEventComposing(e.nativeEvent)) return;
 							if (slotSession && !slashCompletion.open) {
@@ -620,6 +545,7 @@ export function NewWorkspaceDialog({
 								}
 							}
 							if (slashCompletion.handleKeyDown(e)) return;
+
 							if (e.key === "Enter" && !e.shiftKey) {
 								e.preventDefault();
 								if (submitEnabled) void create();
@@ -640,109 +566,140 @@ export function NewWorkspaceDialog({
 							onNext={() => stepPromptSlot(1)}
 							className="absolute top-full left-8 z-50 mt-4"
 						/>
-					) : prompt.trim() && isolated ? (
-						<p
-							data-testid="workspace-naming-hint"
-							className="px-4 text-text-muted tr-text-metadata"
-						>
-							{t("panels.newWorkspace.namingHint")}
-						</p>
-					) : (
-						<p className="mt-4 text-text-muted tr-text-metadata">
-							<T
-								i18nKey="panels.newWorkspace.slashHint"
-								components={[<span key="slash" className="tr-code-text" />]}
+					) : null}
+					<div className="flex flex-wrap items-center gap-8 p-8">
+						<div className="flex min-w-0 flex-1 flex-wrap items-center gap-8">
+							<ModelEffortPicker
+								models={models}
+								current={model}
+								level={thinkingLevel}
+								refreshing={modelsRefreshing}
+								onRefresh={onRefreshModels}
+								onSelect={({ model: next, level }) => {
+									pickExplicitly();
+									setModel(next);
+									if (level) setThinkingLevel(level);
+								}}
+								onSelectLevel={(level) => {
+									pickExplicitly();
+									setThinkingLevel(level);
+								}}
+								preferences={modelPreferences}
+								defaultOption={defaultOption}
+								container={null}
+								className="max-w-full"
 							/>
-						</p>
-					)}
+						</div>
+						<Button
+							variant="ghost"
+							size="l"
+							data-testid="cancel-new-workspace"
+							disabled={creating}
+							onClick={onCancel}
+							className="shrink-0"
+						>
+							{t("common.cancel")}
+						</Button>
+						<Button
+							variant="primary"
+							size="l"
+							data-testid="create-workspace"
+							disabled={!submitEnabled}
+							loading={creating}
+							onClick={() => void create()}
+							className="shrink-0"
+						>
+							{creating ? (
+								isolated ? (
+									t("panels.newWorkspace.creating")
+								) : (
+									t("panels.newWorkspace.starting")
+								)
+							) : (
+								<>
+									{isolated ? t("panels.newWorkspace.create") : t("panels.newWorkspace.start")}
+									<span className="inline-flex h-16 min-w-16 items-center justify-center rounded-sm bg-on-primary-soft px-4 tr-code-text">
+										↵
+									</span>
+								</>
+							)}
+						</Button>
+					</div>
 				</div>
 
 				<div className="flex flex-wrap items-center gap-8">
-					<div className="flex min-w-0 flex-1 flex-wrap items-center gap-8">
-						<ModelEffortPicker
-							models={models}
-							current={model}
-							level={thinkingLevel}
-							refreshing={modelsRefreshing}
-							onRefresh={onRefreshModels}
-							onSelect={({ model: next, level }) => {
-								pickExplicitly();
-								setModel(next);
-								if (level) setThinkingLevel(level);
-							}}
-							onSelectLevel={(level) => {
-								pickExplicitly();
-								setThinkingLevel(level);
-							}}
-							preferences={modelPreferences}
-							defaultOption={defaultOption}
-							container={dialogEl}
-							className="max-w-full"
+					<TargetPicker target={target} onSelect={setTarget} />
+					<ProjectPicker
+						projects={projects}
+						current={selectedProject?.name ?? t("panels.newWorkspace.projectFallback")}
+						container={null}
+						onSelect={setSelectedProjectId}
+					/>
+					{isolated ? (
+						<BranchPicker
+							branches={branches}
+							selected={baseRef}
+							label={t("panels.newWorkspace.baseLabel")}
+							testid="ws-branch-picker"
+							triggerClassName={`${PILL} max-w-[220px]`}
+							refreshing={refreshing}
+							container={null}
+							onSelect={selectBaseRef}
+							onRefresh={refreshBranches}
 						/>
-					</div>
-					<Button
-						variant="primary"
-						size="l"
-						data-testid="create-workspace"
-						disabled={!submitEnabled}
-						loading={creating}
-						onClick={() => void create()}
-						className="shrink-0"
-					>
-						{creating ? (
-							isolated ? (
-								t("panels.newWorkspace.creating")
-							) : (
-								t("panels.newWorkspace.starting")
-							)
-						) : (
-							<>
-								{isolated ? t("panels.newWorkspace.create") : t("panels.newWorkspace.start")}
-								<span className="inline-flex h-16 min-w-16 items-center justify-center rounded-sm bg-on-primary-soft px-4 tr-code-text">
-									↵
-								</span>
-							</>
-						)}
-					</Button>
+					) : null}
+					<SkillsButton
+						onOpen={() => setManageSkills(true)}
+						testId="ws-manage-skills"
+						className="ml-auto"
+					/>
 				</div>
-				<SkillsDialog
-					projectId={selectedProjectId}
-					open={manageSkills}
-					onOpenChange={setManageSkills}
-				/>
-			</DialogContent>
-		</Dialog>
+			</div>
+			<SkillsDialog
+				projectId={selectedProjectId}
+				open={manageSkills}
+				onOpenChange={setManageSkills}
+			/>
+		</form>
 	);
 }
 
-function TargetOption({
-	icon: Icon,
-	label,
-	name,
-	active,
-	testid,
+function TargetPicker({
+	target,
 	onSelect,
 }: {
-	icon: LucideIcon;
-	label: string;
-	name: string;
-	active: boolean;
-	testid: string;
-	onSelect: () => void;
+	target: WorkspaceTarget;
+	onSelect: (target: WorkspaceTarget) => void;
 }) {
+	const t = useT();
+	const Icon = target === "worktree" ? GitBranch : House;
 	return (
-		<label
-			data-testid={testid}
-			data-active={active}
-			className={cn(
-				"flex h-28 cursor-pointer items-center gap-8 rounded-sm px-12 tr-text-ui transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary",
-				active ? "bg-primary-subtle text-primary" : "text-text-muted hover:text-text-default",
-			)}
-		>
-			<input type="radio" name={name} className="sr-only" checked={active} onChange={onSelect} />
-			<Icon className="size-14 shrink-0" />
-			{label}
-		</label>
+		<DropdownMenu>
+			<DropdownMenuTrigger data-testid="ws-target" className={`${PILL} max-w-[220px]`}>
+				<Icon className="size-16 shrink-0 text-text-muted" />
+				<span className="truncate">
+					{target === "worktree"
+						? t("panels.newWorkspace.targetIsolated")
+						: t("panels.newWorkspace.targetDefault")}
+				</span>
+				<ChevronDown className="size-16 shrink-0 text-text-muted" />
+			</DropdownMenuTrigger>
+			<DropdownMenuContent align="start">
+				<DropdownMenuRadioGroup
+					value={target}
+					onValueChange={(value) => onSelect(value as WorkspaceTarget)}
+				>
+					<DropdownMenuRadioItem value="worktree" data-testid="ws-target-worktree">
+						<GitBranch />
+						{t("panels.newWorkspace.targetIsolated")}
+					</DropdownMenuRadioItem>
+					<DropdownMenuRadioItem value="default" data-testid="ws-target-default">
+						<House />
+						{t("panels.newWorkspace.targetDefault")}
+					</DropdownMenuRadioItem>
+				</DropdownMenuRadioGroup>
+			</DropdownMenuContent>
+		</DropdownMenu>
 	);
 }
 

@@ -103,10 +103,10 @@ test("native close-item closes the top layer first, then the focused tab", async
 	await expect(chatTab).toHaveCount(1);
 
 	await chatTab.getByRole("tab").click();
-	const dialog = page.getByTestId("new-workspace-dialog");
+	const dialog = page.getByTestId("new-workspace-page");
 	await pressPlatformShortcut(page, "n");
 	await expect(dialog).toBeVisible();
-	await closeItem(page);
+	await page.keyboard.press("Escape");
 	await expect(dialog).toBeHidden();
 	await expect(chatTab).toHaveCount(1);
 
@@ -256,7 +256,7 @@ async function expectSettingsTooltip(page: Page, text: string): Promise<void> {
 	await page.keyboard.press("Escape");
 }
 
-test("native open-settings opens Settings, keeps it as is, and yields to other dialogs", async ({
+test("native open-settings opens Settings, keeps it as is, and opens above the new-session page", async ({
 	page,
 }) => {
 	await installNativeShortcuts(page, "MacIntel");
@@ -278,10 +278,12 @@ test("native open-settings opens Settings, keeps it as is, and yields to other d
 	await expect(settings).toHaveCount(0);
 
 	await pressPlatformShortcut(page, "n");
-	await expect(page.getByTestId("new-workspace-dialog")).toBeVisible();
+	await expect(page.getByTestId("new-workspace-page")).toBeVisible();
 	await openSettingsCommand(page);
+	await expect(settings).toBeVisible();
+	await page.keyboard.press("Escape");
 	await expect(settings).toHaveCount(0);
-	await expect(page.getByTestId("new-workspace-dialog")).toBeVisible();
+	await expect(page.getByTestId("new-workspace-page")).toBeVisible();
 });
 
 test("Windows Ctrl+, opens Settings, from a terminal too; Shift+Comma does not", async ({

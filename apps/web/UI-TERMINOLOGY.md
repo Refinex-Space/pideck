@@ -516,7 +516,7 @@ App-level dialog/popover instances built on those primitives:
 
 | Canonical name | Implementation | Built on | Responsibility |
 |---|---|---|---|
-| New Workspace Dialog | `panels/NewWorkspaceDialog.tsx` → `NewWorkspaceDialog` | Dialog | Start-working surface (mode fork: isolated worktree / project folder) |
+| New Session Page | `panels/NewSessionPage.tsx` → `NewSessionPage` | Main-panel page (Project Home) | Start-working surface (mode fork: isolated worktree / project folder) |
 | Confirm Dialog | `panels/ConfirmDialog.tsx` → `ConfirmDialog` | Dialog | Modal yes/no with no stable anchor (init a repo, close project, remove workspace) |
 | Notice Dialog | `panels/NoticeDialog.tsx` → `NoticeDialog` | Dialog | Single-button info modal for failures |
 | Confirm Popover | `panels/ConfirmPopover.tsx` → `ConfirmPopover` | Popover | Anchored yes/no from a dedicated action control (template delete) |

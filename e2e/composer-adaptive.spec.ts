@@ -12,38 +12,40 @@ async function box(locator: import("@playwright/test").Locator) {
 	return value;
 }
 
-test("the text-input surface stays centered at its comfortable width and shrinks with a narrow pane", async ({
+test("the text-input surface follows the transcript measure and shrinks with its pane", async ({
 	page,
 }) => {
 	await page.setViewportSize({ width: 2316, height: 1000 });
 	await openWorkspaceChat(page);
-	const chat = page.getByTestId("chat-view");
-	const shell = page.getByTestId("chat-input-surface");
-	for (const width of [2316, 1440]) {
+	for (const width of [2316, 1440, 700]) {
 		await page.setViewportSize({ width, height: 1000 });
-		const chatBox = await box(chat);
-		const shellBox = await box(shell);
-		expect(shellBox.width).toBeGreaterThanOrEqual(767);
-		expect(shellBox.width).toBeLessThanOrEqual(769);
-		expect(
-			Math.abs(shellBox.x + shellBox.width / 2 - (chatBox.x + chatBox.width / 2)),
-		).toBeLessThanOrEqual(1);
+		await expect
+			.poll(() =>
+				page.getByTestId("chat-view").evaluate((chat) => {
+					const input = chat.querySelector('[data-testid="chat-input-surface"]');
+					if (!input) throw new Error("Input surface missing");
+					const probe = document.createElement("div");
+					probe.style.position = "absolute";
+					probe.style.width = "var(--chat-transcript-width)";
+					chat.append(probe);
+					const measure = probe.getBoundingClientRect().width;
+					probe.remove();
+					const gutter = Number.parseFloat(
+						getComputedStyle(chat).getPropertyValue("--chat-gutter"),
+					);
+					const pane = chat.getBoundingClientRect();
+					const surface = input.getBoundingClientRect();
+					return Math.max(
+						Math.abs(surface.width - (Math.min(measure, pane.width) - 2 * gutter)),
+						Math.abs(surface.x + surface.width / 2 - (pane.x + pane.width / 2)),
+					);
+				}),
+			)
+			.toBeLessThanOrEqual(1);
 	}
-	await page.setViewportSize({ width: 700, height: 1000 });
-	await expect(async () => {
-		const chatBox = await box(chat);
-		const shellBox = await box(shell);
-		const gutter = await chat.evaluate((element) =>
-			Number.parseFloat(getComputedStyle(element).getPropertyValue("--chat-gutter")),
-		);
-		expect(shellBox.width).toBeLessThan(768);
-		expect(Math.abs(shellBox.width - (chatBox.width - 2 * gutter))).toBeLessThanOrEqual(1);
-		expect(shellBox.x).toBeGreaterThanOrEqual(chatBox.x);
-		expect(shellBox.x + shellBox.width).toBeLessThanOrEqual(chatBox.x + chatBox.width);
-	}).toPass();
 });
 
-test("zoomed history keeps the full chat width above the bounded composer", async ({ page }) => {
+test("zoomed history keeps the full chat width above the measured composer", async ({ page }) => {
 	await page.setViewportSize({ width: 2316, height: 1000 });
 	await openWorkspaceChat(page);
 	await page.getByTestId("chat-input").press("Control+r");

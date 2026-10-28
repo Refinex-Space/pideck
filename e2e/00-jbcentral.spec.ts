@@ -7,6 +7,7 @@ import {
 	modelGroupToggle,
 	openAppFresh,
 	openFixtureProject,
+	openNewSessionPage,
 	revealModelGroups,
 } from "./fixtures/app";
 import {
@@ -263,8 +264,8 @@ test("disconnect removes Central from new chats while an existing live chat keep
 	await page.keyboard.press("Escape");
 	await expect(page.getByTestId("model-selector")).toContainText("Synthetic JetBrains AI model");
 
-	await page.getByTestId("add-workspace").first().click();
-	const dialog = page.getByTestId("new-workspace-dialog");
+	await openNewSessionPage(page);
+	const dialog = page.getByTestId("new-workspace-page");
 	await expect(dialog).toBeVisible();
 	await dialog.getByTestId("model-selector").click();
 	await revealModelGroups(page);

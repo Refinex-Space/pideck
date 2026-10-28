@@ -16,7 +16,7 @@ import type { Workspace } from "@thinkrail/contracts";
 import { jbcentralExtensionPath } from "@thinkrail/shared/jbcentral";
 import { stripAmbientPiCredentials } from "./ambientCredentials";
 import { CONFIRMED_ANALYTICS_CONFIG } from "./fixtures/analyticsConsent";
-import { activeWorktreeRow } from "./fixtures/app";
+import { activeWorktreeRow, openNewSessionPage } from "./fixtures/app";
 import {
 	CENTRAL_STUB_READ_ONLY_ENV,
 	CentralSetupError,
@@ -188,8 +188,8 @@ test("a pending questionnaire survives a host kill -9: reboot, reopen, answer, a
 	await page.getByTestId("menu-open-project").click();
 	await expect(page.getByTestId("project-item").first()).toBeVisible();
 
-	await page.getByTestId("add-workspace").first().click();
-	const dialog = page.getByTestId("new-workspace-dialog");
+	await openNewSessionPage(page);
+	const dialog = page.getByTestId("new-workspace-page");
 	await expect(dialog).toBeVisible();
 	await page.getByTestId("create-workspace").click();
 	await expect(dialog).toBeHidden();

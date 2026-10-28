@@ -1,6 +1,11 @@
 import { expect, type Page, test } from "@playwright/test";
 import type { AppConfig, ThinkingLevel } from "@thinkrail/contracts";
-import { expandModelGroup, openWorkspaceChat } from "./fixtures/app";
+import {
+	chooseNewSessionTarget,
+	expandModelGroup,
+	openNewSessionPage,
+	openWorkspaceChat,
+} from "./fixtures/app";
 import { connectCentral, openProviders, waitForCentralState } from "./fixtures/jbcentral";
 import { shot } from "./fixtures/screenshots";
 import { E2eWire } from "./fixtures/wire";
@@ -173,8 +178,8 @@ test("the new-workspace dialog follows the host default until a model is picked 
 	await openWorkspaceChat(page);
 	try {
 		await connectFixtureProvider(page);
-		await page.getByTestId("add-workspace").first().click();
-		const dialog = page.getByTestId("new-workspace-dialog");
+		await openNewSessionPage(page);
+		const dialog = page.getByTestId("new-workspace-page");
 		await expect(dialog).toBeVisible();
 		const pill = dialog.getByTestId("model-selector");
 		await expect(pill).toContainText("Default");
@@ -196,7 +201,7 @@ test("the new-workspace dialog follows the host default until a model is picked 
 
 		await page.getByTestId("model-option-default").click();
 		await expect(pill).toContainText("Default");
-		await dialog.getByTestId("ws-target-default").click();
+		await chooseNewSessionTarget(page, "default");
 		await page.getByTestId("create-workspace").click();
 		await expect(dialog).toBeHidden();
 		const chatPill = page.getByTestId("model-selector").last();

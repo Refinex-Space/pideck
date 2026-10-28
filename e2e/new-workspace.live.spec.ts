@@ -4,6 +4,7 @@ import { expect, test } from "@playwright/test";
 import {
 	expandModelGroup,
 	openFixtureProject,
+	openNewSessionPage,
 	revealModelGroups,
 	worktreeRow,
 	worktreeRows,
@@ -13,9 +14,9 @@ import { E2E_CENTRAL_ARTIFACT, E2E_PI_AGENT_DIR } from "./fixtures/paths";
 import { E2eWire } from "./fixtures/wire";
 
 async function kickOff(page: import("@playwright/test").Page, prompt: string): Promise<void> {
-	const dialog = page.getByTestId("new-workspace-dialog");
+	const dialog = page.getByTestId("new-workspace-page");
 	await expect(async () => {
-		if (!(await dialog.isVisible())) await page.getByTestId("add-workspace").first().click();
+		if (!(await dialog.isVisible())) await openNewSessionPage(page);
 		await expect(dialog).toBeVisible({ timeout: 5_000 });
 	}).toPass({ timeout: 30_000 });
 	await page.getByTestId("ws-prompt").fill(prompt);
@@ -38,8 +39,8 @@ test("the dialog shows the exact default model and its picker scrolls inside the
 	expect(isExactE2eModel(selected.model, resolveE2eModel())).toBe(true);
 	if (!selected.model) throw new Error("Central agent model is missing after setup preflight");
 
-	await page.getByTestId("add-workspace").first().click();
-	const dialog = page.getByTestId("new-workspace-dialog");
+	await openNewSessionPage(page);
+	const dialog = page.getByTestId("new-workspace-page");
 	await expect(dialog).toBeVisible();
 
 	const model = dialog.getByTestId("model-selector");

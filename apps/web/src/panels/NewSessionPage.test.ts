@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import type { WireModel } from "@thinkrail/contracts";
-import { reconcileModel } from "./NewWorkspaceDialog";
+import { reconcileModel } from "./NewSessionPage";
 
 const wm = (
 	provider: string,

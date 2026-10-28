@@ -4,6 +4,7 @@ import {
 	expandDisclosure,
 	hideAuxiliaryWorkbench,
 	openFixtureProject,
+	openNewSessionPage,
 	PHONE_VIEWPORT,
 	revealModelGroups,
 	worktreeRows,
@@ -11,8 +12,8 @@ import {
 
 async function openChat(page: import("@playwright/test").Page): Promise<void> {
 	await openFixtureProject(page);
-	await page.getByTestId("add-workspace").first().click();
-	const trustDialog = page.getByTestId("new-workspace-dialog");
+	await openNewSessionPage(page);
+	const trustDialog = page.getByTestId("new-workspace-page");
 	await expect(trustDialog).toBeVisible();
 	await trustDialog.getByTestId("ws-trust-project").click();
 	await expect(trustDialog.getByTestId("ws-trust-notice")).toBeHidden();

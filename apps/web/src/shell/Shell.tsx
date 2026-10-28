@@ -3,7 +3,6 @@ import { type ReactNode, useEffect, useState } from "react";
 import { NotificationPermissionPrompt, useAttentionNotifications } from "../notifications";
 import { AnalyticsConsentDialog } from "../panels/AnalyticsConsentDialog";
 import { InterviewPromptDialog } from "../panels/InterviewPromptDialog";
-import { NewWorkspaceDialog } from "../panels/NewWorkspaceDialog";
 import { SettingsDialog } from "../panels/SettingsDialog";
 import { Toaster } from "../panels/Toaster";
 import { useBranchStatus } from "../panels/useBranchStatus";
@@ -57,10 +56,14 @@ export function Shell() {
 	const locationReview =
 		openReview && openReviewUrl ? { ...openReview, url: openReviewUrl } : openReview;
 	const hasActiveWorkspace = activeWorkspaceId != null;
+	useEffect(() => {
+		if (hasActiveWorkspace) useAppStore.getState().closeNewSession();
+	}, [hasActiveWorkspace]);
 	const protocolVersion = useAppStore((s) => s.protocolVersion);
 	const updates = useUpdates(supportsHostUpdateRun(protocolVersion) ? runHostUpdate : null);
 	const windowControls = useNativeWindowControls();
-	const [newWorkspaceProjectId, setNewWorkspaceProjectId] = useState<string | null>(null);
+	const startNewWorkspace = (projectId: string) =>
+		useAppStore.getState().openNewSession({ projectId, target: "worktree", prompt: "" });
 	const sessionSwitcherOpen = useAppStore((s) => s.sessionSwitcherOpen);
 
 	const homeProjects = useCollapsibleRegion<HTMLDivElement>(PROJECT_HOME_PROJECTS_REGION_ID);
@@ -122,9 +125,7 @@ export function Shell() {
 					},
 				}
 			: {}),
-		...(contextProject
-			? { onNewWorkspace: () => setNewWorkspaceProjectId(contextProject.id) }
-			: {}),
+		...(contextProject ? { onNewWorkspace: () => startNewWorkspace(contextProject.id) } : {}),
 		onSessionSwitcher: () => useAppStore.getState().toggleSessionSwitcher(),
 	});
 	const footer = (compact: boolean) => (
@@ -150,7 +151,7 @@ export function Shell() {
 				branchStatus={branchStatus}
 				noteOpenReview={noteOpenReview}
 				refreshBranchStatus={refreshBranchStatus}
-				onNewWorkspace={() => setNewWorkspaceProjectId(contextProject.id)}
+				onNewWorkspace={() => startNewWorkspace(contextProject.id)}
 			/>
 		) : null;
 	const workspaceLocation = locationBar("tabs");
@@ -207,15 +208,6 @@ export function Shell() {
 					layoutSettings={<LayoutSettings />}
 					updateSettings={updates ? <UpdateSettings updates={updates} /> : undefined}
 				/>
-				{newWorkspaceProjectId !== null ? (
-					<NewWorkspaceDialog
-						open
-						projectId={newWorkspaceProjectId}
-						onOpenChange={(open) => {
-							if (!open) setNewWorkspaceProjectId(null);
-						}}
-					/>
-				) : null}
 				{analyticsConsentOpen ? <AnalyticsConsentDialog /> : <InterviewPromptDialog />}
 				<SessionSwitcher
 					open={sessionSwitcherOpen}

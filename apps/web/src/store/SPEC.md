@@ -445,7 +445,7 @@ re-read while a server starts. The state vocabulary and the attention/active pre
   becomes real. The host-wide **`models`** list stays global (not per session), plus
   **`modelsRefreshing`** — the awaited `model.refresh` in-flight flag — and **`modelsFresh`**, the
   *provenance* of that list: true only while it holds the installed result of an awaited forced refresh,
-  which `NewWorkspaceDialog` needs before it may substitute a model the catalog lacks. It lives here,
+  which `NewSessionPage` needs before it may substitute a model the catalog lacks. It lives here,
   beside the list, precisely **because `models` is app-wide**: `setModelsForProviderVersion` (a guarded
   `model.list` snapshot, whose handler answers from before the detached refresh it starts) **drops** it in the same write, so authority
   falls with the list any consumer replaced — held as one consumer's local flag it would outlive its

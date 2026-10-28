@@ -85,7 +85,6 @@ mapped into Tailwind by `index.css`'s `@theme inline` — the same shape as `--p
 | `--panel-inset` | `var(--space-8)` | `p-panel-inset` | the content inset of every tool pane (Projects, Specs, Files, Review) |
 | `--tree-indent` | `var(--space-8)` | `pl-tree-indent` | per-depth indentation of the Files, Changes and Specs trees |
 | `--chat-gutter` | `var(--space-16)` | `px-` / `p-chat-gutter` | chat row gutters, the stream-status and activity-breadcrumb strips, the composer inset, and the gutter terms of the transcript-width and unbounded user-bubble calcs |
-| `--chat-composer-max-width` | `48rem` | composer root width calculation | visible composer card cap, independent of the saved transcript width; the root adds two chat gutters |
 
 - A **rhythm role aliases a canonical step** (`var(--space-<n>)`), never a raw length, so `spacing.json`
   stays the only source of rhythm lengths and `tokens.css` still holds no scale of its own. A sizing role

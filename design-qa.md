@@ -77,6 +77,12 @@ final result: targeted checks passed; full-suite follow-up has 3 pending cases; 
 - 本轮完整浏览器套件 659 项：656 通过，3 项初次未通过。两项模型选择测试将 Recent 与 All 中同一模型重复计数/定位，测试已改为唯一模型计数和明确 All 项；另一项是终端 Ctrl+C 测试的进程退出。定向复验启动被已有 26060/health 服务占用阻止，未实际执行；按用户快速收尾要求不继续排查，因此这 3 项保留待复验状态。
 - README 明暗截图已更新为 1280×720 的隔离示例；局部图标证据在 `design/claude-reference/lucide-navigation-proof.png`。
 
+## 输入框与正文行宽对齐
+
+- 移除输入框独立的 48rem 上限，与消息正文共用 `--chat-transcript-width` 和左右 gutter；行宽设置与面板缩放会同步改变输入宽度。超宽正文横向滚动时，输入按钮仍保持在可见面板内。
+- 当前开发页面实测消息列与输入框宽度均为 1058.203125px。
+- Composer 自适应、IME 和行宽设置定向浏览器测试 12/12 通过；样式单测和定向 Biome 检查通过。本轮为局部样式修正，未再次运行完整浏览器套件。
+
 ## 结束后的思考标签修复
 
 - 现场确认 `chat-scroll` 的 streaming 与 thinking-group 的 live 均为 false，问题来自静态中文类别被译为“思考中”。静态标签改为“思考过程”，历史步骤摘要改为“思考”；仅 live 且 thought.streaming 时显示“思考中…”。西语同步采用中性类别名称，避免把中断或历史记录描述成仍在进行。

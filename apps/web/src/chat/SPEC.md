@@ -158,8 +158,8 @@ blocks in order into rows; `ChatTurnView` dispatches on row kind:
   is an approximate CSS `ch` text measure because chat retains its proportional reading font. `ChatView`,
   the store-aware integration boundary, applies it to one centered outer column shared by every transcript
   row, the stream indicator, and sticky activity breadcrumbs; ordinary row gutters sit outside the measure,
-  and user bubbles retain their 85% maximum inside it. Composer/header/queue/history chrome remains
-  pane-width. With `chatLineWidthBounded` (default `true`), the column is capped by the mounted chat pane;
+  and user bubbles retain their 85% maximum inside it. Composer uses the same configured outer measure
+  and gutters, capped to the visible pane; header/queue/history chrome remains pane-width. With `chatLineWidthBounded` (default `true`), the column is capped by the mounted chat pane;
   without it, the column keeps its configured measure and the transcript viewport scrolls horizontally from
   its left edge — but the right-aligned **user side** is additionally clamped to the pane width (a
   container-query cap keyed off `data-line-width-bounded=false`), so a user message never lands past the
@@ -827,7 +827,7 @@ both message orders. *Rejected:* keeping the modal for non-MCP extensions — ev
   store deletion fold; success closes the overlay, failure toasts; `session.deleted` also drives that fold
   in every connected client), and a
   **zoomed-stage preview pane** + **scope picker** — see the next bullet),
-  **`ModelEffortPicker`** (the one **model · effort pill**, also mounted by `NewWorkspaceDialog` in
+  **`ModelEffortPicker`** (the one **model · effort pill**, also mounted by `NewSessionPage` in
   pre-session mode; `ModelsSettings` still mounts the older `ModelSelector` +
   `ThinkingSelector` pair — the named survivors until they migrate). Decision: a chat's model and effort
   are **one fact with two parts**, shown by one borderless trigger (`[vendor glyph] name ▂▄▆ level
@@ -855,7 +855,7 @@ both message orders. *Rejected:* keeping the modal for non-MCP extensions — ev
   — and on failure rolled back — only while that pick is still the newest: A·high then B·low can never
   land A's level on B, and B·high then a slide to medium can never let B's response re-send high). When a
   catalog refresh leaves a session on a level its model no longer offers, `ChatView` asks the host's
-  `model.clampThinking` and applies the answer — the reconcile `NewWorkspaceDialog` already runs for its
+  `model.clampThinking` and applies the answer — the reconcile `NewSessionPage` already runs for its
   pair, and the same clamp pi applies at request time — so the pill and slider show the level pi will
   actually use rather than a stop the rail does not have.
   Rows are **two lines**: the name, then `provider · [kind glyph] what it draws on · price · context`. The list reads **Default
@@ -904,7 +904,7 @@ both message orders. *Rejected:* keeping the modal for non-MCP extensions — ev
   and constrained widths clip/truncate TODO + status/usage text while preserving the trailing Skills
   action. Its **Skills** button is the presentational **`SkillsButton`**
   primitive — a `BookOpen` pill, badged when a skill dir changed on disk — also shared with
-  `NewWorkspaceDialog` so the two triggers cannot drift), and **`SkillsDialog`** (the **Skills manager**: a catalog
+  `NewSessionPage` so the two triggers cannot drift), and **`SkillsDialog`** (the **Skills manager**: a catalog
   grouped by source with **sticky section headers** — the first-party **ThinkRail** and **Pi** groups lead
   (above the All-plugins master, which governs only the plugin groups), then Personal / **a group per
   installed Claude plugin** / the repo's Project skills last — each with its admission verdict,
@@ -1140,7 +1140,7 @@ both message orders. *Rejected:* keeping the modal for non-MCP extensions — ev
   the starter-templates offer (`panels/SPEC.md`), since a fresh install has an empty global prompts dir
   and the manager is otherwise two clicks deep in a dialog. Gated on "no templates exist", never on "the
   current query matched none", so a query that simply misses doesn't raise it; `footer` is optional, so
-  `NewWorkspaceDialog`'s reuse of the same menu is unaffected. **The gate is `ChatView`'s explicit
+  `NewSessionPage`'s reuse of the same menu is unaffected. **The gate is `ChatView`'s explicit
   `templatesEmpty` prop — a resolved, empty listing — never `commands` having no `source === "prompt"`
   row.** The merged list is equally empty *before* the first fetch resolves and *after* one fails (that
   `.catch` is silent by design — a failed listing must not break the menu), so reading emptiness off it
@@ -1580,7 +1580,7 @@ Unknown custom messages retain their existing behavior.
   (the hidden-models persistence seam `main.tsx` starts once: hydrates `store.hiddenModels` and writes it
   back through the stable client-preference adapter or host-qualified localStorage — the store itself
   touches no storage). `useModelCatalog` is the shared
-  models-catalog seam `panels/NewWorkspaceDialog` also imports per-file, so the two pickers cannot
+  models-catalog seam `panels/NewSessionPage` also imports per-file, so the two pickers cannot
   drift; on activation it **drops catalog authority synchronously** (a flag an earlier consumer set says
   nothing about the list this one inherited) and reads `model.list` only when the shared list is **empty** —
   a read per activation would hang a full host `runtime.refresh()` off every chat-tab switch, and the picker's
@@ -1666,9 +1666,10 @@ horizontal and 12px vertical padding. Only the existing first-row editor surface
 fill, inset boundary and subtle theme shadow. The inset ring does not alter text measurements or the
 line-count caps. The original grid and refs remain; its second-row model/history/send controls sit on the
 canvas below the input, without an enclosing card or footer divider. The visible text-input surface is
-centered and capped at 48rem; its existing root adds the two chat gutters outside that cap and
-shrinks to the pane width. This is independent of the saved transcript `chatLineWidth`. Mention/slash
-menus, slot hints and attached images retain the same capped root; no query container is added, so
+centered using the same `--chat-transcript-width` and gutters as transcript rows, and shrinks to the
+visible pane width. There is no independent composer cap; saved `chatLineWidth` changes update both.
+Unbounded transcript horizontal scrolling remains available without pushing input controls outside the pane. Mention/slash
+menus, slot hints and attached images retain the same measured root; no query container is added, so
 half-chat growth still uses the chat container. The history overlay stays anchored to the full chat pane
 so its zoomed result/preview layout retains its existing reading space. Its textarea, invisible
 sizer and template backdrop retain identical `px-12 py-8 tr-text-ui` metrics;

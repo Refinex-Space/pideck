@@ -2555,6 +2555,31 @@ test("projects-rail expansion: gestures reveal, restore stays neutral, the chevr
 	expect(useAppStore.getState().expandedProjectIds).toEqual({});
 });
 
+test("project-name selection toggles expansion and enters home in one atomic write", () => {
+	const p1 = project();
+	const p2 = project({ id: "p2" });
+	useAppStore.setState({
+		projects: [p1, p2],
+		selectedProjectId: "p1",
+		activeWorkspaceId: "w1",
+		expandedProjectIds: { p1: true, p2: true },
+	});
+	let writes = 0;
+	const unsubscribe = useAppStore.subscribe(() => writes++);
+	try {
+		useAppStore.getState().selectProject("p1", { toggleExpansion: true });
+		expect(writes).toBe(1);
+		expect(useAppStore.getState().activeWorkspaceId).toBeNull();
+		expect(useAppStore.getState().selectedProjectId).toBe("p1");
+		expect(useAppStore.getState().expandedProjectIds).toEqual({ p2: true });
+		useAppStore.getState().selectProject("p1", { toggleExpansion: true });
+		expect(writes).toBe(2);
+		expect(useAppStore.getState().expandedProjectIds).toEqual({ p1: true, p2: true });
+	} finally {
+		unsubscribe();
+	}
+});
+
 test("hydrateExpandedProjects seeds the persisted mirror; the welcome snapshot prunes to the open rail", () => {
 	const p1 = project();
 	useAppStore.getState().hydrateExpandedProjects(["p1", "stale-closed-project"]);

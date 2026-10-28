@@ -208,8 +208,10 @@ export function ProjectTree() {
 		}
 	}, [projects, expandedProjectIds, workspaces, loadWorkspaces]);
 
-	const selectProject = async (projectId: string) => {
-		useAppStore.getState().selectProject(projectId, { reveal: true });
+	const selectProject = async (projectId: string, toggleExpansion = false) => {
+		useAppStore
+			.getState()
+			.selectProject(projectId, toggleExpansion ? { toggleExpansion: true } : { reveal: true });
 		await loadWorkspaces(projectId);
 	};
 
@@ -299,13 +301,13 @@ export function ProjectTree() {
 				</button>
 			</header>
 
-			<ul className="flex flex-col gap-16">
+			<ul className="flex flex-col gap-2">
 				{projects.map((project) => {
 					const isExpanded = expandedProjectIds[project.id] === true;
 					const list = workspaces[project.id];
 					const stateProjection = { sessionStateByWorkspace };
 					return (
-						<li key={project.id}>
+						<li key={project.id} className={isExpanded ? "pb-12 last:pb-0" : undefined}>
 							<ProjectRow
 								project={project}
 								isSelected={selectedProjectId === project.id}
@@ -316,7 +318,7 @@ export function ProjectTree() {
 								isRunning={!isExpanded && selectProjectIsRunning(stateProjection, project.id)}
 								workspaceCount={(list ?? []).filter((w) => !isDefaultWorkspace(w)).length}
 								onToggle={() => toggleExpand(project.id)}
-								onSelect={() => void selectProject(project.id)}
+								onSelect={() => void selectProject(project.id, true)}
 								canRename={canRenameProject(protocolVersion)}
 								onRename={(name) => renameProject(project, name)}
 								onClose={() => closeProject(project)}
@@ -601,8 +603,9 @@ function ProjectRow({
 					ref={onRegisterNameButton}
 					type="button"
 					data-testid="project-name"
+					aria-expanded={isExpanded}
 					onClick={onSelect}
-					className="flex min-w-0 flex-1 items-center gap-8 text-left outline-none focus-visible:outline-1 focus-visible:outline-focus-ring"
+					className="flex min-w-0 flex-1 items-center gap-8 self-stretch text-left outline-none focus-visible:outline-1 focus-visible:outline-focus-ring"
 				>
 					{isRunning ? folderIcon : null}
 					<span className={nameClass}>{project.name}</span>

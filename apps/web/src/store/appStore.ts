@@ -1087,7 +1087,10 @@ interface AppState {
 	updateWorkspace: (workspace: Workspace) => void;
 	removeWorkspace: (projectId: string, workspaceId: string) => void;
 	applyWorkspaceRemoved: (projectId: string, workspaceId: string) => void;
-	selectProject: (projectId: string, opts?: { reveal?: boolean }) => void;
+	selectProject: (
+		projectId: string,
+		opts?: { reveal?: boolean; toggleExpansion?: boolean },
+	) => void;
 	toggleProjectExpanded: (projectId: string) => void;
 	toggleSettledShelf: (projectId: string, expanded?: boolean) => void;
 	showMoreSettled: (projectId: string, count: number) => void;
@@ -2620,9 +2623,15 @@ export const useAppStore = create<AppState>((set, get) => ({
 		set((state) => ({
 			selectedProjectId,
 			activeWorkspaceId: null,
-			...(opts?.reveal
-				? { expandedProjectIds: withExpandedProject(state.expandedProjectIds, selectedProjectId) }
-				: {}),
+			...(opts?.toggleExpansion
+				? {
+						expandedProjectIds: state.expandedProjectIds[selectedProjectId]
+							? omitKey(state.expandedProjectIds, selectedProjectId)
+							: withExpandedProject(state.expandedProjectIds, selectedProjectId),
+					}
+				: opts?.reveal
+					? { expandedProjectIds: withExpandedProject(state.expandedProjectIds, selectedProjectId) }
+					: {}),
 		})),
 	toggleProjectExpanded: (projectId) =>
 		set((state) => ({

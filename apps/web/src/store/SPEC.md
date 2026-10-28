@@ -94,10 +94,12 @@ re-read while a server starts. The state vocabulary and the attention/active pre
   moves its destination to the front, while project/main selection leaves the recency intact. It is not host
   state, URL history, or reload persistence. **`expandedProjectIds: Record<string, true>`** is the
   Projects rail's per-browser expansion — store-held (it must survive the rail's remounts and be writable by
-  non-rail gestures) with **`toggleProjectExpanded(projectId)`** (the chevron), **`expandProject(projectId)`**
+  non-rail gestures) with **`toggleProjectExpanded(projectId)`** (the folder icon), **`expandProject(projectId)`**
   (idempotent reveal: workspace creation / worktree attach / the active-workspace visibility rule), and
   `selectProject`'s **`{ reveal: true }`** option — the user-gesture variant that enters a project's home and
-  expands its row in one write (rail row click, Welcome-screen open adoption); navigation restore and the
+  expands its row in one write (Welcome-screen open adoption). The rail project-name gesture uses
+  `{ toggleExpansion: true }` to enter home and toggle that row in the same atomic write; other projects
+  keep their expansion. The toggle option takes precedence over reveal. Navigation restore and the
   workspace-removal fallback call it bare, staying expansion-neutral. Project-snapshot installs prune
   expansion to the open rail (a closed project's entry drops; identity-stable when unchanged).
   **`hydrateExpandedProjects(projectIds)`** seeds the set at boot from the `panels/projectExpansion`

@@ -525,3 +525,64 @@ test("project context actions stay compact and close/reopen is lossless across c
 
 	await openAppFresh(page);
 });
+
+test("project names toggle their rows while keeping home navigation and independent actions", async ({
+	page,
+}) => {
+	await openFixtureProject(page);
+	const row = page.getByTestId("project-item").filter({ hasText: "sample-project" });
+	const name = row.getByTestId("project-name");
+	const icon = row.getByTestId("project-expand");
+	await expect(name).toHaveAttribute("aria-expanded", "true");
+	await name.click();
+	await expect(icon).toHaveAttribute("aria-expanded", "false");
+	await expect(defaultWorkspaceRow(page)).toHaveCount(0);
+	await expect(page.getByTestId("welcome")).toBeVisible();
+	await name.press("Enter");
+	await expect(defaultWorkspaceRow(page)).toBeVisible();
+	await name.press("Space");
+	await expect(icon).toHaveAttribute("aria-expanded", "false");
+	await row.getByTestId("add-workspace").click();
+	await expect(page.getByTestId("new-workspace-dialog")).toBeVisible();
+	await expect(name).toHaveAttribute("aria-expanded", "false");
+	await page.keyboard.press("Escape");
+	await name.click({ button: "right" });
+	await expect(page.getByTestId("project-actions")).toBeVisible();
+	await expect(name).toHaveAttribute("aria-expanded", "false");
+	await page.keyboard.press("Escape");
+	await icon.click();
+	await defaultWorkspaceRow(page).getByRole("button").first().click();
+	await expect(page.getByTestId("center-tabs")).toBeVisible();
+	await name.click();
+	await expect(page.getByTestId("welcome")).toBeVisible();
+	await expect(name).toHaveAttribute("aria-expanded", "false");
+	await page.reload();
+	await expect(name).toHaveAttribute("aria-expanded", "false");
+	await expect(defaultWorkspaceRow(page)).toHaveCount(0);
+});
+
+test("collapsed project rows keep a compact gap and expanded content restores group spacing", async ({
+	page,
+}) => {
+	await openFixtureProject(page);
+	seedSecondRepo();
+	await page.getByTestId("add-project-menu").click();
+	await page.getByTestId("menu-open-project").click();
+	const rows = page.getByTestId("project-item");
+	await expect(rows).toHaveCount(2);
+	for (const row of await rows.all()) await row.getByTestId("project-name").click();
+	await expect(rows.first().getByTestId("project-name")).toHaveAttribute("aria-expanded", "false");
+	await expect(rows.last().getByTestId("project-name")).toHaveAttribute("aria-expanded", "false");
+	const gap = async () => {
+		const first = await rows.first().boundingBox();
+		const second = await rows.last().boundingBox();
+		if (!first || !second) throw new Error("Project rows missing");
+		return second.y - first.y - first.height;
+	};
+	await expect.poll(gap).toBeCloseTo(2, 0);
+	await rows.first().getByTestId("project-name").click();
+	await expect(rows.first().getByTestId("project-name")).toHaveAttribute("aria-expanded", "true");
+	await expect.poll(gap).toBeGreaterThan(32);
+	await rows.first().getByTestId("project-name").click();
+	await expect.poll(gap).toBeCloseTo(2, 0);
+});

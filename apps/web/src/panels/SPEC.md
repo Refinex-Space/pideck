@@ -224,12 +224,12 @@ treatment.
   popover); `NoticeDialog` remains the single-button
   surface for failures with no recovery inside that notice. The hook returns a `dialogs` node each consumer
   renders. **Selecting a
-  project** (clicking its row — the chevron expands/collapses separately) **deselects any active
-  workspace**, so the shell returns to that project's Welcome — a deliberate "project home" gesture. Both
-  select-project gestures — the rail row click and adopting a just-opened project (`ProjectTree` *and*
-  `WelcomePanel`) — also **reveal the project's workspaces** (`selectProject(id, { reveal: true })`): a
-  gesture that enters a project promises its workspace list, so opening from the Welcome screen never
-  lands with a collapsed rail row; the
+  project** (clicking its name; the folder icon toggles expansion without changing selection) **deselects any active
+  workspace**, so the shell returns to that project's Welcome — a deliberate "project home" gesture. The project-name button also toggles the project's expansion, atomically with selection, and exposes
+  `aria-expanded`; Enter/Space follow the same path. Opening/adopting a project from Add/Welcome still
+  always reveals its workspaces. Collapsed project rows have a 2px gap; only expanded project groups
+  keep 12px of additional space below their workspace content (except the last group). The + and
+  context/rename actions remain independent. The
   workspace's frontend-local view survives through shell layout persistence, so re-selecting it restores
   that window's resource tabs inside the unchanged frame. The round trip unmounts the workspace surface, but
   terminals keep no client-side lifetime to lose: the host owns

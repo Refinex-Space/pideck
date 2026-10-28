@@ -53,6 +53,17 @@ export function AnalyticsConsentDialog() {
 				)}
 				<DialogFooter>
 					<Button
+						variant="outline"
+						disabled={pending}
+						data-testid="analytics-consent-cancel"
+						onClick={() => {
+							setDraft(false);
+							save(false);
+						}}
+					>
+						{t("common.cancel")}
+					</Button>
+					<Button
 						disabled={pending}
 						data-testid="analytics-consent-confirm"
 						onClick={() => save(draft)}

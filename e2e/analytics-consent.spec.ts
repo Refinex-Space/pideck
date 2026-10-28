@@ -71,7 +71,8 @@ for (const enabled of [true, false]) {
 		await expect(toggle).toBeChecked();
 		await expect(dialog.getByRole("heading")).toHaveText("Help improve PiDeck");
 		await expect(dialog).toContainText(ANALYTICS_COPY);
-		await expect(dialog.getByRole("button")).toHaveCount(2);
+		await expect(dialog.getByRole("button")).toHaveCount(3);
+		await expect(dialog.getByTestId("analytics-consent-cancel")).toHaveText("Cancel");
 		await expect(dialog.getByTestId("analytics-consent-confirm")).toHaveText("Done");
 		await waitForPrime(updates);
 		await shot(dialog, "analytics-consent", enabled ? "saved-on" : "saved-off");
@@ -92,6 +93,30 @@ for (const enabled of [true, false]) {
 		await expect(page.getByTestId("analytics-toggle")).toBeChecked();
 	});
 }
+
+test("Cancel refuses sharing and stays dismissed after reload", async ({ page, baseURL }) => {
+	await seedAnalyticsConsent(baseURL, false, false);
+	const updates = trackSettingsUpdates(page);
+	await page.goto("/");
+	const dialog = page.getByTestId("analytics-consent-dialog");
+	await expect(dialog).toBeVisible();
+	await waitForPrime(updates);
+	await shot(dialog, "analytics-consent", "cancel-action");
+	await dialog.getByTestId("analytics-consent-cancel").click();
+	await expect(dialog).toBeHidden();
+	expect(updates).toEqual([
+		{ analyticsEnabled: true },
+		{ analyticsEnabled: false, analyticsConsentConfirmed: true },
+	]);
+	expect(savedConfig()).toMatchObject({
+		analyticsEnabled: false,
+		analyticsConsentConfirmed: true,
+	});
+	await page.reload();
+	await openPrivacy(page);
+	await expect(dialog).toBeHidden();
+	await expect(page.getByTestId("analytics-toggle")).not.toBeChecked();
+});
 
 for (const dismissal of ["close", "escape", "backdrop"] as const) {
 	test(`first-dialog ${dismissal} accepts the primed on choice`, async ({ page, baseURL }) => {
@@ -139,8 +164,8 @@ test("switching off immediately persists refusal and closes from the broadcast",
 	});
 });
 
-for (const action of ["done", "close"] as const) {
-	test(`failed ${action} persistence keeps the on choice visible and retryable`, async ({
+for (const action of ["done", "close", "cancel"] as const) {
+	test(`failed ${action} persistence keeps the choice visible and retryable`, async ({
 		page,
 		baseURL,
 	}) => {
@@ -156,11 +181,13 @@ for (const action of ["done", "close"] as const) {
 		const actionControl =
 			action === "done"
 				? dialog.getByTestId("analytics-consent-confirm")
-				: dialog.getByRole("button", { name: "Close" });
+				: action === "cancel"
+					? dialog.getByTestId("analytics-consent-cancel")
+					: dialog.getByRole("button", { name: "Close" });
 		try {
 			await actionControl.click();
 			await expect(dialog.getByRole("alert")).toContainText("Couldn't save your choice");
-			await expect(dialog.getByRole("switch")).toBeChecked();
+			await expect(dialog.getByRole("switch")).toBeChecked({ checked: action !== "cancel" });
 			await expect(actionControl).toBeEnabled();
 		} finally {
 			rmSync(configPath, { recursive: true, force: true });
@@ -169,7 +196,7 @@ for (const action of ["done", "close"] as const) {
 		await actionControl.click();
 		await expect(dialog).toBeHidden();
 		expect(savedConfig()).toMatchObject({
-			analyticsEnabled: true,
+			analyticsEnabled: action !== "cancel",
 			analyticsConsentConfirmed: true,
 		});
 	});

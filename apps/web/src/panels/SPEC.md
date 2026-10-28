@@ -872,7 +872,9 @@ a project picker, the prompt hero, and the reused
   **`AnalyticsConsentDialog`** mounts once through shell after a capable host's unconfirmed config hydrates.
   It initializes the draft switch on and immediately persists `{ analyticsEnabled: true }`; persistence and
   broadcast activate the host gate while the dialog stays open. **Done**, Close, Escape, and backdrop persist
-  the current draft with `analyticsConsentConfirmed: true`, so the ordinary result is on. Switching off
+  the current draft with `analyticsConsentConfirmed: true`, so the ordinary result is on. **Cancel** is an
+  explicit refusal: it saves off/confirmed and closes from the config broadcast, just like switching off.
+  Cancel sits before Done and is disabled while persistence is pending. Switching off
   immediately persists off/confirmed and the resulting config broadcast closes the dialog. Confirmed on/off
   configurations never mount or prime. Failed persistence leaves the draft and error visible for retry. Saved
   decisions survive restarts and change later through Settings. The dialog keeps only the short

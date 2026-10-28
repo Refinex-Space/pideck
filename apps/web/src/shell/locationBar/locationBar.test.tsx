@@ -122,11 +122,15 @@ test("a user-owned workspace shows a plain Branch caption; a URL-less review sta
 	expect(html).toMatch(/<span data-testid="scope-review" data-kind="pull-request"/);
 });
 
-test("project home keeps only the Project and Workspace segments", () => {
+test("project home keeps the workspace switcher without redundant details", () => {
 	const html = render(null);
 	expect(html).toContain('data-context="project-home"');
 	expect(html).toContain(">Project home<");
 	const ids = testids(html);
+	expect(ids).toContain("scope-workspace");
+	expect(ids).not.toContain("open-workspace-details");
+	expect(ids).not.toContain("workspace-details");
+	expect(ids).not.toContain("scope-project-segment");
 	expect(ids).not.toContain("scope-branch-segment");
 	expect(ids).not.toContain("scope-review-segment");
 });

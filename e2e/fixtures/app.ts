@@ -32,8 +32,10 @@ export async function workspaceDetail(page: Page, testId: string): Promise<Locat
 	if (
 		!(await page.getByTestId("workspace-details").isVisible()) &&
 		(await page.locator('[role="dialog"]:visible, [role="alertdialog"]:visible').count()) === 0
-	)
+	) {
 		await toggle.click();
+		await expect(page.getByTestId("workspace-details")).toBeVisible();
+	}
 	return page.getByTestId(testId);
 }
 

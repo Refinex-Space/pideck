@@ -72,7 +72,39 @@ export function LocationBar(props: LocationProps) {
 	const now = useNow();
 	const settled = useActiveWorkspaceSettled(props.workspace, now);
 	const details = useRef<HTMLDetailsElement>(null);
+	const panelRef = useRef<HTMLElement>(null);
+	const hasWorkspace = props.workspace !== null;
 	useEffect(() => {
+		const root = details.current;
+		const panel = panelRef.current;
+		if (!root || !panel) return;
+		const position = () => {
+			if (!root.open) {
+				delete panel.dataset.positioned;
+				return;
+			}
+			const trigger = root.getBoundingClientRect();
+			const gap = Number.parseFloat(getComputedStyle(panel).getPropertyValue("--space-8"));
+			const width = panel.getBoundingClientRect().width;
+			const left = Math.max(gap, Math.min(trigger.left, window.innerWidth - width - gap));
+			const top = Math.min(trigger.bottom + gap, window.innerHeight - gap);
+			panel.style.setProperty("--workspace-details-left", `${left}px`);
+			panel.style.setProperty("--workspace-details-top", `${top}px`);
+			panel.style.setProperty(
+				"--workspace-details-max-height",
+				`${Math.max(0, window.innerHeight - top - gap)}px`,
+			);
+			panel.dataset.positioned = "true";
+		};
+		const resize = new ResizeObserver(position);
+		resize.observe(panel);
+		if (root.previousElementSibling) resize.observe(root.previousElementSibling);
+		for (let ancestor: HTMLElement | null = root; ancestor; ancestor = ancestor.parentElement)
+			resize.observe(ancestor);
+		root.addEventListener("toggle", position);
+		window.addEventListener("resize", position);
+		window.addEventListener("scroll", position, true);
+		position();
 		const dismiss = (event: PointerEvent) => {
 			const panel = details.current;
 			const target = event.target;
@@ -82,8 +114,14 @@ export function LocationBar(props: LocationProps) {
 			panel.open = false;
 		};
 		document.addEventListener("pointerdown", dismiss);
-		return () => document.removeEventListener("pointerdown", dismiss);
-	}, []);
+		return () => {
+			document.removeEventListener("pointerdown", dismiss);
+			root.removeEventListener("toggle", position);
+			window.removeEventListener("resize", position);
+			window.removeEventListener("scroll", position, true);
+			resize.disconnect();
+		};
+	}, [hasWorkspace]);
 	return (
 		<div
 			data-testid="scope-context"
@@ -100,30 +138,34 @@ export function LocationBar(props: LocationProps) {
 				now={now}
 				onNewWorkspace={props.onNewWorkspace}
 			/>
-			<details
-				ref={details}
-				className="group/environment shrink-0"
-				onKeyDown={(event) => {
-					if (event.key !== "Escape" || event.defaultPrevented || !event.currentTarget.open) return;
-					event.preventDefault();
-					event.currentTarget.open = false;
-					event.currentTarget.querySelector("summary")?.focus();
-				}}
-			>
-				<summary
-					aria-label={t("shell.workspaceDetails")}
-					data-testid="open-workspace-details"
-					className={`${buttonVariants({ variant: "ghost", size: "m", shape: "icon" })} list-none cursor-pointer [&::-webkit-details-marker]:hidden group-open/environment:bg-control-bg-selected`}
+			{hasWorkspace ? (
+				<details
+					ref={details}
+					className="group/environment shrink-0"
+					onKeyDown={(event) => {
+						if (event.key !== "Escape" || event.defaultPrevented || !event.currentTarget.open)
+							return;
+						event.preventDefault();
+						event.currentTarget.open = false;
+						event.currentTarget.querySelector("summary")?.focus();
+					}}
 				>
-					<RiInformationLine className="size-16" />
-				</summary>
-				<section
-					aria-label={t("shell.workspaceDetails")}
-					className="absolute top-full right-8 z-40 mt-8 w-full max-w-384 rounded-lg border border-border-default bg-container-elevated-bg text-text-default shadow-[var(--shadow-md)]"
-				>
-					<LocationDetails {...props} />
-				</section>
-			</details>
+					<summary
+						aria-label={t("shell.workspaceDetails")}
+						data-testid="open-workspace-details"
+						className={`${buttonVariants({ variant: "ghost", size: "m", shape: "icon" })} list-none cursor-pointer [&::-webkit-details-marker]:hidden group-open/environment:bg-control-bg-selected`}
+					>
+						<RiInformationLine className="size-16" />
+					</summary>
+					<section
+						ref={panelRef}
+						aria-label={t("shell.workspaceDetails")}
+						className="invisible fixed top-[var(--workspace-details-top)] left-[var(--workspace-details-left)] z-40 max-h-[var(--workspace-details-max-height)] w-384 max-w-[calc(100vw-2*var(--space-8))] overflow-y-auto rounded-lg border border-border-default bg-container-elevated-bg text-text-default shadow-[var(--shadow-md)] data-[positioned=true]:visible"
+					>
+						<LocationDetails {...props} />
+					</section>
+				</details>
+			) : null}
 		</div>
 	);
 }

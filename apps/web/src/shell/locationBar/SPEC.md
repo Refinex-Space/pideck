@@ -11,7 +11,11 @@ tags: [ui, topbar, public-surface-checked]
 ## PiDeck presentation and responsibility
 
 The workspace switcher remains in the main canvas's 40px window-control row. Project, branch,
-remote and review actions live in the adjacent Workspace details disclosure. Native `details` keeps
+remote and review actions live in the adjacent Workspace details disclosure **only in a workspace**.
+Project Home keeps its workspace switcher and uses the sidebar for project selection; it has no redundant
+information button or nested project-only details card. The workspace card is fixed to its trigger
+rectangle, clamped inside the viewport with the shared 8px gap; ancestor resizing and scrolling update
+the anchor, and available height scrolls internally. Native `details` keeps
 its child controllers mounted while collapsed: closing the surface must not discard a pending ship
 confirmation, draft, retry or project picker. Escape returns focus to the summary; outside pointer
 interaction closes it except while interacting with its Radix menu/dialog layers. It uses existing

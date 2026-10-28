@@ -124,7 +124,7 @@ test("the location segments name the active workspace and switch through their m
 	await expect(page.getByTestId("welcome")).toBeVisible();
 	await expect(scope).toHaveAttribute("data-context", "project-home");
 	await expect(page.getByTestId("scope-name")).toHaveText("Project home");
-	await expect(await workspaceDetail(page, "scope-branch-segment")).toHaveCount(0);
+	await expect(page.getByTestId("scope-branch-segment")).toHaveCount(0);
 
 	// The workspace pill still switches from Project home.
 	await page.getByTestId("scope-workspace").click();

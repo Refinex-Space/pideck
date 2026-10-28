@@ -18,8 +18,12 @@ function Command({ className, ...props }: React.ComponentProps<typeof CommandPri
 
 function CommandInput({
 	className,
+	bare = false,
 	...props
-}: React.ComponentProps<typeof CommandPrimitive.Input>) {
+}: React.ComponentProps<typeof CommandPrimitive.Input> & { bare?: boolean }) {
+	if (bare) {
+		return <CommandPrimitive.Input className={className} {...props} />;
+	}
 	return (
 		<div className="flex items-center gap-4 border-border-muted border-b px-8">
 			<Search className="size-14 shrink-0 text-text-muted" />

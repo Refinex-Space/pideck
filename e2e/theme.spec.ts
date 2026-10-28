@@ -334,6 +334,7 @@ test("selected workspace tabs keep their surface and edge marker, and rail entri
 				expectedFill: resolveColor("--control-bg-selected"),
 				expectedMarker: resolveColor("--primary"),
 				tabs: tabs.map((element) => ({
+					kind: element.dataset.kind,
 					fill: getComputedStyle(element).backgroundColor,
 					marker: getComputedStyle(element, "::after").backgroundColor,
 					markerHeight: getComputedStyle(element, "::after").height,
@@ -343,8 +344,11 @@ test("selected workspace tabs keep their surface and edge marker, and rail entri
 		expect(state.tabs).toHaveLength(2);
 		for (const tab of state.tabs) {
 			expect(tab.fill).toBe(state.expectedFill);
-			expect(tab.marker).toBe(state.expectedMarker);
-			expect(tab.markerHeight).toBe("2px");
+			// Center tabs are rounded chips with no edge marker; only the bottom terminal strip keeps one.
+			if (tab.kind === "terminal") {
+				expect(tab.marker).toBe(state.expectedMarker);
+				expect(tab.markerHeight).toBe("2px");
+			}
 		}
 		const tool = page.getByTestId("tab-files");
 		const toolButton = page.getByTestId("tool-rail-files");

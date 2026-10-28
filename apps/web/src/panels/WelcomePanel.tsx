@@ -10,6 +10,7 @@ import { LoadingRegion } from "@thinkrail/ui/skeleton";
 import { cn } from "@thinkrail/ui/utils";
 import { type ComponentPropsWithoutRef, forwardRef, useEffect, useState } from "react";
 import { PRODUCT_NAME } from "../constants/branding";
+import { BrandLogo } from "../shell/BrandLogo";
 import { useAppStore } from "../store";
 import { getTransport } from "../transport";
 import { AddProjectMenu } from "./AddProjectMenu";
@@ -88,6 +89,7 @@ export function WelcomePanel() {
 		</AddProjectMenu>
 	);
 
+	const showBrand = !project || project.name.toLowerCase() === PRODUCT_NAME.toLowerCase();
 	return (
 		<div
 			data-testid="welcome"
@@ -97,7 +99,14 @@ export function WelcomePanel() {
 				data-testid="welcome-title"
 				className="max-w-[640px] break-words tr-brand-hero text-text-default"
 			>
-				{project ? project.name : PRODUCT_NAME}
+				{showBrand ? (
+					<span className="inline-flex items-center justify-center gap-12">
+						<BrandLogo className="size-32" testId="welcome-brand-logo" />
+						{PRODUCT_NAME}
+					</span>
+				) : (
+					project.name
+				)}
 			</h1>
 
 			<ProviderWarningBanner />

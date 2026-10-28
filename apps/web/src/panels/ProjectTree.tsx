@@ -447,7 +447,7 @@ function SettledPartition({
 				data-testid="settled-shelf"
 				data-count={settledCount}
 				data-expanded={shelfExpanded}
-				className="flex h-panel-row min-w-0 items-center gap-8 rounded-md px-8 text-text-subtle tr-text-metadata hover:bg-control-bg-hovered"
+				className="flex h-panel-row min-w-0 items-center rounded-md px-8 text-text-subtle tr-text-metadata hover:bg-control-bg-hovered"
 			>
 				<button
 					type="button"
@@ -456,25 +456,20 @@ function SettledPartition({
 					onClick={() => useAppStore.getState().toggleSettledShelf(projectId)}
 					className="flex min-w-0 flex-1 items-center gap-8 text-left outline-none focus-visible:ring-1 focus-visible:ring-focus-ring"
 				>
+					<span className="w-16 shrink-0" />
+					<span className="min-w-0 flex-1 truncate">
+						{t("panels.projectTree.settledShelf", { total: settledCount })}
+					</span>
 					{shelfExpanded ? (
 						<ChevronDown className="size-16 shrink-0" />
 					) : (
 						<ChevronRight className="size-16 shrink-0" />
 					)}
-					<span className="truncate">
-						{t("panels.projectTree.settledShelf", { total: settledCount })}
-					</span>
 				</button>
 			</div>
-			{shelfExpanded ? (
+			{shelfExpanded && settledCount > 0 ? (
 				<ul className="flex flex-col gap-2" data-testid="settled-shelf-rows">
-					{settledCount === 0 ? (
-						<li className="py-4 pr-4 pl-32 text-text-subtle tr-text-metadata">
-							{t("panels.projectTree.nothingSettled")}
-						</li>
-					) : (
-						shown.map((row) => renderRow(row.workspace, row.reason))
-					)}
+					{shown.map((row) => renderRow(row.workspace, row.reason))}
 					{remaining > 0 ? (
 						<li>
 							<button
@@ -779,7 +774,7 @@ function WorkspaceRow({
 		: isActive
 			? RiGitBranchFill
 			: GitBranch;
-	const isTwoLine = !isSettled && workspace.branch !== workspace.name;
+	const showBranch = !isSettled && workspace.branch !== workspace.name;
 	const displayName = workspaceName(t, workspace);
 	const [menuOpen, setMenuOpen] = useState(false);
 	const openMenuFromContext = (event: MouseEvent) => {
@@ -799,22 +794,19 @@ function WorkspaceRow({
 		onRename: (_target, name) => onRename(name),
 	});
 
-	const identityClass = `flex min-h-24 min-w-0 flex-1 gap-8 text-left outline-none focus-visible:outline-1 focus-visible:outline-focus-ring ${isTwoLine ? "items-start" : "items-center"}`;
+	const identityClass = `flex min-h-24 min-w-0 flex-1 gap-8 text-left outline-none focus-visible:outline-1 focus-visible:outline-focus-ring items-center`;
 	const identityIcon = isRunning ? (
-		<RunningIcon
-			className={cn(
-				"size-16",
-				isTwoLine && "mt-2",
-				isActive ? "text-text-default" : "text-text-muted",
-			)}
-		/>
-	) : isDefault ? null : (
-		<Icon
-			className={`${isTwoLine ? "mt-2 " : ""}size-16 shrink-0 ${isActive ? "text-text-default" : "text-text-muted"}`}
-		/>
+		<RunningIcon className={cn("size-16", isActive ? "text-text-default" : "text-text-muted")} />
+	) : isDefault ? (
+		<span aria-hidden="true" className="size-16 shrink-0" />
+	) : (
+		<Icon className={`size-16 shrink-0 ${isActive ? "text-text-default" : "text-text-muted"}`} />
 	);
-	const branchLabel = isTwoLine ? (
-		<span data-testid="workspace-branch" className="truncate text-text-subtle tr-text-metadata">
+	const branchLabel = showBranch ? (
+		<span
+			data-testid="workspace-branch"
+			className="min-w-0 flex-1 truncate text-right text-text-subtle tr-text-metadata"
+		>
 			{workspace.branch}
 		</span>
 	) : null;
@@ -884,7 +876,7 @@ function WorkspaceRow({
 				{editing ? (
 					<div className={identityClass}>
 						{identityIcon}
-						<span className="flex min-w-0 flex-1 flex-col">
+						<span className="flex min-w-0 flex-1 items-center gap-8">
 							<input
 								ref={nameRef}
 								data-testid="workspace-name"
@@ -902,7 +894,7 @@ function WorkspaceRow({
 				) : (
 					<button type="button" onClick={onSelect} className={identityClass}>
 						{identityIcon}
-						<span className="flex min-w-0 flex-1 flex-col">
+						<span className="flex min-w-0 flex-1 items-center gap-8">
 							<span
 								data-testid="workspace-name"
 								className={`truncate tr-text-ui ${isActive ? "text-text-default" : "text-text-muted"}`}
@@ -918,12 +910,9 @@ function WorkspaceRow({
 				<span
 					className={cn(
 						"flex shrink-0 items-center gap-4",
-						isSettled &&
-							"[@media(hover:hover)]:absolute [@media(hover:hover)]:top-1/2 [@media(hover:hover)]:right-4 [@media(hover:hover)]:-translate-y-1/2 [@media(hover:hover)]:rounded-sm [@media(hover:hover)]:pl-4 [@media(hover:hover)]:group-hover:bg-control-bg-hovered",
-						isSettled &&
-							(isActive || menuOpen) &&
-							"[@media(hover:hover)]:group-hover:bg-control-bg-selected",
-						isSettled && menuOpen && "[@media(hover:hover)]:bg-control-bg-selected",
+						"[@media(hover:hover)]:absolute [@media(hover:hover)]:top-1/2 [@media(hover:hover)]:right-4 [@media(hover:hover)]:-translate-y-1/2 [@media(hover:hover)]:rounded-sm [@media(hover:hover)]:pl-4 [@media(hover:hover)]:group-hover:bg-control-bg-hovered",
+						(isActive || menuOpen) && "[@media(hover:hover)]:group-hover:bg-control-bg-selected",
+						menuOpen && "[@media(hover:hover)]:bg-control-bg-selected",
 					)}
 				>
 					{hoverAction}

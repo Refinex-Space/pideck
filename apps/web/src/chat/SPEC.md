@@ -1676,3 +1676,22 @@ sizer and template backdrop retain identical `px-12 py-8 tr-text-ui` metrics;
 no input, IME, draft, selection, scrolling or submission lifecycle changes accompany the presentation.
 
 The chat toolbar uses Lucide `blocks` for Skills and `package-2` for Resources, without changing either action or its loading/stale state.
+
+## Composer card and message chrome
+
+The composer is one card (`chat-input-surface`): an attachment strip on top, then the text editor with
+the **send / stop controls inside the card's bottom-right** (circular `IconButton round` — primary
+fill, Lucide `arrow-up`; while streaming a stop circle with a turning ring beside it, and the send
+options chevron). The model pill sits under the card on the left and the **history** trigger
+(`history-open`, Lucide `history`) on the right; the history panel opens above the card at the
+composer's width as a rounded elevated panel with a search header (the zoomed stage still takes the full
+chat width). Attachments render as **64px thumbnails inside the card** (`PromptImageStrip`): one row,
+sideways scroll with a fade on the clipped edge, a hover-revealed remove badge, and an sr-only name and
+dimensions line. Dialog prompts keep the chip strip (`PromptImageChips`).
+
+A user message is **an image row above a borderless tinted bubble** (images open the same viewer
+dialog); a long message folds to a fixed height that fades out at the bottom, with *Show more / Show
+less* under the text on the left. Under every user message and final assistant answer a reserved
+**hover strip** (`MessageActionBar`) shows the relative time (full date in a tooltip) and a Lucide copy
+button — time then copy on the right for the user, copy then time on the left for the assistant. The
+markdown row carries the assistant message's `timestamp` for this.

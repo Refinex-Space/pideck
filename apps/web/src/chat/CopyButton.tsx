@@ -1,19 +1,10 @@
-import { RiCheckLine as Check, RiFileCopyLine as Copy } from "@remixicon/react";
 import { useT } from "@thinkrail/locales/react";
 import { IconButton } from "@thinkrail/ui/button";
-import { cn } from "@thinkrail/ui/utils";
+import { Check, Copy } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { copyText } from "@/lib";
 
-export function CopyButton({
-	getText,
-	label,
-	className,
-}: {
-	getText: () => string;
-	label?: string;
-	className?: string | undefined;
-}) {
+export function CopyButton({ getText, label }: { getText: () => string; label?: string }) {
 	const t = useT();
 	const accessibleLabel = label ?? t("chat.copyMessage");
 	const [copied, setCopied] = useState(false);
@@ -35,10 +26,7 @@ export function CopyButton({
 					timer.current = setTimeout(() => setCopied(false), 1200);
 				})();
 			}}
-			className={cn(
-				"shrink-0 opacity-0 focus-visible:opacity-100 group-hover:opacity-100 data-[copied]:opacity-100",
-				className,
-			)}
+			className="shrink-0"
 		/>
 	);
 }

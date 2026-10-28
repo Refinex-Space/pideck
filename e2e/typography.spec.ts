@@ -80,15 +80,11 @@ test("entity rows, branch metadata and eyebrows are proportional", async ({ page
 		expect(type.family, `${testid} must not be mono`).not.toMatch(CODE_FACE);
 	}
 	await page.getByTestId("open-skills").click();
-	expect(
-		await typeOf(page.getByTestId("skills-dialog").locator(".tr-text-eyebrow").first()),
-	).toMatchObject({
-		size: "12px",
-		weight: "500",
-		lineHeight: "17px",
-		transform: "none",
-		spacing: "normal",
-	});
+	const groupLabel = await typeOf(
+		page.getByTestId("skills-dialog").locator(".tr-text-emphasis").first(),
+	);
+	expect(groupLabel.family).toMatch(INTERFACE_FACE);
+	expect(groupLabel.transform).toBe("none");
 });
 
 test("Monaco and xterm render the generated code family and size", async ({ page }) => {

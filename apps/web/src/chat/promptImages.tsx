@@ -3,11 +3,13 @@ import { REQUEST_IMAGE_BASE64_BUDGET } from "@thinkrail/contracts";
 import { t as translate, useT } from "@thinkrail/locales/react";
 import { IconButton } from "@thinkrail/ui/button";
 import { cn } from "@thinkrail/ui/utils";
+import { X as CloseIcon } from "lucide-react";
 import {
 	type ClipboardEvent,
 	type DragEvent,
 	type ReactNode,
 	useCallback,
+	useEffect,
 	useRef,
 	useState,
 } from "react";
@@ -221,6 +223,130 @@ export function PromptImageChips({
 						</span>
 					}
 				/>
+			) : null}
+		</div>
+	);
+}
+
+const STRIP_MASK = {
+	none: "",
+	start:
+		"[-webkit-mask-image:linear-gradient(to_right,transparent,var(--color-text-default)_24px)] [mask-image:linear-gradient(to_right,transparent,var(--color-text-default)_24px)]",
+	end: "[-webkit-mask-image:linear-gradient(to_left,transparent,var(--color-text-default)_24px)] [mask-image:linear-gradient(to_left,transparent,var(--color-text-default)_24px)]",
+	both: "[-webkit-mask-image:linear-gradient(to_right,transparent,var(--color-text-default)_24px,var(--color-text-default)_calc(100%-24px),transparent)] [mask-image:linear-gradient(to_right,transparent,var(--color-text-default)_24px,var(--color-text-default)_calc(100%-24px),transparent)]",
+} as const;
+
+function useStripOverflow(ref: React.RefObject<HTMLDivElement | null>, mounted: boolean) {
+	const [state, setState] = useState<keyof typeof STRIP_MASK>("none");
+	useEffect(() => {
+		const element = ref.current;
+		if (!element) return;
+		const update = () => {
+			const max = element.scrollWidth - element.clientWidth;
+			const start = element.scrollLeft > 1;
+			const end = element.scrollLeft < max - 1;
+			setState(start && end ? "both" : start ? "start" : end ? "end" : "none");
+		};
+		update();
+		element.addEventListener("scroll", update, { passive: true });
+		const resize = new ResizeObserver(update);
+		resize.observe(element);
+		const mutation = new MutationObserver(update);
+		mutation.observe(element, { childList: true, subtree: true });
+		return () => {
+			element.removeEventListener("scroll", update);
+			resize.disconnect();
+			mutation.disconnect();
+		};
+	}, [ref, mounted]);
+	return state;
+}
+
+/**
+ * The composer's attachment row: square thumbnails inside the input card, above the text. One row
+ * only — extra images scroll sideways and the clipped edge fades out.
+ */
+export function PromptImageStrip({
+	controller,
+	leading,
+}: {
+	controller: PromptImagesController;
+	leading?: ReactNode;
+}) {
+	const t = useT();
+	const { images, pending, errors, removeImage, dismissError } = controller;
+	const scroller = useRef<HTMLDivElement>(null);
+	const empty = !leading && images.length === 0 && pending === 0 && errors.length === 0;
+	const fade = useStripOverflow(scroller, !empty);
+	if (empty) return null;
+	return (
+		<div
+			ref={scroller}
+			data-testid="composer-images"
+			className={cn(
+				"flex gap-8 overflow-x-auto px-12 pt-12 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+				STRIP_MASK[fade],
+			)}
+		>
+			{leading}
+			{errors.map((err) => (
+				<FileChip
+					key={err.id}
+					data-testid="composer-image-error"
+					tone="error"
+					icon={false}
+					title={t("chat.promptImages.attachFailedDetail", { name: err.name, reason: err.reason })}
+					label={t("chat.promptImages.attachFailed", { name: err.name })}
+					meta={`— ${err.reason}`}
+					trailing={
+						<button
+							type="button"
+							aria-label={t("common.dismiss")}
+							onClick={() => dismissError(err.id)}
+							className="hover:opacity-80"
+						>
+							<X className="size-14" />
+						</button>
+					}
+				/>
+			))}
+			{images.map((img) => (
+				<div
+					key={img.id}
+					data-testid="composer-image"
+					data-width={img.width}
+					data-height={img.height}
+					data-mime={img.content.mimeType}
+					title={img.name}
+					className="group/thumb relative size-64 shrink-0"
+				>
+					<img
+						src={`data:${img.content.mimeType};base64,${img.content.data}`}
+						alt=""
+						className="size-full rounded-lg object-cover ring-1 ring-border-default ring-inset"
+					/>
+					<span className="sr-only">
+						{img.name}
+						{img.width && img.height ? ` · ${img.width}×${img.height}` : ""}
+					</span>
+					<button
+						type="button"
+						aria-label={t("chat.promptImages.remove")}
+						onClick={() => removeImage(img.id)}
+						className="absolute top-2 right-2 flex size-16 items-center justify-center rounded-full bg-container-elevated-bg text-text-muted opacity-0 shadow-[var(--shadow-sm)] outline-none transition-opacity hover:text-text-default focus-visible:opacity-100 focus-visible:ring-1 focus-visible:ring-focus-ring group-hover/thumb:opacity-100 [@media(hover:none)]:opacity-100"
+					>
+						<CloseIcon className="size-12" />
+					</button>
+				</div>
+			))}
+			{pending > 0 ? (
+				<div
+					data-testid="composer-image-pending"
+					role="status"
+					className="flex size-64 shrink-0 items-center justify-center rounded-lg bg-control-bg-selected text-text-muted tr-text-metadata"
+				>
+					{t("chat.promptImages.attaching", { count: pending })}
+				</div>
 			) : null}
 		</div>
 	);

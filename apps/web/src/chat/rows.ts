@@ -60,7 +60,7 @@ export type ChatRow =
 			maxAttempts: number;
 			delayMs: number;
 	  }
-	| { kind: "markdown"; id: string; text: string }
+	| { kind: "markdown"; id: string; text: string; timestamp?: number }
 	| { kind: "backgroundCommandCompletion"; id: string; details: BackgroundCommandCompletionDetails }
 	| { kind: "subagentCompletion"; id: string; details: SubagentCompletionDetails; text: string }
 	| { kind: "reviewFix"; id: string; details: ReviewFixDetails; text: string }
@@ -190,7 +190,12 @@ export function deriveRows(
 				} else if (block.type === "text") {
 					if (block.text.trim().length === 0) continue;
 					flushRun();
-					rows.push({ kind: "markdown", id: `${turn.id}:text:${b}`, text: block.text });
+					rows.push({
+						kind: "markdown",
+						id: `${turn.id}:text:${b}`,
+						text: block.text,
+						...(turn.message.timestamp ? { timestamp: turn.message.timestamp } : {}),
+					});
 				} else if (block.type === "toolCall") {
 					const data: ToolCallData = {
 						toolCallId: block.id,

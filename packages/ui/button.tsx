@@ -43,6 +43,7 @@ const variantClasses = cva(
 			shape: {
 				text: "",
 				icon: "p-0",
+				round: "rounded-full p-0",
 			},
 			tone: {
 				neutral: "",
@@ -57,6 +58,9 @@ const variantClasses = cva(
 			{ shape: "icon", size: "s", className: "size-20" },
 			{ shape: "icon", size: "m", className: "size-24" },
 			{ shape: "icon", size: "l", className: "size-32" },
+			{ shape: "round", size: "s", className: "size-20" },
+			{ shape: "round", size: "m", className: "size-24" },
+			{ shape: "round", size: "l", className: "size-32" },
 			{ variant: "ghost", shape: "icon", className: "focus-visible:-outline-offset-1" },
 			{
 				variant: "ghost",
@@ -264,6 +268,8 @@ export interface IconButtonProps
 		TooltipProps {
 	icon: ButtonIcon;
 	label: string;
+	/** A circular icon button (send / stop); everything else about it is the same skin. */
+	round?: boolean;
 }
 
 export function IconButton({
@@ -273,6 +279,7 @@ export function IconButton({
 	tone,
 	icon: Icon,
 	label,
+	round,
 	tooltip,
 	tooltipSide,
 	tooltipAlign,
@@ -290,7 +297,10 @@ export function IconButton({
 			type={type}
 			aria-label={label}
 			{...buttonDataAttributes({ variant, size, iconOnly: true })}
-			className={cn(variantClasses({ variant, size, shape: "icon", tone }), className)}
+			className={cn(
+				variantClasses({ variant, size, shape: round ? "round" : "icon", tone }),
+				className,
+			)}
 			{...props}
 			{...stateProps(props, selected, loading)}
 		>

@@ -35,7 +35,7 @@ The app's Tailwind sources and adoption guards include this package and extensio
 ## Button system
 
 `button` is the one implementation of an action button: `Button` (text, optional `iconLeft` /
-`iconRight`), `IconButton` (icon only — `label` is required and becomes both the `aria-label` and the shared
+`iconRight`), `IconButton` (icon only — `round` makes it a circle for send/stop; `label` is required and becomes both the `aria-label` and the shared
 `IconTooltip`), and `buttonVariants` for a non-button element that must look like one (a link) — it
 returns the same merged class list the components render, compounds resolved — with
 `buttonDataAttributes` giving such an element the same `data-slot` / `data-variant` / `data-size` /

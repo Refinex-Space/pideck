@@ -2,7 +2,6 @@ import {
 	RiBookOpenLine as BookOpen,
 	RiArrowDownSLine as ChevronDown,
 	RiArrowRightSLine as ChevronRight,
-	RiArrowUpSLine as ChevronUp,
 	RiErrorWarningLine as CircleAlert,
 	RiTimeLine as Clock,
 	RiEyeLine as Eye,
@@ -36,11 +35,11 @@ import { ActivityGroup } from "./ActivityGroup";
 import { type AssistantFailure, errorTurnText } from "./assistantFailure";
 import { AssistantMarkdown } from "./assistantLinks";
 import { BackgroundCommandResult, SubagentResult } from "./BackgroundResult";
-import { CopyButton } from "./CopyButton";
 import { ToolPromptSlot } from "./ExtUiPrompt";
 import { FileChip } from "./FileChip";
 import { useFold, useSelection } from "./foldState";
 import { Markdown } from "./Markdown";
+import { MessageActionBar } from "./MessageActionBar";
 import { ReviewPackageComments } from "./ReviewPackageComments";
 import { parseReviewPackage, reviewFixCommentsToItems, reviewPackageLabel } from "./reviewPackage";
 import { type ChatRow, LARGE_USER_MESSAGE, type TurnDividerData } from "./rows";
@@ -124,6 +123,7 @@ function ChatTurnViewImpl({
 					side="left"
 					copyable={isFinalAnswer}
 					getText={() => row.text}
+					timestamp={row.timestamp}
 				>
 					<div
 						className={cn(
@@ -196,7 +196,10 @@ function userAttachments(content: UserMessage["content"], names?: string[]) {
 }
 
 const USER_BUBBLE_BASE =
-	"whitespace-pre-wrap [overflow-wrap:anywhere] rounded-lg border border-bubble-user-border bg-clip-padding bg-bubble-user-bg px-16 py-12 tr-text-reading text-text-default";
+	"whitespace-pre-wrap [overflow-wrap:anywhere] rounded-lg bg-bubble-user-bg px-16 py-12 tr-text-reading text-text-default";
+// A long message folds to a fixed height that fades out at the bottom; the toggle sits under it.
+const USER_COLLAPSED_BODY =
+	"max-h-[11rem] overflow-hidden [-webkit-mask-image:linear-gradient(to_bottom,var(--color-text-default)_55%,transparent)] [mask-image:linear-gradient(to_bottom,var(--color-text-default)_55%,transparent)]";
 const USER_BUBBLE = cn("max-w-[85%]", USER_BUBBLE_BASE);
 
 // In unbounded chat-width mode the transcript row is a fixed measure that can be far wider than the
@@ -239,17 +242,53 @@ function AttachmentChip({ label, img }: { label: string; img: ImageContent }) {
 		</>
 	);
 }
+function AttachmentThumb({ label, img }: { label: string; img: ImageContent }) {
+	const t = useT();
+	const [open, setOpen] = useState(false);
+	const src = `data:${img.mimeType};base64,${img.data}`;
+	return (
+		<>
+			<button
+				type="button"
+				data-testid="chat-attachment-chip"
+				title={label}
+				aria-label={t("chat.turn.viewAttachment", { label })}
+				onClick={() => setOpen(true)}
+				className="overflow-hidden rounded-lg outline-none ring-1 ring-border-default ring-inset focus-visible:ring-focus-ring"
+			>
+				<img src={src} alt="" className="h-[96px] w-auto max-w-[200px] object-cover" />
+				<span className="sr-only">{label}</span>
+			</button>
+			<Dialog open={open} onOpenChange={setOpen}>
+				<DialogContent
+					data-testid="chat-attachment-dialog"
+					className="flex max-h-[90vh] w-auto max-w-[95vw] flex-col gap-8"
+				>
+					<DialogHeader>
+						<DialogTitle>{label}</DialogTitle>
+					</DialogHeader>
+					<div className="min-h-0 flex-1 overflow-auto">
+						<img src={src} alt="" className="max-h-[80vh] max-w-full rounded-sm" />
+					</div>
+				</DialogContent>
+			</Dialog>
+		</>
+	);
+}
+
 function MessageWithCopy({
 	messageRole,
 	side,
 	copyable = true,
 	getText,
+	timestamp,
 	children,
 }: {
 	messageRole: "user" | "assistant";
 	side: "left" | "right";
 	copyable?: boolean;
 	getText: () => string;
+	timestamp?: number | undefined;
 	children: ReactNode;
 }) {
 	return (
@@ -257,21 +296,13 @@ function MessageWithCopy({
 			data-testid="chat-message"
 			data-role={messageRole}
 			className={cn(
-				copyable && "group relative flex flex-col",
+				copyable && "group/message flex flex-col",
 				copyable && (side === "right" ? "items-end" : "items-start"),
 				side === "right" && USER_SIDE_UNBOUNDED_CLAMP,
 			)}
 		>
 			{children}
-			{copyable ? (
-				<CopyButton
-					getText={getText}
-					className={cn(
-						"absolute z-10",
-						side === "right" ? "right-0 bottom-12" : "bottom-0 left-0",
-					)}
-				/>
-			) : null}
+			{copyable ? <MessageActionBar side={side} getText={getText} timestamp={timestamp} /> : null}
 		</div>
 	);
 }
@@ -338,7 +369,13 @@ function UserTurn({
 	}
 
 	return (
-		<PlainUserTurn id={id} text={text} attachments={attachments} agentResponded={agentResponded} />
+		<PlainUserTurn
+			id={id}
+			text={text}
+			attachments={attachments}
+			agentResponded={agentResponded}
+			timestamp={message.timestamp}
+		/>
 	);
 }
 
@@ -347,56 +384,55 @@ function PlainUserTurn({
 	text,
 	attachments,
 	agentResponded,
+	timestamp,
 }: {
 	id: string;
 	text: string;
 	attachments: ReturnType<typeof userAttachments>;
 	agentResponded: boolean;
+	timestamp?: number | undefined;
 }) {
 	const t = useT();
 	const large = text.length > LARGE_USER_MESSAGE;
 	const [expanded, toggle, toggleRef] = useFold(`${id}:user-collapse`, !agentResponded);
 	const collapsed = large && !expanded;
 	return (
-		<MessageWithCopy messageRole="user" side="right" getText={() => text}>
-			<div data-chat-fold-root className="flex w-fit max-w-[85%] flex-col items-end">
-				<div className={cn(USER_BUBBLE_BASE, "pr-24")}>
-					{attachments.length > 0 ? (
-						<div className="flex flex-wrap gap-4 pb-4" data-testid="chat-message-images">
-							{attachments.map(({ key, label, img }) => (
-								<AttachmentChip key={key} label={label} img={img} />
-							))}
-						</div>
-					) : null}
-					<div
-						data-testid="user-message-body"
-						data-collapsed={collapsed || undefined}
-						className={cn(
-							collapsed
-								? "line-clamp-3"
-								: large && "max-h-[60vh] overflow-y-auto overscroll-contain",
-						)}
-					>
-						{text}
+		<MessageWithCopy messageRole="user" side="right" getText={() => text} timestamp={timestamp}>
+			<div data-chat-fold-root className="flex w-fit max-w-[85%] flex-col items-end gap-8">
+				{attachments.length > 0 ? (
+					<div className="flex flex-wrap justify-end gap-8" data-testid="chat-message-images">
+						{attachments.map(({ key, label, img }) => (
+							<AttachmentThumb key={key} label={label} img={img} />
+						))}
 					</div>
-					{large ? (
-						<button
-							ref={toggleRef}
-							type="button"
-							data-testid="user-message-toggle"
-							aria-expanded={expanded}
-							onClick={toggle}
-							className="mt-4 flex items-center gap-4 tr-text-metadata text-text-subtle hover:text-text-default"
-						>
-							{expanded ? (
-								<ChevronUp className="size-16 shrink-0" />
-							) : (
-								<ChevronDown className="size-16 shrink-0" />
+				) : null}
+				{text ? (
+					<div className={cn(USER_BUBBLE_BASE, "flex w-full flex-col items-start")}>
+						<div
+							data-testid="user-message-body"
+							data-collapsed={collapsed || undefined}
+							className={cn(
+								"w-full",
+								collapsed && USER_COLLAPSED_BODY,
+								!collapsed && large && "max-h-[60vh] overflow-y-auto overscroll-contain",
 							)}
-							{expanded ? t("chat.turn.showLess") : t("chat.turn.showMore")}
-						</button>
-					) : null}
-				</div>
+						>
+							{text}
+						</div>
+						{large ? (
+							<button
+								ref={toggleRef}
+								type="button"
+								data-testid="user-message-toggle"
+								aria-expanded={expanded}
+								onClick={toggle}
+								className="mt-8 rounded-sm tr-text-emphasis text-text-default outline-none hover:text-text-muted focus-visible:ring-1 focus-visible:ring-focus-ring"
+							>
+								{expanded ? t("chat.turn.showLess") : t("chat.turn.showMore")}
+							</button>
+						) : null}
+					</div>
+				) : null}
 			</div>
 		</MessageWithCopy>
 	);

@@ -14,16 +14,17 @@ function renderRow(row: ChatRow, isFinalAnswer: boolean): string {
 }
 
 describe("message copy layout", () => {
-	test("places an assistant copy action inside the bottom-left content band", () => {
+	test("shows the assistant copy action in a hover strip under the message, on the left", () => {
 		const html = renderRow({ kind: "markdown", id: "answer", text: "100. Final answer" }, true);
 
 		expect(html).toContain("pl-24");
 		expect(html).toContain("list-inside");
-		expect(html).toContain("bottom-0 left-0");
-		expect(html).not.toContain("pb-24");
+		expect(html).toContain('data-testid="message-actions"');
+		expect(html).toContain("justify-start");
+		expect(html).not.toContain("absolute");
 	});
 
-	test("places a user copy action inside the bottom-right content band", () => {
+	test("shows the user copy action in a hover strip under the bubble, on the right", () => {
 		const html = renderRow(
 			{
 				kind: "user",
@@ -33,9 +34,9 @@ describe("message copy layout", () => {
 			false,
 		);
 
-		expect(html).toContain("pr-24");
-		expect(html).toContain("right-0 bottom-12");
-		expect(html).not.toContain("pb-24");
+		expect(html).toContain('data-testid="message-actions"');
+		expect(html).toContain("justify-end");
+		expect(html).not.toContain("border-bubble-user-border");
 	});
 });
 

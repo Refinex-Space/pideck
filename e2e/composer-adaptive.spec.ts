@@ -84,7 +84,9 @@ test("idle composer keeps one message line above a stable controls row", async (
 	expect(compactInput.height).toBeLessThanOrEqual(40);
 	await expect(composer).toHaveAttribute("data-expanded", "false");
 	expect(compactShell.height).toBeGreaterThanOrEqual(compactInput.height + compactModel.height);
-	expect(Math.abs(compactSurface.height - compactInput.height)).toBeLessThanOrEqual(0.5);
+	// The send button lives inside the card, so the card may be a few px taller than the text row.
+	expect(compactSurface.height).toBeGreaterThanOrEqual(compactInput.height);
+	expect(compactSurface.height - compactInput.height).toBeLessThanOrEqual(12);
 	expect(Math.abs(compactSurface.width - compactShell.width)).toBeLessThanOrEqual(0.5);
 	expect(compactSurface.height).toBeLessThan(compactShell.height - compactModel.height);
 	const paint = await shell.evaluate((element) => {
@@ -106,14 +108,23 @@ test("idle composer keeps one message line above a stable controls row", async (
 	expect(paint.inputFill).not.toBe("rgba(0, 0, 0, 0)");
 	expect(paint.inputShadow).not.toBe("none");
 	expect(compactInput.x).toBeLessThanOrEqual(compactShell.x + 8);
-	expect(compactInput.x + compactInput.width).toBeGreaterThanOrEqual(
+	expect(compactSurface.x + compactSurface.width).toBeGreaterThanOrEqual(
 		compactShell.x + compactShell.width - 8,
+	);
+	const compactSend = await box(send);
+	expect(compactSend.x).toBeGreaterThanOrEqual(compactInput.x + compactInput.width - 1);
+	expect(compactSend.x + compactSend.width).toBeLessThanOrEqual(
+		compactSurface.x + compactSurface.width,
+	);
+	expect(compactSend.y).toBeGreaterThanOrEqual(compactSurface.y);
+	expect(compactSend.y + compactSend.height).toBeLessThanOrEqual(
+		compactSurface.y + compactSurface.height,
 	);
 	expect(Math.abs(compactWrapMeasure.x - compactInput.x)).toBeLessThanOrEqual(0.5);
 	expect(Math.abs(compactWrapMeasure.width - compactInput.width)).toBeLessThanOrEqual(0.5);
 
 	const compactFooterBottom = compactModel.y + compactModel.height;
-	for (const control of [model, history, send]) {
+	for (const control of [model, history]) {
 		const controlBox = await box(control);
 		expect(controlBox.y).toBeGreaterThanOrEqual(compactSurface.y + compactSurface.height);
 		expect(controlBox.y).toBeGreaterThanOrEqual(compactInput.y + compactInput.height);
@@ -254,7 +265,10 @@ test("compact phone controls remain inside the chat viewport", async ({ page }) 
 	const inputBox = await box(page.getByTestId("chat-input"));
 	expect(inputBox.height).toBeLessThanOrEqual(40);
 	expect(inputBox.x).toBeLessThanOrEqual(shellBox.x + 8);
-	expect(inputBox.x + inputBox.width).toBeGreaterThanOrEqual(shellBox.x + shellBox.width - 8);
+	const phoneSurface = await box(page.getByTestId("chat-input-surface"));
+	expect(phoneSurface.x + phoneSurface.width).toBeGreaterThanOrEqual(
+		shellBox.x + shellBox.width - 8,
+	);
 	expect((await box(page.getByTestId("model-selector"))).y).toBeGreaterThanOrEqual(
 		inputBox.y + inputBox.height,
 	);

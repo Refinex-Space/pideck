@@ -15,6 +15,8 @@ import {
 	DropdownMenuTrigger,
 } from "@thinkrail/ui/dropdown-menu";
 import { IconTooltip } from "@thinkrail/ui/tooltip";
+import { cn } from "@thinkrail/ui/utils";
+import { Search } from "lucide-react";
 import { type KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useNow } from "@/components/useNow";
 import { fileName, firstNonBlankLine, platformShortcutLabel, relativeTime } from "@/lib";
@@ -149,10 +151,8 @@ function PromptRow({
 			data-kind="prompt"
 			data-row={isSelected || undefined}
 			data-selected={isSelected}
-			className={`group flex w-full items-center gap-4 rounded-sm border-l-2 py-4 pl-8 pr-4 text-left tr-text-ui ${
-				isSelected
-					? "border-l-primary bg-control-bg-selected text-text-default"
-					: "border-l-transparent text-text-muted"
+			className={`group flex w-full items-center gap-4 rounded-md py-4 pl-8 pr-4 text-left tr-text-ui ${
+				isSelected ? "bg-control-bg-selected text-text-default" : "text-text-muted"
 			}`}
 		>
 			<button
@@ -248,10 +248,8 @@ function MessageRow({
 			data-kind="message"
 			data-row={isSelected || undefined}
 			data-selected={isSelected}
-			className={`group flex w-full items-center gap-4 rounded-sm border-l-2 pr-4 tr-text-ui ${
-				isSelected
-					? "border-l-primary bg-control-bg-selected text-text-default"
-					: "border-l-transparent text-text-muted"
+			className={`group flex w-full items-center gap-4 rounded-md pr-4 tr-text-ui ${
+				isSelected ? "bg-control-bg-selected text-text-default" : "text-text-muted"
 			}`}
 		>
 			<button
@@ -557,83 +555,91 @@ function HistoryPicker({
 			ref={rootRef}
 			data-testid="history-overlay"
 			data-stage={stage}
-			className="absolute bottom-full left-8 right-8 z-20 mb-4 flex flex-col overflow-hidden rounded-lg border border-border-default bg-container-elevated-bg shadow-[var(--shadow-md)]"
+			className={cn(
+				"absolute bottom-full z-20 mb-8",
+				stage === "zoomed"
+					? "inset-x-8"
+					: "inset-x-0 mx-auto w-full max-w-[var(--chat-transcript-width)] px-chat-gutter",
+			)}
 		>
-			<div className="flex items-center gap-8 border-b border-border-default p-8">
-				<input
-					ref={inputRef}
-					data-testid="history-query"
-					value={query}
-					onChange={(e) => onQueryChange(e.target.value)}
-					onKeyDown={onKeyDown}
-					placeholder={t("chat.history.placeholder")}
-					className="min-w-0 flex-1 bg-transparent tr-text-ui text-text-default outline-none placeholder:text-text-muted"
-				/>
-				<DropdownMenu open={scopeMenuOpen} onOpenChange={setScopeMenuOpen}>
-					<DropdownMenuTrigger
-						data-testid="history-scope"
-						data-scope={scope.kind}
-						className="flex shrink-0 items-center gap-4 rounded-full border border-border-default bg-container-workspace-bg px-8 py-2 text-text-muted tr-text-metadata outline-none hover:bg-control-bg-hovered"
-					>
-						<span>{t(SCOPE_LABELS[scope.kind])}</span>
-						<span className="text-text-muted">⌃R</span>
-					</DropdownMenuTrigger>
-					<DropdownMenuContent
-						align="end"
-						onCloseAutoFocus={(e) => {
-							e.preventDefault();
-							inputRef.current?.focus();
-						}}
-					>
-						{SCOPE_ORDER.map((kind) => (
-							<DropdownMenuItem
-								key={kind}
-								data-testid="history-scope-option"
-								data-scope={kind}
-								onSelect={() => onSetScope(kind)}
-							>
-								<Check className={kind === scope.kind ? "size-14" : "size-14 invisible"} />
-								<span>{t(SCOPE_MENU_LABELS[kind])}</span>
-							</DropdownMenuItem>
-						))}
-					</DropdownMenuContent>
-				</DropdownMenu>
-			</div>
-			{stage === "zoomed" ? (
-				<div className="flex flex-col overflow-hidden md:flex-row">
+			<div className="flex flex-col overflow-hidden rounded-xl border border-border-default bg-container-elevated-bg shadow-[var(--shadow-lg)]">
+				<div className="flex items-center gap-8 border-b border-border-default px-12 py-8">
+					<Search className="size-16 shrink-0 text-text-muted" aria-hidden />
+					<input
+						ref={inputRef}
+						data-testid="history-query"
+						value={query}
+						onChange={(e) => onQueryChange(e.target.value)}
+						onKeyDown={onKeyDown}
+						placeholder={t("chat.history.placeholder")}
+						className="min-w-0 flex-1 bg-transparent tr-text-ui text-text-default outline-none placeholder:text-text-muted"
+					/>
+					<DropdownMenu open={scopeMenuOpen} onOpenChange={setScopeMenuOpen}>
+						<DropdownMenuTrigger
+							data-testid="history-scope"
+							data-scope={scope.kind}
+							className="flex shrink-0 items-center gap-4 rounded-full border border-border-default bg-container-workspace-bg px-8 py-2 text-text-muted tr-text-metadata outline-none hover:bg-control-bg-hovered"
+						>
+							<span>{t(SCOPE_LABELS[scope.kind])}</span>
+							<span className="text-text-muted">⌃R</span>
+						</DropdownMenuTrigger>
+						<DropdownMenuContent
+							align="end"
+							onCloseAutoFocus={(e) => {
+								e.preventDefault();
+								inputRef.current?.focus();
+							}}
+						>
+							{SCOPE_ORDER.map((kind) => (
+								<DropdownMenuItem
+									key={kind}
+									data-testid="history-scope-option"
+									data-scope={kind}
+									onSelect={() => onSetScope(kind)}
+								>
+									<Check className={kind === scope.kind ? "size-14" : "size-14 invisible"} />
+									<span>{t(SCOPE_MENU_LABELS[kind])}</span>
+								</DropdownMenuItem>
+							))}
+						</DropdownMenuContent>
+					</DropdownMenu>
+				</div>
+				{stage === "zoomed" ? (
+					<div className="flex flex-col overflow-hidden md:flex-row">
+						<div
+							ref={resultsRef}
+							data-testid="history-results"
+							className="max-h-[37.5vh] overflow-y-auto md:max-h-[75vh] md:w-[55%]"
+						>
+							{resultsBody}
+						</div>
+						<HistoryPreview
+							item={selectedItem}
+							highlight={highlight}
+							workspaceName={selectedWorkspaceName}
+							className="max-h-[37.5vh] border-border-default border-t md:max-h-[75vh] md:w-[45%] md:border-t-0 md:border-l"
+						/>
+					</div>
+				) : (
 					<div
 						ref={resultsRef}
 						data-testid="history-results"
-						className="max-h-[37.5vh] overflow-y-auto md:max-h-[75vh] md:w-[55%]"
+						className="max-h-[40vh] overflow-y-auto"
 					>
 						{resultsBody}
 					</div>
-					<HistoryPreview
-						item={selectedItem}
-						highlight={highlight}
-						workspaceName={selectedWorkspaceName}
-						className="max-h-[37.5vh] border-border-default border-t md:max-h-[75vh] md:w-[45%] md:border-t-0 md:border-l"
-					/>
-				</div>
-			) : (
-				<div
-					ref={resultsRef}
-					data-testid="history-results"
-					className="max-h-[40vh] overflow-y-auto"
-				>
-					{resultsBody}
-				</div>
-			)}
-			{stage === "compact" && !error && result && !result.indexing && result.messageTotal > 0 ? (
-				<button
-					type="button"
-					data-testid="history-expand-hint"
-					onClick={onToggleStage}
-					className="border-t border-border-default p-4 text-center text-text-muted tr-text-metadata hover:bg-control-bg-hovered"
-				>
-					{t("chat.history.expandHint", { count: result.messageTotal })}
-				</button>
-			) : null}
+				)}
+				{stage === "compact" && !error && result && !result.indexing && result.messageTotal > 0 ? (
+					<button
+						type="button"
+						data-testid="history-expand-hint"
+						onClick={onToggleStage}
+						className="border-t border-border-default p-4 text-center text-text-muted tr-text-metadata hover:bg-control-bg-hovered"
+					>
+						{t("chat.history.expandHint", { count: result.messageTotal })}
+					</button>
+				) : null}
+			</div>
 		</div>
 	);
 }

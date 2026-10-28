@@ -1,20 +1,15 @@
 import {
-	RiArrowUpLine as ArrowUp,
-	RiArrowDownSLine as ChevronDown,
-	RiCornerDownLeftLine as EnterKey,
 	RiFileLine as FileIcon,
 	RiFolderLine as FolderIcon,
-	RiHistoryLine as History,
 	RiSparkling2Line as Sparkles,
-	RiStopFill as StopFill,
 } from "@remixicon/react";
 import type { ComposerGrowthLimit, ThinkingLevel, WireModel } from "@thinkrail/contracts";
 import type { MessageKey } from "@thinkrail/locales";
 import { useT } from "@thinkrail/locales/react";
-import { Button, IconButton } from "@thinkrail/ui/button";
+import { IconButton } from "@thinkrail/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@thinkrail/ui/popover";
-import { IconTooltip } from "@thinkrail/ui/tooltip";
 import { cn } from "@thinkrail/ui/utils";
+import { ArrowUp, ChevronDown, History, Square } from "lucide-react";
 import {
 	forwardRef,
 	type KeyboardEvent,
@@ -51,7 +46,7 @@ import {
 	type ModelSelection,
 } from "./ModelEffortPicker";
 import { isModelCommand, parseModelCommand } from "./nativeCommands";
-import { imagePasteDropHandlers, PromptImageChips, usePromptImages } from "./promptImages";
+import { imagePasteDropHandlers, PromptImageStrip, usePromptImages } from "./promptImages";
 import type { ChatAttachment } from "./types";
 import type { ModelPreferences } from "./useModelPreferences";
 
@@ -65,22 +60,6 @@ const COMPOSER_EDITOR_LIMIT_CLASS = {
 	"half-chat":
 		"max-h-[calc(50cqh-var(--space-16)-var(--space-16)-var(--space-4)-var(--space-4)-var(--space-4)-var(--space-4))]",
 } satisfies Record<ComposerGrowthLimit, string>;
-
-const WIDE_ONLY = "@max-md:hidden";
-const COMPACT_ONLY = "@md:hidden";
-
-const SEGMENT =
-	"flex items-center gap-4 outline-none transition-colors focus-visible:ring-1 focus-visible:ring-focus-ring disabled:pointer-events-none";
-
-const SEND_PILL = "flex h-28 shrink-0 items-stretch rounded-full transition-colors";
-const SEND_PILL_ARMED = "bg-control-primary-bg text-control-primary-text";
-const SEND_PILL_INERT = "bg-control-bg-selected text-control-disabled-text";
-const SEND_MAIN = cn(
-	SEGMENT,
-	"rounded-full pl-12 @max-md:w-28 @max-md:justify-center @max-md:px-0",
-);
-const SEND_MORE = cn(SEGMENT, "rounded-r-full pr-8 pl-2");
-const KEYCAP = "flex h-16 min-w-16 items-center justify-center rounded-xs bg-on-primary-soft px-2";
 
 const STREAMING_SEND_MODES = [
 	{
@@ -548,29 +527,191 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 				/>
 			) : null}
 
-			<PromptImageChips
-				controller={attachedImages}
-				leading={
-					submitError ? (
-						<FileChip
-							data-testid="composer-command-error"
-							tone="error"
-							icon={false}
-							title={submitError}
-							label={submitError}
-						/>
-					) : null
-				}
-			/>
-
 			<div className="p-chat-gutter">
 				<div
 					data-testid="chat-composer-shell"
-					className={cn(
-						"relative grid grid-cols-[auto_minmax(0,1fr)_auto] grid-rows-[minmax(0,1fr)_auto] items-end gap-x-4 gap-y-4",
-						expanded && growthLimit === "half-chat" && "max-h-[50cqh]",
-					)}
+					className="relative grid grid-cols-[minmax(0,1fr)_auto] grid-rows-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-4"
 				>
+					<div
+						data-testid="chat-input-surface"
+						className="relative col-span-2 col-start-1 row-start-1 flex min-h-0 flex-col overflow-hidden rounded-xl bg-control-bg shadow-[var(--shadow-sm)] ring-1 ring-inset ring-control-border-default transition-shadow duration-[var(--motion-duration-normal)] focus-within:ring-control-border-active tr-text-ui"
+					>
+						<PromptImageStrip
+							controller={attachedImages}
+							leading={
+								submitError ? (
+									<FileChip
+										data-testid="composer-command-error"
+										tone="error"
+										icon={false}
+										title={submitError}
+										label={submitError}
+									/>
+								) : null
+							}
+						/>
+						<div
+							className={cn(
+								"flex min-h-0 items-end overflow-hidden",
+								expanded && growthLimit === "half-chat" && "max-h-[50cqh]",
+								COMPOSER_EDITOR_LIMIT_CLASS[growthLimit],
+							)}
+						>
+							<div className="relative min-h-0 min-w-0 flex-1 self-stretch overflow-hidden">
+								<div
+									ref={editorSizerRef}
+									data-testid="chat-input-sizer"
+									aria-hidden
+									className="invisible w-full whitespace-pre-wrap break-words px-12 py-8 tr-text-ui"
+								>
+									{`${value}\u200b`}
+								</div>
+								{slots ? (
+									<div
+										ref={attachBackdrop}
+										data-testid="slot-backdrop"
+										aria-hidden
+										className="pointer-events-none absolute inset-0 overflow-hidden rounded-sm"
+									>
+										<div className="w-full whitespace-pre-wrap break-words px-12 py-8 tr-text-ui">
+											{withOffsets(highlightSegments(value, slots, slotIdx)).map((seg) => (
+												<span
+													key={seg.start}
+													data-testid={seg.state === "plain" ? undefined : "slot-highlight"}
+													data-slot-state={seg.state === "plain" ? undefined : seg.state}
+													className={`text-transparent ${highlightTint(seg.state)}`}
+												>
+													{seg.text}
+												</span>
+											))}
+										</div>
+									</div>
+								) : null}
+								<textarea
+									ref={ref}
+									data-testid="chat-input"
+									value={value}
+									onScroll={syncBackdropScroll}
+									onChange={(e) => {
+										const next = e.target.value;
+										const nextCaret = e.target.selectionStart;
+										setSubmitError(null);
+										const recalled = recallIdxRef.current;
+										if (recalled !== null && next !== recentPrompts[recalled]) {
+											recallIdxRef.current = null;
+										}
+										if (slotSession) {
+											setSlotSession(applyTemplateSlotEdit(value, next, nextCaret, slotSession));
+										}
+										onChange(next);
+										setCaret(nextCaret);
+									}}
+									onKeyUp={(e) => setCaret(e.currentTarget.selectionStart)}
+									onClick={(e) => setCaret(e.currentTarget.selectionStart)}
+									onKeyDown={onKeyDown}
+									onPaste={onPaste}
+									onDrop={onDrop}
+									rows={1}
+									placeholder={
+										isStreaming
+											? t("chat.composer.placeholderStreaming")
+											: expanded
+												? t("chat.composer.placeholderExpanded")
+												: t("chat.composer.placeholder")
+									}
+									className={cn(
+										"absolute inset-0 size-full resize-none overflow-x-hidden overflow-y-auto rounded-sm bg-transparent px-12 py-8 tr-text-ui text-text-default outline-none placeholder:text-text-muted",
+										expanded ? "whitespace-pre-wrap" : "whitespace-nowrap",
+									)}
+								/>
+							</div>
+							<div className="flex shrink-0 items-center gap-4 self-end p-4">
+								{isStreaming ? (
+									<span className="relative flex shrink-0">
+										<span
+											aria-hidden
+											className="pointer-events-none absolute -inset-2 rounded-full border-2 border-transparent border-t-text-muted motion-safe:animate-spin motion-reduce:hidden"
+										/>
+										<IconButton
+											round
+											variant="primary"
+											size="l"
+											icon={Square}
+											data-testid="chat-abort"
+											label={t("chat.composer.stop")}
+											onClick={onAbort}
+											className="[&_svg]:fill-current"
+										/>
+									</span>
+								) : null}
+								<div
+									data-testid="chat-send-pill"
+									data-armed={canSend}
+									className="flex shrink-0 items-center gap-2"
+								>
+									<span
+										className={cn(
+											"flex transition-transform duration-[var(--motion-duration-normal)] ease-[var(--motion-ease-out)]",
+											canSend ? "scale-100" : "scale-90",
+										)}
+									>
+										<IconButton
+											round
+											variant="primary"
+											size="l"
+											icon={ArrowUp}
+											data-testid="chat-send"
+											label={isStreaming ? t("chat.composer.steer") : t("chat.composer.send")}
+											onClick={() => submit(isStreaming ? "steer" : "send")}
+											disabled={!canSend}
+										/>
+									</span>
+									{isStreaming ? (
+										<Popover open={sendMenuOpen} onOpenChange={setSendMenuOpen}>
+											<PopoverTrigger asChild>
+												<IconButton
+													round
+													size="m"
+													icon={ChevronDown}
+													data-testid="send-menu"
+													label={t("chat.composer.sendOptions")}
+												/>
+											</PopoverTrigger>
+											<PopoverContent side="top" align="end" className="w-[320px] p-4">
+												<div className="flex flex-col gap-2">
+													{STREAMING_SEND_MODES.map((mode) => (
+														<button
+															key={mode.behavior}
+															type="button"
+															data-testid={mode.testid}
+															disabled={!canSend}
+															onClick={() => {
+																setSendMenuOpen(false);
+																submit(mode.behavior);
+															}}
+															className="group flex w-full flex-col gap-2 rounded-sm px-8 py-4 text-left hover:bg-control-bg-hovered disabled:pointer-events-none"
+														>
+															<span className="flex w-full items-baseline justify-between gap-8">
+																<span className="text-text-default tr-text-ui group-disabled:text-control-disabled-text">
+																	{t(mode.name)}
+																</span>
+																<span className="shrink-0 text-text-muted tr-text-metadata group-disabled:text-control-disabled-text">
+																	{mode.keys}
+																</span>
+															</span>
+															<span className="text-text-muted tr-text-metadata group-disabled:text-control-disabled-text">
+																{t(mode.meaning)}
+															</span>
+														</button>
+													))}
+												</div>
+											</PopoverContent>
+										</Popover>
+									) : null}
+								</div>
+							</div>
+						</div>
+					</div>
 					<div className="col-start-1 row-start-2 flex min-w-0 items-center self-end">
 						<ModelEffortPicker
 							ref={pickerRef}
@@ -585,81 +726,7 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 							className="max-w-[60vw] px-4 sm:max-w-[320px]"
 						/>
 					</div>
-					<div
-						data-testid="chat-input-surface"
-						className={cn(
-							"relative col-span-3 col-start-1 row-start-1 min-h-0 overflow-hidden rounded-xl bg-control-bg shadow-[var(--shadow-sm)] ring-1 ring-inset ring-control-border-default transition-shadow duration-[var(--motion-duration-normal)] focus-within:ring-control-border-active tr-text-ui",
-							COMPOSER_EDITOR_LIMIT_CLASS[growthLimit],
-						)}
-					>
-						<div
-							ref={editorSizerRef}
-							data-testid="chat-input-sizer"
-							aria-hidden
-							className="invisible w-full whitespace-pre-wrap break-words px-12 py-8 tr-text-ui"
-						>
-							{`${value}\u200b`}
-						</div>
-						{slots ? (
-							<div
-								ref={attachBackdrop}
-								data-testid="slot-backdrop"
-								aria-hidden
-								className="pointer-events-none absolute inset-0 overflow-hidden rounded-sm"
-							>
-								<div className="w-full whitespace-pre-wrap break-words px-12 py-8 tr-text-ui">
-									{withOffsets(highlightSegments(value, slots, slotIdx)).map((seg) => (
-										<span
-											key={seg.start}
-											data-testid={seg.state === "plain" ? undefined : "slot-highlight"}
-											data-slot-state={seg.state === "plain" ? undefined : seg.state}
-											className={`text-transparent ${highlightTint(seg.state)}`}
-										>
-											{seg.text}
-										</span>
-									))}
-								</div>
-							</div>
-						) : null}
-						<textarea
-							ref={ref}
-							data-testid="chat-input"
-							value={value}
-							onScroll={syncBackdropScroll}
-							onChange={(e) => {
-								const next = e.target.value;
-								const nextCaret = e.target.selectionStart;
-								setSubmitError(null);
-								const recalled = recallIdxRef.current;
-								if (recalled !== null && next !== recentPrompts[recalled]) {
-									recallIdxRef.current = null;
-								}
-								if (slotSession) {
-									setSlotSession(applyTemplateSlotEdit(value, next, nextCaret, slotSession));
-								}
-								onChange(next);
-								setCaret(nextCaret);
-							}}
-							onKeyUp={(e) => setCaret(e.currentTarget.selectionStart)}
-							onClick={(e) => setCaret(e.currentTarget.selectionStart)}
-							onKeyDown={onKeyDown}
-							onPaste={onPaste}
-							onDrop={onDrop}
-							rows={1}
-							placeholder={
-								isStreaming
-									? t("chat.composer.placeholderStreaming")
-									: expanded
-										? t("chat.composer.placeholderExpanded")
-										: t("chat.composer.placeholder")
-							}
-							className={cn(
-								"absolute inset-0 size-full resize-none overflow-x-hidden overflow-y-auto rounded-sm bg-transparent px-12 py-8 tr-text-ui text-text-default outline-none placeholder:text-text-muted",
-								expanded ? "whitespace-pre-wrap" : "whitespace-nowrap",
-							)}
-						/>
-					</div>
-					<div className="col-start-3 row-start-2 flex shrink-0 items-center gap-4 self-end">
+					<div className="col-start-2 row-start-2 flex shrink-0 items-center self-end">
 						<IconButton
 							icon={History}
 							data-testid="history-open"
@@ -667,96 +734,6 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 							label={t("chat.composer.searchHistory")}
 							onClick={openHistory}
 						/>
-						{isStreaming ? (
-							<Button
-								variant="ghost"
-								size="m"
-								iconLeft={StopFill}
-								data-testid="chat-abort"
-								aria-label={t("chat.composer.stop")}
-								tooltip={t("chat.composer.stop")}
-								onClick={onAbort}
-								className="shrink-0 @max-md:w-24 @max-md:px-0"
-							>
-								<span className={WIDE_ONLY}>{t("chat.composer.stop")}</span>
-							</Button>
-						) : null}
-						<div
-							data-testid="chat-send-pill"
-							data-armed={canSend}
-							className={cn(SEND_PILL, canSend ? SEND_PILL_ARMED : SEND_PILL_INERT)}
-						>
-							<button
-								type="button"
-								data-testid="chat-send"
-								aria-label={isStreaming ? t("chat.composer.steer") : t("chat.composer.send")}
-								onClick={() => submit(isStreaming ? "steer" : "send")}
-								disabled={!canSend}
-								className={cn(
-									SEND_MAIN,
-									"tr-text-action hover:bg-control-primary-bg-hovered",
-									isStreaming ? "rounded-r-none pr-4" : "pr-12",
-								)}
-							>
-								<ArrowUp className={cn("size-16", COMPACT_ONLY)} />
-								<span className={WIDE_ONLY}>
-									{isStreaming ? t("chat.composer.steer") : t("chat.composer.send")}
-								</span>
-								<kbd aria-hidden className={cn(KEYCAP, WIDE_ONLY)}>
-									<EnterKey className="size-12" />
-								</kbd>
-							</button>
-							{isStreaming ? (
-								<Popover open={sendMenuOpen} onOpenChange={setSendMenuOpen}>
-									<IconTooltip label={t("chat.composer.sendOptions")} wrapTrigger>
-										<PopoverTrigger asChild>
-											<button
-												type="button"
-												data-testid="send-menu"
-												aria-label={t("chat.composer.sendOptions")}
-												className={cn(
-													SEND_MORE,
-													canSend
-														? "hover:bg-control-primary-bg-hovered"
-														: "hover:text-text-default",
-												)}
-											>
-												<ChevronDown className="size-14" />
-											</button>
-										</PopoverTrigger>
-									</IconTooltip>
-									<PopoverContent side="top" align="end" className="w-[320px] p-4">
-										<div className="flex flex-col gap-2">
-											{STREAMING_SEND_MODES.map((mode) => (
-												<button
-													key={mode.behavior}
-													type="button"
-													data-testid={mode.testid}
-													disabled={!canSend}
-													onClick={() => {
-														setSendMenuOpen(false);
-														submit(mode.behavior);
-													}}
-													className="group flex w-full flex-col gap-2 rounded-sm px-8 py-4 text-left hover:bg-control-bg-hovered disabled:pointer-events-none"
-												>
-													<span className="flex w-full items-baseline justify-between gap-8">
-														<span className="text-text-default tr-text-ui group-disabled:text-control-disabled-text">
-															{t(mode.name)}
-														</span>
-														<span className="shrink-0 text-text-muted tr-text-metadata group-disabled:text-control-disabled-text">
-															{mode.keys}
-														</span>
-													</span>
-													<span className="text-text-muted tr-text-metadata group-disabled:text-control-disabled-text">
-														{t(mode.meaning)}
-													</span>
-												</button>
-											))}
-										</div>
-									</PopoverContent>
-								</Popover>
-							) : null}
-						</div>
 					</div>
 				</div>
 			</div>

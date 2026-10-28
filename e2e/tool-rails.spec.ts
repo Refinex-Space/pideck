@@ -1,5 +1,6 @@
 import { expect, type Locator, type Page, test } from "@playwright/test";
 import {
+	applyWorkbenchPreset,
 	createWorkspaceViaDialog,
 	defaultWorkspaceRow,
 	enterDefaultWorkspace,
@@ -14,6 +15,7 @@ import {
 async function openDefaultWorkbench(page: Page): Promise<void> {
 	await openFixtureProject(page);
 	await enterDefaultWorkspace(page);
+	await applyWorkbenchPreset(page, "Balanced");
 	await waitTerminalReady(page);
 }
 
@@ -99,6 +101,7 @@ test("folding, hiding, and showing regions keep the center and the other panes m
 test("edge tools hide only their pane while terminal sessions stay grouped", async ({ page }) => {
 	await openFixtureProject(page);
 	await enterDefaultWorkspace(page);
+	await applyWorkbenchPreset(page, "Balanced");
 	await waitTerminalReady(page);
 	await expect(page.getByTestId("left-layout-rail")).toBeVisible();
 	await expect(page.getByTestId("right-layout-rail")).toBeVisible();
@@ -310,11 +313,11 @@ test("rail keyboard navigation changes focus without selection and keeps collaps
 	await openDefaultWorkbench(page);
 	const rail = page.getByTestId("right-layout-rail");
 	await expect(rail).toHaveAttribute("role", "toolbar");
-	await expect(rail).toHaveAttribute("aria-orientation", "vertical");
+	await expect(rail).toHaveAttribute("aria-orientation", "horizontal");
 	const specs = page.getByTestId("tool-rail-specs");
 	const files = page.getByTestId("tool-rail-files");
 	await specs.focus();
-	await page.keyboard.press("ArrowDown");
+	await page.keyboard.press("ArrowRight");
 	await expect(files).toBeFocused();
 	await expect(specs).toHaveAttribute("aria-pressed", "true");
 	await expect(files).toHaveAttribute("aria-pressed", "false");
@@ -346,7 +349,7 @@ test("the plan rail entry is reachable by keyboard, exposes aria-controls, and l
 
 	await page.getByTestId("tool-rail-specs").focus();
 	for (let i = 0; i < 10 && !(await plan.evaluate((el) => el === document.activeElement)); i += 1) {
-		await page.keyboard.press("ArrowDown");
+		await page.keyboard.press("ArrowRight");
 	}
 	await expect(plan).toBeFocused();
 

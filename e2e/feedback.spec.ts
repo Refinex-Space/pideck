@@ -1,5 +1,6 @@
 import { expect, test, type WebSocketRoute } from "@playwright/test";
 import { WS_CHANNELS } from "@thinkrail/contracts";
+import { openAppSettings } from "./fixtures/app";
 
 const BOOKING_URL = "https://github.com/Refinex-Space/pideck/issues";
 const INVITATION_COPY =
@@ -63,7 +64,7 @@ test("feedback settings and the addressed interview prompt preserve the approved
 	await page.goto("/");
 	await expect(page.getByTestId("connection-status")).toHaveAttribute("data-status", "connected");
 
-	await page.getByTestId("open-settings").click();
+	await openAppSettings(page);
 	await page.getByTestId("settings-nav-feedback").click();
 	const settings = page.getByTestId("settings-feedback");
 	await expect(settings).toContainText(INVITATION_COPY);

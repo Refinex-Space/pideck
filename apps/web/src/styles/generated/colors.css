@@ -68,6 +68,7 @@
 	--editor-find-match-bg: color-mix(in srgb, var(--warning) 40%, transparent); /* Monaco's active find match */
 	--widget-shadow: color-mix(in srgb, var(--text) 20%, transparent); /* Monaco widget, sticky-scroll, and scrollbar shadows */
 	--media-checker-tile: color-mix(in srgb, var(--text) 20%, transparent); /* the transparency checkerboard tile behind images and vector previews: the text colour at the soft (20%) step — the contrast of the conventional #ccc-on-white checkerboard — over the content canvas, so a dark logo on a transparent PNG stays visible on a dark theme and a light one on a light theme; index.css's `.media-backdrop` is the only consumer */
+	--focus-ring: var(--info); /* Keyboard focus is independent of neutral primary fills; automatic workbench restoration is gated by explicit focus intent. */
 }
 
 /* Appearance-level effects. The theme engine stamps `data-theme-appearance` before React mounts, so
@@ -75,16 +76,16 @@
 :root[data-theme-appearance="dark"] {
 	--sunken: rgba(0, 0, 0, 0.12);
 	--overlay: rgba(0, 0, 0, 0.5);
-	--shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
-	--shadow-md: 0 4px 16px rgba(0, 0, 0, 0.35);
-	--shadow-lg: 0 8px 28px rgba(0, 0, 0, 0.4);
+	--shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.2);
+	--shadow-md: 0 8px 24px rgba(0, 0, 0, 0.32), 0 2px 6px rgba(0, 0, 0, 0.2);
+	--shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.24);
 }
 :root[data-theme-appearance="light"] {
 	--sunken: rgba(0, 0, 0, 0.05);
-	--overlay: rgba(0, 0, 0, 0.5);
-	--shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.1);
-	--shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
-	--shadow-lg: 0 8px 28px rgba(0, 0, 0, 0.14);
+	--overlay: rgba(0, 0, 0, 0.4);
+	--shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.06);
+	--shadow-md: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.08);
+	--shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.14), 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 @theme inline {
@@ -140,6 +141,7 @@
 	--color-feedback-warning-muted: var(--feedback-warning-muted);
 	--color-bubble-user-bg: var(--bubble-user-bg);
 	--color-bubble-user-border: var(--bubble-user-border);
+	--color-focus-ring: var(--focus-ring);
 	--color-sunken: var(--sunken);
 	--color-overlay: var(--overlay);
 }

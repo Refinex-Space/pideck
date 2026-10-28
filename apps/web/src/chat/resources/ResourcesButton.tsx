@@ -1,12 +1,12 @@
-import { RiErrorWarningLine, RiStackFill, RiStackLine } from "@remixicon/react";
+import { RiErrorWarningLine } from "@remixicon/react";
 import { useT } from "@thinkrail/locales/react";
 import { Button, IconButton, withIconClass } from "@thinkrail/ui/button";
 import { IconTooltip } from "@thinkrail/ui/tooltip";
 import { cn } from "@thinkrail/ui/utils";
+import { Package2 } from "lucide-react";
 import type { ComponentProps } from "react";
 
-const StackFillLive = withIconClass(RiStackFill, "motion-safe:animate-working");
-const StackLineLive = withIconClass(RiStackLine, "motion-safe:animate-working");
+const PackageLive = withIconClass(Package2, "motion-safe:animate-working");
 
 export function ResourcesButton({
 	activeCount,
@@ -23,7 +23,7 @@ export function ResourcesButton({
 }) {
 	const t = useT();
 	const live = working ?? (activeCount !== null && activeCount > 0);
-	const Icon = open ? (live ? StackFillLive : RiStackFill) : live ? StackLineLive : RiStackLine;
+	const Icon = live ? PackageLive : Package2;
 	return (
 		<IconTooltip
 			label={

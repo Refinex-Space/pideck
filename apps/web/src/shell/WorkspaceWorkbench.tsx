@@ -1,11 +1,7 @@
-import {
-	RiGitBranchLine as GitBranch,
-	RiChatNewLine as MessageSquarePlus,
-	RiTerminalBoxLine as SquareTerminal,
-} from "@remixicon/react";
+import { RiGitBranchLine as GitBranch, RiChatNewLine as MessageSquarePlus } from "@remixicon/react";
 import type { MessageKey } from "@thinkrail/locales";
 import { t, useT } from "@thinkrail/locales/react";
-import { Button, IconButton } from "@thinkrail/ui/button";
+import { Button } from "@thinkrail/ui/button";
 import { LoadingRegion } from "@thinkrail/ui/skeleton";
 import {
 	Fragment,
@@ -77,6 +73,7 @@ import {
 	type LayoutTab,
 	type LayoutTabFocusRequest,
 	type LayoutToolId,
+	readLayoutFocusIntent,
 	showingAuxiliaryKey,
 	Workbench,
 	type WorkspaceLayoutDocument,
@@ -310,7 +307,19 @@ function useTerminalReservation(workspaceId: string): void {
 	}, [connectionGeneration, pendingIntent, status, workspaceId]);
 }
 
-export function WorkspaceWorkbench({ workspaceId }: { workspaceId: string }) {
+export function WorkspaceWorkbench({
+	workspaceId,
+	workspaceLocation,
+	navigationActions,
+	navigationFooter,
+	collapsedNavigationFooter,
+}: {
+	workspaceId: string;
+	workspaceLocation: ReactNode;
+	navigationActions: ReactNode;
+	navigationFooter: ReactNode;
+	collapsedNavigationFooter: ReactNode;
+}) {
 	const t = useT();
 	const status = useAppStore((state) => state.status);
 	const connectionGeneration = useAppStore((state) => state.connectionGeneration);
@@ -346,6 +355,12 @@ export function WorkspaceWorkbench({ workspaceId }: { workspaceId: string }) {
 		void ChatView.preload();
 	}, []);
 	const [focusRequest, setFocusRequest] = useState<LayoutTabFocusRequest | null>(null);
+	const requestFocus = useCallback((request: LayoutTabFocusRequest) => {
+		setFocusRequest({
+			...request,
+			intent: request.intent ?? readLayoutFocusIntent(globalThis.document.activeElement),
+		});
+	}, []);
 	const requestRenameChat = useCallback(
 		(sessionId: string, titleInput: string, currentTitle: string) => {
 			const prepared = prepareChatTitle(titleInput);
@@ -446,7 +461,7 @@ export function WorkspaceWorkbench({ workspaceId }: { workspaceId: string }) {
 	useLegacySelectionAdapter(workspaceId, activeReviewedPath, readActiveReviewedPath, readAuxiliary);
 	useDeletedChatPlacementReconciliation(workspaceId);
 	useTerminalReservation(workspaceId);
-	useLayoutIntentProcessing(workspaceId, commit, changeAttention, setFocusRequest);
+	useLayoutIntentProcessing(workspaceId, commit, changeAttention, requestFocus);
 	useWorkspaceChatCatalogReconciliation(workspaceId, commit);
 	const { terminals } = useTerminalPlacementReconciliation(workspaceId, commit);
 	useChatLocationReconciliation(workspaceId, changeAttention);
@@ -636,11 +651,7 @@ export function WorkspaceWorkbench({ workspaceId }: { workspaceId: string }) {
 	const toolBodies = useMemo<Record<LayoutToolId, ReactNode>>(() => {
 		const bodies: Record<LayoutToolId, ReactNode> = {
 			projects: (
-				<QuietScrollArea
-					data-testid="left-nav"
-					className="h-full"
-					viewportClassName="p-panel-inset"
-				>
+				<QuietScrollArea data-testid="left-nav" className="h-full" viewportClassName="px-8 py-12">
 					<ProjectTree />
 				</QuietScrollArea>
 			),
@@ -791,25 +802,14 @@ export function WorkspaceWorkbench({ workspaceId }: { workspaceId: string }) {
 
 	const renderCenterActions = useCallback(
 		(groupId: string): ReactNode => (
-			<>
-				<WorkspaceChatHistory
-					key={workspaceId}
-					workspaceId={workspaceId}
-					targetGroupId={groupId}
-					{...(canRenameChat ? { onRenameChat: requestRenameChat } : {})}
-				/>
-				<IconButton
-					variant="ghost"
-					size="m"
-					icon={SquareTerminal}
-					label={t("shell.workbench.newTerminal")}
-					data-testid="new-terminal"
-					onClick={() => useAppStore.getState().addTerminal(workspaceId, undefined, groupId)}
-					className="shrink-0 self-center"
-				/>
-			</>
+			<WorkspaceChatHistory
+				key={workspaceId}
+				workspaceId={workspaceId}
+				targetGroupId={groupId}
+				{...(canRenameChat ? { onRenameChat: requestRenameChat } : {})}
+			/>
 		),
-		[canRenameChat, requestRenameChat, t, workspaceId],
+		[canRenameChat, requestRenameChat, workspaceId],
 	);
 
 	if (!rendered) {
@@ -830,6 +830,10 @@ export function WorkspaceWorkbench({ workspaceId }: { workspaceId: string }) {
 				/>
 			))}
 			<Workbench
+				workspaceLocation={workspaceLocation}
+				navigationActions={navigationActions}
+				navigationFooter={navigationFooter}
+				collapsedNavigationFooter={collapsedNavigationFooter}
 				workspaceId={workspaceId}
 				document={rendered.document}
 				attention={rendered.attention}

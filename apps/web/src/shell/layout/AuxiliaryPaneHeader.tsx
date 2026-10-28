@@ -8,7 +8,7 @@ import { tupleKey } from "../../lib";
 import type { LayoutTab } from "./types";
 
 const TITLE_CLASS =
-	"flex min-w-0 flex-1 items-center truncate px-12 tr-title-compact text-text-default";
+	"flex min-w-0 flex-1 items-center truncate px-12 tr-text-metadata text-text-muted";
 
 function DraggableTitle({ title, tab }: { title: string; tab: LayoutTab }) {
 	const { setNodeRef, listeners, isDragging } = useDraggable({
@@ -42,7 +42,7 @@ export const AuxiliaryPaneHeader = forwardRef<
 			data-testid="auxiliary-pane-header"
 			{...props}
 			className={cn(
-				"relative flex h-panel-header-row shrink-0 items-stretch border-border-muted border-b bg-container-header-bg",
+				"relative flex h-panel-header-row shrink-0 items-stretch bg-container-sidebar-bg",
 				className,
 			)}
 		>

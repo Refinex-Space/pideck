@@ -2,6 +2,7 @@ import { RiCoinsLine as Coins, RiLoader4Line as Loader } from "@remixicon/react"
 import type { JbcentralQuotaSnapshot } from "@thinkrail/contracts";
 import { localeOf, type Translator, useT } from "@thinkrail/locales/react";
 import { IconTooltip } from "@thinkrail/ui/tooltip";
+import { cn } from "@thinkrail/ui/utils";
 import { formatJbcentralQuota } from "./jbcentralQuota";
 
 export type JbcentralQuotaViewSnapshot = JbcentralQuotaSnapshot | { state: "loading" };
@@ -17,9 +18,11 @@ function observedLabel(t: Translator, observedAt: number): string {
 export function JbcentralQuotaIndicator({
 	snapshot,
 	onRetry,
+	compact = false,
 }: {
 	snapshot: JbcentralQuotaViewSnapshot;
 	onRetry: () => void;
+	compact?: boolean;
 }) {
 	const t = useT();
 	if (snapshot.state === "hidden") return null;
@@ -29,10 +32,15 @@ export function JbcentralQuotaIndicator({
 				<span
 					data-testid="jbcentral-quota"
 					data-state="loading"
-					className="inline-flex shrink-0 items-center gap-4 whitespace-nowrap text-text-muted tr-text-ui"
+					className={cn(
+						"inline-flex shrink-0 items-center gap-4 whitespace-nowrap text-text-muted tr-text-ui",
+						compact && "size-28 justify-center",
+					)}
 				>
 					<Loader className="size-14 animate-spin" aria-hidden="true" />
-					<span>{t("shell.jbcentralQuota.loading")}</span>
+					<span className={compact ? "sr-only" : undefined}>
+						{t("shell.jbcentralQuota.loading")}
+					</span>
 				</span>
 			</IconTooltip>
 		);
@@ -45,11 +53,18 @@ export function JbcentralQuotaIndicator({
 					data-testid="jbcentral-quota"
 					data-state="unavailable"
 					onClick={onRetry}
-					className="inline-flex shrink-0 items-center gap-4 whitespace-nowrap rounded-sm text-text-muted tr-text-ui outline-none hover:text-text-default focus-visible:ring-2 focus-visible:ring-primary"
+					className={cn(
+						"inline-flex shrink-0 items-center gap-4 whitespace-nowrap rounded-sm text-text-muted tr-text-ui outline-none hover:text-text-default focus-visible:ring-1 focus-visible:ring-focus-ring",
+						compact && "size-28 justify-center",
+					)}
 				>
 					<Coins className="size-14" aria-hidden="true" />
-					<span>{t("shell.jbcentralQuota.unavailable")}</span>
-					<span className="hidden sm:inline">{t("shell.jbcentralQuota.retrySuffix")}</span>
+					<span className={compact ? "sr-only" : undefined}>
+						{t("shell.jbcentralQuota.unavailable")}
+					</span>
+					<span className={compact ? "sr-only" : "hidden sm:inline"}>
+						{t("shell.jbcentralQuota.retrySuffix")}
+					</span>
 				</button>
 			</IconTooltip>
 		);
@@ -60,8 +75,10 @@ export function JbcentralQuotaIndicator({
 	const content = (
 		<>
 			<Coins className="size-14 text-text-muted" aria-hidden="true" />
-			<span>{value}</span>
-			<span className="hidden sm:inline">{t("shell.jbcentralQuota.creditsUnit")}</span>
+			<span className={compact ? "sr-only" : undefined}>{value}</span>
+			<span className={compact ? "sr-only" : "hidden sm:inline"}>
+				{t("shell.jbcentralQuota.creditsUnit")}
+			</span>
 			{stale ? (
 				<span
 					data-testid="jbcentral-quota-stale-marker"
@@ -75,15 +92,19 @@ export function JbcentralQuotaIndicator({
 	const label = stale
 		? t("shell.jbcentralQuota.staleLabel", { value })
 		: t("shell.jbcentralQuota.availableLabel", { value, time: observed });
-	const className =
-		"inline-flex shrink-0 items-center gap-4 whitespace-nowrap text-text-default tr-text-ui";
+	const className = cn(
+		"inline-flex shrink-0 items-center gap-4 whitespace-nowrap text-text-default tr-text-ui",
+		compact && "size-28 justify-center",
+	);
 
 	return (
 		<IconTooltip
 			label={
-				stale
-					? t("shell.jbcentralQuota.staleTooltip", { time: observed })
-					: t("shell.jbcentralQuota.availableTooltip", { time: observed })
+				compact
+					? label
+					: stale
+						? t("shell.jbcentralQuota.staleTooltip", { time: observed })
+						: t("shell.jbcentralQuota.availableTooltip", { time: observed })
 			}
 		>
 			{stale ? (
@@ -93,7 +114,7 @@ export function JbcentralQuotaIndicator({
 					data-state="stale"
 					aria-label={label}
 					onClick={onRetry}
-					className={`${className} rounded-sm outline-none hover:text-text-default focus-visible:ring-2 focus-visible:ring-primary`}
+					className={`${className} rounded-sm outline-none hover:text-text-default focus-visible:ring-1 focus-visible:ring-focus-ring`}
 				>
 					{content}
 				</button>

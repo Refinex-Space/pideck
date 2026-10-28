@@ -16,15 +16,37 @@ active palette atomically. The host owns only the opaque
 fixed id plus fixed/system mode and optional light/dark pair; this module owns what those values mean on
 this client, including operating-system color-scheme observation and same-appearance fallback. **Adding a
 theme = adding one `*.theme.json` file** — to `bundled/` (a PR + rebuild) or, for a user, to
-`~/.thinkrail/themes` (live, [[submodule-server-themes]]) — no code, contract, CSS, or test changes.
+`~/.pideck/themes` (live, [[submodule-server-themes]]) — no code, contract, CSS, or test changes.
 
-Six manifests ship: the standard **Dark** and **Light** (the configured default and its pair, unchanged),
-**Minimal Dark** and **Minimal Light** (the quiet neutral surface hierarchy, restrained green accent and
-neutral `bubbleAccent` of the Minimal interface study, sharing the standard pair's syntax and terminal
-palettes), and the two High Contrast palettes with their stricter accessibility contract. Minimal is a
-palette a user picks in Appearance and nothing more: every theme renders the same roles, so a component
-never branches on the active theme or its contrast metadata to drop a fill or a border. What a palette
-cannot express through the manifest keys is a product decision for all themes, not a theme.
+Six manifests ship under their existing ids: **Dark**, **Light**, **Minimal Dark**, **Minimal Light**,
+**High Contrast Dark** and **High Contrast Light**. Their palette follows [[pideck-design-system]]:
+neutral surfaces, inverted primary controls and neutral user-message bubbles. Standard Light and Dark
+follow the actual Claude Code runtime captures: white canvas/header/content with a `#fafafa` sidebar in
+Light; `#242424` canvas/header/content, `#2a2a2a` sidebar/overlays and `#3a3a3a` input in Dark. These
+observed remote-page surfaces take precedence over the different near-black surfaces found in the
+packaged CDS stylesheet. Packaged tokens are evidence of shipped resources, not proof of a remote
+page's rendered colors. Minimal retains its flatter CDS-inspired surfaces as a distinct option; High
+Contrast strengthens text, borders and selections under the existing stricter accessibility contract.
+Theme ids, schema, order, default selection and user-theme loading are unchanged.
+
+Minimal is a palette a user picks in Appearance and nothing more: every theme renders the same roles,
+so a component never branches on the active theme or its contrast metadata to drop a fill or a border.
+What a palette cannot express through the manifest keys is a product decision for all themes, not a theme.
+The branded green is removed only from accent, primary-control and bubble roles. Success, error, Git diff,
+syntax and ANSI colors retain their separate meanings. The normal light family shares a deeper syntax
+comment gray for legibility on Minimal's warm surfaces; other syntax colors and all ANSI entries remain.
+Standard Dark's destructive fill is slightly lighter so its inherited 12% darker hover and the legacy
+background-derived label still meet AA on the brighter runtime canvas. Terminals keep the existing
+xterm minimum-contrast floor (4.5, or 7 in High Contrast), including for extended ANSI output.
+
+The measured CDS muted color is not copied blindly: Light's hint is slightly darker so it remains
+legible on the hover surface. Standard Dark's hint is slightly lighter for the same reason. Hover fills
+meet PiDeck's existing 1.15 distinction gate, including against the lighter input surface, while the exact
+component geometry and state ownership remain outside the palette. These adjustments are PiDeck
+implementation decisions rather than claims about Claude's accessibility policy. Bundled-primary and
+bubble regression checks allow a small warm-neutral channel spread (16 out of 255) but exclude a
+return to chromatic branding; user palettes are not subject to that styling constraint. Syntax colors
+must retain at least 4.5 contrast on workspace, content and elevated surfaces.
 
 ## Boundary
 
@@ -79,15 +101,15 @@ bypasses the role it belongs to. See [`styles/COLOR.md`](../styles/COLOR.md).
 
 **One key per role that themes may vary independently.** Schema version 2 splits `header` out of
 `content`, which previously wrote both `--bg-dark` and `--surface-content` and so pinned the app header
-to the code canvas in every theme. Every bundled manifest ships `header` equal to its `content`, so the
-split changed no pixel — it made a knob exist. The same move is what any future divergence needs: a role
+to the code canvas in every theme. The original split shipped `header` equal to `content` and changed no pixels. PiDeck now uses the
+workspace tone for the standard header while retaining a separate recessed content surface. The same move is what any future divergence needs: a role
 can only vary between themes if the manifest has a key for it.
 
 The primary control has an explicit opaque-fill contract: `accentSolid` is its resting fill,
 `accentHover` its hover fill, and `onAccent` the label on both. The separate `accent` remains the
 foreground/ring/border and tint source. This lets a palette vary opaque controls without silently
-changing every accent tint: the Minimal palettes align their resting fill with their accent, while the
-standard Light keeps its brighter independent solid fill. The destructive control has the same contract
+changing every accent tint. Bundled PiDeck themes use neutral inverted fills; user themes may still
+vary the foreground accent independently from their solid controls. The destructive control has the same contract
 on the danger hue: `danger` is its resting fill (and the feedback colour), `dangerHover` its hover fill, and
 `onDanger` the label on both — `schema.test.ts` holds `onDanger` to AA on both fills and keeps the hover
 step distinguishable (≥ 1.15) from the resting fill. `dangerHover` and `onDanger` joined v2 after user

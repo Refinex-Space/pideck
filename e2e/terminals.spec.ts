@@ -2,7 +2,9 @@ import { expect, test, type WebSocketRoute } from "@playwright/test";
 import { INITIAL_TERMINAL_TAB_KEY } from "@thinkrail/contracts";
 import {
 	activeWorktreeRow,
+	applyWorkbenchPreset,
 	createWorkspaceViaDialog,
+	openCenterTerminal,
 	openFixtureProject,
 	openTerminal,
 	pseudoBackgroundColor,
@@ -24,11 +26,12 @@ const CURSOR_POSITION_QUERY_COMMAND = [
 	"termios.tcsetattr(0,termios.TCSADRAIN,old); print('TR_DSR_CONSUMED='+repr(reply))\"",
 ].join(" ");
 
-test("a workspace opens a terminal automatically, rooted in the worktree, with working I/O", async ({
+test("Balanced opens the reserved terminal automatically, rooted in the worktree, with working I/O", async ({
 	page,
 }) => {
 	await openFixtureProject(page);
 	await createWorkspaceViaDialog(page);
+	await applyWorkbenchPreset(page, "Balanced");
 	await expect(worktreeRows(page)).toHaveCount(1);
 
 	await expect(page.getByTestId("terminal-tab")).toHaveCount(1);
@@ -86,6 +89,7 @@ test("a shell start failure explains recovery and retries the same tab", async (
 
 	await openFixtureProject(page);
 	const workspace = await createWorkspaceViaDialog(page);
+	await applyWorkbenchPreset(page, "Balanced");
 	await waitTerminalReady(page);
 	attachFailuresRemaining = 2;
 	await page.getByTestId("project-item").first().click();
@@ -152,6 +156,7 @@ test("a shell start failure explains recovery and retries the same tab", async (
 test("xterm uses the shared quiet rail and directional curtains", async ({ page }) => {
 	await openFixtureProject(page);
 	await createWorkspaceViaDialog(page);
+	await applyWorkbenchPreset(page, "Balanced");
 	await waitTerminalReady(page);
 
 	const terminal = visibleTerminal(page);
@@ -258,6 +263,7 @@ test("xterm uses the shared quiet rail and directional curtains", async ({ page 
 test("terminals are workspace-scoped and survive workspace switches", async ({ page }) => {
 	await openFixtureProject(page);
 	await createWorkspaceViaDialog(page);
+	await applyWorkbenchPreset(page, "Balanced");
 	await waitTerminalReady(page);
 	await runInTerminal(page, "echo TR_WS1_BUFFER");
 	await expect(visibleTerminalScreen(page)).toContainText("TR_WS1_BUFFER");
@@ -278,6 +284,7 @@ test("multiple terminals per workspace keep independent buffers and can be close
 }) => {
 	await openFixtureProject(page);
 	await createWorkspaceViaDialog(page);
+	await applyWorkbenchPreset(page, "Balanced");
 
 	await waitTerminalReady(page);
 	await runInTerminal(page, "echo TR_ONE");
@@ -297,7 +304,7 @@ test("multiple terminals per workspace keep independent buffers and can be close
 	await expect(page.getByTestId("terminal-tab")).toHaveCount(1);
 	await page.getByTestId("terminal-tab-close").click();
 	await expect(page.getByTestId("terminal-tab")).toHaveCount(0);
-	await page.getByTestId("new-terminal").first().click();
+	await openCenterTerminal(page);
 	await expect(page.getByTestId("terminal-tab")).toHaveCount(1);
 	await expect(
 		page.getByTestId("center-group").filter({ has: page.getByTestId("terminal-tab") }),
@@ -308,6 +315,7 @@ test("multiple terminals per workspace keep independent buffers and can be close
 test("the terminal's shell counts characters, not bytes", async ({ page }) => {
 	await openFixtureProject(page);
 	await createWorkspaceViaDialog(page);
+	await applyWorkbenchPreset(page, "Balanced");
 	await waitTerminalReady(page);
 	const term = visibleTerminalScreen(page);
 
@@ -321,6 +329,7 @@ test("the terminal's shell counts characters, not bytes", async ({ page }) => {
 test("a shell survives a trip to Project Home and back", async ({ page }) => {
 	await openFixtureProject(page);
 	await createWorkspaceViaDialog(page);
+	await applyWorkbenchPreset(page, "Balanced");
 	await waitTerminalReady(page);
 
 	await runInTerminal(page, "TR_SURVIVOR=alive");
@@ -358,6 +367,7 @@ test("historical terminal queries do not become input on remount", async ({ page
 
 	await openFixtureProject(page);
 	await createWorkspaceViaDialog(page);
+	await applyWorkbenchPreset(page, "Balanced");
 	await waitTerminalReady(page);
 
 	await runInTerminal(page, CURSOR_POSITION_QUERY_COMMAND);
@@ -406,6 +416,7 @@ test("rapid re-entry never spawns a second shell", async ({ page }) => {
 
 	await openFixtureProject(page);
 	await createWorkspaceViaDialog(page);
+	await applyWorkbenchPreset(page, "Balanced");
 	await waitTerminalReady(page);
 	await runInTerminal(page, "TR_SURVIVOR=alive");
 	await runInTerminal(page, 'echo "CHECK=$TR_SURVIVOR"');
@@ -429,6 +440,7 @@ test("rapid re-entry never spawns a second shell", async ({ page }) => {
 test("a shell survives a page reload", async ({ page }) => {
 	await openFixtureProject(page);
 	await createWorkspaceViaDialog(page);
+	await applyWorkbenchPreset(page, "Balanced");
 	await waitTerminalReady(page);
 	await runInTerminal(page, "TR_RELOAD=survived");
 	await runInTerminal(page, 'echo "BEFORE=$TR_RELOAD"');
@@ -447,6 +459,7 @@ test("a shell survives a page reload", async ({ page }) => {
 test("a terminal's output never reaches another client", async ({ page, context }) => {
 	await openFixtureProject(page);
 	await createWorkspaceViaDialog(page);
+	await applyWorkbenchPreset(page, "Balanced");
 	await createWorkspaceViaDialog(page);
 	await waitTerminalReady(page);
 	await worktreeRow(page, "workspace-1").click();
@@ -463,6 +476,7 @@ test("a terminal's output never reaches another client", async ({ page, context 
 	await expect(page2.getByTestId("connection-status")).toHaveAttribute("data-status", "connected");
 	await revealFirstProjectWorkspaces(page2);
 	await worktreeRow(page2, "workspace-2").click();
+	await applyWorkbenchPreset(page2, "Balanced");
 	await waitTerminalReady(page2);
 
 	await runInTerminal(page, "echo TR_SECRET_FROM_A_$((20 + 22))");
@@ -480,6 +494,7 @@ test("a terminal's output never reaches another client", async ({ page, context 
 test("a tab says so when its shell exits", async ({ page }) => {
 	await openFixtureProject(page);
 	await createWorkspaceViaDialog(page);
+	await applyWorkbenchPreset(page, "Balanced");
 	await waitTerminalReady(page);
 	await expect(visibleTerminal(page)).toHaveAttribute("data-exited", "false");
 
@@ -492,6 +507,7 @@ test("a tab says so when its shell exits", async ({ page }) => {
 test("Ctrl+C still interrupts while an input method is active", async ({ page }) => {
 	await openFixtureProject(page);
 	await createWorkspaceViaDialog(page);
+	await applyWorkbenchPreset(page, "Balanced");
 	await waitTerminalReady(page);
 	const term = visibleTerminalScreen(page);
 
@@ -516,6 +532,7 @@ test("Ctrl+C still interrupts while an input method is active", async ({ page })
 test("a shell that dies while detached is not re-attached as if alive", async ({ page }) => {
 	await openFixtureProject(page);
 	await createWorkspaceViaDialog(page);
+	await applyWorkbenchPreset(page, "Balanced");
 	await waitTerminalReady(page);
 
 	await runInTerminal(page, "(sleep 2; kill -9 $$) &");
@@ -543,6 +560,7 @@ test("a shell survives losing the connection and reconnecting", async ({ page })
 
 	await openFixtureProject(page);
 	await createWorkspaceViaDialog(page);
+	await applyWorkbenchPreset(page, "Balanced");
 	await waitTerminalReady(page);
 
 	await runInTerminal(page, "TR_RECONNECT=survived");
@@ -604,6 +622,7 @@ test("a terminal attach response lost with its socket is replayed exactly once",
 
 	await openFixtureProject(page);
 	await createWorkspaceViaDialog(page);
+	await applyWorkbenchPreset(page, "Balanced");
 	await waitTerminalReady(page);
 	await runInTerminal(page, "echo TR_REPLAYED_CREATE_WORKS");
 	await expect(visibleTerminalScreen(page)).toContainText("TR_REPLAYED_CREATE_WORKS");
@@ -632,6 +651,7 @@ test("final shell output is delivered before exit after reconnect", async ({ pag
 
 	await openFixtureProject(page);
 	await createWorkspaceViaDialog(page);
+	await applyWorkbenchPreset(page, "Balanced");
 	await waitTerminalReady(page);
 	const term = visibleTerminalScreen(page);
 
@@ -659,6 +679,7 @@ test("final shell output is delivered before exit after reconnect", async ({ pag
 test("a second client takes a terminal over and the first is told", async ({ page, context }) => {
 	await openFixtureProject(page);
 	await createWorkspaceViaDialog(page);
+	await applyWorkbenchPreset(page, "Balanced");
 	await waitTerminalReady(page);
 	await runInTerminal(page, "TR_SHARED=yes");
 	await runInTerminal(page, 'echo "FIRST=$TR_SHARED"');
@@ -669,6 +690,7 @@ test("a second client takes a terminal over and the first is told", async ({ pag
 	await expect(page2.getByTestId("connection-status")).toHaveAttribute("data-status", "connected");
 	await revealFirstProjectWorkspaces(page2);
 	await worktreeRows(page2).nth(0).click();
+	await applyWorkbenchPreset(page2, "Balanced");
 	await waitTerminalReady(page2);
 
 	await expect(page2.getByTestId("terminal-tab")).toHaveCount(1);
@@ -689,6 +711,7 @@ test("a second client takes a terminal over and the first is told", async ({ pag
 test("closing a tab with a running process asks first", async ({ page }) => {
 	await openFixtureProject(page);
 	await createWorkspaceViaDialog(page);
+	await applyWorkbenchPreset(page, "Balanced");
 	await waitTerminalReady(page);
 
 	await runInTerminal(page, "sleep 45");
@@ -744,6 +767,7 @@ test("a rejected forced close stays correlated and permits a clean retry", async
 
 	await openFixtureProject(page);
 	await createWorkspaceViaDialog(page);
+	await applyWorkbenchPreset(page, "Balanced");
 	await waitTerminalReady(page);
 	await runInTerminal(page, "sleep 45");
 	await page.waitForTimeout(1500);
@@ -765,6 +789,7 @@ test("a rejected forced close stays correlated and permits a clean retry", async
 test("closing an idle tab does not ask", async ({ page }) => {
 	await openFixtureProject(page);
 	await createWorkspaceViaDialog(page);
+	await applyWorkbenchPreset(page, "Balanced");
 	await waitTerminalReady(page);
 	await openTerminal(page);
 	await expect(page.getByTestId("terminal-tab")).toHaveCount(2);
@@ -780,6 +805,7 @@ test("a terminal opened in one browser never creates placement in another", asyn
 }) => {
 	await openFixtureProject(page);
 	await createWorkspaceViaDialog(page);
+	await applyWorkbenchPreset(page, "Balanced");
 	await waitTerminalReady(page);
 	await expect(page.getByTestId("terminal-tab")).toHaveCount(1);
 
@@ -788,6 +814,7 @@ test("a terminal opened in one browser never creates placement in another", asyn
 	await expect(page2.getByTestId("connection-status")).toHaveAttribute("data-status", "connected");
 	await revealFirstProjectWorkspaces(page2);
 	await worktreeRows(page2).nth(0).click();
+	await applyWorkbenchPreset(page2, "Balanced");
 	await waitTerminalReady(page2);
 	await expect(page2.getByTestId("terminal-tab")).toHaveCount(1);
 
@@ -835,6 +862,7 @@ test("a shell that dies during a reclaim is not presented as alive", async ({ pa
 
 	await openFixtureProject(page);
 	await createWorkspaceViaDialog(page);
+	await applyWorkbenchPreset(page, "Balanced");
 	await waitTerminalReady(page);
 
 	const page2 = await context.newPage();
@@ -842,6 +870,7 @@ test("a shell that dies during a reclaim is not presented as alive", async ({ pa
 	await expect(page2.getByTestId("connection-status")).toHaveAttribute("data-status", "connected");
 	await revealFirstProjectWorkspaces(page2);
 	await worktreeRows(page2).nth(0).click();
+	await applyWorkbenchPreset(page2, "Balanced");
 	await waitTerminalReady(page2);
 	await expect(visibleTerminal(page)).toHaveAttribute("data-detached", "true");
 	await runInTerminal(page2, "(sleep 5; kill -9 $$) &");

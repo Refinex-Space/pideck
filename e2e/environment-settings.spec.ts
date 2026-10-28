@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, type Page, test } from "@playwright/test";
-import { openFixtureProject } from "./fixtures/app";
+import { openAppSettings, openFixtureProject } from "./fixtures/app";
 import { E2E_PI_AGENT_DIR, E2E_SCREENSHOT_DIR } from "./fixtures/paths";
 import { E2eWire } from "./fixtures/wire";
 
@@ -18,7 +18,7 @@ async function clearStoredEnvironment(page: Page): Promise<void> {
 }
 
 async function openEnvironmentSettings(page: Page) {
-	await page.getByTestId("open-settings").click();
+	await openAppSettings(page);
 	await page.getByTestId("settings-nav-environment").click();
 	const section = page.getByTestId("settings-environment");
 	await expect(section).toBeVisible();

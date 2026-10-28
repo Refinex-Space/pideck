@@ -1,8 +1,10 @@
 import { expect, type Locator, type Page, test } from "@playwright/test";
 import {
+	applyWorkbenchPreset,
 	createWorkspaceViaDialog,
 	defaultWorkspaceRow,
 	enterDefaultWorkspace,
+	openCenterTerminal,
 	openFixtureProject,
 	pressPlatformShortcut,
 	revealWorkbenchTool,
@@ -14,6 +16,7 @@ async function openDefault(page: Page): Promise<void> {
 	await page.setViewportSize({ width: 1440, height: 900 });
 	await openFixtureProject(page);
 	await enterDefaultWorkspace(page);
+	await applyWorkbenchPreset(page, "Balanced");
 	await waitTerminalReady(page);
 }
 
@@ -84,9 +87,9 @@ for (const allFolded of [false, true]) {
 			await page.getByTestId("tool-rail-review").click({ button: "right" });
 			await page.getByRole("menuitem", { name: "New bottom group at right", exact: true }).click();
 		}
+		await openCenterTerminal(page);
 		await terminalRail.click();
 		await expect(terminalRail).toHaveAttribute("aria-pressed", "false");
-		await page.getByTestId("center-tab-strip").getByTestId("new-terminal").click();
 		const source = page.getByTestId("center-group").getByTestId("terminal-tab");
 		await expect(source).toBeVisible();
 		const target = allFolded ? page.getByTestId("bottom-drop-zone") : terminalRail;
@@ -112,9 +115,9 @@ test("a terminal dropped on a rail boundary beside a folded tool pane gets its o
 	const specsGroupId = await specs.evaluate(
 		(button) => button.closest<HTMLElement>("[data-group-id]")?.dataset.groupId,
 	);
+	await openCenterTerminal(page);
 	await specs.click();
 	await expect(specs).toHaveAttribute("aria-pressed", "false");
-	await page.getByTestId("center-tab-strip").getByTestId("new-terminal").click();
 	const terminal = page.getByTestId("center-group").getByTestId("terminal-tab");
 	await startDrag(page, terminal);
 	await expect(page.locator('[data-drop-label="Insert before Specs"]')).toHaveCount(0);

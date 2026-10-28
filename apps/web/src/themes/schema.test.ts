@@ -48,6 +48,51 @@ test("every bundled theme is complete, unique, and includes the configured defau
 	expect(ids).toContain(DEFAULT_CONFIG.theme);
 });
 
+test("the PiDeck palette redesign preserves the six persisted bundled theme ids", () => {
+	expect(bundledThemes().map((theme) => theme.id)).toEqual(
+		expect.arrayContaining([
+			"dark",
+			"light",
+			"minimal-dark",
+			"minimal-light",
+			"high-contrast-dark",
+			"high-contrast-light",
+		]),
+	);
+});
+
+test("bundled primary controls and user bubbles stay neutral without constraining semantic colors", () => {
+	for (const theme of bundledThemes()) {
+		for (const key of [
+			"accent",
+			"accentSolid",
+			"accentHover",
+			"onAccent",
+			"bubbleAccent",
+		] as const) {
+			const color = theme.colors[key];
+			const channels = [1, 3, 5].map((start) => Number.parseInt(color.slice(start, start + 2), 16));
+			expect(
+				Math.max(...channels) - Math.min(...channels),
+				`${theme.id}: ${key} must stay within the neutral family`,
+			).toBeLessThanOrEqual(16);
+		}
+	}
+});
+
+test("bundled syntax remains readable on document, code and raised surfaces", () => {
+	for (const theme of bundledThemes()) {
+		for (const [key, color] of Object.entries(theme.syntax)) {
+			for (const surface of ["background", "content", "elevated"] as const) {
+				expect(
+					contrast(color, theme.colors[surface]),
+					`${theme.id}: syntax ${key} on ${surface}`,
+				).toBeGreaterThanOrEqual(4.5);
+			}
+		}
+	}
+});
+
 test("runtime palette keys stay aligned with the authoring JSON schema", () => {
 	const schema = JSON.parse(readFileSync(join(import.meta.dir, "theme.schema.json"), "utf8")) as {
 		$defs: Record<string, { required: string[]; properties: Record<string, unknown> }>;

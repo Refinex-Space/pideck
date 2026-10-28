@@ -4,7 +4,9 @@ import {
 	defaultWorkspaceRow,
 	openFixtureProject,
 	openTerminal,
+	revealWorkbenchTerminal,
 	revealWorkbenchTool,
+	workspaceDetail,
 	worktreeRow,
 	worktreeRows,
 } from "./fixtures/app";
@@ -27,12 +29,12 @@ test("editor tabs are scoped to the active workspace", async ({ page }) => {
 	await expect(tabs).toHaveCount(1);
 	await expect(tabs.filter({ hasText: "README.md" })).toHaveCount(0);
 	await expect(page.getByTestId("scope-name")).toHaveText("workspace-2");
-	await expect(page.getByTestId("scope-branch")).toHaveText("workspace-2");
+	await expect(await workspaceDetail(page, "scope-branch")).toHaveText("workspace-2");
 
 	await worktreeRow(page, "workspace-1").getByRole("button").first().click();
 	await expect(worktreeRow(page, "workspace-1")).toHaveAttribute("data-active", "true");
 	await expect(page.getByTestId("scope-name")).toHaveText("workspace-1");
-	await expect(page.getByTestId("scope-branch")).toHaveText("workspace-1");
+	await expect(await workspaceDetail(page, "scope-branch")).toHaveText("workspace-1");
 	await expect(tabs).toHaveCount(2);
 	await expect(tabs.filter({ hasText: "README.md" })).toBeVisible();
 });
@@ -46,6 +48,7 @@ test("the selected side tool follows workspace switches", async ({ page }) => {
 	await worktreeRow(page, "workspace-1").getByRole("button").first().click();
 	await expect(page.getByTestId("scope-name")).toHaveText("workspace-1");
 
+	await revealWorkbenchTool(page, "specs");
 	const groupInfo = await page.locator('[data-side][data-tools~="specs"]').evaluate((group) => ({
 		side: group.getAttribute("data-side"),
 		groupId: group.getAttribute("data-group-id"),
@@ -87,6 +90,7 @@ test("switching workspaces re-targets the mounted workbench instead of remountin
 	await createWorkspaceViaDialog(page);
 	await revealWorkbenchTool(page, "files");
 	await page.getByTestId("file-node").filter({ hasText: "README.md" }).dblclick();
+	await revealWorkbenchTerminal(page);
 	await openTerminal(page);
 	const terminalTabs = page.getByTestId("terminal-tab");
 	const terminalCount = await terminalTabs.count();
@@ -143,6 +147,7 @@ test("a same-id terminal body remounts instead of carrying across workspaces", a
 	await createWorkspaceViaDialog(page);
 	await createWorkspaceViaDialog(page);
 	await expect(page.getByTestId("scope-name")).toHaveText("workspace-2");
+	await revealWorkbenchTerminal(page);
 	const terminal = page.locator(
 		'[data-testid="terminal-instance"][data-tab-key="thinkrail-initial"]',
 	);

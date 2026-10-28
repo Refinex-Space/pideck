@@ -34,7 +34,7 @@ describe("message copy layout", () => {
 		);
 
 		expect(html).toContain("pr-24");
-		expect(html).toContain("right-0 bottom-8");
+		expect(html).toContain("right-0 bottom-12");
 		expect(html).not.toContain("pb-24");
 	});
 });

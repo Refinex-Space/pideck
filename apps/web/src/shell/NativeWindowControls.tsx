@@ -9,7 +9,7 @@ import { useT } from "@thinkrail/locales/react";
 import { cn } from "@thinkrail/ui/utils";
 
 const BUTTON_CLASS =
-	"flex h-topbar-row w-46 items-center justify-center text-text-muted outline-none transition-colors focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary";
+	"flex h-topbar-row w-46 items-center justify-center text-text-muted outline-none transition-colors focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-focus-ring";
 const BUTTON_HOVER_CLASS = "hover:bg-control-bg-hovered hover:text-text-default";
 const CLOSE_HOVER_CLASS = "hover:bg-feedback-error-subtle hover:text-feedback-error";
 
@@ -30,7 +30,7 @@ export function NativeWindowControls({
 	return (
 		<div
 			data-testid="window-controls"
-			className="window-no-drag absolute top-0 right-0 flex h-topbar-row"
+			className="window-no-drag absolute z-40 top-0 right-0 flex h-topbar-row"
 		>
 			<button
 				type="button"

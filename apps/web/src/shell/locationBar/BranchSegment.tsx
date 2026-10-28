@@ -126,19 +126,17 @@ export function BranchSegment({
 			<Segment
 				testid="scope-branch-segment"
 				className="hidden max-w-[440px] shrink-[4] md:flex"
-				caption={
-					<>
-						{t("shell.location.branch.caption")}
-						{userOwned ? null : (
-							<span className="truncate">
-								<T
-									i18nKey="shell.location.branch.fromBase"
-									values={{ base: workspace.baseBranch }}
-									components={[<span key="base" data-testid="scope-base" />]}
-								/>
-							</span>
-						)}
-					</>
+				caption={t("shell.location.branch.caption")}
+				detail={
+					userOwned ? null : (
+						<span className="truncate">
+							<T
+								i18nKey="shell.location.branch.fromBase"
+								values={{ base: workspace.baseBranch }}
+								components={[<span key="base" data-testid="scope-base" />]}
+							/>
+						</span>
+					)
 				}
 			>
 				<PopoverTrigger

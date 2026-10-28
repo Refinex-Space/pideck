@@ -22,6 +22,9 @@ is historical context; it is not a PiDeck signing or publication service.
 
 ## Drivers
 
+Presentation decisions are owned by [design-system.md](design-system.md); module and transport
+boundaries remain here. Reference observations never override PiDeck behavior or platform contracts.
+
 The product is built around the `pi` agent, run **in-process** (`createAgentSession`). Two additive
 launchers share the same host library: the retained CLI boots the engine host and opens a browser,
 while Electrobun packages that host with a native system-webview shell. The desktop profile is local

@@ -6,6 +6,7 @@ import {
 	defaultWorkspaceRow,
 	enterDefaultWorkspace,
 	goProjectHome,
+	openAppSettings,
 	openFixtureProject,
 	openPersistedChat,
 	openWorkspaceMenu,
@@ -361,7 +362,7 @@ test("a result behind an open modal clears only once the modal closes", async ({
 			liveRegion.setAttribute("aria-live", "polite");
 			chat.append(liveRegion);
 		});
-		await page.getByTestId("open-settings").click();
+		await openAppSettings(page);
 		await expect(page.getByRole("dialog")).toBeVisible();
 		await setWindowFocus(page, true);
 		await settleFrames(page);

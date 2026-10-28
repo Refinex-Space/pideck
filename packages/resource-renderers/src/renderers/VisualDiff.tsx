@@ -280,7 +280,7 @@ export function VisualDiff({
 									<button
 										type="button"
 										aria-label={t(DIVIDER_LABELS[noun])}
-										className="absolute inset-y-0 z-20 w-4 -translate-x-1/2 cursor-col-resize bg-primary outline-none focus-visible:ring-2 focus-visible:ring-primary"
+										className="absolute inset-y-0 z-20 w-4 -translate-x-1/2 cursor-col-resize bg-primary outline-none focus-visible:ring-1 focus-visible:ring-focus-ring"
 										style={{ left: `${divider}%` }}
 										onPointerDown={(event) => {
 											event.currentTarget.setPointerCapture(event.pointerId);

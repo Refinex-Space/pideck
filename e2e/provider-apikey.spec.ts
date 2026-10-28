@@ -1,5 +1,5 @@
 import { expect, type Page, test } from "@playwright/test";
-import { openAppFresh } from "./fixtures/app";
+import { openAppFresh, openAppSettings } from "./fixtures/app";
 
 const APIKEY_BTN = '[data-testid="provider-apikey"][data-provider="e2e-apikey"]';
 const SIGNOUT = '[data-testid="provider-signout"][data-provider="e2e-apikey"]';
@@ -8,7 +8,7 @@ const CONFIGURED =
 
 async function configureApiKeyProvider(page: Page): Promise<void> {
 	await openAppFresh(page);
-	await page.getByTestId("open-settings").click();
+	await openAppSettings(page);
 	await expect(page.getByTestId("settings-providers")).toBeVisible();
 
 	await expect(page.getByTestId("provider-apikey").first()).toBeVisible();
@@ -76,7 +76,7 @@ test("the OAuth-only fake offers no API-key entry (flags derive from Provider.au
 	tag: "@dev-seam",
 }, async ({ page }) => {
 	await openAppFresh(page);
-	await page.getByTestId("open-settings").click();
+	await openAppSettings(page);
 	await expect(page.getByTestId("settings-providers")).toBeVisible();
 
 	await expect(

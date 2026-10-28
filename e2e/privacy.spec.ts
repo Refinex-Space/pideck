@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { seedAnalyticsConsent } from "./fixtures/analyticsConsent";
+import { openAppSettings } from "./fixtures/app";
 
 test("privacy controls additional data without disabling basics and persists across reload", async ({
 	page,
@@ -9,7 +10,7 @@ test("privacy controls additional data without disabling basics and persists acr
 	await page.goto("/");
 	await expect(page.getByTestId("connection-status")).toHaveAttribute("data-status", "connected");
 
-	await page.getByTestId("open-settings").click();
+	await openAppSettings(page);
 	const dialog = page.getByTestId("settings-dialog");
 	await expect(dialog).toBeVisible();
 	await page.getByTestId("settings-nav-privacy").click();
@@ -29,7 +30,7 @@ test("privacy controls additional data without disabling basics and persists acr
 
 	await page.reload();
 	await expect(page.getByTestId("connection-status")).toHaveAttribute("data-status", "connected");
-	await page.getByTestId("open-settings").click();
+	await openAppSettings(page);
 	await page.getByTestId("settings-nav-privacy").click();
 	await expect(toggle).toHaveAttribute("data-active", "false");
 

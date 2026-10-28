@@ -4,30 +4,32 @@ import type { ReactNode } from "react";
 
 export function Segment({
 	caption,
+	detail,
 	children,
 	className,
 	testid,
 }: {
 	caption: ReactNode;
+	detail?: ReactNode;
 	children: ReactNode;
 	className?: string | undefined;
 	testid?: string | undefined;
 }) {
 	return (
-		<div
-			data-testid={testid}
-			className={cn("flex min-w-0 flex-col justify-center pl-8", className)}
-		>
-			<span className="flex h-14 min-w-0 items-center gap-4 truncate pl-8 text-text-subtle tr-text-metadata">
-				{caption}
-			</span>
-			<div className="flex h-20 min-w-0 items-center gap-4">{children}</div>
+		<div data-testid={testid} className={cn("flex min-w-0 items-center gap-4 pl-8", className)}>
+			<span className="sr-only">{caption}</span>
+			<div className="flex h-24 min-w-0 items-center gap-4">{children}</div>
+			{detail ? (
+				<span className="flex min-w-0 items-center gap-4 truncate text-text-subtle tr-text-metadata">
+					{detail}
+				</span>
+			) : null}
 		</div>
 	);
 }
 
 export const pillClass =
-	"group/pill window-no-drag inline-flex h-20 min-w-0 items-center gap-4 rounded-sm px-8 text-text-muted outline-none transition-colors hover:bg-control-bg-hovered hover:text-text-default focus-visible:ring-2 focus-visible:ring-primary data-[state=open]:bg-control-bg-selected data-[state=open]:text-text-default";
+	"group/pill window-no-drag inline-flex h-24 min-w-0 items-center gap-4 rounded-md px-8 text-text-muted outline-none transition-colors hover:bg-control-bg-hovered hover:text-text-default focus-visible:ring-1 focus-visible:ring-focus-ring data-[state=open]:bg-control-bg-selected data-[state=open]:text-text-default";
 
 export function PillChevron({ className }: { className?: string | undefined }) {
 	return (
@@ -65,7 +67,7 @@ export function chipClass(tone: ChipTone, interactive = false): string {
 		CHIP_TONE[tone].rest,
 		interactive &&
 			cn(
-				"window-no-drag outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary",
+				"window-no-drag outline-none transition-colors focus-visible:ring-1 focus-visible:ring-focus-ring",
 				CHIP_TONE[tone].hover,
 			),
 	);
@@ -98,7 +100,7 @@ export function splitFrameClass(tone: SplitTone): string {
 
 export function splitPartClass(tone: SplitTone): string {
 	return cn(
-		"window-no-drag flex items-center gap-4 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary disabled:opacity-60 [&_svg]:size-12 [&_svg]:shrink-0",
+		"window-no-drag flex items-center gap-4 outline-none transition-colors focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-focus-ring disabled:opacity-60 [&_svg]:size-12 [&_svg]:shrink-0",
 		SPLIT_TONE[tone].hover,
 	);
 }

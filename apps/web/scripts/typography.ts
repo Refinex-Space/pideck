@@ -105,19 +105,9 @@ export function renderFontsCss(t: Typography): string {
 }
 
 const FONTS_HEADER = (version: string) => `/*
- * GENERATED — do not edit. Source: \`src/styles/typography.json\` (v${version}), the \`selfHosted\`
- * entries of each font family. Regenerate with \`bun run typography:generate\`.
- *
- * The app's faces are self-hosted — no runtime call to a font CDN. ThinkRail runs locally (often
- * offline) and ships as a single-file binary, so the fonts have to be part of the artifact: Vite
- * fingerprints these woff2 files into \`dist/assets\` and the CLI embeds that output. A \`<link>\` to a
- * font CDN satisfied none of it — it left an air-gapped host in system faces, put first paint behind a
- * third party, and contacted the CDN on every load despite the app's analytics opt-out.
- *
- * The bundled faces are VARIABLE fonts (the interface + code families carry real italics), which is
- * what makes the type scale honest: every weight and markdown \`<em>\` are real faces, not the
- * browser's synthetic bold/oblique. Every unicode subset stays declared — each is its own
- * \`@font-face\` with a \`unicode-range\`, so a document downloads only the ranges it renders.
+ * GENERATED — do not edit. Source: \`src/styles/typography.json\` (v${version}).
+ * Regenerate with \`bun run typography:generate\`. System UI fonts need no imports;
+ * the variable code face remains self-hosted for offline artifacts.
  */
 `;
 
@@ -138,7 +128,7 @@ export function proseRootClassName(t: Typography, system: string): string {
 	return `${t.metadata.classPrefix}-prose-${kebab(system)}`;
 }
 
-export const PROSE_STRONG_WEIGHT = "medium";
+export const PROSE_STRONG_WEIGHT = "semibold";
 
 export const PROSE_SELECTORS: Record<string, string> = {
 	body: "",
@@ -435,7 +425,7 @@ function declarations(t: Typography, style: Style, indent = "\t"): string {
 		`font-family: var(${cssVarName(t, "font-family", style.fontFamily)});`,
 		`font-size: var(${cssVarName(t, "font-size", style.fontSize)});`,
 		`font-weight: var(${cssVarName(t, "font-weight", style.fontWeight)});`,
-		`line-height: var(${cssVarName(t, "line-height", style.lineHeight)});`,
+		`line-height: ${Math.round(t.fontSizes[style.fontSize] * t.lineHeights[style.lineHeight])}px;`,
 		`letter-spacing: var(${cssVarName(t, "letter-spacing", style.letterSpacing)});`,
 		`text-transform: ${style.textTransform};`,
 		`font-style: ${style.fontStyle};`,

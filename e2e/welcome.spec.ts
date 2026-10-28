@@ -4,7 +4,10 @@ import { expect, type Page, test } from "@playwright/test";
 import {
 	createWorkspaceViaDialog,
 	openAppFresh,
+	openAppSettings,
 	openFixtureProject,
+	revealWorkbenchTerminal,
+	revealWorkbenchTool,
 	stagePlainFolder,
 	worktreeRows,
 } from "./fixtures/app";
@@ -59,7 +62,7 @@ test("the Welcome provider warning only shows when no provider is connected, and
 test("Settings → Providers lists in-app auth options", async ({ page }) => {
 	await openAppFresh(page);
 
-	await page.getByTestId("open-settings").click();
+	await openAppSettings(page);
 	await expect(page.getByTestId("settings-dialog")).toBeVisible();
 	await expect(page.getByTestId("settings-providers")).toBeVisible();
 
@@ -72,7 +75,7 @@ test("a real provider's API key round-trips through the login dialog (add in Set
 	tag: "@dev-seam",
 }, async ({ page }) => {
 	await openAppFresh(page);
-	await page.getByTestId("open-settings").click();
+	await openAppSettings(page);
 	await expect(page.getByTestId("settings-providers")).toBeVisible();
 
 	const keyBtn = page.getByTestId("provider-apikey").first();
@@ -113,7 +116,7 @@ test("clicking Sign in (Settings) opens the in-app login dialog, and Cancel dism
 	tag: "@dev-seam",
 }, async ({ page }) => {
 	await openAppFresh(page);
-	await page.getByTestId("open-settings").click();
+	await openAppSettings(page);
 	await expect(page.getByTestId("settings-providers")).toBeVisible();
 
 	const signIn = page.getByTestId("provider-signin").first();
@@ -131,7 +134,7 @@ test("Settings → Providers offers JetBrains AI with host-authoritative Central
 	page,
 }) => {
 	await openAppFresh(page);
-	await page.getByTestId("open-settings").click();
+	await openAppSettings(page);
 	await expect(page.getByTestId("settings-providers")).toBeVisible();
 
 	const card = page.getByTestId("jetbrains-ai-card");
@@ -231,7 +234,9 @@ test("a project without specs suggests setting it up", async ({ page }) => {
 		await expect(dialog).toBeHidden();
 		await expect(page.getByTestId("welcome")).toHaveCount(0);
 		await expect(page.getByTestId("center-tabs")).toBeVisible();
+		await revealWorkbenchTool(page, "specs");
 		await expect(page.getByTestId("right-panel")).toBeVisible();
+		await revealWorkbenchTerminal(page);
 		await expect(page.getByTestId("terminal-panel")).toBeVisible();
 		await expect(
 			page.locator('[data-testid="workspace-item"][data-kind="default"]'),

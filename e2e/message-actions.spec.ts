@@ -1,13 +1,18 @@
 import { realpathSync } from "node:fs";
 import { expect, type Page, test } from "@playwright/test";
-import { defaultWorkspaceRow, enterDefaultWorkspace, openFixtureProject } from "./fixtures/app";
+import {
+	defaultWorkspaceRow,
+	enterDefaultWorkspace,
+	openAppSettings,
+	openFixtureProject,
+} from "./fixtures/app";
 import { E2E_FIXTURE_REPO } from "./fixtures/paths";
 import { seedWorkspaceSession } from "./fixtures/sessions";
 
 async function restoreChatWidthBounded(page: Page): Promise<void> {
 	if (page.isClosed()) return;
 	if (!(await page.getByTestId("settings-dialog").isVisible())) {
-		await page.getByTestId("open-settings").click();
+		await openAppSettings(page);
 	}
 	await page.getByTestId("settings-nav-chat").click();
 	const bounded = page.getByTestId("chat-line-width-bounded");
@@ -123,7 +128,7 @@ test("an unbounded transcript keeps the user message within the visible pane", a
 	await expect(page.locator('[data-testid="editor-tab"][data-kind="chat"]')).toHaveCount(1);
 
 	try {
-		await page.getByTestId("open-settings").click();
+		await openAppSettings(page);
 		await page.getByTestId("settings-nav-chat").click();
 		const bounded = page.getByTestId("chat-line-width-bounded");
 		await expect(bounded).toHaveAttribute("data-active", "true");

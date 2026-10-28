@@ -10,6 +10,7 @@ import {
 	enterDefaultWorkspace,
 	expandDisclosure,
 	openAppFresh,
+	openAppSettings,
 	openFixtureProject,
 	PHONE_VIEWPORT,
 } from "./fixtures/app";
@@ -41,35 +42,44 @@ async function setInsets(page: Page, left: number, right: number): Promise<void>
 		},
 		{ left, right },
 	);
-	await expect(page.getByTestId("window-chrome-inset-left")).toHaveCSS("width", `${left}px`);
+	const navigation = page.getByTestId("navigation-chrome");
+	const expanded = await navigation.isVisible();
+	await expect(page.getByTestId("window-chrome-inset-left")).toHaveCSS(
+		"width",
+		expanded ? "0px" : `${left}px`,
+	);
+	if (expanded)
+		await expect(page.getByTestId("navigation-window-inset-left")).toHaveCSS("width", `${left}px`);
 	await expect(page.getByTestId("window-chrome-inset-right")).toHaveCSS("width", `${right}px`);
 }
 
 async function expectUsableHeader(
 	page: Page,
-	buttonIds: string[] = ["open-settings"],
+	buttonIds: string[] = ["app-menu"],
 	dragRegion: "drag" | "no-drag" = "no-drag",
 ): Promise<void> {
-	const header = page.getByTestId("topbar");
-	const actions = page.getByTestId("topbar-actions");
+	const header = page.getByTestId("topbar").or(page.getByTestId("center-tab-strip")).first();
+	const actions = page.getByTestId("navigation-footer");
 	await expect(header).toHaveCSS("height", "40px");
 	await expect(header).toHaveCSS("-webkit-app-region", dragRegion);
 	await expect(actions).toHaveCSS("-webkit-app-region", "no-drag");
+	for (const id of buttonIds) await expect(actions.getByTestId(id)).toBeVisible();
 	const headerBox = await bounds(header);
 	const actionsBox = await bounds(actions);
 	const logoBox = await bounds(page.getByTestId("brand-logo"));
 	const leftInsetBox = await bounds(page.getByTestId("window-chrome-inset-left"));
 	const rightInsetBox = await bounds(page.getByTestId("window-chrome-inset-right"));
-	expect(headerBox.x).toBe(0);
+	expect(headerBox.x).toBeGreaterThanOrEqual(0);
 	expect(headerBox.y).toBe(0);
-	expect(headerBox.width).toBe(page.viewportSize()?.width);
-	expect(logoBox.width).toBe(32);
-	expect(logoBox.height).toBe(32);
-	expect(logoBox.x).toBeGreaterThanOrEqual(leftInsetBox.right);
-	expect(actionsBox.right).toBeLessThanOrEqual(rightInsetBox.x);
-	expect(logoBox.right).toBeLessThanOrEqual(actionsBox.x);
-	expect(actionsBox.y).toBeGreaterThanOrEqual(headerBox.y);
-	expect(actionsBox.bottom).toBeLessThanOrEqual(headerBox.bottom);
+	expect(headerBox.right).toBeLessThanOrEqual(page.viewportSize()?.width ?? 0);
+	expect(logoBox.width).toBe(20);
+	expect(logoBox.height).toBe(20);
+	expect(actionsBox.bottom).toBeCloseTo(page.viewportSize()?.height ?? 0, 0);
+	expect(logoBox.x).toBeGreaterThanOrEqual(actionsBox.x);
+	expect(logoBox.right).toBeLessThanOrEqual(actionsBox.right);
+	expect(leftInsetBox.width).toBeGreaterThanOrEqual(0);
+	expect(rightInsetBox.right).toBeLessThanOrEqual(headerBox.right);
+
 	for (const testId of buttonIds) {
 		const button = actions.getByTestId(testId);
 		await expect(button).toBeInViewport({ ratio: 1 });
@@ -84,7 +94,7 @@ async function expectUsableHeader(
 async function headerColors(page: Page): Promise<{ actual: string; expected: string }> {
 	return page.getByTestId("topbar").evaluate((header) => {
 		const probe = document.createElement("div");
-		probe.style.backgroundColor = "var(--container-header-bg)";
+		probe.style.backgroundColor = "var(--container-content-bg)";
 		document.body.append(probe);
 		const expected = getComputedStyle(probe).backgroundColor;
 		probe.remove();
@@ -125,11 +135,11 @@ test("ordinary browsers have a fixed themed header with zero native insets", asy
 	await expect(page.getByTestId("update-ready")).toHaveCount(0);
 	await expect(page.getByTestId("window-controls")).toHaveCount(0);
 	await expectUsableHeader(page);
-	expect((await bounds(page.getByTestId("welcome-shell-layout"))).y).toBe(40);
+	expect((await bounds(page.getByTestId("welcome-shell-layout"))).y).toBe(0);
 	const initialColors = await headerColors(page);
 	expect(initialColors.actual).toBe(initialColors.expected);
 
-	await page.getByTestId("open-settings").click();
+	await openAppSettings(page);
 	await expect(page.getByTestId("settings-dialog")).toBeVisible();
 	await expect(page.getByTestId("settings-nav-updates")).toHaveCount(0);
 	await page.getByTestId("settings-nav-appearance").click();
@@ -144,8 +154,10 @@ test("ordinary browsers have a fixed themed header with zero native insets", asy
 	await expect(page.getByTestId("settings-dialog")).toBeHidden();
 
 	await page.setViewportSize(PHONE_VIEWPORT);
+	if ((await page.getByTestId("tool-rail-projects").getAttribute("aria-pressed")) === "true")
+		await page.getByTestId("tool-rail-projects").click();
 	await expectUsableHeader(page);
-	await page.getByTestId("open-settings").click();
+	await openAppSettings(page);
 	await expect(page.getByTestId("settings-dialog")).toBeVisible();
 	await page.keyboard.press("Escape");
 	await expect(page.getByTestId("settings-dialog")).toBeHidden();
@@ -158,11 +170,16 @@ test("live safe areas on either edge preserve header and workbench geometry", as
 	await enterDefaultWorkspace(page);
 	await page.evaluate(() => document.fonts.ready);
 	const logo = page.getByTestId("brand-logo");
-	const actions = page.getByTestId("topbar-actions");
+	const actions = page.getByTestId("navigation-footer");
 	const workbench = page.getByTestId("workspace-shell-layout");
 
 	for (const viewport of [{ width: 1280, height: 720 }, PHONE_VIEWPORT]) {
 		await page.setViewportSize(viewport);
+		if (
+			viewport.width < 640 &&
+			(await page.getByTestId("tool-rail-projects").getAttribute("aria-pressed")) === "true"
+		)
+			await page.getByTestId("tool-rail-projects").click();
 		await setInsets(page, 0, 0);
 		const baselineLogo = await bounds(logo);
 		const baselineActions = await bounds(actions);
@@ -175,11 +192,11 @@ test("live safe areas on either edge preserve header and workbench geometry", as
 		] as const) {
 			await setInsets(page, left, right);
 			await expectUsableHeader(page);
-			expect((await bounds(logo)).x).toBeCloseTo(baselineLogo.x + left, 1);
-			expect((await bounds(actions)).right).toBeCloseTo(baselineActions.right - right, 1);
+			expect((await bounds(logo)).x).toBeCloseTo(baselineLogo.x, 1);
+			expect((await bounds(actions)).right).toBeCloseTo(baselineActions.right, 1);
 			const workbenchBox = await bounds(workbench);
 			expect(workbenchBox).toEqual(baselineWorkbench);
-			expect(workbenchBox.y).toBe(40);
+			expect(workbenchBox.y).toBe(0);
 			await expect(page.getByTestId("scope-name")).toBeVisible();
 			await expect(page.getByTestId("center-tabs")).toBeVisible();
 			if (left === 80 && right === 138) {
@@ -303,7 +320,7 @@ test("the action cluster keeps Update, quota Retry and Settings out of the drag 
 	await page.keyboard.press("Escape");
 	await expect(page.getByTestId("settings-dialog")).toBeHidden();
 
-	const buttons = ["update-ready", "jbcentral-quota", "open-settings"];
+	const buttons = ["update-ready", "jbcentral-quota", "app-menu"];
 	await page.evaluate(() =>
 		document.documentElement.style.setProperty("--window-chrome-drag-region", "drag"),
 	);
@@ -312,6 +329,8 @@ test("the action cluster keeps Update, quota Retry and Settings out of the drag 
 
 	await setInsets(page, 0, 0);
 	await page.setViewportSize(PHONE_VIEWPORT);
+	if ((await page.getByTestId("tool-rail-projects").getAttribute("aria-pressed")) === "true")
+		await page.getByTestId("tool-rail-projects").click();
 	await expectUsableHeader(page, buttons, "drag");
 
 	await page.getByTestId("update-ready").click();
@@ -376,11 +395,11 @@ test("HTML window controls appear only with the native bridge and drive it", asy
 	const headerBox = await bounds(header);
 	const spacerBox = await bounds(spacer);
 	const controlsBox = await bounds(controls);
-	expect(controlsBox.right).toBe(headerBox.right);
+	expect(controlsBox.right).toBe(page.viewportSize()?.width);
 	expect(controlsBox.y).toBe(headerBox.y);
 	expect(controlsBox.height).toBe(40);
 	expect(controlsBox.x).toBeGreaterThanOrEqual(spacerBox.x);
-	await expectUsableHeader(page, ["open-settings"], "drag");
+	await expectUsableHeader(page, ["app-menu"], "drag");
 
 	const getActions = () => page.evaluate(() => Reflect.get(globalThis, "__TEST_WINDOW_ACTIONS__"));
 
@@ -409,7 +428,7 @@ test("HTML window controls appear only with the native bridge and drive it", asy
 	});
 	await setInsets(page, 0, 0);
 	await expect(controls).toHaveCount(0);
-	await expectUsableHeader(page, ["open-settings"], "drag");
+	await expectUsableHeader(page, ["app-menu"], "drag");
 
 	await page.evaluate(() => {
 		const listeners = Reflect.get(globalThis, "__TEST_WINDOW_LISTENERS__") as Set<

@@ -1,8 +1,8 @@
-import { RiBookOpenLine as BookOpen } from "@remixicon/react";
 import { useT } from "@thinkrail/locales/react";
 import { Button } from "@thinkrail/ui/button";
 import { IconTooltip } from "@thinkrail/ui/tooltip";
 import { cn } from "@thinkrail/ui/utils";
+import { Blocks } from "lucide-react";
 
 export function SkillsButton({
 	onOpen,
@@ -21,7 +21,7 @@ export function SkillsButton({
 			<Button
 				variant="ghost"
 				size="s"
-				iconLeft={BookOpen}
+				iconLeft={Blocks}
 				data-testid={testId}
 				data-stale={stale ? "true" : undefined}
 				onClick={onOpen}

@@ -71,7 +71,7 @@ test("resource primitives keep their props-only import boundary", () => {
 		const source = readFileSync(`${import.meta.dir}/${file}`, "utf8");
 		for (const [, dependency] of source.matchAll(/from\s+["']([^"']+)["']/g)) {
 			expect(dependency).toMatch(
-				/^(?:@thinkrail\/contracts|@thinkrail\/locales(?:\/react)?$|react|@remixicon\/react|@thinkrail\/ui\/|@\/lib$|\.\/)/,
+				/^(?:@thinkrail\/contracts|@thinkrail\/locales(?:\/react)?$|react|lucide-react$|@remixicon\/react|@thinkrail\/ui\/|@\/lib$|\.\/)/,
 			);
 		}
 		expect(source).not.toMatch(

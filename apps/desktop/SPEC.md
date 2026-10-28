@@ -11,6 +11,10 @@ references: [submodule-web-navigation, module-artifact-tests, module-ci-release,
 
 ## PiDeck packaging
 
+The native startup surface follows the neutral light/dark palette and system typography from
+[design-system.md](../../design-system.md). Its lifecycle, readiness and platform window geometry
+remain unchanged; the splash does not load the web theme runtime or add another preference owner.
+
 The application name is `PiDeck`, its bundle identifier is `space.refinex.pideck`, and Windows
 AppUserModelIDs use `RefinexSpace.PiDeck` with the existing channel suffixes. Native icons use the
 vendored Pi block glyph. The default update feed is empty, so even stable/canary local packages

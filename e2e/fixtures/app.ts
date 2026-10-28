@@ -27,6 +27,21 @@ import {
 import { fixtureRepoHealthy, seedFixtureRepo } from "./repo";
 import { E2eWire } from "./wire";
 
+export async function workspaceDetail(page: Page, testId: string): Promise<Locator> {
+	const toggle = page.getByTestId("open-workspace-details");
+	if (
+		!(await page.getByTestId("workspace-details").isVisible()) &&
+		(await page.locator('[role="dialog"]:visible, [role="alertdialog"]:visible').count()) === 0
+	)
+		await toggle.click();
+	return page.getByTestId(testId);
+}
+
+export async function openAppSettings(page: Page): Promise<void> {
+	await page.getByTestId("app-menu").filter({ visible: true }).click();
+	await page.getByTestId("open-settings").click();
+}
+
 export const PHONE_VIEWPORT = { width: 390, height: 780 } as const;
 
 export async function pressPlatformShortcut(page: Page, key: string): Promise<void> {
@@ -190,6 +205,26 @@ export async function enterDefaultWorkspace(page: Page): Promise<void> {
 	await page.getByTestId("welcome-action").filter({ hasText: "Work in project folder" }).click();
 	await expect(defaultWorkspaceRow(page)).toHaveAttribute("data-active", "true");
 	await expect(page.getByTestId("center-tabs")).toBeVisible();
+}
+
+export async function applyWorkbenchPreset(page: Page, name: string): Promise<void> {
+	await expect(page.getByTestId("workspace-workbench")).toBeVisible();
+	await openAppSettings(page);
+	await page.getByTestId("settings-nav-layout").click();
+	const preset = page
+		.getByTestId("layout-preset")
+		.filter({ has: page.getByText(name, { exact: true }) });
+	await preset.getByRole("button", { name: "Apply now…" }).click();
+	const confirm = page.getByTestId("layout-apply-confirm");
+	await confirm.click();
+	await expect(confirm).toBeHidden();
+	await page
+		.getByTestId("settings-dialog")
+		.getByRole("button", { name: "Close", exact: true })
+		.click();
+	await expect(page.getByTestId("settings-dialog")).toBeHidden();
+	const notice = page.getByTestId("toast").filter({ hasText: `${name} layout applied` });
+	if (await notice.isVisible()) await notice.getByRole("button", { name: "Dismiss" }).click();
 }
 
 // Use this helper when a pane must be visible; rail controls toggle on each click. "files" means Files in All mode, "changes" Files in Changed mode.
@@ -394,6 +429,40 @@ export function pseudoBackgroundColor(element: Locator, pseudo: string): Promise
 
 export async function waitTerminalReady(page: Page): Promise<void> {
 	await expect(visibleTerminal(page)).toHaveAttribute("data-ready", "true");
+}
+
+export async function revealWorkbenchTerminal(page: Page): Promise<void> {
+	const rail = page.getByTestId("terminal-rail-group").first();
+	await expect(rail).toBeVisible();
+	if ((await rail.getAttribute("aria-pressed")) !== "true") await rail.click();
+	await expect(rail).toHaveAttribute("aria-pressed", "true");
+	await waitTerminalReady(page);
+}
+
+/**
+ * The top bar's terminal entry is the only terminal entry; a terminal that must live in the center
+ * is created in the bottom pane and moved with its tab menu.
+ */
+export async function openCenterTerminal(page: Page): Promise<void> {
+	const rail = page
+		.getByTestId("terminal-rail-group")
+		.or(page.getByTestId("empty-rail-group"))
+		.first();
+	await expect(rail).toBeVisible();
+	if ((await rail.getAttribute("aria-pressed")) !== "true") await rail.click();
+	const bottom = page.getByTestId("bottom-panel");
+	const emptyCreate = bottom.getByTestId("bottom-new-terminal");
+	const before = await bottom.getByTestId("terminal-tab").count();
+	if (before === 0) await emptyCreate.click();
+	else await bottom.getByTestId("terminal-add").first().click();
+	const tab = bottom.getByTestId("terminal-tab").last();
+	await expect(bottom.getByTestId("terminal-tab")).toHaveCount(before === 0 ? 1 : before + 1);
+	await tab.click({ button: "right" });
+	await page
+		.getByRole("menuitem", { name: /^Move to center pane/ })
+		.first()
+		.click();
+	await expect(page.getByTestId("center-group").getByTestId("terminal-tab").first()).toBeVisible();
 }
 
 export async function openTerminal(page: Page): Promise<void> {

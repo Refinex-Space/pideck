@@ -90,8 +90,9 @@ test("a worktree renders project, workspace and branch · from base segments", (
 	expect(html).toContain(">Image selection coordinates bug<");
 	expect(html).toContain(">fix-image-region-comment-coords<");
 	expect(html).toContain(">origin/main<");
-	const caption = /Branch<span[^>]*>· from <span data-testid="scope-base">origin\/main<\/span>/;
+	const caption = /· from <span data-testid="scope-base">origin\/main<\/span>/;
 	expect(html).toMatch(caption);
+	expect(html).toContain('<span class="sr-only">Branch</span>');
 });
 
 test("an open PR adds the Remote chips and the Pull request chip link", () => {
@@ -136,8 +137,8 @@ test("segments are separated by space alone and the first one starts flush", () 
 		...html.matchAll(/data-testid="(scope-[a-z]+-segment)" class="([^"]*)"/g),
 	].map(([, id, classes]) => [id, classes?.split(/\s+/) ?? []] as const);
 	expect(segmentClasses.map(([id]) => id)).toEqual([
-		"scope-project-segment",
 		"scope-workspace-segment",
+		"scope-project-segment",
 		"scope-branch-segment",
 		"scope-remote-segment",
 		"scope-review-segment",

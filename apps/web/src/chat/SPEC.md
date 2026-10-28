@@ -176,7 +176,7 @@ blocks in order into rows; `ChatTurnView` dispatches on row kind:
   transcript integration as `isFinalAnswer`); a non-final markdown row renders plain, without the action.
   Both go through **one shared layout**, `MessageWithCopy` (in `turns.tsx`): a `relative` wrapper that
   overlays the action **inside the role's bottom corner on the same line as content** — bottom-left for
-  an assistant answer (`left-0 bottom-0`), bottom-right for a user bubble (`right-0 bottom-8`, aligned
+  an assistant answer (`left-0 bottom-0`), bottom-right for a user bubble (`right-0 bottom-12`, aligned
   within the bubble's existing vertical padding) — never in a row below it. The user bubble stays
   content-only: the button is positioned against the outer wrapper, not injected into the bubble markup.
   The message content reserves one horizontal `size-24` band on the action's side (`pl-24` for the final
@@ -1204,17 +1204,16 @@ both message orders. *Rejected:* keeping the modal for non-MCP extensions — ev
   gaps are visually tinted in the message field itself — a native `<textarea>` can't style text ranges
   inside it, so `Composer` renders a **highlight-backdrop** (a styled mirror layer positioned behind a
   now-`bg-transparent` textarea; the input background moves up to the wrapping container instead, clipped
-  to the same `rounded-md` so nothing changes visually outside a session). That wrapper
-  owns the input border and fill: `bg-clip-padding` keeps the backdrop tint inside the rounded border,
-  while `focus-within:border-control-border-active` is the composer's sole focus indicator rather than a
+  to the same `rounded-xl` so the 14px composer outline stays consistent inside and outside a session). That wrapper
+  owns the input fill and an inset ring, which keeps the three text layers on the same box geometry;
+  `focus-within:ring-control-border-active` is the input's sole focus indicator rather than a
   second accent ring on the textarea. The pure `highlightSegments(value, slots, activeIdx)`
   (from the shared `prompt` module) breaks `value` into ordered
   plain/unfilled/filled/active runs — a slot range is `"active"` when its `slots` index is `activeIdx`
   (`Composer`'s own `slotIdx`), else `"unfilled"`/`"filled"` per its own `filled` flag; everything else is
   `"plain"` — pure offsets/slices, no empty segment for zero-gap-adjacent slots, and the tests pin
   `segments.map(s => s.text).join("") === value` in every case. The backdrop's inner mirror div matches the
-  textarea's box model **exactly** (`px-12 py-8`, the same `tr-text-ui` typography class, a
-  `border border-transparent` of the same width so the content box lines up,
+  textarea's box model **exactly** (`px-12 py-8`, the same `tr-text-ui` typography class and
   `whitespace-pre-wrap break-words` — spelled out explicitly since a `<div>`, unlike a `<textarea>`,
   doesn't soft-wrap this way by default) so each `SlotSegment`'s tint span
   (`data-testid="slot-highlight"` + `data-slot-state`, `rounded-xs` — the text-run radius
@@ -1654,3 +1653,22 @@ the lifecycle assertable.
   is the seam for extracting a standalone `packages/chat-ui` later.
 - Keep this spec at **intent + boundary + invariants**; per-component behavior belongs in the
   components' jsdoc, per-tool detail in [tools/SPEC.md](tools/SPEC.md).
+
+## PiDeck presentation
+
+Reading text uses the shared 16/24px role and code uses 13/19px. The pre-measurement row estimator
+uses those same line heights; it remains a conservative fallback, never a substitute for actual
+virtualizer measurements. User bubbles use the theme-owned neutral palette with primary text, 16px
+horizontal and 12px vertical padding. Only the existing first-row editor surface carries the 14px radius,
+fill, inset boundary and subtle theme shadow. The inset ring does not alter text measurements or the
+line-count caps. The original grid and refs remain; its second-row model/history/send controls sit on the
+canvas below the input, without an enclosing card or footer divider. The visible text-input surface is
+centered and capped at 48rem; its existing root adds the two chat gutters outside that cap and
+shrinks to the pane width. This is independent of the saved transcript `chatLineWidth`. Mention/slash
+menus, slot hints and attached images retain the same capped root; no query container is added, so
+half-chat growth still uses the chat container. The history overlay stays anchored to the full chat pane
+so its zoomed result/preview layout retains its existing reading space. Its textarea, invisible
+sizer and template backdrop retain identical `px-12 py-8 tr-text-ui` metrics;
+no input, IME, draft, selection, scrolling or submission lifecycle changes accompany the presentation.
+
+The chat toolbar uses Lucide `blocks` for Skills and `package-2` for Resources, without changing either action or its loading/stale state.

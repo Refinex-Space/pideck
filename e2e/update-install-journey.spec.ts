@@ -165,7 +165,10 @@ test("a failed install after relaunch explains the cause, offers recovery, and d
 	await expect(page.getByTestId("update-install-cause")).toHaveText(
 		"Another program is using PiDeck's install folder",
 	);
-	await expect(page.getByTestId("update-ready")).toContainText("Update didn't install");
+	await expect(page.getByTestId("update-ready")).toHaveAttribute(
+		"aria-label",
+		"The last PiDeck update didn't install",
+	);
 	const recover = page.getByTestId("update-install-recover");
 	await expect(recover).toHaveAttribute("data-recovery", "install");
 	await expect(recover).toHaveText("Try again");

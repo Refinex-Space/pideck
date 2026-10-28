@@ -26,24 +26,24 @@ test("Back and Forward step through chat switches and scope moves", async ({ pag
 	await expect(chatTabs(page).first()).toHaveAttribute("data-active", "true");
 	await expect.poll(() => currentHash(page)).toBe(chat1Hash);
 
-	await page.goBack();
+	await page.getByTestId("navigate-back").click();
 	await expect.poll(() => currentHash(page)).toBe(chat2Hash);
 	await expect(chatTabs(page).last()).toHaveAttribute("data-active", "true");
 
-	await page.goBack();
+	await page.getByTestId("navigate-back").click();
 	await expect.poll(() => currentHash(page)).toBe(chat1Hash);
 	await expect(chatTabs(page).first()).toHaveAttribute("data-active", "true");
 
-	await page.goForward();
+	await page.getByTestId("navigate-forward").click();
 	await expect.poll(() => currentHash(page)).toBe(chat2Hash);
 	await expect(chatTabs(page).last()).toHaveAttribute("data-active", "true");
-	await page.goForward();
+	await page.getByTestId("navigate-forward").click();
 	await expect.poll(() => currentHash(page)).toBe(chat1Hash);
 	await expect(chatTabs(page).first()).toHaveAttribute("data-active", "true");
 
 	await goProjectHome(page);
 	await expect.poll(() => currentHash(page)).not.toContain("/workspaces/");
-	await page.goBack();
+	await page.getByTestId("navigate-back").click();
 	await expect.poll(() => currentHash(page)).toBe(chat1Hash);
 	await expect(chatTabs(page).first()).toHaveAttribute("data-active", "true");
 });
@@ -118,4 +118,29 @@ test("a closed chat's entry survives Back; a deleted chat's entry falls back", a
 	await expect.poll(() => currentHash(page)).toBe(chat1Hash);
 	await expect(chatTabs(page)).toHaveCount(1);
 	await expect(chatTabs(page).first()).toHaveAttribute("data-active", "true");
+});
+
+test("toolbar history survives reload, truncates Forward after a new route and follows sidebar folding", async ({
+	page,
+}) => {
+	const { chat1Hash, chat2Hash } = await openTwoChats(page);
+	await expect(page.getByTestId("navigate-forward")).toBeDisabled();
+	await page.getByTestId("navigate-back").click();
+	await expect.poll(() => currentHash(page)).toBe(chat1Hash);
+	await page.reload();
+	await expect(page.getByTestId("connection-status")).toHaveAttribute("data-status", "connected");
+	await expect(page.getByTestId("navigate-forward")).toBeEnabled();
+	await page.getByTestId("navigate-forward").click();
+	await expect.poll(() => currentHash(page)).toBe(chat2Hash);
+	await page.getByTestId("navigate-back").click();
+	await expect.poll(() => currentHash(page)).toBe(chat1Hash);
+	await page.getByTestId("new-chat").first().click();
+	await expect.poll(() => currentHash(page)).not.toBe(chat1Hash);
+	await expect(page.getByTestId("navigate-forward")).toBeDisabled();
+	await page.getByTestId("tool-rail-projects").click();
+	await expect(page.getByTestId("left-stack")).toHaveCount(0);
+	await expect(page.getByTestId("navigation-history")).toHaveCount(1);
+	await expect(page.getByTestId("navigate-back")).toBeVisible();
+	await page.getByTestId("navigate-back").click();
+	await expect.poll(() => currentHash(page)).toBe(chat1Hash);
 });

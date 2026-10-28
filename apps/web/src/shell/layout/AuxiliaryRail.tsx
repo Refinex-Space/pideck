@@ -24,18 +24,13 @@ const RAIL_TOOLBAR_LABELS = {
 	bottom: "workbench.rail.bottomTools",
 } as const satisfies Record<LayoutAuxiliaryRegion, MessageKey>;
 
-export function railEntryFrameClass(region: LayoutAuxiliaryRegion | "center"): string {
-	return cn(
-		"relative flex w-32 shrink-0 items-center justify-center",
-		region === "bottom" ? "h-panel-header-control" : "h-32",
-	);
-}
+export const RAIL_ENTRY_FRAME_CLASS =
+	"relative flex h-32 w-32 shrink-0 items-center justify-center";
 
-export const RAIL_ENTRY_BUTTON_CLASS = buttonVariants({
-	variant: "ghost",
-	size: "m",
-	shape: "icon",
-});
+export const RAIL_ENTRY_BUTTON_CLASS = cn(
+	buttonVariants({ variant: "ghost", size: "m", shape: "icon" }),
+	"data-[layout-focus-intent=keyboard]:focus:ring-1 data-[layout-focus-intent=restore]:focus-visible:ring-0 data-[layout-focus-intent=restore]:focus-visible:outline-none",
+);
 
 export function railEntryButtonProps(active: boolean) {
 	return buttonDataAttributes({ variant: "ghost", size: "m", iconOnly: true, selected: active });
@@ -43,10 +38,8 @@ export function railEntryButtonProps(active: boolean) {
 
 export const RAIL_ICON = "size-16 shrink-0";
 
-export function railTooltipSide(
-	region: LayoutAuxiliaryRegion | "center",
-): "left" | "right" | "top" {
-	return region === "right" ? "left" : region === "bottom" ? "top" : "right";
+export function railTooltipSide(region: LayoutAuxiliaryRegion | "center"): "right" | "bottom" {
+	return region === "left" ? "right" : "bottom";
 }
 
 export const AuxiliaryRailToolButton = forwardRef<
@@ -64,7 +57,7 @@ export const AuxiliaryRailToolButton = forwardRef<
 	const tab = toolTab(entry.tool);
 	const name = layoutTabName(t, tab);
 	return (
-		<div data-active={active} className={railEntryFrameClass(region)}>
+		<div data-active={active} className={RAIL_ENTRY_FRAME_CLASS}>
 			<IconTooltip label={name} side={railTooltipSide(region)}>
 				<button
 					ref={ref}
@@ -92,8 +85,10 @@ export function AuxiliaryRail({
 	renderEntry,
 	renderBoundary,
 	trailing,
+	orientation,
 }: {
 	region: LayoutAuxiliaryRegion;
+	orientation?: "horizontal" | "vertical";
 	entries: readonly AuxiliaryRailEntry[];
 	renderEntry: (entry: AuxiliaryRailEntry, control: AuxiliaryRailControlProps) => ReactNode;
 	renderBoundary?: (paneIndex: number) => ReactNode;
@@ -105,17 +100,13 @@ export function AuxiliaryRail({
 	const activeKey = entries.some((entry) => entry.key === focused)
 		? focused
 		: (entries.find((entry) => entry.selected && entry.expanded) ?? entries[0])?.key;
-	const horizontal = region === "bottom";
+	const horizontal = orientation ? orientation === "horizontal" : region === "bottom";
 	const clusters = clusterAuxiliaryRail(entries);
 	const paneCount = clusters.filter((cluster) => cluster.groupId !== null).length;
 	const boundary = (paneIndex: number): ReactNode => {
 		const zone = renderBoundary?.(paneIndex);
 		return zone ? (
-			<div
-				className={cn("relative shrink-0", horizontal ? "h-panel-header-control w-0" : "h-0 w-32")}
-			>
-				{zone}
-			</div>
+			<div className={cn("relative shrink-0", horizontal ? "h-32 w-0" : "h-0 w-32")}>{zone}</div>
 		) : null;
 	};
 	return (
@@ -126,12 +117,11 @@ export function AuxiliaryRail({
 			aria-orientation={horizontal ? "horizontal" : "vertical"}
 			data-testid={region === "bottom" ? "bottom-tool-rail" : `${region}-layout-rail`}
 			className={cn(
-				"relative flex shrink-0 items-center gap-4 bg-container-header-bg",
+				"relative flex shrink-0 items-center gap-4",
 				horizontal
-					? "h-panel-header-row min-w-0 overflow-x-auto overflow-y-hidden border-border-muted border-t px-4"
+					? "window-no-drag h-32 min-w-0 overflow-x-auto overflow-y-hidden"
 					: "h-full w-40 flex-col overflow-x-hidden overflow-y-auto py-4",
-				region === "left" && "border-border-muted border-r",
-				region === "right" && "border-border-muted border-l",
+				(!horizontal || region === "left") && "bg-container-sidebar-bg",
 			)}
 			onKeyDown={(event) => {
 				if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;

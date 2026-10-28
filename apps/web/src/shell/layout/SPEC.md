@@ -10,12 +10,29 @@ tags: [ui, layout, tabs, drag-and-drop]
 
 ## Responsibility
 
+Optional navigation-header/footer slots and a `workspaceLocation` slot let the shell integrate chrome into
+columns. The expanded left rail is horizontal inside its column; when collapsed it moves beside browser history controls at the start of the center tab row.
+
+**One top bar.** The workbench draws no separate header row: the center tab strip *is* the 40px top bar
+(`window-drag`, `h-topbar-row`, `window-no-drag` on tabs and action clusters). The top-left center group's
+strip starts with the window inset spacer (and, when the left column is collapsed, the left rail plus history
+buttons). The top-right group's strip ends with, in order: new chat / history, the shell's location pill and
+details control, the **bottom rail** (the single global terminal entry; the former bottom bar is gone), the
+**right rail** tools, the bottom-alignment menu while the bottom body is hidden, and the right inset spacer
+(omitted while the right column is visible, which owns that corner). Both rails are horizontal 32px-frame
+toolbars, so no vertical right column exists; their tooltips open downward. Center tabs are 32px rounded (`sm`)
+chips with a selected fill and hover fill — no divider, no underline, no chat icon — and the strip has no
+bottom border. Side and bottom tab strips keep the bordered strip. There is no center "New terminal" button:
+terminals are created from the bottom pane that the top-bar terminal entry reveals.
+Toolbar keyboard orientation and reorder keys follow the actual orientation. No feature-store
+dependency is introduced, and saved ratios, tool placement and bottom alignment remain authoritative.
+
 The shell-owned, headless workbench engine: the normalized frontend-local frame and per-workspace view grammar; legal atomic mutations and projection; recursive center plus left/right/bottom rendering; resize/alignment and drag geometry; keyboard arrangement commands; and focus recovery. It renders containers; feature views remain arrangement-agnostic.
 
 ## Boundary
 
 - **Owns:** web-local `WorkbenchFrame`/`WorkspaceViewState` types; frame-plus-view projection; pure topology, placement, attention, and policy operations; semantic minimum and independent group-limit checks; one-result drag previews; center/side/bottom renderers; alignment-owned nested composition and side-width projection; tab-strip overflow; ARIA tab/separator behavior; and the terminal visibility gate.
-- **Public surface (`index.ts`):** all current-layout types; workbench renderer/controller; the edge-chrome primitives (`AuxiliaryRail`, `AuxiliaryRailToolButton`, `AuxiliaryPaneHeader`, `AuxiliaryPaneHideButton`); pure mutations, projection, and validation helpers; built-in preset definitions plus instantiate/apply/capture operations and `frameMatchesPreset` (geometry equality ignoring generated ids, which Settings uses to mark the applied preset); attention fallback helpers; and unavailable-reason results. Callers inject resource renderers and commit complete pure results rather than splicing arrays.
+- **Public surface (`index.ts`):** all current-layout types; workbench renderer/controller; the edge-chrome primitives (`AuxiliaryRail`, `AuxiliaryRailToolButton`, `AuxiliaryPaneHeader`, `AuxiliaryPaneHideButton`); pure mutations, projection, and validation helpers; built-in preset definitions plus instantiate/apply/capture operations and `frameMatchesPreset` (geometry equality ignoring generated ids, which Settings uses to mark the applied preset); attention fallback helpers; `readLayoutFocusIntent` for capturing a focus request's source intent before arrangement commits; and unavailable-reason results. Callers inject resource renderers and commit complete pure results rather than splicing arrays.
 - **External deps:** `@thinkrail/contracts` for the resource-free custom-preset DTO and git diff-scope type only; shell-neutral `lib` attention/id primitives; React; `@thinkrail/ui/*` (including `@thinkrail/ui/resizable`); `@dnd-kit/core`.
 - **Forbidden:** server/shared/pi imports; domain-resource lifetime; browser persistence or WS calls; feature-panel internals; a mutable third-party docking model; inline component styles; or non-semantic colour values.
 
@@ -106,7 +123,7 @@ the plain pane header, and its Hide control are the one owner of edge-chrome sty
 `AuxiliaryGroupHeader` reuses the header component, and the shell's Project Home branch
 ([[submodule-web-shell]]) composes the exported `AuxiliaryRail` / `AuxiliaryRailToolButton` /
 `AuxiliaryPaneHeader` around its own geometry so a tool looks identical with or without a frame. Every
-rail entry is a `data-active` 32px frame (24px in the bottom rail) around a control that wears the shared
+rail entry is a `data-active` 32px frame around a control that wears the shared
 `ghost` M icon-button skin (`buttonVariants`, [[module-ui]] "Button system": 24px square, 16px icon,
 shared hover — pressed looks the same — and the ghost icon-only focus ring drawn inside the square, so no
 rail margin or strip edge clips it). The control keeps its own element for the roving toolbar, drag and drop and
@@ -127,11 +144,11 @@ decides how loud it reads, never a per-theme selector in the component.
 
 - **Center:** a recursive horizontal/vertical binary tree, maximum four leaves. A split replaces one leaf with equal halves. User creation/resize requires each child to remain at least 320 px wide and 180 px high. Empty leaves are valid frame slots and render the shell-provided empty surface. Remove/Merge promotes a sibling and rehomes every affected workspace's tabs deterministically.
 - **Auxiliary eligibility:** Projects, Specs, Files, and Review are singleton auxiliary-only tools owned by the frame; terminals are workspace resources and may occupy center or any auxiliary region. Hiding a singleton preserves its restore target. View/deep-link reveal restores or unfolds it in frame-local position and focuses the requested item in current workspace attention.
-- **Left/right:** ordered vertical frame stacks beside persistent full-height tool rails. Dragging an outer separator through its minimum hides that side and retains the last expanded width. Broad upper/lower body targets create adjacent groups; the rail's cluster-boundary zones offer the same commands for folded or hidden panes. Expanded bodies have a 120 px normal minimum; folded groups occupy no interior body space and retain their expanded weights, with restoration on the edge rail. An empty frame group remains available across workspaces until explicit removal and renders a named
+- **Left/right:** ordered vertical frame stacks; the left rail is a horizontal toolbar in its column's chrome and the right rail is a horizontal toolbar in the top bar. Dragging an outer separator through its minimum hides that side and retains the last expanded width. Broad upper/lower body targets create adjacent groups; the rail's cluster-boundary zones offer the same commands for folded or hidden panes. Expanded bodies have a 120 px normal minimum; folded groups occupy no interior body space and retain their expanded weights, with restoration on the edge rail. An empty frame group remains available across workspaces until explicit removal and renders a named
   Add/Reveal surface rather than disappearing; a region with groups may stay hidden.
 - **Bottom:** ordered left-to-right frame groups resize on vertical separators. Folded groups retain only
-  their edge-rail controls, not an interior vertical strip. A persistent bottom tool rail spans the column
-  selected by bottom alignment, even when the body is hidden or there are no groups. A bottom-eligible drag
+  their edge-rail controls, not an interior vertical strip. The bottom tool rail lives in the top bar
+  (the global terminal entry) rather than under the body, and is present even when the body is hidden or there are no groups. A bottom-eligible drag
   exposes a broad Primary restore/drop target in unused rail space, leaving explicit group controls
   reachable; dropping reveals its destination. With no drag active, `Mod+Shift+J` and the rail provide
   the same restore path. Height starts at 30%, has a 120 px body minimum, and caps at 70%.
@@ -210,6 +227,22 @@ recursive center splits without keying the workbench by workspace. The canceled-
 
 Pointer is never the sole arrangement path. Keyboard controls and shadcn menus cover group/tab focus, select/close/keep/reorder/move, directional center splits, absolute and adjacent auxiliary-group creation, explicit group remove/merge, fold/show/hide/tool restore, bottom alignment, and keyboard separator resize, always with an unavailable reason. A tab can reproduce every interior pointer placement through move plus New group. The optional chat-rename menu item replaces the tab label with an inline editor and commits through a shell-injected callback: layout identifies the chat tab and owns the transient edit interaction but never imports transport/store or performs the domain mutation. Resource strips implement WAI-ARIA tabs and visible roving focus. Rails are named toolbars of pressed buttons: arrows move focus, Enter/Space activates, and `aria-controls` links each existing group. Tool bodies are named regions and terminal bodies are tabpanels. A folded auxiliary group retains a linked native-hidden region while unmounting the body; its selected edge-rail control is the focus endpoint when no tab renders. A local fold moves focus to that control and expansion returns it to the selected tab. Separators expose orientation and current/min/max values. `Ctrl+F6` visits upper-row groups in visual order, then visible bottom groups left-to-right.
 
+DOM focus handoff distinguishes passive `restore` from explicit `keyboard` intent without adding layout
+state or a global input-modality owner. Automatic workspace/tab restoration still calls `focus()` but
+temporarily marks its target so native `:focus-visible` heuristics cannot paint a misleading focus frame.
+The marker clears on blur; pointer input clears a previous keyboard indicator even when the same tab
+retains focus, and actual workbench keyboard input changes it to keyboard intent. Arrow,
+Home/End, Ctrl+F6, rename completion and keyboard close recovery preserve visible navigation feedback.
+Native Tab entry remains browser-owned. Tab and empty-pane focus rings use the semantic `focus-ring`
+colour at 1px, independent of the neutral primary selection indicator.
+`WorkspaceWorkbench` captures source intent synchronously in its existing request-focus callback,
+before a layout-intent commit can remove the focused tool or pane. Keyboard file opens therefore retain
+their indicator; restoration from body or a pointer-selected control keeps restore intent. The existing
+global-keyboard-only `toggle-side` / `toggle-bottom` intents explicitly request keyboard focus, since
+modifier shortcuts can bypass native `:focus-visible` heuristics. Explicit keyboard intent paints the
+same thin ring while focused; native Tab entry uses `:focus-visible`. The captured value is transient
+request metadata, never saved layout state.
+
 Center resource strips and auxiliary terminal-session strips have bounded readable tab widths and no fixed previous/next controls: wheel, trackpad, touch,
 roving-keyboard navigation, active reveal, and the searchable keyboard overflow list scroll the same list.
 Native scrollbars stay hidden; pointer-transparent edge fades appear only where clipped and update without
@@ -235,7 +268,15 @@ preview, the four splits) and auxiliary terminals carry no splits.
 
 ## Presets and local persistence
 
-Balanced, Focus, and Review are web-owned resource-free frame definitions with a below-center bottom slot:
+Studio, Balanced, Focus, and Review are web-owned resource-free frame definitions with a below-center bottom slot.
+Studio is the new-surface default: Projects remains visible on the left, while the right tools and bottom
+terminal slot stay available behind their existing rails. The pure preset retains an 18% fallback.
+`layoutPresetForViewport` adapts only Studio at the UI integration boundary: the initial pane targets
+288px including its integrated horizontal toolbar, reserves the right rail and the 320px center minimum
+when space permits, then respects the existing 8–70% side-ratio bounds. It returns a preset copy, never
+changes a frame or a persisted value. Initial creation, explicit Studio apply and its current-viewport
+comparison share this derivation; saved frames always win, and window resize never reapplies a preset.
+The original preset definitions remain unchanged:
 Balanced and Review show it; Focus hides it. Balanced and Focus start with one center group; Review provides
 its deliberate vertical pair. Custom presets use the same grammar and capture geometry,
 topology, tools, folds, and empty structural slots, never workspace resources or terminal count. Preset node
@@ -246,9 +287,9 @@ definition keeps its stable `name`; custom preset names are user data and render
 
 Applying a preset creates one replacement frame, raises this surface's local side/bottom limits if required, and remaps all retained workspace views atomically. Center resources preserve visual order and distribute across destination leaves; terminals map into compatible slots; singleton tool placement ids survive where possible. Omitted tools receive deterministic restore targets, so a sparse preset cannot strand Projects or another tool. The local default preset is the target of the explicit Reset frame command; ordinary workspace switches retain the current frame. Default selection and limits persist locally, not in host settings.
 
-`layoutState` validates and persists the normalized frame/views/attention document under browser endpoint + frontend-surface identity or the native stable adapter's profile/window scope. Reload and supported session restoration reuse it; simultaneous windows never consume each other's storage events. Persistence contains references only. Failure leaves live state intact; unknown schema falls back to the Balanced safe frame.
+`layoutState` validates and persists the normalized frame/views/attention document under browser endpoint + frontend-surface identity or the native stable adapter's profile/window scope. Reload and supported session restoration reuse it; simultaneous windows never consume each other's storage events. Persistence contains references only. Failure leaves live state intact; unknown schema falls back to the Studio safe frame.
 
-The complete current-layout grammar, including the derived `WorkspaceLayoutDocument` projection consumed by existing shell renderers, is web-local. A pristine surface instantiates Balanced; no host snapshot or prior layout schema is imported.
+The complete current-layout grammar, including the derived `WorkspaceLayoutDocument` projection consumed by existing shell renderers, is web-local. A pristine surface instantiates Studio; no host snapshot or prior layout schema is imported.
 
 The terminal visibility gate mounts a body only for a terminal locally selected in an unfolded visible group. Distinct terminal identities may mount concurrently; one identity has one body per browser surface. Inactive/folded/hidden tabs never attach. Global New Terminal targets last local bottom focus, creating a frame slot only through an explicit frame command; center Group Header creation captures that group. Host catalog reconciliation may place an unrepresented terminal locally without selecting it, but cannot change frame geometry.
 

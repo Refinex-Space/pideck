@@ -6,6 +6,7 @@ import {
 	RiSparkling2Line as Sparkles,
 } from "@remixicon/react";
 import { useT } from "@thinkrail/locales/react";
+import { LoadingRegion } from "@thinkrail/ui/skeleton";
 import { cn } from "@thinkrail/ui/utils";
 import { type ComponentPropsWithoutRef, forwardRef, useEffect, useState } from "react";
 import { PRODUCT_NAME } from "../constants/branding";
@@ -66,7 +67,6 @@ export function WelcomePanel() {
 			title={t("panels.welcome.projectFolderTitle")}
 			subtitle={t("panels.welcome.projectFolderSubtitle")}
 			onClick={() => void enterDefaultWorkspace(projectId)}
-			className="motion-safe:animate-reveal"
 		/>
 	);
 
@@ -95,7 +95,7 @@ export function WelcomePanel() {
 		>
 			<h1
 				data-testid="welcome-title"
-				className="tr-brand-hero max-w-[640px] break-words text-primary"
+				className="max-w-[640px] break-words tr-brand-hero text-text-default"
 			>
 				{project ? project.name : PRODUCT_NAME}
 			</h1>
@@ -103,7 +103,7 @@ export function WelcomePanel() {
 			<ProviderWarningBanner />
 			{project ? <ProjectTrustNotice projectId={project.id} /> : null}
 
-			<div className="mt-24 flex flex-wrap justify-center gap-12">
+			<div className="mt-24 flex w-full max-w-[560px] flex-col gap-4 text-left">
 				{noProjects ? (
 					openProjectCard()
 				) : hasSpecs === null ? (
@@ -120,7 +120,6 @@ export function WelcomePanel() {
 							title={t("panels.welcome.startBuildingTitle")}
 							subtitle={t("panels.welcome.startBuildingSubtitle")}
 							onClick={() => setDialog({ projectId: project.id, prompt: "" })}
-							className="motion-safe:animate-reveal"
 						/>
 						{projectFolderCard(project.id)}
 					</>
@@ -140,14 +139,12 @@ export function WelcomePanel() {
 									note: t("panels.welcome.setupNote"),
 								})
 							}
-							className="motion-safe:animate-reveal"
 						/>
 						<Card
 							icon={Rocket}
 							title={t("panels.welcome.startBuildingTitle")}
 							subtitle={t("panels.welcome.startBuildingSecondarySubtitle")}
 							onClick={() => setDialog({ projectId: project.id, prompt: "" })}
-							className="motion-safe:animate-reveal"
 						/>
 						{projectFolderCard(project.id)}
 					</>
@@ -173,18 +170,11 @@ export function WelcomePanel() {
 function CardSkeleton() {
 	const t = useT();
 	return (
-		<div
-			role="status"
-			aria-label={t("panels.welcome.loading")}
-			aria-busy="true"
-			className="flex h-[150px] w-[220px] flex-col items-start justify-between rounded-sm border border-border-default bg-container-workspace-bg p-16"
-		>
-			<span className="size-24 shrink-0 animate-pulse rounded-full bg-control-bg-hovered" />
-			<span className="flex w-full flex-col gap-8">
-				<span className="h-3 w-3/4 animate-pulse rounded-sm bg-control-bg-hovered" />
-				<span className="h-3 w-full animate-pulse rounded-sm bg-control-bg-hovered" />
-			</span>
-		</div>
+		<LoadingRegion
+			rows={2}
+			label={t("panels.welcome.loading")}
+			className="min-h-64 w-full rounded-lg px-16 py-12"
+		/>
 	);
 }
 
@@ -208,21 +198,21 @@ const Card = forwardRef<HTMLButtonElement, CardProps>(function Card(
 			data-testid={cta ? "welcome-cta" : "welcome-action"}
 			{...rest}
 			className={cn(
-				"relative flex h-[150px] w-[220px] flex-col items-start justify-between rounded-sm border bg-clip-padding p-16 text-left transition-colors",
-				primary
-					? "border-primary-muted bg-primary-subtle hover:bg-primary-soft"
-					: "border-border-default bg-container-workspace-bg hover:border-primary-muted hover:bg-container-elevated-bg",
+				"relative flex min-h-64 w-full items-start gap-12 rounded-lg border border-transparent bg-clip-padding px-16 py-12 text-left outline-none transition-colors focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-focus-ring hover:bg-control-bg-hovered",
+				primary ? "bg-control-bg-selected" : "bg-transparent",
 				className,
 			)}
 		>
 			{tag ? (
-				<span className="absolute top-12 right-12 rounded-full border border-primary-muted bg-clip-padding bg-primary-subtle px-8 py-2 tr-text-label-pill text-primary">
+				<span className="order-last shrink-0 rounded-sm bg-container-elevated-bg px-8 py-2 tr-text-caption text-text-muted">
 					{tag}
 				</span>
 			) : null}
-			<Icon className={cn("size-24", primary ? "text-primary" : "text-text-muted")} />
-			<span className="w-full">
-				<span className="block tr-title-card text-text-default">{title}</span>
+			<Icon
+				className={cn("mt-2 size-20 shrink-0", primary ? "text-text-default" : "text-text-muted")}
+			/>
+			<span className="min-w-0 flex-1">
+				<span className="block tr-text-emphasis text-text-default">{title}</span>
 				<span className="mt-2 block text-text-muted tr-text-metadata leading-snug">{subtitle}</span>
 			</span>
 		</button>

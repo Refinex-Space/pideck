@@ -85,7 +85,7 @@ export function JsonTree({
 				<button
 					type="button"
 					disabled={node.pointer.length === 0}
-					className="min-w-0 flex-1 truncate py-2 text-left tr-code-text text-text-default outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:pointer-events-none"
+					className="min-w-0 flex-1 truncate py-2 text-left tr-code-text text-text-default outline-none focus-visible:ring-1 focus-visible:ring-focus-ring disabled:pointer-events-none"
 					onClick={() => onSelect(node)}
 				>
 					{node.key !== undefined ? (
@@ -100,7 +100,7 @@ export function JsonTree({
 								key={entry.thread.id}
 								type="button"
 								aria-label={t("viewer.region.showComment", { number: entry.number })}
-								className="flex size-20 items-center justify-center rounded-full bg-primary tr-text-metadata text-text-on-primary outline-none focus-visible:ring-2 focus-visible:ring-primary"
+								className="flex size-20 items-center justify-center rounded-full bg-primary tr-text-metadata text-text-on-primary outline-none focus-visible:ring-1 focus-visible:ring-focus-ring"
 								onClick={() => onMarker(entry.thread.id)}
 							>
 								{entry.number}

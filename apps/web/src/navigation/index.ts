@@ -1,3 +1,9 @@
+export {
+	getNavigationHistory,
+	goBack,
+	goForward,
+	subscribeNavigationHistory,
+} from "./browserHistory";
 export type { NavigationDriver } from "./driver";
 export { initNavigation } from "./init";
 export {

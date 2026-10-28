@@ -310,6 +310,11 @@
 			"alpha": "soft",
 			"publish": false,
 			"note": "the transparency checkerboard tile behind images and vector previews: the text colour at the soft (20%) step — the contrast of the conventional #ccc-on-white checkerboard — over the content canvas, so a dark logo on a transparent PNG stays visible on a dark theme and a light one on a light theme; index.css's `.media-backdrop` is the only consumer"
+		},
+		"focus-ring": {
+			"from": "info",
+			"publish": true,
+			"note": "Keyboard focus is independent of neutral primary fills; automatic workbench restoration is gated by explicit focus intent."
 		}
 	},
 	"effects": {
@@ -322,22 +327,22 @@
 		"overlay": {
 			"note": "the scrim behind a modal",
 			"dark": "rgba(0, 0, 0, 0.5)",
-			"light": "rgba(0, 0, 0, 0.5)",
+			"light": "rgba(0, 0, 0, 0.4)",
 			"publish": true
 		},
 		"shadow-sm": {
-			"dark": "0 2px 8px rgba(0, 0, 0, 0.3)",
-			"light": "0 2px 8px rgba(0, 0, 0, 0.1)",
+			"dark": "0 1px 4px rgba(0, 0, 0, 0.2)",
+			"light": "0 1px 4px rgba(0, 0, 0, 0.06)",
 			"publish": false
 		},
 		"shadow-md": {
-			"dark": "0 4px 16px rgba(0, 0, 0, 0.35)",
-			"light": "0 4px 16px rgba(0, 0, 0, 0.12)",
+			"dark": "0 8px 24px rgba(0, 0, 0, 0.32), 0 2px 6px rgba(0, 0, 0, 0.2)",
+			"light": "0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.08)",
 			"publish": false
 		},
 		"shadow-lg": {
-			"dark": "0 8px 28px rgba(0, 0, 0, 0.4)",
-			"light": "0 8px 28px rgba(0, 0, 0, 0.14)",
+			"dark": "0 16px 48px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.24)",
+			"light": "0 16px 48px rgba(0, 0, 0, 0.14), 0 2px 8px rgba(0, 0, 0, 0.08)",
 			"publish": false
 		}
 	}

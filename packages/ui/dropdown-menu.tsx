@@ -68,7 +68,8 @@ function DropdownMenuSubContent({
 		<DropdownMenuPrimitive.Portal>
 			<DropdownMenuPrimitive.SubContent
 				className={cn(
-					"z-50 min-w-[10rem] max-h-[min(60vh,var(--radix-dropdown-menu-content-available-height))] overflow-y-auto overflow-x-hidden rounded-md border border-border-default bg-container-elevated-bg p-4 text-text-default shadow-[var(--shadow-md)]",
+					menuContentClass,
+					"min-w-[10rem] max-h-[min(60vh,var(--radix-dropdown-menu-content-available-height))]",
 					className,
 				)}
 				{...props}

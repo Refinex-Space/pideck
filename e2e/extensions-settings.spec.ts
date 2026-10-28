@@ -4,14 +4,19 @@ import type {
 	AskUserQuestionArgs,
 	AskUserQuestionResult,
 } from "@thinkrail/pi-ask-user-question/core";
-import { enterDefaultWorkspace, openFixtureProject, openPersistedChat } from "./fixtures/app";
+import {
+	enterDefaultWorkspace,
+	openAppSettings,
+	openFixtureProject,
+	openPersistedChat,
+} from "./fixtures/app";
 import { E2E_FIXTURE_REPO } from "./fixtures/paths";
 import { seedWorkspaceSession } from "./fixtures/sessions";
 
 const BASE_TS = 1_700_930_000_000;
 
 async function openExtensionsSettings(page: Page) {
-	await page.getByTestId("open-settings").click();
+	await openAppSettings(page);
 	await page.getByTestId("settings-nav-extensions").click();
 	const section = page.getByTestId("settings-extensions");
 	await expect(section).toBeVisible();

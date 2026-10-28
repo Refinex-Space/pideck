@@ -954,6 +954,17 @@ describe("workspace layout model", () => {
 		expect(focus?.bottom.groups).toHaveLength(1);
 		expect(review?.bottom).toMatchObject({ visible: true, alignment: "center" });
 		expect(review?.bottom.groups).toHaveLength(1);
+		const studio = BUILTIN_LAYOUT_PRESETS.find((preset) => preset.id === "studio");
+		expect(studio?.center.kind).toBe("group");
+		expect(studio?.left).toMatchObject({ visible: true, groups: [{ tools: ["projects"] }] });
+		expect(studio?.right.visible).toBe(false);
+		expect(studio?.right.groups.flatMap((group) => group.tools)).toEqual([
+			"specs",
+			"files",
+			"review",
+		]);
+		expect(studio?.bottom).toMatchObject({ visible: false, alignment: "center" });
+		expect(studio?.bottom.groups).toHaveLength(1);
 	});
 
 	test("successful generated mutation sequences preserve every layout invariant", () => {

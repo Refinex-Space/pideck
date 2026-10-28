@@ -1,7 +1,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, type Page, test } from "@playwright/test";
-import { createWorkspaceViaDialog, openFixtureProject } from "./fixtures/app";
+import { createWorkspaceViaDialog, openFixtureProject, revealWorkbenchTool } from "./fixtures/app";
 
 async function proxyOneSpecGraphFailure(page: Page) {
 	let armed = false;
@@ -44,6 +44,7 @@ test("Specs tab renders the worktree's spec tree and opens a spec as an editor t
 }) => {
 	await openFixtureProject(page);
 	const workspace = await createWorkspaceViaDialog(page);
+	await revealWorkbenchTool(page, "specs");
 
 	const tabs = page.locator('[data-testid="tab-specs"], [data-testid="tab-files"]');
 	await expect(tabs.first()).toHaveAttribute("data-testid", "tab-specs");
@@ -136,6 +137,7 @@ test("Specs tab renders the worktree's spec tree and opens a spec as an editor t
 test("Specs offers Retry only after its automatic graph read fails", async ({ page }) => {
 	await openFixtureProject(page);
 	await createWorkspaceViaDialog(page);
+	await revealWorkbenchTool(page, "specs");
 
 	const root = page.locator('[data-testid="spec-node"][data-spec-id="sample-root"]');
 	await expect(root).toBeVisible();
@@ -163,6 +165,7 @@ test("a failed automatic Specs update keeps the previous tree until Retry succee
 	const failure = await proxyOneSpecGraphFailure(page);
 	await openFixtureProject(page);
 	const workspace = await createWorkspaceViaDialog(page);
+	await revealWorkbenchTool(page, "specs");
 	const root = page.locator('[data-testid="spec-node"][data-spec-id="sample-root"]');
 	await expect(root).toBeVisible();
 

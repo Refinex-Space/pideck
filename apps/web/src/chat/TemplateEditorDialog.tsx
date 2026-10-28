@@ -277,7 +277,7 @@ function ScopeOption({
 			disabled={disabled}
 			onClick={onSelect}
 			className={cn(
-				"flex-1 rounded-sm border px-12 py-8 text-left tr-text-ui outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:bg-control-disabled-bg disabled:text-control-disabled-text",
+				"flex-1 rounded-sm border px-12 py-8 text-left tr-text-ui outline-none transition-colors focus-visible:ring-1 focus-visible:ring-focus-ring disabled:cursor-not-allowed disabled:bg-control-disabled-bg disabled:text-control-disabled-text",
 				active
 					? "border-primary-muted bg-clip-padding bg-primary-subtle text-text-default"
 					: "border-border-default text-text-muted hover:bg-control-bg-hovered hover:text-text-default",

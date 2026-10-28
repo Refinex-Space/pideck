@@ -1,6 +1,6 @@
 import type { Locator, Page } from "@playwright/test";
 import { expect, test } from "@playwright/test";
-import { openWorkspaceChat, waitForAgentSettled } from "./fixtures/app";
+import { openAppSettings, openWorkspaceChat, waitForAgentSettled } from "./fixtures/app";
 
 async function openChatAndSend(page: Page, prompt: string): Promise<void> {
 	await openWorkspaceChat(page);
@@ -9,7 +9,7 @@ async function openChatAndSend(page: Page, prompt: string): Promise<void> {
 }
 
 async function setVisualizeEnabled(page: Page, enabled: boolean): Promise<void> {
-	await page.getByTestId("open-settings").click();
+	await openAppSettings(page);
 	await page.getByTestId("settings-nav-extensions").click();
 	const toggle = page.getByTestId("extension-toggle-visualize");
 	if ((await toggle.getAttribute("data-active")) !== String(enabled)) await toggle.click();

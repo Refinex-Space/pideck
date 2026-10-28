@@ -5,7 +5,6 @@ import {
 	createWorkspaceViaDialog,
 	openFixtureProject,
 	openWorkspaceMenu,
-	waitTerminalReady,
 	worktreeRows,
 } from "./fixtures/app";
 import { E2E_EDITOR_LOG } from "./fixtures/paths";
@@ -15,7 +14,11 @@ test.beforeEach(() => {
 });
 
 async function settleAfterCreate(page: import("@playwright/test").Page): Promise<void> {
-	await waitTerminalReady(page);
+	await expect(page.getByTestId("workspace-workbench")).toHaveAttribute(
+		"data-layout-status",
+		"settled",
+	);
+	await expect(page.getByTestId("terminal-rail-group")).toBeVisible();
 }
 
 test("Open in launches the detected editor detached at the worktree path", async ({ page }) => {

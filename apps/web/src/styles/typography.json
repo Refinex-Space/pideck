@@ -1,22 +1,27 @@
 {
 	"$schema": "./typography.schema.json",
 	"metadata": {
-		"version": "3.1.0",
+		"version": "4.0.0",
 		"cssVarPrefix": "tr",
 		"classPrefix": "tr"
 	},
 	"fontFamilies": {
 		"interface": {
 			"stack": [
-				"Geist Variable",
-				"Geist",
+				"system-ui",
 				"-apple-system",
 				"BlinkMacSystemFont",
 				"Segoe UI",
+				"Roboto",
+				"PingFang SC",
+				"PingFang TC",
+				"Hiragino Sans",
+				"Microsoft YaHei",
+				"Apple SD Gothic Neo",
+				"Noto Sans CJK SC",
 				"sans-serif"
 			],
-			"kind": "proportional",
-			"selfHosted": ["@fontsource-variable/geist", "@fontsource-variable/geist/wght-italic.css"]
+			"kind": "proportional"
 		},
 		"code": {
 			"stack": [
@@ -34,28 +39,13 @@
 			]
 		},
 		"brand": {
-			"note": "Orbitron ships LATIN ONLY, and `brand.hero` renders a project's own name — so the next fallback is the interface face (Geist covers cyrillic/cyrillic-ext/latin-ext/vietnamese and is already bundled), not a system font. A non-Latin project name then falls back within our own type system instead of to whatever the OS supplies.",
-			"stack": [
-				"Orbitron Variable",
-				"Orbitron",
-				"Geist Variable",
-				"Geist",
-				"-apple-system",
-				"BlinkMacSystemFont",
-				"Segoe UI",
-				"sans-serif"
-			],
-			"kind": "proportional",
-			"selfHosted": ["@fontsource-variable/orbitron"]
+			"$ref": "interface"
 		}
 	},
 	"fontWeights": {
-		"light": 370,
 		"regular": 400,
 		"medium": 500,
-		"semibold": 600,
-		"brand": 400,
-		"button": 470
+		"semibold": 600
 	},
 	"fontSizes": {
 		"s10": 10,
@@ -63,43 +53,42 @@
 		"s12": 12,
 		"s13": 13,
 		"s14": 14,
+		"s15": 15,
 		"s16": 16,
 		"s18": 18,
 		"s20": 20,
+		"s22": 22,
 		"s24": 24,
-		"s44": 44
+		"s32": 32
 	},
 	"lineHeights": {
 		"compact": 1.25,
-		"metadata": 1.25,
-		"ui": 1.3,
-		"code": 1.4,
-		"relaxed": 1.4,
-		"default": 1.3,
-		"reading": 1.45
+		"metadata": 1.4166666666666667,
+		"ui": 1.4285714285714286,
+		"code": 1.4615384615384615,
+		"relaxed": 1.4615384615384615,
+		"default": 1.4166666666666667,
+		"reading": 1.5
 	},
 	"letterSpacings": {
 		"normal": "normal",
-		"loose": "0.02em",
-		"wide": "0.05em",
-		"widest": "0.1em",
-		"brand": "0.5px"
+		"widest": "0.1em"
 	},
 	"rootStyle": {
 		"$ref": "ui.default"
 	},
 	"codeRow": {
-		"fontSize": "s11",
-		"lineHeight": "default"
+		"fontSize": "s13",
+		"lineHeight": "code"
 	},
 	"textStyles": {
 		"brand": {
 			"hero": {
 				"fontFamily": "brand",
-				"fontSize": "s44",
-				"fontWeight": "brand",
+				"fontSize": "s32",
+				"fontWeight": "regular",
 				"lineHeight": "compact",
-				"letterSpacing": "brand",
+				"letterSpacing": "normal",
 				"textTransform": "none",
 				"fontStyle": "normal"
 			}
@@ -116,7 +105,7 @@
 			},
 			"lg": {
 				"fontFamily": "interface",
-				"fontSize": "s20",
+				"fontSize": "s22",
 				"fontWeight": "semibold",
 				"lineHeight": "compact",
 				"letterSpacing": "normal",
@@ -125,7 +114,7 @@
 			},
 			"md": {
 				"fontFamily": "interface",
-				"fontSize": "s18",
+				"fontSize": "s20",
 				"fontWeight": "semibold",
 				"lineHeight": "compact",
 				"letterSpacing": "normal",
@@ -134,7 +123,7 @@
 			},
 			"sm": {
 				"fontFamily": "interface",
-				"fontSize": "s16",
+				"fontSize": "s18",
 				"fontWeight": "semibold",
 				"lineHeight": "compact",
 				"letterSpacing": "normal",
@@ -145,7 +134,7 @@
 		"title": {
 			"dialog": {
 				"fontFamily": "interface",
-				"fontSize": "s14",
+				"fontSize": "s16",
 				"fontWeight": "semibold",
 				"lineHeight": "compact",
 				"letterSpacing": "normal",
@@ -159,7 +148,7 @@
 				"fontFamily": "interface",
 				"fontSize": "s14",
 				"fontWeight": "medium",
-				"lineHeight": "default",
+				"lineHeight": "ui",
 				"letterSpacing": "normal",
 				"textTransform": "none",
 				"fontStyle": "normal"
@@ -168,20 +157,20 @@
 				"fontFamily": "interface",
 				"fontSize": "s12",
 				"fontWeight": "medium",
-				"lineHeight": "default",
+				"lineHeight": "metadata",
 				"letterSpacing": "normal",
 				"textTransform": "none",
 				"fontStyle": "normal"
 			},
 			"entity": {
-				"$ref": "body.reading"
+				"$ref": "ui.default"
 			}
 		},
 		"ui": {
 			"default": {
 				"fontFamily": "interface",
 				"fontSize": "s14",
-				"fontWeight": "light",
+				"fontWeight": "regular",
 				"lineHeight": "ui",
 				"letterSpacing": "normal",
 				"textTransform": "none",
@@ -190,44 +179,32 @@
 			"metadata": {
 				"fontFamily": "interface",
 				"fontSize": "s12",
-				"fontWeight": "light",
+				"fontWeight": "regular",
 				"lineHeight": "metadata",
 				"letterSpacing": "normal",
 				"textTransform": "none",
 				"fontStyle": "normal"
 			},
 			"eyebrow": {
-				"fontFamily": "interface",
-				"fontSize": "s12",
-				"fontWeight": "medium",
-				"lineHeight": "relaxed",
-				"letterSpacing": "loose",
-				"textTransform": "uppercase",
-				"fontStyle": "normal"
+				"$ref": "title.compact"
 			},
 			"labelPill": {
-				"$ref": "ui.eyebrow"
+				"$ref": "title.compact"
 			},
 			"caption": {
 				"fontFamily": "interface",
-				"fontSize": "s10",
+				"fontSize": "s11",
 				"fontWeight": "medium",
 				"lineHeight": "compact",
-				"letterSpacing": "wide",
-				"textTransform": "uppercase",
+				"letterSpacing": "normal",
+				"textTransform": "none",
 				"fontStyle": "normal"
 			},
 			"action": {
 				"$ref": "title.compact"
 			},
 			"button": {
-				"fontFamily": "interface",
-				"fontSize": "s14",
-				"fontWeight": "button",
-				"lineHeight": "ui",
-				"letterSpacing": "normal",
-				"textTransform": "none",
-				"fontStyle": "normal"
+				"$ref": "title.section"
 			},
 			"emphasis": {
 				"$ref": "title.compact"
@@ -236,8 +213,8 @@
 		"body": {
 			"reading": {
 				"fontFamily": "interface",
-				"fontSize": "s14",
-				"fontWeight": "light",
+				"fontSize": "s16",
+				"fontWeight": "regular",
 				"lineHeight": "reading",
 				"letterSpacing": "normal",
 				"textTransform": "none",
@@ -296,9 +273,9 @@
 			},
 			"h3": {
 				"fontFamily": "interface",
-				"fontSize": "s12",
+				"fontSize": "s14",
 				"fontWeight": "semibold",
-				"lineHeight": "default",
+				"lineHeight": "ui",
 				"letterSpacing": "normal",
 				"textTransform": "none",
 				"fontStyle": "normal"
@@ -310,13 +287,7 @@
 				"$ref": "title.compact"
 			},
 			"h6": {
-				"fontFamily": "interface",
-				"fontSize": "s10",
-				"fontWeight": "medium",
-				"lineHeight": "default",
-				"letterSpacing": "wide",
-				"textTransform": "uppercase",
-				"fontStyle": "normal"
+				"$ref": "title.compact"
 			},
 			"inlineCode": {
 				"$ref": "code.text"
@@ -364,8 +335,8 @@
 				"fontSize": "s12",
 				"fontWeight": "semibold",
 				"lineHeight": "compact",
-				"letterSpacing": "wide",
-				"textTransform": "uppercase",
+				"letterSpacing": "normal",
+				"textTransform": "none",
 				"fontStyle": "normal"
 			},
 			"inlineCode": {

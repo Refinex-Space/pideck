@@ -9,6 +9,7 @@ import type {
 import {
 	enterDefaultWorkspace,
 	hideAuxiliaryWorkbench,
+	openAppSettings,
 	openFixtureProject,
 	openPersistedChat,
 } from "./fixtures/app";
@@ -55,7 +56,7 @@ async function openPersistedChatAfterInput(page: Page, title: string): Promise<v
 }
 
 async function selectOldestFirst(page: Page): Promise<void> {
-	await page.getByTestId("open-settings").click();
+	await openAppSettings(page);
 	await page.getByTestId("settings-nav-chat").click();
 	const option = page.getByTestId("chat-order-oldest-first");
 	await option.click();

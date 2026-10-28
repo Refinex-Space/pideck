@@ -163,15 +163,13 @@ export function WorkspaceSegment({
 
 	return (
 		<Segment
-			caption={
-				<>
-					{t("shell.location.workspace.caption")}
-					{activeSettled ? (
-						<span data-testid="scope-workspace-settled" className="text-feedback-warning">
-							{t("shell.location.workspace.settledSuffix")}
-						</span>
-					) : null}
-				</>
+			caption={t("shell.location.workspace.caption")}
+			detail={
+				activeSettled ? (
+					<span data-testid="scope-workspace-settled" className="text-feedback-warning">
+						{t("shell.location.workspace.settledSuffix")}
+					</span>
+				) : null
 			}
 			testid="scope-workspace-segment"
 			className="min-w-64 max-w-[460px] pl-0 sm:pl-8"
@@ -186,7 +184,7 @@ export function WorkspaceSegment({
 					aria-label={t("shell.location.workspace.nameInput")}
 					defaultValue={workspace.name}
 					{...renameInputProps}
-					className="window-no-drag h-20 w-full min-w-0 truncate rounded-sm border-0 bg-control-bg px-8 text-text-default tr-title-section outline-none ring-1 ring-control-border-active"
+					className="window-no-drag h-24 w-full min-w-0 truncate rounded-md border-0 bg-control-bg px-8 text-text-default tr-title-section outline-none ring-1 ring-control-border-active"
 				/>
 			) : (
 				<DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>

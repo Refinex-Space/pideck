@@ -30,9 +30,22 @@ it is not a PiDeck release. Signing, notarization and a PiDeck automatic-update 
 - **Choose your environment.** Use the native desktop shell or the same UI in a browser, with English,
   Japanese, Simplified Chinese and Spanish interface catalogs, themes and custom layouts.
 
-PiDeck's initial changes establish an independent product identity and a maintainable fork workflow.
-File-tree context actions and further UI improvements are future work, not features delivered by this
-initialization.
+## A quieter workbench
+
+The Studio layout gives conversations the main canvas while keeping projects visible and files,
+review and terminals one action away. Neutral light/dark themes, system UI typography, readable code,
+restrained motion and searchable Settings follow a Claude Desktop-inspired visual direction.
+The continuous left navigation keeps application settings in its bottom menu; workspace, branch and
+delivery controls stay with the active workspace. Back/Forward buttons follow local navigation history,
+and the primary navigation tools use Lucide icons. Existing layouts, the other built-in presets,
+high-contrast modes and custom themes remain available.
+The evidence, design decisions and cross-platform requirements live in [design-system.md](design-system.md).
+File-tree “add to conversation” actions remain future work.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset=".github/readme-assets/pideck-studio-dark.png">
+  <img src=".github/readme-assets/pideck-studio-light.png" alt="PiDeck Studio with continuous navigation and a centered composer">
+</picture>
 
 ## Run from source
 

@@ -249,7 +249,11 @@ test("disconnect removes Central from new chats while an existing live chat keep
 	await page.getByTestId("model-selector").click();
 	await revealModelGroups(page);
 	await expandModelGroup(page, "e2e-central");
-	await page.locator('[data-testid="model-option"][data-model-id="e2e-central-model"]').click();
+	await page
+		.locator(
+			'[data-testid="model-option"][data-provider="e2e-central"][data-model-id="e2e-central-model"][data-value^="all:"]',
+		)
+		.click();
 	await expect(page.getByTestId("model-selector")).toContainText("Synthetic JetBrains AI model");
 
 	await openProviders(page);

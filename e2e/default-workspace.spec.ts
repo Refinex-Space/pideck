@@ -6,10 +6,12 @@ import {
 	goProjectHome,
 	openFixtureProject,
 	openWorkspaceMenu,
+	revealWorkbenchTerminal,
 	revealWorkbenchTool,
 	runInTerminal,
 	visibleTerminalScreen,
 	waitTerminalReady,
+	workspaceDetail,
 	worktreeRows,
 } from "./fixtures/app";
 
@@ -22,8 +24,8 @@ test("the Welcome fork's “Work in project folder” enters the Default workspa
 
 	await expect(page.getByTestId("center-tabs")).toBeVisible();
 	await expect(page.getByTestId("scope-name")).toHaveText("Default");
-	await expect(page.getByTestId("scope-branch")).toHaveText("main");
-	await expect(page.getByTestId("scope-base")).toHaveCount(0);
+	await expect(await workspaceDetail(page, "scope-branch")).toHaveText("main");
+	await expect(await workspaceDetail(page, "scope-base")).toHaveCount(0);
 
 	const row = defaultWorkspaceRow(page);
 	await expect(page.getByTestId("workspace-item").first()).toHaveAttribute("data-kind", "default");
@@ -42,6 +44,7 @@ test("the Welcome fork's “Work in project folder” enters the Default workspa
 	await revealWorkbenchTool(page, "changes");
 	await expect(page.getByTestId("changes-empty")).toBeVisible();
 
+	await revealWorkbenchTerminal(page);
 	await page.getByTestId("terminal-tab").click();
 	await waitTerminalReady(page);
 	await runInTerminal(page, 'basename "$(pwd)"');
@@ -53,14 +56,14 @@ test("a terminal branch switch converges every Default branch label live", async
 	await enterDefaultWorkspace(page);
 
 	const row = defaultWorkspaceRow(page);
-	await expect(page.getByTestId("scope-branch")).toHaveText("main");
+	await expect(await workspaceDetail(page, "scope-branch")).toHaveText("main");
 	await expect(row.getByTestId("workspace-branch")).toHaveText("main");
 
-	await waitTerminalReady(page);
+	await revealWorkbenchTerminal(page);
 	await runInTerminal(page, "git switch -c live-branch");
 
 	await expect(row.getByTestId("workspace-branch")).toHaveText("live-branch");
-	await expect(page.getByTestId("scope-branch")).toHaveText("live-branch");
+	await expect(await workspaceDetail(page, "scope-branch")).toHaveText("live-branch");
 	await expect(page.getByTestId("workspace-ready")).toContainText("on live-branch");
 });
 

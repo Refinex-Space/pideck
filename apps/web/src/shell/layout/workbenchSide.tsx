@@ -160,13 +160,22 @@ export const SideGroupView = memo(function SideGroupView({
 				if (selected) shared.onFocusGroup(location, selected.id);
 			}}
 		>
-			<AuxiliaryGroupHeader
-				region={side}
-				group={group}
-				selected={selected}
-				shared={{ ...shared, renderToolBody }}
-				onFold={onFold}
-			/>
+			{!(
+				side === "left" &&
+				shared.document.left.groups.length === 1 &&
+				!shared.draggingTab &&
+				group.tabs.length === 1 &&
+				selected?.kind === "tool" &&
+				selected.tool === "projects"
+			) ? (
+				<AuxiliaryGroupHeader
+					region={side}
+					group={group}
+					selected={selected}
+					shared={{ ...shared, renderToolBody }}
+					onFold={onFold}
+				/>
+			) : null}
 			<section
 				id={groupPanelId(location)}
 				role={selected?.kind === "terminal" ? "tabpanel" : undefined}

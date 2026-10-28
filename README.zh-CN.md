@@ -24,8 +24,19 @@ PiDeck 的应用签名、公证和自动更新服务尚未配置。
 - **MCP 工具接入**：配置服务器并处理宿主的权限提示，沿用上游引擎和扩展边界。
 - **桌面与浏览器入口**：两种入口使用同一套界面，内置英语、日语、简体中文和西班牙语，支持主题与布局设置。
 
-本次初始化建立独立产品身份和可持续维护的 fork 工作流。文件树右键插入会话、进一步的 UI 改进
-属于后续开发方向，尚未作为本次初始化的功能交付。
+## 更安静的工作台
+
+Studio 布局把主画布留给会话，项目导航保持可见，文件、审查与终端随时可展开。
+中性明暗主题、系统界面字体、清晰代码排版、克制动效和可搜索的设置页，采用接近 Claude Desktop
+的视觉方向。已有布局、其他内置预设、高对比模式与自定义主题继续可用。
+依据、设计决策与跨平台要求见 [design-system.md](design-system.md)。文件树右键插入会话仍为后续工作。
+左侧导航保持连续，设置入口位于左下角 PiDeck 菜单；分支、远程与 PR 操作归入工作区详情。
+顶部返回/前进按钮使用真实导航历史，主要导航工具采用 Lucide 图标，默认工作区使用无装饰图标的文字行。
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset=".github/readme-assets/pideck-studio-dark.png">
+  <img src=".github/readme-assets/pideck-studio-light.png" alt="PiDeck Studio：连续侧栏与居中的输入区">
+</picture>
 
 ## 从源码运行
 

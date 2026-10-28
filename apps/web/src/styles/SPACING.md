@@ -2,7 +2,7 @@
 id: web-spacing
 type: submodule-design
 status: active
-title: ThinkRail spacing — one JSON source, one canonical numeric scale
+title: PiDeck spacing — one JSON source, one canonical numeric scale
 parent: module-web
 references: [web-color, web-typography]
 ---
@@ -30,8 +30,10 @@ its pixel value** — `"8": "8px"` — so an instruction that names a number map
 one family of utilities. `0` is the identity step (no spacing).
 
 The scale is an **intentionally defined primitive set, not an inventory of current usage**: a step may
-exist ahead of any consumer. `32`/`40`/`64` are reserved primitives with no rhythm call sites — they are
-canonical, not orphans, and are not removed for lack of use. Conversely, adding a step is a deliberate design decision, not a mechanical one. `6` was added for
+exist ahead of any consumer. `40`/`64` are reserved primitives with no rhythm call sites — they are
+canonical, not orphans, and are not removed for lack of use. `32` is an active rhythm step for settings
+section separation and search-field text clearance beside an inset icon. Adding a step is a deliberate
+design decision, not a mechanical one. `6` was added for
 one decided consumer — the icon↔text gap of the L button (`packages/ui` Button system: S 4 · M 4 · L 6,
 below the button's side padding except at S, where it equals it). The earlier audit's four unrelated 6px uses stay resolved into
 existing roles; a new 6px rhythm needs its own decision, not this step's existence.
@@ -77,12 +79,13 @@ mapped into Tailwind by `index.css`'s `@theme inline` — the same shape as `--p
 
 | Role | Value | Utilities | Keeps equal |
 |---|---|---|---|
-| `--panel-header-row-height` | `28px` | `h-` / `w-panel-header-row` | the height of every header strip (tab strips, pane headers, chat toolbar, bottom tool rail) and the width of its full-height square actions |
+| `--panel-header-row-height` | `32px` | `h-` / `w-panel-header-row` | the height of every header strip (tab strips, pane headers, chat toolbar, bottom tool rail) and the width of its full-height square actions |
 | `--panel-header-control-height` | `calc(var(--panel-header-row-height) - var(--space-4))` | `h-panel-header-control` | every control floating inside a header strip, so it keeps clearing the strip’s 1px border whenever the header height changes |
-| `--panel-row-height` | `22px` | `h-` / `min-h-` / `size-panel-row` | every side-pane row (file, change, spec, project, workspace) and the row-height icon buttons inside them |
+| `--panel-row-height` | `28px` | `h-` / `min-h-` / `size-panel-row` | every side-pane row (file, change, spec, project, workspace) and the row-height icon buttons inside them |
 | `--panel-inset` | `var(--space-8)` | `p-panel-inset` | the content inset of every tool pane (Projects, Specs, Files, Review) |
 | `--tree-indent` | `var(--space-8)` | `pl-tree-indent` | per-depth indentation of the Files, Changes and Specs trees |
-| `--chat-gutter` | `var(--space-8)` | `px-` / `p-chat-gutter` | chat row gutters, the stream-status and activity-breadcrumb strips, the composer inset, and the gutter terms of the transcript-width and unbounded user-bubble calcs |
+| `--chat-gutter` | `var(--space-16)` | `px-` / `p-chat-gutter` | chat row gutters, the stream-status and activity-breadcrumb strips, the composer inset, and the gutter terms of the transcript-width and unbounded user-bubble calcs |
+| `--chat-composer-max-width` | `48rem` | composer root width calculation | visible composer card cap, independent of the saved transcript width; the root adds two chat gutters |
 
 - A **rhythm role aliases a canonical step** (`var(--space-<n>)`), never a raw length, so `spacing.json`
   stays the only source of rhythm lengths and `tokens.css` still holds no scale of its own. A sizing role
@@ -115,7 +118,7 @@ The shared source scanner covers app source, `packages/ui`, and every `thinkrail
   other arbitrary spacing utility fails the guard; adding one is a design decision recorded here, not a
   silent escape from the scale;
 - the scale is a defined primitive set, so a step is **not** required to have a consumer — the gate has no
-  orphan/reachability check that could reject a reserved primitive (`32`/`40`/`64`);
+  orphan/reachability check that could reject a reserved primitive (`40`/`64`);
 - handwritten CSS declarations throughout those source roots are covered, including multiline declarations and
   CSS string literals in TypeScript: `gap` / `padding` / `margin` (and longhands) must use a declared
   `--space-*` token (or `0` / `auto`), never a raw length or an unrelated/unknown custom property. Sizing,

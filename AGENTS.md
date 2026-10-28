@@ -65,9 +65,12 @@ PiDeck 是基于 ThinkRail 的独立 fork，以 Pi 为进程内智能体引擎�
 
 ## Web UI
 
+- 所有 Web、桌面与共享 UI 的视觉变更先读 [design-system.md](design-system.md)，并遵守其中的跨平台、证据和行为保留约束。
+
 - 阅读 `apps/web/SPEC.md` 和所属子模块 SPEC；颜色改动读 `styles/COLOR.md`，间距改动读 `styles/SPACING.md`。
 - 用 Tailwind v4 语义 token utilities，不写 inline style、裸 hex、内部调色板名或不存在的 token。
-- 图标用 `@remixicon/react`（默认 Line、激活 Fill）；交互基础件用 `@thinkrail/ui/<primitive>`，
+- 新增与本轮指定替换的图标使用 `lucide-react` 线性图标；未迁移入口保留 Remix，不扩大替换范围。
+  选中态使用背景/颜色表达，具体映射见 `design-system.md`。交互基础件用 `@thinkrail/ui/<primitive>`，
   `cn()` 来自 `@thinkrail/ui/utils`。这些规则也适用于 ui、resource-renderers 与扩展 Web 部分。
 - 用户可见文本放在 `packages/locales/en.json`，通过 `@thinkrail/locales/react` 渲染；同步维护受影响翻译。
   渲染时用 `useT()` 返回的 translator，不能读取全局 translator 导致 React Compiler 缓存旧语言。

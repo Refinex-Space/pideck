@@ -7,7 +7,7 @@ import {
 	ResizablePanel,
 	ResizablePanelGroup,
 } from "@thinkrail/ui/resizable";
-import { memo, useMemo, useRef } from "react";
+import { memo, type ReactNode, useMemo, useRef } from "react";
 import { type LayoutAttention, readLayoutSelection, tupleKey } from "../../lib";
 import {
 	canPlaceLayoutTab,
@@ -38,6 +38,8 @@ export const CenterGroupView = memo(function CenterGroupView({
 	onNewChat,
 	renderEmptyCenter,
 	renderCenterActions,
+	topbarLeading,
+	topbarTrailing,
 	...shared
 }: SharedGroupProps & {
 	group: LayoutCenterGroup;
@@ -45,6 +47,8 @@ export const CenterGroupView = memo(function CenterGroupView({
 	onNewChat: WorkbenchProps["onNewChat"];
 	renderEmptyCenter: WorkbenchProps["renderEmptyCenter"];
 	renderCenterActions: WorkbenchProps["renderCenterActions"];
+	topbarLeading?: ReactNode;
+	topbarTrailing?: ReactNode;
 }) {
 	const t = useT();
 	const location: LayoutGroupLocation = { area: "center", groupId: group.id };
@@ -58,45 +62,33 @@ export const CenterGroupView = memo(function CenterGroupView({
 	const applySelect = (tabId: string, keep?: boolean) => {
 		shared.onSelectTab(location, tabId, { center: true, ...(keep !== undefined ? { keep } : {}) });
 	};
-	return (
-		<section
-			ref={sizeRef}
-			id={groupDomId(location)}
-			data-testid="center-group"
-			data-group-id={group.id}
-			tabIndex={-1}
-			aria-label={
-				group.tabs.length === 0 ? t("workbench.center.emptyGroup") : t("workbench.center.group")
-			}
-			className="relative flex h-full min-h-0 min-w-0 flex-col bg-container-content-bg outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
-			onFocusCapture={() => {
-				if (selected) shared.onFocusGroup(location, selected.id);
-			}}
-		>
-			<TabStrip
-				document={shared.document}
-				readAttention={shared.readAttention}
-				selectionEpochRef={shared.selectionEpochRef}
-				location={location}
-				tabs={group.tabs}
-				selectedId={selected?.id}
-				previewId={group.previewTabId}
-				maxSideGroups={shared.maxSideGroups}
-				maxBottomGroups={shared.maxBottomGroups}
-				draggingTab={shared.draggingTab}
-				splitGeometry={splitGeometry}
-				onSelect={applySelect}
-				onClose={shared.onClose}
-				onApply={shared.onApply}
-				onFocusAdjacentGroup={shared.onFocusAdjacentGroup}
-				onHideSide={shared.onHideSide}
-				onRevealTool={shared.onRevealTool}
-				onRenameChat={shared.onRenameChat}
-				{...(shared.chatFirstPrompts ? { chatFirstPrompts: shared.chatFirstPrompts } : {})}
-				canFocusAdjacentGroup={shared.canFocusAdjacentGroup}
-				renderTabAdornment={shared.renderTabAdornment}
-				trailing={
-					<>
+	const tabStrip = (
+		<TabStrip
+			document={shared.document}
+			readAttention={shared.readAttention}
+			selectionEpochRef={shared.selectionEpochRef}
+			location={location}
+			tabs={group.tabs}
+			selectedId={selected?.id}
+			previewId={group.previewTabId}
+			maxSideGroups={shared.maxSideGroups}
+			maxBottomGroups={shared.maxBottomGroups}
+			draggingTab={shared.draggingTab}
+			splitGeometry={splitGeometry}
+			onSelect={applySelect}
+			onClose={shared.onClose}
+			onApply={shared.onApply}
+			onFocusAdjacentGroup={shared.onFocusAdjacentGroup}
+			onHideSide={shared.onHideSide}
+			onRevealTool={shared.onRevealTool}
+			onRenameChat={shared.onRenameChat}
+			{...(shared.chatFirstPrompts ? { chatFirstPrompts: shared.chatFirstPrompts } : {})}
+			canFocusAdjacentGroup={shared.canFocusAdjacentGroup}
+			renderTabAdornment={shared.renderTabAdornment}
+			leading={topbarLeading}
+			trailing={
+				<>
+					<div className="window-no-drag flex min-w-0 shrink items-center gap-4 self-center overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
 						{renderCenterActions(group.id)}
 						{group.tabs.length === 0 ? (
 							<IconButton
@@ -127,9 +119,37 @@ export const CenterGroupView = memo(function CenterGroupView({
 							onClick={() => onNewChat(group.id)}
 							className="shrink-0 self-center"
 						/>
-					</>
-				}
-			/>
+					</div>
+					{topbarTrailing}
+				</>
+			}
+		/>
+	);
+	return (
+		<section
+			ref={sizeRef}
+			id={groupDomId(location)}
+			data-testid="center-group"
+			data-group-id={group.id}
+			tabIndex={-1}
+			aria-label={
+				group.tabs.length === 0 ? t("workbench.center.emptyGroup") : t("workbench.center.group")
+			}
+			className="relative flex h-full min-h-0 min-w-0 flex-col bg-container-content-bg outline-none ring-focus-ring ring-inset data-[layout-focus-intent=keyboard]:focus:ring-1 [&:focus-visible:not([data-layout-focus-intent=restore])]:ring-1"
+			onFocusCapture={() => {
+				if (selected) shared.onFocusGroup(location, selected.id);
+			}}
+		>
+			{topbarTrailing ? (
+				<div
+					data-testid="topbar"
+					className="window-drag relative flex h-topbar-row min-w-0 shrink-0 flex-col"
+				>
+					{tabStrip}
+				</div>
+			) : (
+				tabStrip
+			)}
 			<div
 				id={groupPanelId(location)}
 				data-testid="editor-pane"
@@ -203,6 +223,8 @@ export type CenterNodeProps = SharedGroupProps & {
 	onNewChat: WorkbenchProps["onNewChat"];
 	renderEmptyCenter: WorkbenchProps["renderEmptyCenter"];
 	renderCenterActions: WorkbenchProps["renderCenterActions"];
+	topbarLeading?: ReactNode;
+	topbarTrailing?: ReactNode;
 };
 
 export const CenterNodeView = memo(function CenterNodeView({
@@ -211,6 +233,8 @@ export const CenterNodeView = memo(function CenterNodeView({
 	projectionEpoch,
 	onCommit,
 	onNewChat,
+	topbarLeading,
+	topbarTrailing,
 	...shared
 }: CenterNodeProps) {
 	return node.kind === "group" ? (
@@ -219,6 +243,8 @@ export const CenterNodeView = memo(function CenterNodeView({
 			group={node}
 			selectedId={readLayoutSelection(attention, node.id)}
 			onNewChat={onNewChat}
+			topbarLeading={topbarLeading}
+			topbarTrailing={topbarTrailing}
 			{...shared}
 		/>
 	) : (
@@ -229,6 +255,8 @@ export const CenterNodeView = memo(function CenterNodeView({
 			projectionEpoch={projectionEpoch}
 			onCommit={onCommit}
 			onNewChat={onNewChat}
+			topbarLeading={topbarLeading}
+			topbarTrailing={topbarTrailing}
 			{...shared}
 		/>
 	);
@@ -241,8 +269,11 @@ export const CenterSplitView = memo(function CenterSplitView({
 	projectionEpoch,
 	onCommit,
 	onNewChat,
+	topbarLeading,
+	topbarTrailing,
 	...shared
 }: Omit<CenterNodeProps, "node"> & { node: LayoutCenterSplit }) {
+	const horizontal = node.direction === "horizontal";
 	const [sizeRef, size] = useElementSize();
 	const weights = useMemo(() => node.weights.map((weight) => weight * 100), [node.weights]);
 	const groupRef = useRef<ImperativePanelGroupHandle>(null);
@@ -281,6 +312,8 @@ export const CenterSplitView = memo(function CenterSplitView({
 						projectionEpoch={projectionEpoch}
 						onCommit={onCommit}
 						onNewChat={onNewChat}
+						topbarLeading={topbarLeading}
+						topbarTrailing={horizontal ? undefined : topbarTrailing}
 						{...shared}
 					/>
 				</ResizablePanel>
@@ -304,6 +337,7 @@ export const CenterSplitView = memo(function CenterSplitView({
 						projectionEpoch={projectionEpoch}
 						onCommit={onCommit}
 						onNewChat={onNewChat}
+						topbarTrailing={horizontal ? topbarTrailing : undefined}
 						{...shared}
 					/>
 				</ResizablePanel>

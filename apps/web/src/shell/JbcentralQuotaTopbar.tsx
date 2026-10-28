@@ -19,7 +19,7 @@ function transportFailureSnapshot(current: JbcentralQuotaViewSnapshot): Jbcentra
 	return { state: "unavailable" };
 }
 
-export function JbcentralQuotaTopbar() {
+export function JbcentralQuotaTopbar({ compact = false }: { compact?: boolean }) {
 	const protocolVersion = useAppStore((state) => state.protocolVersion);
 	const connectionStatus = useAppStore((state) => state.status);
 	const providerVersion = useAppStore((state) => state.providerVersion);
@@ -89,5 +89,5 @@ export function JbcentralQuotaTopbar() {
 	}, [centralConnected, connectionStatus, enabled, refreshSeconds, visible]);
 
 	const retry = useCallback(() => pollingRef.current?.retry(), []);
-	return <JbcentralQuotaIndicator snapshot={snapshot} onRetry={retry} />;
+	return <JbcentralQuotaIndicator snapshot={snapshot} onRetry={retry} compact={compact} />;
 }

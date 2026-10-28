@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, type Page, type TestInfo, test } from "@playwright/test";
 import type { Workspace } from "@thinkrail/contracts";
-import { createWorkspaceViaDialog, openFixtureProject } from "./fixtures/app";
+import { createWorkspaceViaDialog, openFixtureProject, workspaceDetail } from "./fixtures/app";
 import { commitFile, gitAs } from "./fixtures/git";
 import {
 	type FakePr,
@@ -62,14 +62,14 @@ test("a draft PR shows its running checks and becomes ready for review", async (
 			],
 		});
 		await revalidate(page);
-		const chip = page.getByTestId("scope-review");
+		const chip = await workspaceDetail(page, "scope-review");
 		await expect(chip).toContainText("Draft #128");
 		await expect(chip).toHaveAttribute("data-state-tone", "neutral");
-		await expect(page.getByTestId("scope-review-checks-glyph")).toHaveAttribute(
+		await expect(await workspaceDetail(page, "scope-review-checks-glyph")).toHaveAttribute(
 			"data-verdict",
 			"pending",
 		);
-		const primary = page.getByTestId("scope-ship-review-primary");
+		const primary = await workspaceDetail(page, "scope-ship-review-primary");
 		await expect(primary).toHaveAttribute("data-action", "ready");
 		await shoot(page, testInfo, "review-draft");
 
@@ -102,17 +102,19 @@ test("failing checks and requested changes read in the branch card, and Fix with
 			],
 		});
 		await revalidate(page);
-		await expect(page.getByTestId("scope-review-checks-glyph")).toHaveAttribute(
+		await expect(await workspaceDetail(page, "scope-review-checks-glyph")).toHaveAttribute(
 			"data-verdict",
 			"failing",
 		);
-		const primary = page.getByTestId("scope-ship-review-primary");
+		const primary = await workspaceDetail(page, "scope-ship-review-primary");
 		await expect(primary).toHaveAttribute("data-action", "fixChecks");
 		await shoot(page, testInfo, "review-failing");
 
-		await page.getByTestId("scope-branch-trigger").click();
-		await expect(page.getByTestId("scope-review-checks")).toHaveText("1 check failing: lint");
-		await expect(page.getByTestId("scope-review-decision")).toHaveText(
+		await (await workspaceDetail(page, "scope-branch-trigger")).click();
+		await expect(await workspaceDetail(page, "scope-review-checks")).toHaveText(
+			"1 check failing: lint",
+		);
+		await expect(await workspaceDetail(page, "scope-review-decision")).toHaveText(
 			"Changes requested by @anna",
 		);
 		await page.keyboard.press("Escape");
@@ -142,7 +144,7 @@ test("Merge PR offers the allowed methods, deletes the branch on GitHub, and rem
 			],
 		});
 		await revalidate(page);
-		const primary = page.getByTestId("scope-ship-review-primary");
+		const primary = await workspaceDetail(page, "scope-ship-review-primary");
 		await expect(primary).toHaveAttribute("data-action", "mergePr");
 		await primary.click();
 		const dialog = page.getByTestId("merge-pr-dialog");
@@ -169,14 +171,14 @@ test("Merge PR offers the allowed methods, deletes the branch on GitHub, and rem
 				["pr", "merge", "128", "--repo", "acme/no-rebase", "--merge", "--match-head-commit", head],
 			]);
 		await expect.poll(() => remoteHead(origin.bare, branch)).toBe("");
-		await expect(page.getByTestId("scope-review")).toContainText("Merged #128");
+		await expect(await workspaceDetail(page, "scope-review")).toContainText("Merged #128");
 		await expect(primary).toHaveAttribute("data-action", "settle");
 		expect(readGhScenario().prs[0]?.mergedWith).toBe("--merge");
 
 		gitAs(workspace.worktreePath, "push", "-q", "--set-upstream", "origin", branch);
 		writeGhScenario({ ...readGhScenario(), prs: [pr(branch, { number: 129 })] });
 		await revalidate(page);
-		await expect(page.getByTestId("scope-review")).toContainText("PR #129");
+		await expect(await workspaceDetail(page, "scope-review")).toContainText("PR #129");
 		await primary.click();
 		await expect(
 			page.locator('[data-testid="merge-pr-method"] [data-method="merge"]'),
@@ -197,8 +199,8 @@ test("a closed PR deletes its remote branch only after a confirmation, then reop
 			prs: [pr(branch, { state: "CLOSED", closedAt: new Date().toISOString() })],
 		});
 		await revalidate(page);
-		await expect(page.getByTestId("scope-review")).toContainText("Closed #128");
-		const menu = page.getByTestId("scope-ship-review-menu");
+		await expect(await workspaceDetail(page, "scope-review")).toContainText("Closed #128");
+		const menu = await workspaceDetail(page, "scope-ship-review-menu");
 		const item = (action: string) =>
 			page.locator(`[data-testid="scope-ship-action"][data-action="${action}"]`);
 		await menu.click();
@@ -215,7 +217,7 @@ test("a closed PR deletes its remote branch only after a confirmation, then reop
 		await item("deleteRemote").click();
 		await page.getByTestId("ship-confirm-delete-remote").click();
 		await expect.poll(() => remoteHead(origin.bare, branch)).toBe("");
-		await expect(page.getByTestId("scope-ship-remote-primary")).toHaveAttribute(
+		await expect(await workspaceDetail(page, "scope-ship-remote-primary")).toHaveAttribute(
 			"data-action",
 			"publish",
 		);
@@ -225,7 +227,7 @@ test("a closed PR deletes its remote branch only after a confirmation, then reop
 		await expect(item("deleteRemote")).toHaveCount(0);
 		await item("reopen").click();
 		await expect.poll(ghMutations).toEqual([["pr", "reopen", "128", "--repo", "acme/sample"]]);
-		await expect(page.getByTestId("scope-review")).toContainText("PR #128");
+		await expect(await workspaceDetail(page, "scope-review")).toContainText("PR #128");
 	} finally {
 		origin.dispose();
 	}
@@ -248,7 +250,7 @@ test("the Sync dialog hands a diverged branch to the agent to integrate", async 
 		commitFile(workspace.worktreePath, "mine.ts", "export const mine = 1;\n", "feat: mine");
 
 		await revalidate(page);
-		const sync = page.getByTestId("scope-ship-remote-primary");
+		const sync = await workspaceDetail(page, "scope-ship-remote-primary");
 		await expect(sync).toHaveAttribute("data-action", "sync");
 		await sync.click();
 		await expect(page.getByTestId("ship-sync-dialog")).toBeVisible();

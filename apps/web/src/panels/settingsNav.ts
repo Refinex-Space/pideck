@@ -26,6 +26,7 @@ import {
 	WORKSPACE_SETTLE_PROTOCOL_VERSION,
 } from "@thinkrail/contracts";
 import type { MessageKey } from "@thinkrail/locales";
+import type { Translator } from "@thinkrail/locales/react";
 import { SettingsSection } from "@/store";
 
 export interface SettingsNavSection {
@@ -131,6 +132,25 @@ export function settingsNavGroups(
 	hasUpdates: boolean,
 ): SettingsNavGroup[] {
 	return filterSettingsNavGroups(NAV_GROUPS, protocolVersion, hasUpdates);
+}
+
+export function searchSettingsNavGroups(
+	groups: SettingsNavGroup[],
+	query: string,
+	translate: Translator,
+): SettingsNavGroup[] {
+	const needle = query.trim().toLocaleLowerCase();
+	if (!needle) return groups;
+	return groups
+		.map((group) => ({
+			...group,
+			sections: translate(group.label).toLocaleLowerCase().includes(needle)
+				? group.sections
+				: group.sections.filter((section) =>
+						translate(section.label).toLocaleLowerCase().includes(needle),
+					),
+		}))
+		.filter((group) => group.sections.length > 0);
 }
 
 export function filterSettingsNavGroups(

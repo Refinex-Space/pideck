@@ -41,7 +41,17 @@ async function centralModelsOfferedToNewChats(page: Page): Promise<number> {
 	if ((await modelGroupToggle(page, "e2e-central").count()) > 0) {
 		await expandModelGroup(page, "e2e-central");
 	}
-	const count = await page.locator(CENTRAL_MODEL).count();
+	const count = await page
+		.locator(CENTRAL_MODEL)
+		.evaluateAll(
+			(options) =>
+				new Set(
+					options.map(
+						(option) =>
+							`${option.getAttribute("data-provider")}:${option.getAttribute("data-model-id")}`,
+					),
+				).size,
+		);
 	await page.keyboard.press("Escape");
 	await page.keyboard.press("Escape");
 	await expect(dialog).toBeHidden();

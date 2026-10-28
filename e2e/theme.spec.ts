@@ -5,7 +5,9 @@ import {
 	createWorkspaceViaDialog,
 	enterDefaultWorkspace,
 	expandDisclosure,
+	openAppSettings,
 	openFixtureProject,
+	revealWorkbenchTerminal,
 	revealWorkbenchTool,
 } from "./fixtures/app";
 
@@ -18,7 +20,7 @@ interface ThemeOption {
 }
 
 async function openAppearance(page: Page) {
-	await page.getByTestId("open-settings").click();
+	await openAppSettings(page);
 	const dialog = page.getByTestId("settings-dialog");
 	await expect(dialog).toBeVisible();
 	await page.getByTestId("settings-nav-appearance").click();
@@ -299,6 +301,7 @@ test("selected workspace tabs keep their surface and edge marker, and rail entri
 	await files.filter({ hasText: "notes.txt" }).click();
 	await expect(page.getByTestId("editor-tab")).toHaveCount(2);
 
+	await revealWorkbenchTerminal(page);
 	await page.getByTestId("terminal-add").click();
 	await expect(page.getByTestId("terminal-tab")).toHaveCount(2);
 

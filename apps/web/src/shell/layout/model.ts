@@ -38,6 +38,9 @@ export const LAYOUT_LIMITS = {
 	minCenterWidth: 320,
 	minCenterHeight: 180,
 	minSideBodyHeight: 120,
+	minSideWidth: 0.08,
+	maxSideWidth: 0.7,
+	auxiliaryRailWidth: 40,
 	minBottomBodyHeight: 120,
 	minBottomGroupWidth: 160,
 	auxiliaryHeaderHeight: 32,
@@ -1137,8 +1140,8 @@ export function resizeSideRegion(
 	const opposite = side === "left" ? "right" : "left";
 	const available = Math.max(Number.MIN_VALUE, 1 - document[opposite].width);
 	const gap = Math.min(1e-6, available / 2);
-	const upper = Math.max(Number.MIN_VALUE, Math.min(0.7, available - gap));
-	const lower = Math.min(0.08, upper);
+	const upper = Math.max(Number.MIN_VALUE, Math.min(LAYOUT_LIMITS.maxSideWidth, available - gap));
+	const lower = Math.min(LAYOUT_LIMITS.minSideWidth, upper);
 	const requested = Number.isFinite(width) ? width : document[side].width;
 	const normalized = Math.max(lower, Math.min(upper, requested));
 	if (Math.abs(normalized - document[side].width) < 1e-9) return document;

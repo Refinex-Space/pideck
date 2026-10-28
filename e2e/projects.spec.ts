@@ -5,6 +5,7 @@ import {
 	createWorkspaceViaDialog,
 	defaultWorkspaceRow,
 	openAppFresh,
+	openAppSettings,
 	openFixtureProject,
 	stagePlainFolder,
 	worktreeRows,
@@ -190,7 +191,7 @@ test("manual path from the rail supersedes a picker started from Welcome", async
 	pickerReply.release();
 	await pickerReply.acknowledged;
 	pickerReply.armBarrier();
-	await page.getByTestId("open-settings").click();
+	await openAppSettings(page);
 	await pickerReply.barrier;
 	expect(pickerReply.staleOpenWasSent()).toBe(false);
 	await page.keyboard.press("Escape");
@@ -322,6 +323,7 @@ test("project context actions stay compact and close/reopen is lossless across c
 	await expect(expand).toBeVisible();
 	await expect(addWorkspace).toBeVisible();
 	await expect(expand).toHaveCSS("opacity", "1");
+	await fixtureRow.hover();
 	await expect(addWorkspace).toHaveCSS("opacity", "1");
 	await expect(fixtureRow.getByTestId("close-project")).toHaveCount(0);
 	await expect(fixtureRow.getByLabel(/project actions/i)).toHaveCount(0);

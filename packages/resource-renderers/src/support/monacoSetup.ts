@@ -88,8 +88,8 @@ export function fileEditorOptions(
 	bounded: boolean,
 	path: string,
 ) {
-	const fontSize = Number.parseFloat(cssVar("--tr-font-size-s11") ?? "") || 11;
-	const lineHeight = Number.parseFloat(cssVar("--tr-line-height-default") ?? "") || undefined;
+	const fontSize = Number.parseFloat(cssVar("--tr-font-size-s13") ?? "") || 13;
+	const lineHeight = Number.parseFloat(cssVar("--tr-code-row-height") ?? "") || 19;
 	const paddingTop = Number.parseFloat(cssVar("--space-8") ?? "");
 	const options: editor.IStandaloneEditorConstructionOptions = {
 		readOnly: true,

@@ -176,7 +176,7 @@ export function ChangesReviewGuide({
 											data-active={cursor === index ? true : undefined}
 											disabled={!inScope.has(step.path)}
 											onClick={() => go(index)}
-											className={`flex w-full items-start gap-8 border-l-2 px-12 py-4 text-left outline-none hover:bg-control-bg-hovered focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary disabled:opacity-50 disabled:hover:bg-transparent ${
+											className={`flex w-full items-start gap-8 border-l-2 px-12 py-4 text-left outline-none hover:bg-control-bg-hovered focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-focus-ring disabled:opacity-50 disabled:hover:bg-transparent ${
 												cursor === index
 													? "border-primary bg-control-bg-selected"
 													: "border-transparent"
@@ -227,7 +227,7 @@ export function ChangesReviewGuide({
 										<button
 											type="button"
 											onClick={() => go(index)}
-											className="flex w-full flex-col items-start gap-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-primary"
+											className="flex w-full flex-col items-start gap-2 text-left outline-none focus-visible:ring-1 focus-visible:ring-focus-ring"
 										>
 											<span className="flex items-center gap-4 tr-text-metadata text-text-subtle">
 												<Robot className="size-12" />

@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { registerWebExtensions } from "@/extensions";
+import { loadTypography, resolveStyle } from "../../scripts/typography";
 import "./tools/register";
 import {
 	estimateChatRowHeight,
@@ -39,6 +40,23 @@ function toolRow(toolName: string, args: Record<string, unknown>): ChatRow {
 }
 
 describe("estimateMarkdownHeight", () => {
+	test("estimates added prose and code lines using the generated typography metrics", () => {
+		const typography = loadTypography();
+		const lineHeight = (id: string) => {
+			const style = resolveStyle(typography, id);
+			return Math.round(
+				typography.fontSizes[style.fontSize] * typography.lineHeights[style.lineHeight],
+			);
+		};
+		expect(estimateMarkdownHeight("one\ntwo") - estimateMarkdownHeight("one")).toBe(
+			lineHeight("body.reading"),
+		);
+		expect(
+			estimateMarkdownHeight("```text\none\ntwo\n```") -
+				estimateMarkdownHeight("```text\none\n```"),
+		).toBe(lineHeight("code.text"));
+	});
+
 	test("gives a hundred prose paragraphs a multi-thousand-pixel estimate", () => {
 		const text = Array.from({ length: 100 }, (_, index) => `${index + 1}. ${paragraph}`).join(
 			"\n\n",

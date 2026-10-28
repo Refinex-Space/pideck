@@ -8,19 +8,22 @@ depends-on: [submodule-web-panels]
 tags: [ui, topbar, public-surface-checked]
 ---
 
-## Responsibility
+## PiDeck presentation and responsibility
 
-The persistent "where am I / what state is it in" strip after the ThinkRail mark: one row of captioned
-segments — **Project · Workspace · Branch · from base · Remote · Pull request** — whose values are the
-controls for switching project or workspace, acting on the workspace, reading or retargeting the
-branch, and taking the branch's **next delivery step** (publish, push, open a PR, sync, fix checks, mark
-ready, merge, settle). It renders
-what the store and `workspace.branchStatus` (older hosts: `workspace.openReview`) already report and runs
-actions through the panels-owned ship runner; it owns no host state.
+The workspace switcher remains in the main canvas's 40px window-control row. Project, branch,
+remote and review actions live in the adjacent Workspace details disclosure. Native `details` keeps
+its child controllers mounted while collapsed: closing the surface must not discard a pending ship
+confirmation, draft, retry or project picker. Escape returns focus to the summary; outside pointer
+interaction closes it except while interacting with its Radix menu/dialog layers. It uses existing
+panels-owned actions and reads host state; it introduces no parallel domain owner.
+
+The lightweight details surface follows the same semantic tokens as menus. Repeated category
+captions remain screen-reader text; base branch and settled state remain subdued details. All
+project/workspace/branch/remote/review actions and the existing protocol guards remain available.
 
 ## Boundary
 
-- **Owns:** the segment grammar (caption over a 20px value row, segments separated by space alone),
+- **Owns:** the segment grammar (one 24px value row with subdued details, segments separated by space alone),
   the pill/chip/split-button classes every value uses, the project switcher menu, the workspace menu
   (actions + sibling switcher + New workspace), the branch card (copy, based-on, compare-to picker, remote
   and review rows), the Remote and Pull request segments, and the responsive drop order.
@@ -43,16 +46,12 @@ actions through the panels-owned ship runner; it owns no host state.
 
 ## Grammar
 
-- The strip and every segment stretch to the header's content box (39px: the 40px row minus its bottom
-  border), never a fixed `h-topbar-row` — a 40px child in a 39px box centres on half pixels, blurring text
-  on 1x screens and overlapping the border. A segment centres a 14px caption row (12px sentence-case
-  `tr-text-metadata` in `text-subtle`, at its own 15px leading: `leading-none` lets the glyph box overflow
-  the truncating row) over a 20px value row, leaving 2.5px above the caption row and below the value's hover
-  fill. Segments carry no hairlines: `pl-8` plus the
-  pills' own padding (≈42px text to text, 8px between hover fills) is the separation, because full-height
-  rules read as a table and never line up with the tab strip's dividers below. A caption fragment (`· from <base>`,
-  `· settled`) uses the caption's own face — never a second typeface inside the caption.
-- Values are pills (`pillClass`: 20px, `window-no-drag`, hover `control-bg-hovered`, open
+- The strip and every segment stretch to the header's content box, never a fixed `h-topbar-row`.
+  Each segment centers a single 24px value row. Category captions remain screen-reader text;
+  worktree base and settled state are visible, subordinate details alongside that row. Segments carry
+  no hairlines: `pl-8` plus the pills' own padding separates controls without turning the header into a table.
+  Detail fragments (`· from <base>`, `· settled`) use the metadata face rather than a second typeface.
+- Values are pills (`pillClass`: 24px, `window-no-drag`, hover `control-bg-hovered`, open
   `control-bg-selected`; the chevron is hidden at rest and appears on hover, keyboard focus, or while open)
   or status chips (`chipClass`: 20px, rounded-full, `tr-text-emphasis`, feedback-tinted `-subtle` fill with
   the solid feedback text; interactive chips hover to the `-muted` step), or a segment's **split button**

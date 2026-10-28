@@ -120,7 +120,7 @@ export function ExtUiPrompt({
 							aria-label={t("chat.extUi.arguments")}
 							tabIndex={0}
 							entries={toolArgs}
-							className="max-h-[40vh] shrink-0 overflow-y-auto rounded-sm bg-container-header-bg px-8 py-4 outline-none focus-visible:ring-2 focus-visible:ring-primary"
+							className="max-h-[40vh] shrink-0 overflow-y-auto rounded-sm bg-container-header-bg px-8 py-4 outline-none focus-visible:ring-1 focus-visible:ring-focus-ring"
 						/>
 					) : null}
 

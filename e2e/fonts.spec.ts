@@ -16,7 +16,7 @@ test("loads no fonts from a CDN", async ({ page }) => {
 	expect(external).toEqual([]);
 });
 
-test("serves the self-hosted variable faces, including the brand weight and real italics", async ({
+test("uses system UI fonts and serves self-hosted variable code with real italics", async ({
 	page,
 }) => {
 	await page.goto("/");
@@ -34,7 +34,7 @@ test("serves the self-hosted variable faces, including the brand weight and real
 		};
 	});
 
-	for (const family of [INTERFACE_FACE, CODE_FACE]) {
+	for (const family of [CODE_FACE]) {
 		const faces = fonts.faces.filter((f) => f.family === family);
 		expect(faces.length, `${family} is declared`).toBeGreaterThan(0);
 		expect(
@@ -50,6 +50,9 @@ test("serves the self-hosted variable faces, including the brand weight and real
 	}
 
 	expect(fonts.bodyFamily).toContain(INTERFACE_FACE);
+	expect(INTERFACE_FACE).toBe("system-ui");
+	expect(fonts.faces.some((face) => face.family === INTERFACE_FACE)).toBe(false);
+	expect(fonts.faces.some((face) => /Geist|Orbitron/.test(face.family))).toBe(false);
 });
 
 function weightCovers(range: string, target: number): boolean {

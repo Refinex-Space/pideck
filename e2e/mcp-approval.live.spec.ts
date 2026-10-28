@@ -2,7 +2,12 @@ import { rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, type Page, test } from "@playwright/test";
-import { expandAllRoutineGroups, openWorkspaceChat, waitForAgentSettled } from "./fixtures/app";
+import {
+	expandAllRoutineGroups,
+	openAppSettings,
+	openWorkspaceChat,
+	waitForAgentSettled,
+} from "./fixtures/app";
 import { resolveBunExecutable } from "./fixtures/executables";
 import { E2E_PI_AGENT_DIR } from "./fixtures/paths";
 import { shot } from "./fixtures/screenshots";
@@ -67,7 +72,7 @@ test("an MCP call asks on its card; Always allow runs it unasked from then on un
 		await expect(again).toHaveAttribute("data-status", "done");
 		await expect(page.getByTestId("ext-ui-prompt")).toHaveCount(0);
 
-		await page.getByTestId("open-settings").click();
+		await openAppSettings(page);
 		await page.getByTestId("settings-nav-mcp").click();
 		const row = page.locator('[data-testid="mcp-server-row"][data-name="fixture"]');
 		const allowed = row.getByTestId("mcp-always-allowed-tool");

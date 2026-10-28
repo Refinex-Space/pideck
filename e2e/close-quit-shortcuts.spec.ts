@@ -5,6 +5,7 @@ import {
 	openAppFresh,
 	openFixtureProject,
 	pressPlatformShortcut,
+	revealWorkbenchTerminal,
 	revealWorkbenchTool,
 	runInTerminal,
 	visibleTerminal,
@@ -115,7 +116,7 @@ test("native close-item closes the top layer first, then the focused tab", async
 	await expect(editorTabs(page)).toHaveCount(1);
 	await expect(editorTabs(page).filter({ hasText: "README.md" })).toHaveCount(0);
 
-	await waitTerminalReady(page);
+	await revealWorkbenchTerminal(page);
 	await runInTerminal(page, "sh -c 'echo TR_$((40+2)); exec sleep 45'");
 	await expect(visibleTerminalScreen(page)).toContainText("TR_42");
 	await closeItem(page);
@@ -129,7 +130,7 @@ test("native close-item never closes a session through a tool-window rail", asyn
 	await installNativeShortcuts(page, "MacIntel");
 	await openFixtureProject(page);
 	await createWorkspaceViaDialog(page);
-	await waitTerminalReady(page);
+	await revealWorkbenchTerminal(page);
 	await page.getByTestId("tool-rail-files").click({ button: "right" });
 	await page.getByRole("menuitem", { name: "New bottom group at right", exact: true }).click();
 	await waitTerminalReady(page);
@@ -176,7 +177,7 @@ test("Windows Ctrl+W and Ctrl+F4 close the focused tab; a terminal keeps Ctrl+W"
 	await expect(editorTabs(page)).toHaveCount(0);
 	await expect(page.getByRole("region", { name: "Empty center group" })).toBeFocused();
 
-	await waitTerminalReady(page);
+	await revealWorkbenchTerminal(page);
 	const terminalInput = visibleTerminal(page).locator(".xterm-helper-textarea");
 	await terminalInput.focus();
 	await expect(terminalInput).toBeFocused();
@@ -248,9 +249,11 @@ function openSettingsCommand(page: Page) {
 }
 
 async function expectSettingsTooltip(page: Page, text: string): Promise<void> {
-	await page.getByTestId("open-settings").hover();
-	await expect(page.getByRole("tooltip")).toHaveText(text);
-	await page.mouse.move(0, 0);
+	await page.getByTestId("app-menu").click();
+	await expect(page.getByTestId("open-settings")).toHaveText(
+		text.replace(" (", "").replace(")", ""),
+	);
+	await page.keyboard.press("Escape");
 }
 
 test("native open-settings opens Settings, keeps it as is, and yields to other dialogs", async ({
@@ -290,7 +293,7 @@ test("Windows Ctrl+, opens Settings, from a terminal too; Shift+Comma does not",
 	await expectSettingsTooltip(page, "Settings (Ctrl+,)");
 	const settings = page.getByTestId("settings-dialog");
 
-	await waitTerminalReady(page);
+	await revealWorkbenchTerminal(page);
 	await visibleTerminal(page).locator(".xterm-helper-textarea").focus();
 	await page.keyboard.press("Control+Comma");
 	await expect(settings).toBeVisible();

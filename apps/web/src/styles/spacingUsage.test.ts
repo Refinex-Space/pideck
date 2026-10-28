@@ -118,13 +118,13 @@ describe("radius at a call site", () => {
 		expect(read(TOKENS)).toMatch(/@theme static \{\s*--radius-\*:\s*initial;/);
 	});
 
-	it("keeps exactly the xs/sm/md/lg primitive family capped at 8px", () => {
+	it("keeps the design-system radius hierarchy from text marks to the composer", () => {
 		const declared = Object.fromEntries(
 			[...read(TOKENS).matchAll(/^\s*--radius-([a-z0-9]+)\s*:\s*([\d.]+)px;/gm)].map(
 				([, step, value]) => [step, Number(value)],
 			),
 		);
-		expect(declared).toEqual({ xs: 2, sm: 4, md: 6, lg: 8 });
+		expect(declared).toEqual({ xs: 4, sm: 6, md: 8, lg: 12, xl: 14 });
 	});
 
 	it("declares no radius step nothing consumes", () => {
@@ -206,7 +206,8 @@ describe("spacing at a call site", () => {
 	});
 
 	it("keeps reserved primitives canonical and unspent by rhythm call sites", () => {
-		const reserved = ["32", "40", "64"];
+		const reserved = ["40", "64"];
+		expect(STEPS.has("32")).toBe(true);
 		for (const step of reserved) expect(STEPS.has(step)).toBe(true);
 		expect([...STEPS].every((step) => /^(?:0|[1-9]\d*)$/.test(step))).toBe(true);
 		expect(

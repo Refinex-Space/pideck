@@ -1,14 +1,16 @@
 import { RiDownloadCloud2Line as DownloadCloud } from "@remixicon/react";
 import { useT } from "@thinkrail/locales/react";
-import { Button } from "@thinkrail/ui/button";
+import { Button, IconButton } from "@thinkrail/ui/button";
 import type { UpdatesController } from "./useUpdates";
 
 export function UpdateReadyButton({
 	updates,
 	onOpen,
+	compact = false,
 }: {
 	updates: UpdatesController;
 	onOpen(): void;
+	compact?: boolean;
 }) {
 	const t = useT();
 	const hostUpdate = updates.source === "host";
@@ -90,6 +92,21 @@ export function UpdateReadyButton({
 				break;
 		}
 	}
+
+	if (compact)
+		return (
+			<IconButton
+				variant="soft-primary"
+				size="m"
+				icon={DownloadCloud}
+				label={ariaLabel}
+				tooltip={label}
+				data-testid="update-ready"
+				data-source={updates.source}
+				data-status={nativeState?.status ?? hostStatus ?? (hostUpdate ? "legacy" : undefined)}
+				onClick={onOpen}
+			/>
+		);
 
 	return (
 		<Button

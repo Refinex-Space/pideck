@@ -47,11 +47,11 @@ export function splashMessage(
 
 export function splashDocument(message: string): string {
 	return `<!doctype html><html><head><meta charset="utf-8"><meta name="color-scheme" content="dark light"><title>PiDeck</title><style>
-:root{--bg:#09090b;--fg:#f4f4f5;--muted:#babac1;--accent:#8dff4f;--track:#27272a}
-@media (prefers-color-scheme: light){:root{--bg:#ffffff;--fg:#27272a;--muted:#52525b;--accent:#2a7314;--track:#e4e4e7}}
+:root{--bg:#242424;--fg:#f0efec;--muted:#c3c2b7;--accent:#f0efec;--track:#444442}
+@media (prefers-color-scheme: light){:root{--bg:#ffffff;--fg:#0b0b0b;--muted:#52514e;--accent:#0b0b0b;--track:#e8e7e3}}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);cursor:default;user-select:none;-webkit-user-select:none}
-body{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;font:13px/1.4 system-ui,"Segoe UI",sans-serif}
-.mark{font-size:28px;font-weight:700;color:var(--accent)}
+body{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;font:14px/1.428571 system-ui,"Segoe UI",sans-serif}
+.mark{font-size:28px;font-weight:500;color:var(--accent)}
 .message{color:var(--muted)}
 .bar{width:220px;height:3px;border-radius:2px;background:var(--track);overflow:hidden}
 .bar i{display:block;width:35%;height:100%;border-radius:2px;background:var(--accent);animation:slide 1.2s ease-in-out infinite}

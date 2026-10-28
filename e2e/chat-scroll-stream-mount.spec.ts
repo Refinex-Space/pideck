@@ -1,6 +1,11 @@
 import { realpathSync } from "node:fs";
 import { expect, type Page, test } from "@playwright/test";
-import { enterDefaultWorkspace, openFixtureProject, openPersistedChat } from "./fixtures/app";
+import {
+	enterDefaultWorkspace,
+	openAppSettings,
+	openFixtureProject,
+	openPersistedChat,
+} from "./fixtures/app";
 import { E2E_FIXTURE_REPO } from "./fixtures/paths";
 import { seedWorkspaceSession } from "./fixtures/sessions";
 import {
@@ -75,7 +80,7 @@ const readProbe = (page: Page) =>
 const now = (page: Page) => page.evaluate(() => performance.now());
 
 const selectNewestFirst = async (page: Page) => {
-	await page.getByTestId("open-settings").click();
+	await openAppSettings(page);
 	await page.getByTestId("settings-nav-chat").click();
 	const option = page.getByTestId("chat-order-newest-first");
 	await option.click();

@@ -1,5 +1,10 @@
 import { expect, test } from "@playwright/test";
-import { hideAuxiliaryWorkbench, openWorkspaceChat, PHONE_VIEWPORT } from "./fixtures/app";
+import {
+	hideAuxiliaryWorkbench,
+	openAppSettings,
+	openWorkspaceChat,
+	PHONE_VIEWPORT,
+} from "./fixtures/app";
 
 async function box(locator: import("@playwright/test").Locator) {
 	const value = await locator.boundingBox();
@@ -7,17 +12,69 @@ async function box(locator: import("@playwright/test").Locator) {
 	return value;
 }
 
+test("the text-input surface stays centered at its comfortable width and shrinks with a narrow pane", async ({
+	page,
+}) => {
+	await page.setViewportSize({ width: 2316, height: 1000 });
+	await openWorkspaceChat(page);
+	const chat = page.getByTestId("chat-view");
+	const shell = page.getByTestId("chat-input-surface");
+	for (const width of [2316, 1440]) {
+		await page.setViewportSize({ width, height: 1000 });
+		const chatBox = await box(chat);
+		const shellBox = await box(shell);
+		expect(shellBox.width).toBeGreaterThanOrEqual(767);
+		expect(shellBox.width).toBeLessThanOrEqual(769);
+		expect(
+			Math.abs(shellBox.x + shellBox.width / 2 - (chatBox.x + chatBox.width / 2)),
+		).toBeLessThanOrEqual(1);
+	}
+	await page.setViewportSize({ width: 700, height: 1000 });
+	await expect(async () => {
+		const chatBox = await box(chat);
+		const shellBox = await box(shell);
+		const gutter = await chat.evaluate((element) =>
+			Number.parseFloat(getComputedStyle(element).getPropertyValue("--chat-gutter")),
+		);
+		expect(shellBox.width).toBeLessThan(768);
+		expect(Math.abs(shellBox.width - (chatBox.width - 2 * gutter))).toBeLessThanOrEqual(1);
+		expect(shellBox.x).toBeGreaterThanOrEqual(chatBox.x);
+		expect(shellBox.x + shellBox.width).toBeLessThanOrEqual(chatBox.x + chatBox.width);
+	}).toPass();
+});
+
+test("zoomed history keeps the full chat width above the bounded composer", async ({ page }) => {
+	await page.setViewportSize({ width: 2316, height: 1000 });
+	await openWorkspaceChat(page);
+	await page.getByTestId("chat-input").press("Control+r");
+	const overlay = page.getByTestId("history-overlay");
+	await expect(overlay).toHaveAttribute("data-stage", "compact");
+	await page.getByTestId("history-query").press("Tab");
+	await expect(overlay).toHaveAttribute("data-stage", "zoomed");
+	await expect(page.getByTestId("history-preview")).toBeVisible();
+	const chatBox = await box(page.getByTestId("chat-view"));
+	const shellBox = await box(page.getByTestId("chat-composer-shell"));
+	const overlayBox = await box(overlay);
+	expect(overlayBox.width).toBeGreaterThan(shellBox.width + 200);
+	expect(overlayBox.width).toBeGreaterThanOrEqual(chatBox.width - 18);
+	await page.getByTestId("history-query").press("Escape");
+	await expect(overlay).toBeHidden();
+	await expect(page.getByTestId("chat-input")).toBeFocused();
+});
+
 test("idle composer keeps one message line above a stable controls row", async ({ page }) => {
 	await openWorkspaceChat(page);
 
 	const composer = page.getByTestId("chat-composer");
 	const shell = page.getByTestId("chat-composer-shell");
+	const surface = page.getByTestId("chat-input-surface");
 	const input = page.getByTestId("chat-input");
 	const model = page.getByTestId("model-selector");
 	const history = page.getByTestId("history-open");
 	const send = page.getByTestId("chat-send");
 
 	const compactShell = await box(shell);
+	const compactSurface = await box(surface);
 	const compactInput = await box(input);
 	const compactWrapMeasure = await box(page.getByTestId("chat-input-sizer"));
 	const compactModel = await box(model);
@@ -25,6 +82,27 @@ test("idle composer keeps one message line above a stable controls row", async (
 	expect(compactInput.height).toBeLessThanOrEqual(40);
 	await expect(composer).toHaveAttribute("data-expanded", "false");
 	expect(compactShell.height).toBeGreaterThanOrEqual(compactInput.height + compactModel.height);
+	expect(Math.abs(compactSurface.height - compactInput.height)).toBeLessThanOrEqual(0.5);
+	expect(Math.abs(compactSurface.width - compactShell.width)).toBeLessThanOrEqual(0.5);
+	expect(compactSurface.height).toBeLessThan(compactShell.height - compactModel.height);
+	const paint = await shell.evaluate((element) => {
+		const inputSurface = element.querySelector<HTMLElement>('[data-testid="chat-input-surface"]');
+		if (!inputSurface) throw new Error("input surface missing");
+		const outer = getComputedStyle(element);
+		const inner = getComputedStyle(inputSurface);
+		return {
+			outerFill: outer.backgroundColor,
+			outerShadow: outer.boxShadow,
+			outerBorder: outer.borderTopWidth,
+			inputFill: inner.backgroundColor,
+			inputShadow: inner.boxShadow,
+		};
+	});
+	expect(paint.outerFill).toBe("rgba(0, 0, 0, 0)");
+	expect(paint.outerShadow).toBe("none");
+	expect(paint.outerBorder).toBe("0px");
+	expect(paint.inputFill).not.toBe("rgba(0, 0, 0, 0)");
+	expect(paint.inputShadow).not.toBe("none");
 	expect(compactInput.x).toBeLessThanOrEqual(compactShell.x + 8);
 	expect(compactInput.x + compactInput.width).toBeGreaterThanOrEqual(
 		compactShell.x + compactShell.width - 8,
@@ -35,6 +113,7 @@ test("idle composer keeps one message line above a stable controls row", async (
 	const compactFooterBottom = compactModel.y + compactModel.height;
 	for (const control of [model, history, send]) {
 		const controlBox = await box(control);
+		expect(controlBox.y).toBeGreaterThanOrEqual(compactSurface.y + compactSurface.height);
 		expect(controlBox.y).toBeGreaterThanOrEqual(compactInput.y + compactInput.height);
 		expect(Math.abs(controlBox.y + controlBox.height - compactFooterBottom)).toBeLessThanOrEqual(4);
 	}
@@ -106,7 +185,7 @@ test("half-chat growth caps the editor shell and scrolls the textarea", async ({
 test("chat growth setting persists and compact means six visual lines", async ({ page }) => {
 	await page.goto("/");
 	await expect(page.getByTestId("connection-status")).toHaveAttribute("data-status", "connected");
-	await page.getByTestId("open-settings").click();
+	await openAppSettings(page);
 	await page.getByTestId("settings-nav-chat").click();
 
 	const compact = page.getByTestId("composer-growth-compact");
@@ -120,7 +199,7 @@ test("chat growth setting persists and compact means six visual lines", async ({
 
 	await page.reload();
 	await expect(page.getByTestId("connection-status")).toHaveAttribute("data-status", "connected");
-	await page.getByTestId("open-settings").click();
+	await openAppSettings(page);
 	await page.getByTestId("settings-nav-chat").click();
 	await expect(compact).toHaveAttribute("data-active", "true");
 	await page.keyboard.press("Escape");
@@ -140,7 +219,7 @@ test("chat growth setting persists and compact means six visual lines", async ({
 	expect(lines).toBeGreaterThanOrEqual(5.9);
 	expect(lines).toBeLessThanOrEqual(6.1);
 
-	await page.getByTestId("open-settings").click();
+	await openAppSettings(page);
 	await page.getByTestId("settings-nav-chat").click();
 	await half.click();
 	await expect(half).toHaveAttribute("data-active", "true");

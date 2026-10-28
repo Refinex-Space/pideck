@@ -12,6 +12,7 @@ import {
 	collectAllGroups,
 	collectCenterGroups,
 	createLayoutId,
+	LAYOUT_LIMITS,
 	LAYOUT_TOOL_DEFAULT_SIDES,
 	LAYOUT_TOOLS,
 	toolTab,
@@ -70,7 +71,30 @@ const bottom = (
 	groups: weightedGroups(groups),
 });
 
-export const DEFAULT_LAYOUT_PRESET_ID = "balanced";
+export const DEFAULT_LAYOUT_PRESET_ID = "studio";
+
+export function layoutPresetForViewport(
+	preset: LayoutPreset,
+	viewportWidth: number | undefined,
+): LayoutPreset {
+	if (
+		preset.id !== "studio" ||
+		viewportWidth === undefined ||
+		!Number.isFinite(viewportWidth) ||
+		viewportWidth <= 0
+	) {
+		return preset;
+	}
+	const paneWidth = Math.min(
+		288,
+		viewportWidth - LAYOUT_LIMITS.auxiliaryRailWidth - LAYOUT_LIMITS.minCenterWidth,
+	);
+	const width = Math.max(
+		LAYOUT_LIMITS.minSideWidth,
+		Math.min(LAYOUT_LIMITS.maxSideWidth, paneWidth / viewportWidth),
+	);
+	return { ...preset, left: { ...preset.left, width } };
+}
 
 export const BUILTIN_LAYOUT_PRESETS: readonly LayoutPreset[] = [
 	{
@@ -103,10 +127,22 @@ export const BUILTIN_LAYOUT_PRESETS: readonly LayoutPreset[] = [
 		]),
 		bottom: bottom(true, [{ id: "review-bottom", tools: [] }]),
 	},
+	{
+		id: "studio",
+		name: "Studio",
+		center: group("studio-primary"),
+		left: side(true, 0.18, [{ id: "studio-left", tools: ["projects"] }]),
+		right: side(false, 0.28, [
+			{ id: "studio-right-top", tools: ["specs", "files"], weight: 1.25 },
+			{ id: "studio-right-bottom", tools: ["review"] },
+		]),
+		bottom: bottom(false, [{ id: "studio-bottom", tools: [] }]),
+	},
 ] as const;
 
 const BUILTIN_PRESET_NAME_KEYS: Readonly<Record<string, MessageKey>> = {
 	balanced: "workbench.preset.balanced",
+	studio: "workbench.preset.studio",
 	focus: "workbench.preset.focus",
 	review: "workbench.preset.review",
 };

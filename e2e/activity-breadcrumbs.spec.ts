@@ -1,6 +1,11 @@
 import { appendFileSync, realpathSync, utimesSync } from "node:fs";
 import { expect, type Locator, type Page, test } from "@playwright/test";
-import { defaultWorkspaceRow, enterDefaultWorkspace, openFixtureProject } from "./fixtures/app";
+import {
+	defaultWorkspaceRow,
+	enterDefaultWorkspace,
+	openAppSettings,
+	openFixtureProject,
+} from "./fixtures/app";
 import {
 	moveMouseToChatViewport,
 	readChatScrollGeometry,
@@ -39,7 +44,7 @@ async function selectMessageOrder(
 	page: Page,
 	order: "oldest-first" | "newest-first",
 ): Promise<void> {
-	await page.getByTestId("open-settings").click();
+	await openAppSettings(page);
 	await page.getByTestId("settings-nav-chat").click();
 	const option = page.getByTestId(`chat-order-${order}`);
 	await option.click();
@@ -197,7 +202,7 @@ test("a model-authored Thinking heading stays bounded and appears only while fol
 	const metadata = "5 steps · get_search_content, fetch_content, web_search, spec_grep, +1 more";
 	await expect(heading).toBeVisible();
 	await expect(heading).toHaveText("Evaluating formatting process");
-	await expect(heading).toHaveCSS("font-weight", "370");
+	await expect(heading).toHaveCSS("font-weight", "400");
 	await expect(thinkingLabel).toHaveClass(/sr-only/);
 	await expect(toggle).toContainText(metadata);
 

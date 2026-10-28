@@ -20,6 +20,12 @@ import { readLayoutNavigationClock, readLayoutSelection, tupleKey } from "../../
 import { projectWorkbenchRatio, restoreWorkbenchRatio } from "./auxiliaryPresentation";
 import { closeRequestTarget } from "./closeRequest";
 import {
+	focusLayoutElement,
+	type LayoutFocusIntent,
+	readLayoutFocusIntent,
+	setLayoutFocusIntent,
+} from "./layoutFocus";
+import {
 	canCreateAuxiliaryGroup,
 	canJoinAuxiliaryGroup,
 	canPlaceLayoutTab,
@@ -86,6 +92,10 @@ import { SideStack } from "./workbenchSide";
 export type { LayoutTabFocusRequest, WorkbenchProps } from "./workbenchShared";
 
 export function Workbench({
+	workspaceLocation,
+	navigationActions,
+	navigationFooter,
+	collapsedNavigationFooter,
 	workspaceId,
 	document,
 	attention,
@@ -126,6 +136,7 @@ export function Workbench({
 		workspaceId: string;
 		closedTab: LayoutTab;
 		fallbackDomId: string;
+		intent: LayoutFocusIntent;
 	} | null>(null);
 	const documentRef = useRef(document);
 	const attentionRef = useRef(attention);
@@ -154,6 +165,7 @@ export function Workbench({
 
 	const apply = useCallback(
 		(result: LayoutMutationResult) => {
+			const intent = readLayoutFocusIntent(globalThis.document.activeElement);
 			let next = reconcileAttention(result.document, attentionRef.current, documentRef.current);
 			if (result.focusGroupId && result.focusTabId) {
 				const location = findTabLocation(result.document, result.focusTabId);
@@ -178,6 +190,7 @@ export function Workbench({
 						workspaceId,
 						key: createLayoutId("focus"),
 						location,
+						intent,
 						...(result.focusTabId ? { tabId: result.focusTabId } : {}),
 						...(result.focusOnlyIfLost ? { onlyIfFocusLost: true } : {}),
 					});
@@ -252,6 +265,7 @@ export function Workbench({
 				? globalThis.document.getElementById(tabDomId(requestedLocation, tab.id))
 				: null;
 			const activeElement = globalThis.document.activeElement;
+			const closeFocusIntent = readLayoutFocusIntent(activeElement);
 			const closeControlHadFocusAtRequest = Boolean(
 				requestedTabElement?.parentElement?.contains(activeElement) ||
 					activeElement?.closest('[role="menu"]'),
@@ -334,6 +348,7 @@ export function Workbench({
 							setFocusAfterClose({
 								workspaceId: requestedWorkspaceId,
 								closedTab: tab,
+								intent: closeFocusIntent,
 								fallbackDomId: focusTabId
 									? tabDomId(focusLocation, focusTabId)
 									: groupDomId(focusLocation),
@@ -369,7 +384,7 @@ export function Workbench({
 		}
 		const frame = requestAnimationFrame(() => {
 			if (workspaceRef.current !== pending.workspaceId) return;
-			globalThis.document.getElementById(pending.fallbackDomId)?.focus();
+			focusLayoutElement(globalThis.document.getElementById(pending.fallbackDomId), pending.intent);
 			setFocusAfterClose((current) => (current === pending ? null : current));
 		});
 		return () => cancelAnimationFrame(frame);
@@ -697,6 +712,7 @@ export function Workbench({
 				setLocalFocusRequest({
 					workspaceId,
 					key: createLayoutId("focus-group"),
+					intent: "keyboard",
 					location: target.location,
 					...(target.tabControlsRendered ? { tabId: selected.id } : {}),
 				});
@@ -714,6 +730,7 @@ export function Workbench({
 				setLocalFocusRequest({
 					workspaceId,
 					key: createLayoutId("focus-group"),
+					intent: "keyboard",
 					location: target.location,
 				});
 				return;
@@ -734,6 +751,7 @@ export function Workbench({
 			setLocalFocusRequest({
 				workspaceId,
 				key: createLayoutId("focus-group"),
+				intent: "keyboard",
 				location: target.location,
 			});
 		},
@@ -782,27 +800,131 @@ export function Workbench({
 		canFocusAdjacentGroup,
 	};
 	const sideStack = (side: LayoutSide) => (
-		<SideStack
-			side={side}
-			attention={attention}
-			projectionEpoch={projectionEpoch}
-			onCommit={onCommit}
-			{...shared}
-		/>
+		<div
+			data-testid={`${side}-column`}
+			className="flex h-full min-h-0 min-w-0 flex-col bg-container-sidebar-bg"
+		>
+			{side === "left" ? (
+				<div
+					data-testid="navigation-chrome"
+					className="window-drag flex h-topbar-row shrink-0 items-center px-8"
+				>
+					<div
+						data-testid="navigation-window-inset-left"
+						aria-hidden="true"
+						className="w-window-chrome-inset-left shrink-0"
+					/>
+					<AuxiliaryRegionRail
+						region="left"
+						orientation="horizontal"
+						shared={shared}
+						attention={attention}
+					/>
+					{navigationActions}
+				</div>
+			) : (
+				<div aria-hidden="true" className="window-drag h-topbar-row shrink-0" />
+			)}
+			<div className="min-h-0 flex-1">
+				<SideStack
+					side={side}
+					attention={attention}
+					projectionEpoch={projectionEpoch}
+					onCommit={onCommit}
+					{...shared}
+				/>
+			</div>
+			{side === "left" ? navigationFooter : null}
+		</div>
+	);
+	const topbarLeading = (
+		<>
+			<div
+				data-testid="window-chrome-inset-left"
+				aria-hidden="true"
+				className="workspace-chrome-inset w-window-chrome-inset-left shrink-0"
+			/>
+			{!leftVisible ? (
+				<div className="window-no-drag flex shrink-0 items-center gap-4 self-center">
+					<AuxiliaryRegionRail
+						region="left"
+						orientation="horizontal"
+						shared={shared}
+						attention={attention}
+					/>
+					{navigationActions}
+				</div>
+			) : null}
+		</>
+	);
+	const bottomRailTrailing =
+		!bottomVisible &&
+		draggingTab &&
+		canPlaceLayoutTab(draggingTab, "bottom") &&
+		(hiddenBottomTargetGroupId !== undefined ||
+			canCreateAuxiliaryGroup(
+				document,
+				"bottom",
+				draggingTab,
+				maxBottomGroups,
+				document.bottom.groups.length,
+			)) ? (
+			<BottomDropZone
+				targetGroupId={hiddenBottomTargetGroupId}
+				targetIndex={document.bottom.groups.length}
+			/>
+		) : null;
+	const topbarTrailing = (
+		<>
+			<div className="window-no-drag flex min-w-0 shrink-3 items-center gap-4 self-center overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+				{workspaceLocation}
+				<AuxiliaryRegionRail
+					region="bottom"
+					orientation="horizontal"
+					shared={shared}
+					attention={attention}
+					trailing={bottomRailTrailing}
+				/>
+				<AuxiliaryRegionRail
+					region="right"
+					orientation="horizontal"
+					shared={shared}
+					attention={attention}
+				/>
+				{!bottomVisible ? (
+					<BottomAlignmentMenu
+						alignment={document.bottom.alignment}
+						onChange={(alignment) => onCommit(setBottomAlignment(document, alignment))}
+						onHide={() => hideSideRegion("bottom")}
+					/>
+				) : null}
+			</div>
+			{rightVisible ? null : (
+				<div
+					data-testid="window-chrome-inset-right"
+					aria-hidden="true"
+					className="w-window-chrome-inset-right shrink-0"
+				/>
+			)}
+		</>
 	);
 	const centerView = (
-		<main data-testid="center-tabs" className="h-full min-h-0 min-w-0">
-			<CenterNodeView
-				node={document.center}
-				attention={attention}
-				projectionEpoch={projectionEpoch}
-				onCommit={onCommit}
-				onNewChat={onNewChat}
-				renderEmptyCenter={renderEmptyCenter}
-				renderCenterActions={renderCenterActions}
-				{...shared}
-			/>
-		</main>
+		<div data-testid="center-column" className="flex h-full min-h-0 min-w-0 flex-col">
+			<main data-testid="center-tabs" className="min-h-0 min-w-0 flex-1">
+				<CenterNodeView
+					node={document.center}
+					attention={attention}
+					projectionEpoch={projectionEpoch}
+					onCommit={onCommit}
+					onNewChat={onNewChat}
+					renderEmptyCenter={renderEmptyCenter}
+					renderCenterActions={renderCenterActions}
+					topbarLeading={topbarLeading}
+					topbarTrailing={topbarTrailing}
+					{...shared}
+				/>
+			</main>
+		</div>
 	);
 	const alignedTopRow = (
 		<ResizablePanelGroup
@@ -914,40 +1036,6 @@ export function Workbench({
 			<div ref={bottomBodyRef} className="min-h-0 min-w-0 flex-1">
 				{alignedBody}
 			</div>
-			<AuxiliaryRegionRail
-				region="bottom"
-				shared={shared}
-				attention={attention}
-				trailing={
-					<div className="flex min-w-32 flex-1 self-stretch">
-						{!bottomVisible &&
-						draggingTab &&
-						canPlaceLayoutTab(draggingTab, "bottom") &&
-						(hiddenBottomTargetGroupId !== undefined ||
-							canCreateAuxiliaryGroup(
-								document,
-								"bottom",
-								draggingTab,
-								maxBottomGroups,
-								document.bottom.groups.length,
-							)) ? (
-							<BottomDropZone
-								targetGroupId={hiddenBottomTargetGroupId}
-								targetIndex={document.bottom.groups.length}
-							/>
-						) : (
-							<div className="flex-1" />
-						)}
-						{!bottomVisible ? (
-							<BottomAlignmentMenu
-								alignment={document.bottom.alignment}
-								onChange={(alignment) => onCommit(setBottomAlignment(document, alignment))}
-								onHide={() => hideSideRegion("bottom")}
-							/>
-						) : null}
-					</div>
-				}
-			/>
 		</div>
 	);
 	const workbenchColumns = (
@@ -1022,22 +1110,36 @@ export function Workbench({
 			<div
 				ref={workbenchRef}
 				data-testid="workbench"
+				data-navigation-expanded={leftVisible}
 				className="flex h-full min-h-0 min-w-0 overflow-hidden"
 				onPointerDownCapture={() => {
 					tabSelectionEpoch.current += 1;
+					const active = globalThis.document.activeElement;
+					if (
+						active instanceof HTMLElement &&
+						(active.dataset.layoutFocusIntent || active.hasAttribute("data-layout-tab-id"))
+					)
+						setLayoutFocusIntent(active, "restore");
 				}}
 				onKeyDownCapture={(event) => {
+					const active = globalThis.document.activeElement;
+					if (active instanceof HTMLElement && active.dataset.layoutFocusIntent)
+						setLayoutFocusIntent(active, "keyboard");
 					if (!event.ctrlKey || event.altKey || event.metaKey || event.key !== "F6") return;
 					event.preventDefault();
 					event.stopPropagation();
 					focusAdjacentGroup(event.shiftKey ? -1 : 1);
 				}}
 			>
-				<AuxiliaryRegionRail region="left" shared={shared} attention={attention} />
+				{!leftVisible ? (
+					<div className="flex h-full w-40 shrink-0 flex-col bg-container-sidebar-bg">
+						<div className="min-h-0 flex-1" />
+						{collapsedNavigationFooter}
+					</div>
+				) : null}
 				<div ref={columnsRef} className="min-h-0 min-w-0 flex-1">
 					{workbenchColumns}
 				</div>
-				<AuxiliaryRegionRail region="right" shared={shared} attention={attention} />
 			</div>
 			<DragOverlay dropAnimation={null}>
 				{draggingTab ? (

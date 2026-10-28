@@ -1,6 +1,11 @@
 import { realpathSync, rmSync, utimesSync } from "node:fs";
 import { expect, type Locator, type Page, test } from "@playwright/test";
-import { enterDefaultWorkspace, hideAuxiliaryWorkbench, openFixtureProject } from "./fixtures/app";
+import {
+	enterDefaultWorkspace,
+	hideAuxiliaryWorkbench,
+	openAppSettings,
+	openFixtureProject,
+} from "./fixtures/app";
 import { moveMouseToChatViewport, readChatScrollGeometry } from "./fixtures/chatScroll";
 import { E2E_FIXTURE_REPO } from "./fixtures/paths";
 import { seedWorkspaceSession } from "./fixtures/sessions";
@@ -34,7 +39,7 @@ const orderCases: Array<{
 ];
 
 async function selectMessageOrder(page: Page, order: MessageOrder): Promise<void> {
-	await page.getByTestId("open-settings").click();
+	await openAppSettings(page);
 	await page.getByTestId("settings-nav-chat").click();
 	const option = page.getByTestId(`chat-order-${order}`);
 	await option.click();
@@ -235,6 +240,67 @@ async function openTallChat(
 }
 
 for (const testCase of orderCases) {
+	test(`${testCase.order} retains the latest edge when an image resolves after the transcript mounts`, async ({
+		page,
+	}) => {
+		const imageUrl = `https://scroll-fixture.invalid/${testCase.order}.svg`;
+		let requested = false;
+		let releaseImage: () => void = () => {};
+		const released = new Promise<void>((resolve) => {
+			releaseImage = resolve;
+		});
+		await page.route(imageUrl, async (route) => {
+			requested = true;
+			await released;
+			await route.fulfill({
+				contentType: "image/svg+xml",
+				body: '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="360"><rect width="400" height="360" fill="gray"/></svg>',
+			});
+		});
+		const messages = Array.from({ length: 30 }, (_, index) => [
+			{
+				role: "user" as const,
+				text: `Image history request ${index}`,
+				timestamp: BASE_TS + index * 2000,
+			},
+			{
+				role: "assistant" as const,
+				text: `Image history answer ${index}`,
+				timestamp: BASE_TS + index * 2000 + 1000,
+			},
+		]).flat();
+		messages.push(
+			{ role: "user", text: "Inspect the delayed image.", timestamp: BASE_TS + 62_000 },
+			{
+				role: "assistant",
+				text: `Before image.\n\n![Late scroll fixture](${imageUrl})\n\nAfter image.`,
+				timestamp: BASE_TS + 63_000,
+			},
+		);
+		const { session, chatScroll } = await openTallChat(page, testCase.order, messages);
+		try {
+			await expect.poll(() => requested).toBe(true);
+			await waitForScrollStability(chatScroll);
+			const before = await readChatScrollGeometry(chatScroll);
+			releaseImage();
+			const image = page.getByRole("img", { name: "Late scroll fixture", exact: true });
+			await expect
+				.poll(() => image.evaluate((element: HTMLImageElement) => element.naturalHeight))
+				.toBe(360);
+			await expect
+				.poll(async () => (await readChatScrollGeometry(chatScroll)).scrollHeight)
+				.toBeGreaterThan(before.scrollHeight + 100);
+			await waitForScrollStability(chatScroll);
+			await expect(chatScroll).toHaveAttribute("data-follow-state", "following");
+			expect(
+				latestDistance(testCase.order, await readChatScrollGeometry(chatScroll)),
+			).toBeLessThanOrEqual(1);
+		} finally {
+			releaseImage();
+			rmSync(session.path, { force: true });
+		}
+	});
+
 	test(`${testCase.order} ignores repeated outward wheel input at the physical latest edge`, async ({
 		page,
 	}) => {

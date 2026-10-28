@@ -86,7 +86,7 @@ function SourceSwitch({
 					disabled={disabled}
 					onClick={() => onChange(option)}
 					className={cn(
-						"h-24 rounded-sm px-8 tr-text-ui outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary disabled:text-control-disabled-text",
+						"h-24 rounded-sm px-8 tr-text-ui outline-none transition-colors focus-visible:ring-1 focus-visible:ring-focus-ring disabled:text-control-disabled-text",
 						value === option
 							? "bg-control-bg-selected text-text-default"
 							: "text-text-muted hover:text-text-default",
@@ -176,7 +176,7 @@ function ComposeForm({
 								<DropdownMenuTrigger
 									data-testid="open-pr-compose-template"
 									disabled={locked}
-									className="flex h-28 min-w-0 max-w-full items-center gap-4 rounded-sm border border-control-border-default bg-control-bg px-8 tr-code-text-small text-text-default outline-none transition-colors hover:bg-control-bg-hovered focus-visible:ring-2 focus-visible:ring-primary"
+									className="flex h-28 min-w-0 max-w-full items-center gap-4 rounded-sm border border-control-border-default bg-control-bg px-8 tr-code-text-small text-text-default outline-none transition-colors hover:bg-control-bg-hovered focus-visible:ring-1 focus-visible:ring-focus-ring"
 								>
 									<span className="truncate">{template}</span>
 									<ChevronDown className="size-14 shrink-0 text-text-subtle" />

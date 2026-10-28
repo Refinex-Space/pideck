@@ -233,7 +233,7 @@
 	color-scheme: inherit;
 	--diffs-font-family: var(--tr-font-family-code);
 	--diffs-header-font-family: var(--tr-font-family-code);
-	--diffs-font-size: var(--tr-font-size-s11);
+	--diffs-font-size: var(--tr-font-size-s13);
 	--diffs-line-height: var(--tr-code-row-height);
 	--diffs-foreground: var(--code-foreground);
 	--diffs-fg: var(--code-foreground);
@@ -503,4 +503,8 @@
 .custom-icon-file-diff-fill {
 	-webkit-mask-image: url("/custom-icons/file-diff-fill.svg");
 	mask-image: url("/custom-icons/file-diff-fill.svg");
+}
+
+[data-navigation-expanded="true"] .workspace-chrome-inset {
+	width: 0;
 }

@@ -2,6 +2,7 @@ import { expect, type Page, test } from "@playwright/test";
 import {
 	activeWorktreeRow,
 	createWorkspaceViaDialog,
+	openAppSettings,
 	openFixtureProject,
 	worktreeRow,
 } from "./fixtures/app";
@@ -11,7 +12,7 @@ import { seedExternalCwdSessions, seedWorkspaceSession } from "./fixtures/sessio
 type MessageOrder = "oldest-first" | "newest-first";
 
 async function selectMessageOrder(page: Page, order: MessageOrder) {
-	await page.getByTestId("open-settings").click();
+	await openAppSettings(page);
 	await page.getByTestId("settings-nav-chat").click();
 	const option = page.getByTestId(`chat-order-${order}`);
 	await option.click();

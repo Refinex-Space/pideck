@@ -13,6 +13,11 @@ references: [web-color, web-spacing, web-typography]
 The owned shadcn/Radix primitives shared by the app and extension web halves. Presentational only:
 feature state, theme selection, and token generation stay with the app.
 
+PiDeck presentation follows [design-system.md](../../design-system.md): neutral primary controls,
+8px control corners, 12px floating surfaces, 32px comfortable menu rows, restrained shadows and
+visible keyboard focus. These visual roles do not change Radix dismissal, portal or focus behavior.
+Default dialogs retain a 16px viewport margin on each side before their content-width cap applies.
+
 ## Boundary
 
 Primitives expose per-file `@thinkrail/ui/<primitive>` subpaths, not a root component barrel; this keeps
@@ -58,8 +63,8 @@ test's documented specialized list names it.
   is the one sanctioned label colour: on `ghost` and `outline` it keeps the feedback colour in every state
   (rest, hover, focus-visible, pressed, selected — disabled still wins), because a colour set at the call
   site loses to ghost's own state text in focus and pressed, exactly when the control is used.
-- **Sizes** (exactly three; border-box, same for every variant and state, radius `rounded-sm`, type
-  `tr-text-button` — the 14px interface face at weight 470, one step above ordinary UI text): `s` 20px
+- **Sizes** (exactly three; border-box, same for every variant and state, radius `rounded-md`, type
+  `tr-text-button` — the interface label role defined by the typography manifest): `s` 20px
   high, 4px text padding, 14px icon, 4px icon↔text gap, 20px square icon-only; `m` 24 / 8 / 16 / 4 / 24;
   `l` 32 / 12 / 20 / 6 / 32 (the default for `Button`; `IconButton` defaults to `m`). At `s` the gap equals the side padding: a 12px icon read as
   lighter than the 14px label beside it, so the icon was raised to 14px and the gap to 4px to keep the pair
@@ -68,11 +73,11 @@ test's documented specialized list names it.
   size to content unless the layout asks for `w-full`.
 - **States** live in the component, not at the call site: hover uses the variant's hover role
   (soft-primary: `control-soft-primary-bg-hovered` plus a `primary-muted` border, so its accent label
-  stays AA); pressed (`:active`, pointer down or Space held) looks exactly like hover — the same `active:` classes mirror the `hover:` ones, so a keyboard press without a pointer shows it too — and never moves geometry; focus-visible is a 2px `primary` outline with a 2px offset in every variant, so
+  stays AA); pressed (`:active`, pointer down or Space held) looks exactly like hover — the same `active:` classes mirror the `hover:` ones, so a keyboard press without a pointer shows it too — and never moves geometry; focus-visible is a 1px `focus-ring` outline with a 2px offset in every variant, so
   it stays visible over a primary or destructive fill and on every surface (`ghost`, which has no surface
   of its own, also takes its hover fill and default text while focused, so the focused button reads as a
   control and not only as a ring around empty space) — except a `ghost` icon-only button, which draws the
-  ring 2px inside its square, because those sit flush in 28px header strips and rails whose
+  outline 1px inside its square, because those sit flush in 28px header strips and rails whose
   `overflow: hidden` would clip an outer ring; disabled keeps the element in
   place on the `control-disabled-*` / `control-primary-disabled-*` / `control-destructive-disabled-*` roles
   (never opacity, never hidden) through the `button-disabled` variant the app stylesheet defines — a

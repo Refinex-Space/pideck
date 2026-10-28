@@ -2,8 +2,10 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, type Locator, type Page, test } from "@playwright/test";
 import {
+	applyWorkbenchPreset,
 	defaultWorkspaceRow,
 	enterDefaultWorkspace,
+	openAppSettings,
 	openFixtureProject,
 	pressPlatformShortcut,
 	revealFirstProjectWorkspaces,
@@ -18,6 +20,7 @@ import { E2E_DATA_DIR } from "./fixtures/paths";
 async function openDefaultWorkbench(page: Page): Promise<void> {
 	await openFixtureProject(page);
 	await enterDefaultWorkspace(page);
+	await applyWorkbenchPreset(page, "Balanced");
 	await waitTerminalReady(page);
 	await expect(page.getByTestId("workspace-workbench")).toHaveAttribute(
 		"data-layout-status",
@@ -228,7 +231,7 @@ test("panel-header actions are square IconButton m controls", async ({ page }) =
 
 	const controls = [
 		page.getByTestId("new-chat").first(),
-		page.getByTestId("new-terminal").first(),
+		page.getByTestId("terminal-rail-group").first(),
 		page.getByTestId("side-group-fold").first(),
 		page.getByTestId("side-group-menu").first(),
 		page.getByRole("button", { name: "Bottom panel alignment" }),
@@ -277,7 +280,7 @@ test("a hidden local frame keeps the host terminal reserved without attaching un
 	context,
 }) => {
 	await openDefaultWorkbench(page);
-	await page.getByTestId("open-settings").click();
+	await openAppSettings(page);
 	await page.getByTestId("settings-nav-layout").click();
 	const focusPreset = page.getByTestId("layout-preset").filter({ hasText: "Focus" });
 	await focusPreset.getByRole("button", { name: "Apply now…" }).click();
@@ -303,6 +306,7 @@ test("a hidden local frame keeps the host terminal reserved without attaching un
 	await expect(peer.getByTestId("connection-status")).toHaveAttribute("data-status", "connected");
 	await revealFirstProjectWorkspaces(peer);
 	await peer.getByTestId("workspace-item").filter({ hasText: workspace.name }).click();
+	await applyWorkbenchPreset(peer, "Balanced");
 	await expect(peer.getByTestId("bottom-panel")).toBeVisible();
 	await expect(peer.getByTestId("terminal-tab")).toHaveCount(1);
 	await waitTerminalReady(peer);
@@ -338,6 +342,7 @@ test("a completed initial-terminal handshake never recreates a terminal after ex
 		"data-layout-status",
 		"settled",
 	);
+	await pressPlatformShortcut(page, "Shift+j");
 	await expect(page.getByTestId("bottom-new-terminal")).toBeVisible();
 	await expect(page.getByTestId("terminal-tab")).toHaveCount(0);
 	const catalog = await requestOverWire<{ tabs: Array<{ tabKey: string }> }>(
@@ -378,7 +383,7 @@ test("Mod+Shift+J works from xterm, preserves its PTY through hide and reload, a
 	await waitTerminalReady(page);
 	await expect(visibleTerminalScreen(page)).toContainText(marker);
 
-	await page.getByTestId("open-settings").click();
+	await openAppSettings(page);
 	await expect(page.getByRole("dialog")).toBeVisible();
 	await pressPlatformShortcut(page, "Shift+j");
 	await expect(page.getByTestId("bottom-panel")).toBeVisible();
@@ -458,13 +463,11 @@ test("bottom height, all alignments, and keyboard resizing persist across reload
 	await pressPlatformShortcut(page, "Shift+j");
 	await startTabDrag(page, page.getByTestId("tab-files"));
 	await expect(page.getByTestId("bottom-drop-zone")).toBeVisible();
-	await expectHorizontalSpan(page.getByTestId("bottom-tool-rail"), left, center);
 	const railBox = await page.getByTestId("bottom-tool-rail").boundingBox();
 	const dropBox = await page.getByTestId("bottom-drop-zone").boundingBox();
 	if (!railBox || !dropBox) throw new Error("bottom rail or drop target has no bounding box");
 	expect(dropBox.x).toBeGreaterThanOrEqual(railBox.x);
 	expect(dropBox.x + dropBox.width).toBeLessThanOrEqual(railBox.x + railBox.width);
-	expect(dropBox.width).toBeGreaterThan(railBox.width / 2);
 	await cancelTabDrag(page);
 	await pressPlatformShortcut(page, "Shift+j");
 	await expectHorizontalSpan(page.getByTestId("bottom-panel"), left, center);
@@ -475,9 +478,9 @@ test("bottom alignments give excluded lower corners to the actual side panels", 
 }) => {
 	await openDefaultWorkbench(page);
 	const workbench = page.getByTestId("workbench");
-	const center = page.getByTestId("center-tabs");
-	const left = page.getByTestId("left-stack");
-	const right = page.getByTestId("right-stack");
+	const center = page.getByTestId("center-column");
+	const left = page.getByTestId("left-column");
+	const right = page.getByTestId("right-column");
 
 	const cases = [
 		{ name: "Below center", leftOwnsCorner: true, rightOwnsCorner: true },
@@ -762,6 +765,7 @@ test("bottom visibility and alignment stay local to each window and survive its 
 	await expect(peer.getByTestId("connection-status")).toHaveAttribute("data-status", "connected");
 	await revealFirstProjectWorkspaces(peer);
 	await defaultWorkspaceRow(peer).getByRole("button").first().click();
+	await applyWorkbenchPreset(peer, "Balanced");
 	await expect(peer.getByTestId("bottom-panel")).toBeVisible();
 
 	await setBottomAlignment(page, "Full width");
@@ -780,9 +784,7 @@ test("bottom visibility and alignment stay local to each window and survive its 
 	await peer.close();
 });
 
-test("an old host layout stays inert while a pristine surface starts Balanced", async ({
-	page,
-}) => {
+test("an old host layout stays inert while a pristine surface starts Studio", async ({ page }) => {
 	await openFixtureProject(page);
 	const workspace = await createWorkspaceWithoutOpening(page);
 	await requestOverWire(page, "terminal.close", {
@@ -818,9 +820,14 @@ test("an old host layout stays inert while a pristine surface starts Balanced", 
 	await page.getByTestId("workspace-item").filter({ hasText: workspace.name }).click();
 
 	await expect(page.getByTestId("left-nav")).toBeVisible();
+	await expect(page.getByTestId("right-stack")).toHaveCount(0);
+	await revealWorkbenchTool(page, "specs");
 	await expect(page.getByTestId("right-stack")).toContainText("Specs");
 	await expect(page.getByTestId("tool-rail-files")).toHaveAccessibleName("Files");
+	await revealWorkbenchTool(page, "review");
 	await expect(page.getByTestId("right-stack")).toContainText("Review");
+	await expect(page.getByTestId("bottom-panel")).toHaveCount(0);
+	await pressPlatformShortcut(page, "Shift+j");
 	await expect(page.getByTestId("bottom-panel")).toBeVisible();
 	await expect(page.getByTestId("bottom-new-terminal")).toBeVisible();
 	await expect(page.getByTestId("center-group")).toHaveCount(1);

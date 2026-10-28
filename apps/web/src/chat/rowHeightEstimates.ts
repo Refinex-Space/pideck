@@ -4,8 +4,8 @@ import { isInteractiveTool, resolveProminence } from "./toolRegistry";
 const MAX_ESTIMATED_HEIGHT = 20_000;
 const MIN_ESTIMATED_HEIGHT = 20;
 const PROSE_COLUMNS = 72;
-const PROSE_LINE_HEIGHT = 20;
-const CODE_LINE_HEIGHT = 20;
+const PROSE_LINE_HEIGHT = 24;
+const CODE_LINE_HEIGHT = 19;
 const BLOCK_GAP = 8;
 
 export type RowHeightEstimateCache = Map<string, number>;
@@ -137,9 +137,9 @@ export function estimateChatRowHeight(row: ChatRow): number {
 			const attachments = userAttachmentCount(row) * 28;
 			// Large messages rest collapsed; estimate that size, not full height (see chat/SPEC.md).
 			if (text.length > LARGE_USER_MESSAGE) {
-				return clampHeight(24 + 3 * PROSE_LINE_HEIGHT + 24 + attachments);
+				return clampHeight(28 + 3 * PROSE_LINE_HEIGHT + 24 + attachments);
 			}
-			return clampHeight(24 + wrappedLines(text, 62) * PROSE_LINE_HEIGHT + attachments);
+			return clampHeight(28 + wrappedLines(text, 62) * PROSE_LINE_HEIGHT + attachments);
 		}
 		case "system":
 			return clampHeight(20 + wrappedLines(row.text ?? "") * PROSE_LINE_HEIGHT);

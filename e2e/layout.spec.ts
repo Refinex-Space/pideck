@@ -1,10 +1,13 @@
 import { realpathSync, rmSync } from "node:fs";
 import { expect, type Locator, type Page, test, type WebSocketRoute } from "@playwright/test";
 import {
+	applyWorkbenchPreset,
 	createWorkspaceViaDialog,
 	defaultWorkspaceRow,
 	enterDefaultWorkspace,
 	expandDisclosure,
+	openAppSettings,
+	openCenterTerminal,
 	openFixtureProject,
 	openPersistedChat,
 	pressPlatformShortcut,
@@ -21,6 +24,7 @@ test.use({ viewport: { width: 1440, height: 900 } });
 async function openDefaultWorkbench(page: Page): Promise<void> {
 	await openFixtureProject(page);
 	await enterDefaultWorkspace(page);
+	await applyWorkbenchPreset(page, "Balanced");
 	await waitTerminalReady(page);
 }
 
@@ -135,8 +139,11 @@ test("workbench strips and feature toolbars keep one-row geometry with ARIA tabs
 
 	const centerStrip = page.getByTestId("center-tab-strip").first();
 	const bottomStrip = page.getByTestId("bottom-tab-strip");
-	for (const strip of [centerStrip, bottomStrip]) {
-		await expect(strip).toHaveCSS("height", "28px");
+	for (const [strip, stripHeight] of [
+		[centerStrip, "40px"],
+		[bottomStrip, "32px"],
+	] as const) {
+		await expect(strip).toHaveCSS("height", stripHeight);
 		await expect(strip.getByRole("tablist")).toHaveCount(1);
 		await expect(strip.getByRole("button", { name: /^Scroll tabs (left|right)$/ })).toHaveCount(0);
 		const active = strip.locator('[role="tab"][aria-selected="true"]');
@@ -162,12 +169,12 @@ test("workbench strips and feature toolbars keep one-row geometry with ARIA tabs
 
 	await revealWorkbenchTool(page, "changes");
 	for (const header of await page.getByTestId("auxiliary-pane-header").all()) {
-		await expect(header).toHaveCSS("height", "28px");
+		await expect(header).toHaveCSS("height", "32px");
 		await expect(header.getByRole("tablist")).toHaveCount(0);
 	}
-	await expect(page.getByTestId("chat-toolbar")).toHaveCSS("height", "28px");
+	await expect(page.getByTestId("chat-toolbar")).toHaveCSS("height", "32px");
 	await expect(page.getByTestId("chat-toolbar")).toHaveCSS("overflow-x", "clip");
-	await expect(page.getByTestId("changes-view-toggle")).toHaveCSS("height", "28px");
+	await expect(page.getByTestId("changes-view-toggle")).toHaveCSS("height", "32px");
 });
 
 test("overflow uses directional fades without changing tab-strip geometry", async ({ page }) => {
@@ -193,9 +200,10 @@ test("overflow uses directional fades without changing tab-strip geometry", asyn
 			tablist.evaluate((element) => getComputedStyle(element, "::-webkit-scrollbar").display),
 		)
 		.toBe("none");
-	await expect(strip).toHaveCSS("height", "28px");
+	await expect(strip).toHaveCSS("height", "40px");
 	const listHeight = await height(tablist);
-	await expect.poll(() => height(strip.getByRole("tab").first())).toBeCloseTo(listHeight, 1);
+	expect(listHeight).toBe(40);
+	await expect.poll(() => height(strip.getByRole("tab").first())).toBe(32);
 
 	await tablist.evaluate((element) => {
 		element.scrollLeft = 0;
@@ -222,8 +230,8 @@ test("overflow uses directional fades without changing tab-strip geometry", asyn
 			return tabBox.x >= listBox.x && tabBox.x + tabBox.width <= listBox.x + listBox.width + 1;
 		})
 		.toBe(true);
-	await expect(strip).toHaveCSS("height", "28px");
-	await expect.poll(() => height(last)).toBeCloseTo(listHeight, 1);
+	await expect(strip).toHaveCSS("height", "40px");
+	await expect.poll(() => height(last)).toBe(32);
 });
 
 test("auxiliary panel scrollbars stay quiet at rest and expose only clipped edges", async ({
@@ -678,6 +686,7 @@ test("hiding a side or the bottom keeps focus outside it and recovers focus from
 	});
 	try {
 		await enterDefaultWorkspace(page);
+		await applyWorkbenchPreset(page, "Balanced");
 		await waitTerminalReady(page);
 		await openPersistedChat(page, "focus keeper");
 		const composer = page.getByTestId("chat-input");
@@ -702,12 +711,12 @@ test("hiding a side or the bottom keeps focus outside it and recovers focus from
 		await expect(insideLeft).toBeFocused();
 		await pressPlatformShortcut(page, "b");
 		await expect(page.getByTestId("left-nav")).toHaveCount(0);
-		await expect(
-			page
-				.locator('[data-testid="editor-tab"][data-kind="chat"]')
-				.filter({ hasText: "focus keeper" })
-				.getByRole("tab"),
-		).toBeFocused();
+		const recoveredTab = page
+			.locator('[data-testid="editor-tab"][data-kind="chat"]')
+			.filter({ hasText: "focus keeper" })
+			.getByRole("tab");
+		await expect(recoveredTab).toBeFocused();
+		await expect(recoveredTab.locator("..")).toHaveCSS("box-shadow", /0px 0px 0px 1px inset/);
 	} finally {
 		rmSync(session.path, { force: true });
 	}
@@ -972,7 +981,7 @@ test("applying the Review preset preserves resources and installs its vertical c
 	await openDefaultWorkbench(page);
 	await openKeptFiles(page, ["README.md", "notes.txt"]);
 
-	await page.getByTestId("open-settings").click();
+	await openAppSettings(page);
 	await page.getByTestId("settings-nav-layout").click();
 	const reviewPreset = layoutPreset(page, "Review");
 	await reviewPreset.getByRole("button", { name: "Apply now…" }).click();
@@ -1002,7 +1011,7 @@ test("applying the Review preset preserves resources and installs its vertical c
 
 test("the local default preset drives an explicit frame reset", async ({ page }) => {
 	await openDefaultWorkbench(page);
-	await page.getByTestId("open-settings").click();
+	await openAppSettings(page);
 	await page.getByTestId("settings-nav-layout").click();
 	const reviewPreset = layoutPreset(page, "Review");
 	await reviewPreset.getByRole("button", { name: "Set default" }).click();
@@ -1018,7 +1027,7 @@ test("the local default preset drives an explicit frame reset", async ({ page })
 
 	await reloadDefaultWorkbench(page);
 	await expect(page.getByTestId("center-group")).toHaveCount(2);
-	await page.getByTestId("open-settings").click();
+	await openAppSettings(page);
 	await page.getByTestId("settings-nav-layout").click();
 	await expect(layoutPreset(page, "Review")).toHaveAttribute("data-default", "true");
 });
@@ -1028,7 +1037,7 @@ test("custom presets synchronize while defaults and group limits remain window-l
 	context,
 }) => {
 	await openDefaultWorkbench(page);
-	await page.getByTestId("open-settings").click();
+	await openAppSettings(page);
 	await page.getByTestId("settings-nav-layout").click();
 
 	await page.getByTestId("layout-add-new").click();
@@ -1058,7 +1067,7 @@ test("custom presets synchronize while defaults and group limits remain window-l
 	const peer = await context.newPage();
 	await peer.goto("/");
 	await expect(peer.getByTestId("connection-status")).toHaveAttribute("data-status", "connected");
-	await peer.getByTestId("open-settings").click();
+	await openAppSettings(peer);
 	await peer.getByTestId("settings-nav-layout").click();
 	const peerCustom = peer.getByTestId("layout-preset").filter({ hasText: "My renamed workbench" });
 	await expect(peerCustom).toBeVisible();
@@ -1070,7 +1079,7 @@ test("custom presets synchronize while defaults and group limits remain window-l
 	await expect(custom).toHaveCount(0);
 	await expect(peerCustom).toHaveCount(0);
 	await peer.close();
-	await expect(page.getByTestId("layout-preset").filter({ hasText: "Balanced" })).toHaveAttribute(
+	await expect(page.getByTestId("layout-preset").filter({ hasText: "Studio" })).toHaveAttribute(
 		"data-default",
 		"true",
 	);
@@ -1078,7 +1087,7 @@ test("custom presets synchronize while defaults and group limits remain window-l
 
 test("preset-card actions wrap inside their card in a longer language", async ({ page }) => {
 	await openFixtureProject(page);
-	await page.getByTestId("open-settings").click();
+	await openAppSettings(page);
 	await page.getByTestId("settings-nav-language").click();
 	await page.getByTestId("language-es").click();
 	await expect(page.locator("html")).toHaveAttribute("lang", "es");
@@ -1110,7 +1119,7 @@ test("an accepted side-group overage is grandfathered without allowing further g
 	page,
 }) => {
 	await openDefaultWorkbench(page);
-	await page.getByTestId("open-settings").click();
+	await openAppSettings(page);
 	await page.getByTestId("settings-nav-layout").click();
 	await saveGroupLimit(page, "Maximum side groups", 3);
 	await page.getByRole("dialog").getByRole("button", { name: "Close" }).click();
@@ -1120,7 +1129,7 @@ test("an accepted side-group overage is grandfathered without allowing further g
 	await expect(sideGroups(page, "right")).toHaveCount(3);
 
 	await createWorkspaceViaDialog(page);
-	await page.getByTestId("open-settings").click();
+	await openAppSettings(page);
 	await page.getByTestId("settings-nav-layout").click();
 	await saveGroupLimit(page, "Maximum side groups", 2);
 	await page.getByRole("dialog").getByRole("button", { name: "Close" }).click();
@@ -1184,11 +1193,12 @@ test("frontend windows keep chat and file placement independent", async ({ page,
 	await expect(peer.getByTestId("connection-status")).toHaveAttribute("data-status", "connected");
 	await revealFirstProjectWorkspaces(peer);
 	await defaultWorkspaceRow(peer).click();
+	await applyWorkbenchPreset(peer, "Balanced");
 	await expect(page.getByTestId("terminal-tab")).toHaveCount(1);
 	await expect(peer.getByTestId("terminal-tab")).toHaveCount(1);
 	const peerChat = peer.locator('[data-testid="editor-tab"][data-kind="chat"]');
 	await expect(peerChat).toHaveCount(1);
-	await peer.getByTestId("new-terminal").first().click();
+	await openCenterTerminal(peer);
 	await expect(peer.getByTestId("terminal-tab")).toHaveCount(2);
 	await expect(page.getByTestId("terminal-tab")).toHaveCount(1);
 	await expect(peerChat).toHaveCount(1);
@@ -1409,7 +1419,7 @@ test("the hidden bottom drop zone wins overlapping terminal targets and reveals 
 	await expect(async () => {
 		const zoneBox = await dropZone.boundingBox();
 		if (!zoneBox) throw new Error("bottom drop zone has no box");
-		expect(Math.round(zoneBox.height)).toBe(24);
+		expect(Math.round(zoneBox.height)).toBe(28);
 	}).toPass();
 
 	const zoneBox = await dropZone.boundingBox();

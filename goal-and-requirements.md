@@ -123,9 +123,10 @@ What PiDeck does, at product level; the linked spec owns the detail.
 - **Themes** — light, dark, minimal and high-contrast themes ship built-in, following the system
   appearance or a fixed choice; a user adds a theme by saving a copy of a bundled theme file with new
   colours in `~/.pideck/themes`, live on save ([[submodule-web-themes]]).
-- **Brand** — PiDeck green accent (bright on dark themes, deepened on light ones so it clears AA on
-  both), a Darcula-family dark background, Orbitron for the brand display role, Geist and JetBrains Mono
-  for UI and code ([[submodule-web-themes]], [[web-typography]]).
+- **Presentation** — PiDeck's own identity within a restrained, Claude Desktop-inspired workbench:
+  neutral light/dark surfaces, monochrome primary actions, system UI fonts with CJK fallbacks,
+  self-hosted JetBrains Mono for code, and a content-first Studio layout. Saved layouts and user themes
+  remain available. [design-system.md](design-system.md) owns the measured basis and implementation contract.
 
 ## Non-goals
 

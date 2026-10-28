@@ -2,7 +2,7 @@
 id: web-typography
 type: submodule-design
 status: active
-title: ThinkRail typography — one JSON source, generated CSS, semantic styles
+title: PiDeck typography — one JSON source, generated CSS, semantic styles
 parent: module-web
 ---
 
@@ -45,25 +45,28 @@ both markdown surfaces, the `<body>` base).
 
 | Group | Ids |
 |---|---|
-| `fontFamilies` | `interface` (Geist Variable, all proportional UI + reading text) · `code` (JetBrains Mono Variable, code only) · `brand` → **Orbitron Variable** (self-hosted `@fontsource-variable/orbitron`, a distinct display face for the brand role — `wordmark` + `hero`; it was formerly a `$ref` to `interface`). Orbitron is **latin-only** and `brand.hero` renders a project's own name, so the stack falls back to the *interface* face before any system font — a non-Latin name lands on Geist (cyrillic/latin-ext/vietnamese, already bundled) rather than on whatever the OS supplies |
-| `fontWeights` | `light` 370 · `regular` 400 · `medium` 500 · `semibold` 600 · `brand` 400 · `button` 470 |
-| `fontSizes` | `s10` `s11` `s12` `s13` `s14` `s16` `s18` `s20` `s24` `s44` (px) |
-| `lineHeights` | `compact` 1.25 · `metadata` 1.25 (12px→15px) · `ui` 1.3 (14px→18.2px) · `code` 1.4 · `relaxed` 1.4 (13px→18.2px) · `default` 1.3 (14px→18.2px) · `reading` 1.45 (14px→20.3px) |
-| `letterSpacings` | `normal` · `loose` 0.02em · `wide` 0.05em · `widest` 0.1em · `brand` 0.5px |
+| `fontFamilies` | `interface` uses platform system sans with explicit CJK fallbacks; `code` is self-hosted JetBrains Mono; `brand` is a direct alias of `interface` |
+| `fontWeights` | `regular` 400 · `medium` 500 · `semibold` 600 |
+| `fontSizes` | `s10` `s11` `s12` `s13` `s14` `s15` `s16` `s18` `s20` `s22` `s24` `s32` (px) |
+| `lineHeights` | ratios describe the intended rhythm; semantic declarations and `codeRow` are pre-rounded to whole pixels by the generator |
+| `letterSpacings` | `normal` · `widest` 0.1em for one-time-code input |
 
-The leading scale is deliberately **dense** (1.25–1.4): Geist’s x-height at 14px is 7.4px (cap height 9.9px), so
-the former 1.5–1.6 left an empty band between lines taller than the letters themselves — it read as
-near double spacing. Reading prose — `body.reading`: chat, user messages, documents — is the deliberate exception at
-`reading` 1.45: at the dense value long replies read as a compressed wall, so reading text keeps more leading
-than UI chrome. Monaco and the Pierre diff surface read `--tr-line-height-default` and stay dense; both use a whole-pixel code row (Pierre's virtualizer needs the exact row height). `codeRow` in `typography.json` names its font size and line height, and the generator emits the pre-rounded `--tr-code-row-height`, which Pierre's CSS and its virtualizer both read, because CSS `round()` is missing before Safari 15.4. Values are short exact decimals on purpose: the production minifier rounds custom properties to
-five decimals, so a repeating ratio such as 18/14 can never land on a whole pixel (it shipped as `17.9999px`).
+The PiDeck design system owns the direction: interface 14/20px, reading 16/24px, code 13/19px and metadata
+12/17px. System sans keeps Latin and CJK text legible on Web, macOS and Windows without redistributing
+proprietary fonts. The brand heading uses the same family at 32/40px rather than a separate display face.
+The preserved upstream website has its own font contract and does not determine application typography.
+
+The generator rounds `fontSize × lineHeight` once for each semantic style. This prevents production CSS
+minification from truncating repeating ratios such as 20/14 into a fractional line box. The primitive ratio
+variables remain available, but Monaco, Pierre and virtualizers use the generated whole-pixel
+`--tr-code-row-height` for the 13/19px code row. Semantic aliases still share exactly one source definition.
 
 **Semantic styles** are what components use. Each names seven primitive references and nothing else, so
 it resolves deterministically — there is no inheritance, no per-usage branching, no fallback:
 
 ```json
 "title": { "dialog": {
-  "fontFamily": "interface", "fontSize": "s14", "fontWeight": "semibold",
+  "fontFamily": "interface", "fontSize": "s16", "fontWeight": "semibold",
   "lineHeight": "compact", "letterSpacing": "normal",
   "textTransform": "none", "fontStyle": "normal"
 } }
@@ -83,17 +86,15 @@ The rules, all enforced by `typography:validate`:
 
 `textStyles` groups: **brand** (`hero` — the Welcome text identity; the shell logo is supplied vector
 artwork) · **heading** (`xl`, `lg`, `md`, `sm` — the shared document heading scale) · **title**
-(`dialog`, `card`→dialog, `section`, `compact`, `entity`→body.reading)
-· **ui** (`default`, `metadata`, `eyebrow`, `labelPill`→eyebrow, `caption` — the 10px/compact uppercase
-badge and tile-initial style (row status badges, the topbar project initial), where `eyebrow`'s 18px line would
-not fit, `action`→title.compact, `button` — the shared button label, `ui.default` one weight step heavier, `emphasis`→title.compact) · **body** (`reading`) · **code** (`text` — the base 13px code style, `document`, `otp`, `textSmall` — an 11px code style for
-inline code in table cells). `proseSystems` holds one entry per markdown surface, almost entirely aliases
-into the above. Dead aliases are not retained: prose points directly to the semantic style it uses.
-
-**21 canonical definitions + 30 aliases = 51 styles.**
+(`dialog`, `card`→dialog, `section`, `compact`, `entity`→ui.default)
+· **ui** (`default`, `metadata`, `eyebrow`/`labelPill`/`action`/`emphasis`→title.compact,
+`caption`, `button`→title.section) · **body** (`reading`) · **code** (`text`, `document`, `otp`,
+`textSmall`). Section labels use their original casing, not forced uppercase. `proseSystems` holds one
+entry per markdown surface, mostly aliases into these roles. References remain direct and canonical
+values are never duplicated.
 
 One prose rule is deliberately *not* a semantic style: `<strong>` / `<b>` gets **weight only**
-(`--tr-font-weight-medium`), emitted by the generator into each prose system. A complete style there
+(`--tr-font-weight-semibold`), emitted by the generator into each prose system. A complete style there
 would override the size and line-height of whatever element the bold text sits inside.
 
 The JSON holds **no** CSS selectors, class strings, component paths, usage lists, rationale or audit
@@ -102,7 +103,7 @@ data. Rationale lives in this file.
 ## The `<body>` base
 
 `rootStyle` is the typography of text that carries no semantic class — and it is **a `$ref`, never
-values** (today `{ "$ref": "ui.default" }`, so 14px/370 interface with a 20px line height). The generator emits it as a
+values** (today `{ "$ref": "ui.default" }`, so 14px/400 system interface with a 20px line height). The generator emits it as a
 `body { … }` rule inside `@layer base`, which puts it *below* every semantic class in the cascade: it is
 a floor, never something a component relies on.
 
@@ -132,7 +133,7 @@ The generator derives one class per semantic style, mechanically:
 | `proseSystems.<id>.*` | `.tr-prose-<id>` + one element selector each |
 
 Primitive tokens are also emitted as custom properties — `--tr-font-family-code`,
-`--tr-font-size-s11`, `--tr-line-height-default`, … — for the surfaces that cannot use a class.
+`--tr-font-size-s13`, `--tr-code-row-height`, … — for the surfaces that cannot use a class.
 
 **Cascade layers.** Three levels, all deliberate: the token block is unlayered (custom properties have
 nothing to compete with), the `<body>` base sits in `@layer base`, the semantic classes in
@@ -177,33 +178,26 @@ naming its own type. Two exist:
 | | `chat` (`.tr-prose-chat`) | `doc` (`.tr-prose-doc`) |
 |---|---|---|
 | mounted by | `chat/Markdown.tsx` | `resource-renderers/support/MarkdownPreview.tsx` |
-| body, blockquote, lists | 14 / 370 / 1.45 | 14 / 370 / 1.45 |
-| h1 | 18 / 600 | **24 / 600** |
-| h2 | 14 / 600 | **20 / 600** |
-| h3 | 12 / 600 | **18 / 600** |
-| h4 | 12 / 500 | **16 / 600** |
-| h5 | 12 / 500 | 14 / 600 |
-| h6 | 10 / 500 uppercase | 12 / 600 uppercase |
+| body, blockquote, lists | 16 / 400 / 24px | 16 / 400 / 24px |
+| h1 | 20 / 600 | **24 / 600** |
+| h2 | 16 / 600 | **22 / 600** |
+| h3 | 14 / 600 | **20 / 600** |
+| h4 | 12 / 500 | **18 / 600** |
+| h5 | 12 / 500 | 16 / 600 |
+| h6 | 12 / 500 | 12 / 600 |
 | inline code | 13 mono | 13 mono |
-| fenced code | 13 mono / 1.54 | 13 mono / 1.5 |
-| table body / header | 12 / 370 · 12 / 600 | 14 / 370 · 14 / 600 |
-| table cell inline code | **11 mono / 1.5** (`code.textSmall`) | 13 mono (`code.text`) |
-| `strong` / `b` | weight 500 only | weight 500 only |
+| fenced code | 13 mono / 19px | 13 mono / 19px |
+| table body / header | 12 / 400 · 14 / 600 | 16 / 400 · 16 / 600 |
+| table cell inline code | **11 mono / 16px** (`code.textSmall`) | 13 mono (`code.text`) |
+| `strong` / `b` | weight 600 only | weight 600 only |
 
-**Why two.** A chat bubble is a stream of short messages: headings there are separators, and a 24px h1
-inside a bubble shouts. A rendered file is a document: its headings have to be visibly larger than its
-paragraphs or the structure disappears. One shared scale cannot be both — with body copy at 14px and a
-compact scale, four of six heading levels land at or below body size, which is what the `doc` system
-exists to fix. Validation enforces it: `doc.h1`–`doc.h4` must each be **larger than `doc.body`**, and the
-ladder h1→h6 must never invert. `h5` sits at body size and `h6` below it, both semibold and `h6`
-uppercase — the convention every markdown renderer settles on, since documents essentially never nest
-that deep.
+Chat headings separate a stream of messages; document headings expose nested structure. Both share
+comfortable reading text, while document h1–h4 stay larger than the body and the h1→h6 ladder never
+inverts. The validator keeps these requirements. Neither surface forces uppercase decoration.
+`chat.h1` and `doc.h3` reference `heading.md`; body copy references `body.reading`. Only two of the
+28 prose entries define independent styles; every other prose role names a canonical definition.
 
-The two systems share their canonical definitions: `chat.h1` and `doc.h3` are both `{ "$ref":
-"heading.md" }`, body copy everywhere is `body.reading`. Only 3 of the 28 prose entries are canonical
-definitions of their own.
-
-`strong` / `b` gets **weight 500 only** in both systems — family, size, line-height, tracking, transform
+`strong` / `b` gets **weight 600 only** in both systems — family, size, line-height, tracking, transform
 and colour inherit from the enclosing element, so bold in a heading keeps the heading's size and bold in
 a cell keeps the table's.
 
@@ -214,18 +208,15 @@ JSON entry — the generator, the naming and the guards all follow.
 
 ## Fonts
 
-Self-hosted variable faces. The packages are declared per family as `selfHosted` in the JSON and
-`styles/generated/fonts.css` is emitted from them (`@fontsource-variable/geist`,
-`@fontsource-variable/jetbrains-mono`), fingerprinted into `dist/assets` and embedded in the binary —
-**no font CDN**, so an offline host renders the real system. Both faces are variable, so 800 and
-italics are real, not synthetic. Pinned by `e2e/fonts.spec.ts`.
+The interface and brand use the platform's system sans stack, including explicit CJK fallbacks.
+JetBrains Mono remains self-hosted for code, with its real variable weights and italic face. The
+`selfHosted` entries produce `styles/generated/fonts.css`, and Vite includes those files in offline
+artifacts. No font CDN is contacted; `e2e/fonts.spec.ts` verifies both system UI and bundled code fonts.
 
-**Swapping a family is a one-file change**: edit the family's `stack` + `selfHosted` here, `bun add` the
-new package, `typography:generate`. No face name is written anywhere else — the tests read it back from
-the generated output (`e2e/fixtures/typography.ts`), and `validate` rejects both a `selfHosted` package
-that is not a dependency and a font dependency no family claims. The one other copy of the stacks lives
-in `apps/website` (a standalone leaf that cannot import ours); `apps/website/src/fonts.test.ts` fails
-when it drifts from this file.
+A font change updates the JSON stack and its `selfHosted` entries together with actual app dependencies.
+Validation rejects an undeclared font package and a font dependency no family uses. Tests read family
+names from generated CSS. The retained upstream website keeps its own font stack and imports; it must
+not pull PiDeck back to the legacy Geist/Orbitron application styling.
 
 `tokens.css` holds **no typography at all** — not a value and not an alias. It used to carry `--font`,
 `--font-mono`, `--font-accent`, `--font-mono-size` and `--line-height` as aliases onto the generated
@@ -244,15 +235,9 @@ those are proportional. Validation enforces this: a monospace family on a non-co
 
 ## Weight policy
 
-- **370** (`light`) — ordinary UI, body, entity, metadata and status text (interface family).
-- **400** (`regular` / `brand`) — monospace / code text (`code.*`) and brand display text (`brand.*`).
-- **470** (`button`) — the shared `Button` / `IconButton` label (`ui.button`, owned by `packages/ui`
-  `buttonVariants`): the 14px interface face one weight step (+100) above ordinary UI text so an action
-  label reads as an action, still lighter than titles. Call sites never set it; it travels with the button.
-- **500** — non-button action text (`ui.action`), in-page section titles, compact titles, inline emphasis
-  (`ui.emphasis`), uppercase labels (`ui.eyebrow`/`labelPill`), chat prose h4–h6 and `strong`.
-- **600** — dialog titles, card titles, alert titles, every `heading.*`, chat prose h1–h3, document
-  prose h1–h6 and table headers.
+- **400** — ordinary UI, reading, entity, metadata, status, code and brand-heading text.
+- **500** — action and button labels, section/compact titles, restrained labels and chat h4–h6.
+- **600** — dialog/card titles, heading roles, chat h1–h3, document headings, table headers and prose strong.
 
 Disabled control colors come from `control-disabled-bg` / `control-disabled-text`; disabled non-control
 text uses `text-disabled`. Typography does not encode disabled state, and controls do not use opacity to
@@ -265,11 +250,11 @@ The allowlist is deliberately tiny, and each entry is enforced by name in
 
 | Surface | Why it cannot use a semantic class |
 |---|---|
-| `resource-renderers/support/monacoSetup.ts` | Monaco takes `fontFamily` / `fontSize` / `lineHeight` as JS options — it reads `--tr-font-family-code`, `--tr-font-size-s11`, `--tr-line-height-default`, so it cannot drift from a code block |
+| `resource-renderers/support/monacoSetup.ts` | Monaco takes `fontFamily` / `fontSize` / `lineHeight` as JS options — it reads `--tr-font-family-code`, `--tr-font-size-s13`, `--tr-code-row-height`, so it cannot drift from a code block |
 | `resource-renderers/renderers/code/pierreVirtualizer.ts` | Pierre's virtualizer takes its row height as a JS metric — it reads the generated `--tr-code-row-height`, the same value `.pierre-code-surface` gives `--diffs-line-height` |
 | `panels/TerminalInstance.tsx` | xterm, same reason — it reads `--tr-font-family-code` + `--tr-font-size-s13` (the primitives behind `code.text`), and owns row height through its own `lineHeight` option rather than a CSS line-height |
 | `thinkrail-extensions/visualize/web/mermaid.ts` | mermaid's theme config takes a family string (`--tr-font-family-code`) |
-| `index.css`, `styles/tokens.css`, `styles/global.css` | the mapping layers themselves; `.pierre-code-surface` passes the code family, `s11`, and the default line-height (rounded to whole pixels) into Pierre's Shadow DOM |
+| `index.css`, `styles/tokens.css`, `styles/global.css` | the mapping layers themselves; `.pierre-code-surface` passes the code family, `s13`, and the generated whole-pixel code row height into Pierre's Shadow DOM |
 
 The OTP code is **not** an exception any more: it is the named `code.otp` style (`.tr-code-otp`).
 

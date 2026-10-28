@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { openAppSettings } from "./fixtures/app";
 
 test("Review settings: model + effort render and the auto-fix toggle persists across a reload", async ({
 	page,
@@ -6,7 +7,7 @@ test("Review settings: model + effort render and the auto-fix toggle persists ac
 	await page.goto("/");
 	await expect(page.getByTestId("connection-status")).toHaveAttribute("data-status", "connected");
 
-	await page.getByTestId("open-settings").click();
+	await openAppSettings(page);
 	const dialog = page.getByTestId("settings-dialog");
 	await expect(dialog).toBeVisible();
 	await page.getByTestId("settings-nav-models").click();
@@ -36,7 +37,7 @@ test("Review settings: model + effort render and the auto-fix toggle persists ac
 
 	await page.reload();
 	await expect(page.getByTestId("connection-status")).toHaveAttribute("data-status", "connected");
-	await page.getByTestId("open-settings").click();
+	await openAppSettings(page);
 	await page.getByTestId("settings-nav-models").click();
 	await expect(toggle).toHaveAttribute("data-active", "true");
 
@@ -51,7 +52,7 @@ test("Review settings: the agent-review toggle persists across a reload", async 
 	await page.goto("/");
 	await expect(page.getByTestId("connection-status")).toHaveAttribute("data-status", "connected");
 
-	await page.getByTestId("open-settings").click();
+	await openAppSettings(page);
 	const dialog = page.getByTestId("settings-dialog");
 	await expect(dialog).toBeVisible();
 	await page.getByTestId("settings-nav-models").click();
@@ -69,7 +70,7 @@ test("Review settings: the agent-review toggle persists across a reload", async 
 
 	await page.reload();
 	await expect(page.getByTestId("connection-status")).toHaveAttribute("data-status", "connected");
-	await page.getByTestId("open-settings").click();
+	await openAppSettings(page);
 	await page.getByTestId("settings-nav-models").click();
 	await expect(toggle).toHaveAttribute("data-active", "true");
 

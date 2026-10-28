@@ -86,7 +86,7 @@ const BACKEND_PROFILE_ID = "local";
 const WINDOW_ID = "main";
 const TITLE_BAR_PROBE_TARGETS: Record<string, string[]> = {
 	"title-bar-double-click": ["topbar"],
-	"title-bar-double-click-no-drag": ["topbar-actions", "topbar"],
+	"title-bar-double-click-no-drag": ["app-menu", "topbar"],
 };
 function titleBarProbeScript(testIds: string[]): string {
 	return `(() => {

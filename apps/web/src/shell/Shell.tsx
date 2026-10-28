@@ -1,12 +1,5 @@
-import {
-	RiCircleLine as Circle,
-	RiCircleFill,
-	RiSettings3Line as Settings,
-} from "@remixicon/react";
-import type { MessageKey } from "@thinkrail/locales";
-import { useT } from "@thinkrail/locales/react";
-import { IconButton } from "@thinkrail/ui/button";
-import { useEffect, useState } from "react";
+import { DropdownMenu } from "@thinkrail/ui/dropdown-menu";
+import { type ReactNode, useEffect, useState } from "react";
 import { NotificationPermissionPrompt, useAttentionNotifications } from "../notifications";
 import { AnalyticsConsentDialog } from "../panels/AnalyticsConsentDialog";
 import { InterviewPromptDialog } from "../panels/InterviewPromptDialog";
@@ -29,47 +22,28 @@ import {
 	readThemeHint,
 	writeThemeHint,
 } from "../themes";
-import {
-	type ConnectionStatus,
-	runHostUpdate,
-	supportsHostUpdateRun,
-	supportsUserThemes,
-} from "../transport";
+import { runHostUpdate, supportsHostUpdateRun, supportsUserThemes } from "../transport";
 import { UpdateInstallSurfaces, UpdateReadyButton, UpdateSettings, useUpdates } from "../updates";
+import { ApplicationMenu, ApplicationMenuItems } from "./ApplicationMenu";
 import { AppShortcuts } from "./AppShortcuts";
-import { BrandLogo } from "./BrandLogo";
 import { JbcentralQuotaTopbar } from "./JbcentralQuotaTopbar";
 import { LayoutSettings } from "./LayoutSettings";
 import { useLocalLayoutState } from "./layoutState";
 import { LocationBar } from "./locationBar";
 import { NativeWindowControls } from "./NativeWindowControls";
+import { NavigationHistoryButtons } from "./NavigationHistoryButtons";
 import { PROJECT_HOME_PROJECTS_REGION_ID, ProjectHome } from "./ProjectHome";
 import { SessionSwitcher } from "./SessionSwitcher";
-import { readSettingsShortcutLabel } from "./useAppShortcuts";
 import { useCollapsibleRegion } from "./useCollapsibleRegion";
 import { useGlobalHotkeys } from "./useGlobalHotkeys";
 import { useNativeWindowControls } from "./useNativeWindowControls";
 import { WorkspaceWorkbench } from "./WorkspaceWorkbench";
 
-const STATUS_LABEL = {
-	connected: "shell.connection.connected",
-	connecting: "shell.connection.connecting",
-	disconnected: "shell.connection.disconnected",
-} satisfies Record<ConnectionStatus, MessageKey>;
-
-const STATUS_DOT: Record<ConnectionStatus, string> = {
-	connected: "text-feedback-success",
-	connecting: "text-feedback-warning",
-	disconnected: "text-feedback-error",
-};
-
 export function Shell() {
-	const t = useT();
 	useLocalLayoutState();
 	useAttentionNotifications();
 	const status = useAppStore((s) => s.status);
 	const analyticsConsentOpen = useAppStore(selectAnalyticsConsentPromptOpen);
-	const StatusDot = status === "connected" ? RiCircleFill : Circle;
 	const activeWorkspaceId = useAppStore((s) => s.activeWorkspaceId);
 	const activeWorkspace = useAppStore(selectActiveWorkspace);
 	const contextProject = useAppStore(selectContextProject);
@@ -92,7 +66,6 @@ export function Shell() {
 	const homeProjects = useCollapsibleRegion<HTMLDivElement>(PROJECT_HOME_PROJECTS_REGION_ID);
 
 	const [themeHint] = useState(readThemeHint);
-	const [settingsShortcut] = useState(readSettingsShortcutLabel);
 	const welcomeGeneration = useAppStore((s) => s.welcomeGeneration);
 	const theme = useAppStore((s) => s.theme);
 	const themeMode = useAppStore((s) => s.themeMode);
@@ -154,76 +127,74 @@ export function Shell() {
 			: {}),
 		onSessionSwitcher: () => useAppStore.getState().toggleSessionSwitcher(),
 	});
+	const footer = (compact: boolean) => (
+		<ApplicationMenu compact={compact}>
+			{updates ? (
+				<UpdateReadyButton
+					compact
+					updates={updates}
+					onOpen={() => useAppStore.getState().openSettings(SettingsSection.Updates)}
+				/>
+			) : null}
+			<JbcentralQuotaTopbar compact />
+		</ApplicationMenu>
+	);
+	const navigationActions = <NavigationHistoryButtons />;
+	const locationBar = (placement: "header" | "tabs") =>
+		contextProject ? (
+			<LocationBar
+				placement={placement}
+				project={contextProject}
+				workspace={activeWorkspace}
+				review={activeWorkspace ? locationReview : null}
+				branchStatus={branchStatus}
+				noteOpenReview={noteOpenReview}
+				refreshBranchStatus={refreshBranchStatus}
+				onNewWorkspace={() => setNewWorkspaceProjectId(contextProject.id)}
+			/>
+		) : null;
+	const workspaceLocation = locationBar("tabs");
+	const workspaceHeader = (historyControls?: ReactNode) => (
+		<div
+			data-testid="topbar"
+			className="window-drag relative flex h-topbar-row min-w-0 shrink-0 select-none items-center bg-container-content-bg px-8"
+		>
+			<div
+				data-testid="window-chrome-inset-left"
+				aria-hidden="true"
+				className="workspace-chrome-inset w-window-chrome-inset-left shrink-0"
+			/>
+			{historyControls}
+			{locationBar("header") ?? <div className="flex-1" />}
+			<div
+				data-testid="window-chrome-inset-right"
+				aria-hidden="true"
+				className="w-window-chrome-inset-right shrink-0"
+			/>
+		</div>
+	);
 	return (
-		<div data-testid="shell" className="grid h-full grid-cols-[minmax(0,1fr)] grid-rows-[auto_1fr]">
-			<header
-				data-testid="topbar"
-				className="relative window-drag flex h-topbar-row min-w-0 select-none items-center border-b border-border-default bg-container-header-bg px-16"
-			>
-				<div
-					aria-hidden="true"
-					data-testid="window-chrome-inset-left"
-					className="w-window-chrome-inset-left shrink-0"
-				/>
-				<div className="flex min-w-0 flex-1 items-center gap-12 self-stretch pr-12">
-					<BrandLogo />
-					{contextProject ? (
-						<LocationBar
-							project={contextProject}
-							workspace={activeWorkspace}
-							review={activeWorkspace ? locationReview : null}
-							branchStatus={branchStatus}
-							noteOpenReview={noteOpenReview}
-							refreshBranchStatus={refreshBranchStatus}
-							onNewWorkspace={() => setNewWorkspaceProjectId(contextProject.id)}
+		<DropdownMenu>
+			<div data-testid="shell" className="relative flex h-full min-h-0 min-w-0 flex-col">
+				{hasActiveWorkspace && activeWorkspaceId ? (
+					<div data-testid="workspace-shell-layout" className="h-full min-h-0 min-w-0">
+						<WorkspaceWorkbench
+							workspaceId={activeWorkspaceId}
+							workspaceLocation={workspaceLocation}
+							navigationActions={navigationActions}
+							navigationFooter={footer(false)}
+							collapsedNavigationFooter={footer(true)}
 						/>
-					) : null}
-				</div>
-				<div
-					data-testid="topbar-actions"
-					className="window-no-drag ml-auto flex shrink-0 items-center gap-12"
-				>
-					{updates ? (
-						<UpdateReadyButton
-							updates={updates}
-							onOpen={() => useAppStore.getState().openSettings(SettingsSection.Updates)}
-						/>
-					) : null}
-					<JbcentralQuotaTopbar />
-					<span
-						data-testid="connection-status"
-						data-status={status}
-						role="status"
-						aria-label={t(STATUS_LABEL[status])}
-						className="inline-flex items-center gap-8 tr-text-ui text-text-muted"
-					>
-						<StatusDot
-							aria-hidden="true"
-							className={`size-8 shrink-0 fill-current ${STATUS_DOT[status]}`}
-						/>
-						<span aria-hidden="true" className="hidden sm:inline">
-							{t(STATUS_LABEL[status])}
-						</span>
-					</span>
-					<IconButton
-						variant="ghost"
-						size="m"
-						icon={Settings}
-						label={t("shell.topbar.settings")}
-						tooltip={
-							settingsShortcut
-								? t("shell.topbar.settingsWithShortcut", { shortcut: settingsShortcut })
-								: t("shell.topbar.settings")
-						}
-						data-testid="open-settings"
-						onClick={() => useAppStore.getState().openSettings()}
+					</div>
+				) : (
+					<ProjectHome
+						projects={homeProjects}
+						workspaceHeader={workspaceHeader}
+						navigationActions={navigationActions}
+						navigationFooter={footer(false)}
+						collapsedNavigationFooter={footer(true)}
 					/>
-				</div>
-				<div
-					aria-hidden="true"
-					data-testid="window-chrome-inset-right"
-					className="w-window-chrome-inset-right shrink-0"
-				/>
+				)}
 				{windowControls ? (
 					<NativeWindowControls
 						state={windowControls.state}
@@ -240,32 +211,26 @@ export function Shell() {
 					<NewWorkspaceDialog
 						open
 						projectId={newWorkspaceProjectId}
-						onOpenChange={(isOpen) => {
-							if (!isOpen) setNewWorkspaceProjectId(null);
+						onOpenChange={(open) => {
+							if (!open) setNewWorkspaceProjectId(null);
 						}}
 					/>
 				) : null}
-			</header>
-			{hasActiveWorkspace && activeWorkspaceId ? (
-				<div data-testid="workspace-shell-layout" className="h-full min-h-0 min-w-0">
-					<WorkspaceWorkbench workspaceId={activeWorkspaceId} />
-				</div>
-			) : (
-				<ProjectHome projects={homeProjects} />
-			)}
-			{analyticsConsentOpen ? <AnalyticsConsentDialog /> : <InterviewPromptDialog />}
-			<SessionSwitcher
-				open={sessionSwitcherOpen}
-				onOpenChange={(open) => {
-					const store = useAppStore.getState();
-					if (open) store.openSessionSwitcher();
-					else store.closeSessionSwitcher();
-				}}
-			/>
-			<NotificationPermissionPrompt />
-			<Toaster />
-			<UpdateInstallSurfaces updates={updates} />
-			<AppShortcuts />
-		</div>
+				{analyticsConsentOpen ? <AnalyticsConsentDialog /> : <InterviewPromptDialog />}
+				<SessionSwitcher
+					open={sessionSwitcherOpen}
+					onOpenChange={(open) => {
+						const store = useAppStore.getState();
+						if (open) store.openSessionSwitcher();
+						else store.closeSessionSwitcher();
+					}}
+				/>
+				<NotificationPermissionPrompt />
+				<Toaster />
+				<UpdateInstallSurfaces updates={updates} />
+				<AppShortcuts />
+				<ApplicationMenuItems />
+			</div>
+		</DropdownMenu>
 	);
 }

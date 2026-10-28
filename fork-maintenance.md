@@ -57,6 +57,7 @@ git switch refinex/dev
 | 默认宿主目录 `~/.pideck` | `packages/server/src/persistence` | 默认路径与 override 测试；不自动迁移官方状态 |
 | PiDeck 界面、Pi 图标和反馈入口 | `apps/web`、`packages/locales`、shared assets | 文案检查、组件测试、完整 e2e；不得留下上游团队的服务承诺 |
 | PiDeck 产物与更新边界 | 桌面 config、CLI update、`.github/actions/build-binary` | 产物收集与 updater 测试；默认空 feed，更新代码仅指向 fork |
+| Claude Desktop 风格的共享 UI | `design-system.md`、web shell/themes/styles、共享 UI | 单测、无智能体 e2e、截图与原生产物验证；保留 PiDeck 行为与独立品牌，Windows 真机待验收 |
 | 仓库文档与分支制度 | README、AGENTS、本文 | 对照代码和实际验证维护，不承诺未发布能力 |
 
 各项属于 fork 身份差异，上游修复不会自动消除。后续功能补丁新增时记录问题、来源、验证方式和可移除条件；

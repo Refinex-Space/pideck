@@ -1,5 +1,5 @@
 import { expect, type Page, test } from "@playwright/test";
-import { openAppFresh } from "./fixtures/app";
+import { openAppFresh, openAppSettings } from "./fixtures/app";
 
 const SIGNIN = '[data-testid="provider-signin"][data-provider="e2e-oauth"]';
 const CONFIGURED =
@@ -10,7 +10,7 @@ const LOOPBACK_URL =
 
 async function startLogin(page: Page, option: "subscription" | "api") {
 	await openAppFresh(page);
-	await page.getByTestId("open-settings").click();
+	await openAppSettings(page);
 	await expect(page.getByTestId("settings-providers")).toBeVisible();
 	await page.locator(SIGNIN).click();
 	const dialog = page.getByTestId("login-dialog");
@@ -23,7 +23,7 @@ test("signs in through the OAuth dialog (select → open-URL + paste → success
 	tag: "@dev-seam",
 }, async ({ page }) => {
 	await openAppFresh(page);
-	await page.getByTestId("open-settings").click();
+	await openAppSettings(page);
 	await expect(page.getByTestId("settings-providers")).toBeVisible();
 
 	await page.locator(SIGNIN).click();
@@ -66,7 +66,7 @@ test("cancelling the OAuth dialog aborts the login and leaves the provider uncon
 	tag: "@dev-seam",
 }, async ({ page }) => {
 	await openAppFresh(page);
-	await page.getByTestId("open-settings").click();
+	await openAppSettings(page);
 	await expect(page.getByTestId("settings-providers")).toBeVisible();
 
 	await page.locator(SIGNIN).click();

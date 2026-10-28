@@ -44,11 +44,11 @@ describe("typography source", () => {
 		}
 	});
 
-	it("holds 21 canonical definitions and 30 aliases (51 styles)", () => {
+	it("holds 18 canonical definitions and 33 aliases (51 styles)", () => {
 		const styles = allStyles(typography);
 		expect(styles).toHaveLength(51);
-		expect(styles.filter((s) => !s.ref)).toHaveLength(21);
-		expect(styles.filter((s) => s.ref)).toHaveLength(30);
+		expect(styles.filter((s) => !s.ref)).toHaveLength(18);
+		expect(styles.filter((s) => s.ref)).toHaveLength(33);
 		expect(styles.filter((s) => s.prose)).toHaveLength(28);
 	});
 
@@ -59,39 +59,39 @@ describe("typography source", () => {
 			s12: 12,
 			s13: 13,
 			s14: 14,
+			s15: 15,
 			s16: 16,
 			s18: 18,
 			s20: 20,
+			s22: 22,
 			s24: 24,
-			s44: 44,
+			s32: 32,
 		});
 		expect(typography.lineHeights).toEqual({
 			compact: 1.25,
-			metadata: 1.25,
-			ui: 1.3,
-			code: 1.4,
-			relaxed: 1.4,
-			default: 1.3,
-			reading: 1.45,
+			metadata: 17 / 12,
+			ui: 20 / 14,
+			code: 19 / 13,
+			relaxed: 19 / 13,
+			default: 17 / 12,
+			reading: 1.5,
 		});
 		expect(typography.fontWeights).toEqual({
-			light: 370,
 			regular: 400,
 			medium: 500,
 			semibold: 600,
-			brand: 400,
-			button: 470,
 		});
-		for (const id of ["interface", "code", "brand"]) {
-			const family = resolveFamily(typography, id);
-			expect(family.selfHosted ?? [], `${id} self-hosted`).not.toEqual([]);
-			expect(family.stack[0], `${id} leads with its bundled face`).not.toMatch(
-				/^(?:-apple-system|sans-serif|serif|monospace)$/,
-			);
-		}
-		expect(isRef(typography.fontFamilies.brand)).toBe(false);
-		expect(resolveFamily(typography, "brand").stack[0]).toBe("Orbitron Variable");
-		expect(resolveFamily(typography, "brand")).not.toEqual(resolveFamily(typography, "interface"));
+		const ui = resolveFamily(typography, "interface");
+		expect(ui.stack[0]).toBe("system-ui");
+		expect(ui.stack).toContain("PingFang SC");
+		expect(ui.stack).toContain("Microsoft YaHei");
+		expect(ui.selfHosted ?? []).toEqual([]);
+		expect(resolveFamily(typography, "code").selfHosted).toEqual([
+			"@fontsource-variable/jetbrains-mono",
+			"@fontsource-variable/jetbrains-mono/wght-italic.css",
+		]);
+		expect(typography.fontFamilies.brand).toEqual({ $ref: "interface" });
+		expect(resolveFamily(typography, "brand")).toEqual(ui);
 		expect(Object.values(typography.lineHeights)).not.toContain(1.65);
 	});
 
@@ -111,7 +111,7 @@ describe("typography source", () => {
 			resolveStyle(typography, "title.dialog"),
 		);
 		expect(resolveStyle(typography, "title.dialog")).toMatchObject({
-			fontSize: "s14",
+			fontSize: "s16",
 			fontWeight: "semibold",
 			lineHeight: "compact",
 		});
@@ -144,13 +144,13 @@ describe("typography source", () => {
 				}),
 			),
 		).toEqual({
-			default: 370,
-			metadata: 370,
+			default: 400,
+			metadata: 400,
 			eyebrow: 500,
 			labelPill: 500,
 			caption: 500,
 			action: 500,
-			button: 470,
+			button: 500,
 			emphasis: 500,
 		});
 	});
@@ -158,7 +158,7 @@ describe("typography source", () => {
 	it("holds one monotonic heading scale", () => {
 		expect(Object.keys(typography.textStyles.heading)).toEqual(["xl", "lg", "md", "sm"]);
 		const sizes = ["xl", "lg", "md", "sm"].map((n) => px(`heading.${n}`) as number);
-		expect(sizes).toEqual([24, 20, 18, 16]);
+		expect(sizes).toEqual([24, 22, 20, 18]);
 		for (const n of ["xl", "lg", "md", "sm"])
 			expect(resolveStyle(typography, `heading.${n}`), `heading.${n}`).toMatchObject({
 				fontWeight: "semibold",
@@ -177,18 +177,18 @@ describe("prose systems", () => {
 			);
 	});
 
-	it("keeps the chat scale compact — a bubble, not a document", () => {
-		expect(px("chat.body")).toBe(14);
-		expect(px("chat.h1")).toBe(18);
-		expect(px("chat.h2")).toBe(14);
-		expect(px("chat.h3")).toBe(12);
+	it("keeps chat reading comfortable with a restrained heading hierarchy", () => {
+		expect(px("chat.body")).toBe(16);
+		expect(px("chat.h1")).toBe(20);
+		expect(px("chat.h2")).toBe(16);
+		expect(px("chat.h3")).toBe(14);
 		expect(px("chat.codeBlock")).toBe(13);
 	});
 
 	it("gives the document scale headings larger than its body text", () => {
 		const body = px("doc.body") as number;
-		expect(body).toBe(14);
-		expect(["h1", "h2", "h3", "h4"].map((h) => px(`doc.${h}`))).toEqual([24, 20, 18, 16]);
+		expect(body).toBe(16);
+		expect(["h1", "h2", "h3", "h4"].map((h) => px(`doc.${h}`))).toEqual([24, 22, 20, 18]);
 		for (const h of ["h1", "h2", "h3", "h4"])
 			expect(px(`doc.${h}`), `doc.${h} > body`).toBeGreaterThan(body);
 		const ladder = ["h1", "h2", "h3", "h4", "h5", "h6"].map((h) => px(`doc.${h}`) as number);
@@ -197,7 +197,7 @@ describe("prose systems", () => {
 		expect(resolveStyle(typography, "doc.h5")).toMatchObject({ fontWeight: "semibold" });
 		expect(resolveStyle(typography, "doc.h6")).toMatchObject({
 			fontWeight: "semibold",
-			textTransform: "uppercase",
+			textTransform: "none",
 		});
 		expect(px("doc.codeBlock")).toBe(13);
 		expect(px("doc.codeBlock")).toBeGreaterThanOrEqual(px("chat.codeBlock") as number);
@@ -207,8 +207,11 @@ describe("prose systems", () => {
 		expect(resolveStyle(typography, "chat.h1")).toEqual(resolveStyle(typography, "doc.h3"));
 		expect(rawStyle(typography, "chat.h1")).toEqual({ $ref: "heading.md" });
 		expect(rawStyle(typography, "doc.h3")).toEqual({ $ref: "heading.md" });
-		for (const id of ["chat.body", "doc.body", "chat.blockquote", "doc.list", "title.entity"])
+		for (const id of ["chat.body", "doc.body", "chat.blockquote", "doc.list"])
 			expect(resolveStyle(typography, id), id).toEqual(resolveStyle(typography, "body.reading"));
+		expect(resolveStyle(typography, "title.entity")).toEqual(
+			resolveStyle(typography, "ui.default"),
+		);
 	});
 });
 
@@ -413,7 +416,7 @@ describe("generated CSS", () => {
 				.split(";")
 				.map((d) => d.trim())
 				.filter(Boolean);
-			expect(declarations, system).toEqual(["font-weight: var(--tr-font-weight-medium)"]);
+			expect(declarations, system).toEqual(["font-weight: var(--tr-font-weight-semibold)"]);
 			expect(typography.proseSystems[system]).not.toHaveProperty("strong");
 		}
 		expect(PROSE_SELECTORS).not.toHaveProperty("strong");
@@ -428,21 +431,32 @@ describe("generated CSS", () => {
 		}
 	});
 
+	it("publishes whole-pixel UI, prose and code line boxes", () => {
+		for (const [selector, height] of [
+			["tr-text-ui", 20],
+			["tr-text-reading", 24],
+			["tr-code-text", 19],
+		] as const) {
+			const block = new RegExp(`\\.${selector} \\{([^}]*)\\}`).exec(GENERATED);
+			expect(block?.[1]).toContain(`line-height: ${height}px;`);
+		}
+	});
+
 	it("exposes the code family + size tokens Monaco and xterm read", () => {
 		expect(GENERATED).toContain("--tr-font-family-code:");
 		expect(GENERATED).toContain("--tr-font-size-s11: 11px;");
 		expect(GENERATED).toContain("--tr-font-size-s13: 13px;");
-		expect(GENERATED).toContain("--tr-line-height-default: 1.3;");
-		expect(GENERATED).toContain("--tr-code-row-height: 14px;");
+		expect(GENERATED).toContain("--tr-line-height-code: 1.4615384615384615;");
+		expect(GENERATED).toContain("--tr-code-row-height: 19px;");
 		const monaco = read(
 			join(SRC, "../../../packages/resource-renderers/src/support/monacoSetup.ts"),
 		);
 		const xterm = read(join(SRC, "panels/TerminalInstance.tsx"));
-		expect(monaco).toContain('cssVar("--tr-font-size-s11")');
+		expect(monaco).toContain('cssVar("--tr-font-size-s13")');
 		expect(xterm).toContain('cssVar("--tr-font-size-s13")');
 		for (const file of [monaco, xterm]) {
 			expect(file).toContain('cssVar("--tr-font-family-code")');
 		}
-		expect(monaco).toContain('cssVar("--tr-line-height-default")');
+		expect(monaco).toContain('cssVar("--tr-code-row-height")');
 	});
 });

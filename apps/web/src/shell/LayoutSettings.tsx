@@ -17,7 +17,7 @@ import type { MessageKey } from "@thinkrail/locales";
 import { t as translate, useT } from "@thinkrail/locales/react";
 import { Button, IconButton } from "@thinkrail/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@thinkrail/ui/popover";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { randomId } from "../lib";
 import { ConfirmDialog } from "../panels/ConfirmDialog";
 import { SettingsGroup } from "../panels/SettingsGroup";
@@ -29,6 +29,7 @@ import {
 	captureWorkbenchPreset,
 	DEFAULT_LAYOUT_PRESET_ID,
 	frameMatchesPreset,
+	layoutPresetForViewport,
 	layoutPresetName,
 	minimumBottomGroupLimit,
 	minimumSideGroupLimit,
@@ -37,11 +38,26 @@ import {
 import { applyLayoutPresetLocally } from "./layoutState";
 
 const BUILTIN_PRESET_IDS = new Set(BUILTIN_LAYOUT_PRESETS.map((preset) => preset.id));
+const BUILTIN_PRESET_DISPLAY_ORDER = [
+	...BUILTIN_LAYOUT_PRESETS.filter((preset) => preset.id === DEFAULT_LAYOUT_PRESET_ID),
+	...BUILTIN_LAYOUT_PRESETS.filter((preset) => preset.id !== DEFAULT_LAYOUT_PRESET_ID),
+];
 const MAX_CUSTOM_PRESETS = 32;
 const GROUP_LIMIT_MIN = 1;
 const GROUP_LIMIT_MAX = 32;
 
+function readViewportWidth(): number | undefined {
+	return typeof window === "undefined" ? undefined : window.innerWidth;
+}
+
+function subscribeViewportWidth(changed: () => void): () => void {
+	if (typeof window === "undefined") return () => {};
+	window.addEventListener("resize", changed);
+	return () => window.removeEventListener("resize", changed);
+}
+
 const PRESET_DESCRIPTIONS: Readonly<Record<string, MessageKey>> = {
+	studio: "workbench.layoutSettings.studioDescription",
 	balanced: "workbench.layoutSettings.balancedDescription",
 	focus: "workbench.layoutSettings.focusDescription",
 	review: "workbench.layoutSettings.reviewDescription",
@@ -125,7 +141,7 @@ function GroupLimitInput({
 						setDraft(savedText);
 					}
 				}}
-				className="h-32 w-64 rounded-sm border border-control-border-default bg-control-bg px-8 tr-text-ui text-text-default outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus:border-control-border-active focus-visible:ring-2 focus-visible:ring-primary aria-invalid:border-feedback-error"
+				className="h-32 w-64 rounded-sm border border-control-border-default bg-control-bg px-8 tr-text-ui text-text-default outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus:border-control-border-active focus-visible:ring-1 focus-visible:ring-focus-ring aria-invalid:border-feedback-error"
 			/>
 			{invalid ? (
 				<span id={errorId} className="text-feedback-error tr-text-metadata">
@@ -138,6 +154,11 @@ function GroupLimitInput({
 
 export function LayoutSettings() {
 	const t = useT();
+	const viewportWidth = useSyncExternalStore(
+		subscribeViewportWidth,
+		readViewportWidth,
+		readViewportWidth,
+	);
 	const customLayoutPresets = useAppStore((state) => state.customLayoutPresets);
 	const preferences = useAppStore((state) => state.localLayoutPreferences);
 	const frame = useAppStore((state) => state.workbenchFrame);
@@ -152,10 +173,12 @@ export function LayoutSettings() {
 
 	const presets = useMemo(
 		() => [
-			...BUILTIN_LAYOUT_PRESETS,
+			...BUILTIN_PRESET_DISPLAY_ORDER.map((preset) =>
+				layoutPresetForViewport(preset, viewportWidth),
+			),
 			...customLayoutPresets.filter((preset) => !BUILTIN_PRESET_IDS.has(preset.id)),
 		],
-		[customLayoutPresets],
+		[customLayoutPresets, viewportWidth],
 	);
 	const selected = resolveLayoutPreset(preferences.defaultPresetId, customLayoutPresets);
 	const canApply = !saving && activeWorkspaceId !== null && frame !== null;
@@ -211,6 +234,7 @@ export function LayoutSettings() {
 						<div
 							key={preset.id}
 							data-testid="layout-preset"
+							data-preset-id={preset.id}
 							data-default={isEffectiveDefault}
 							data-applied={isCurrentlyApplied}
 							className={`relative flex flex-col rounded-sm p-12 ${
@@ -469,7 +493,7 @@ export function LayoutSettings() {
 					onClick={() => setAdvancedOpen((v) => !v)}
 					aria-expanded={advancedOpen}
 					data-testid="layout-advanced-toggle"
-					className="flex w-full items-start gap-8 rounded-sm py-12 text-left outline-none transition-colors hover:bg-control-bg-hovered focus-visible:ring-2 focus-visible:ring-primary"
+					className="flex w-full items-start gap-8 rounded-sm py-12 text-left outline-none transition-colors hover:bg-control-bg-hovered focus-visible:ring-1 focus-visible:ring-focus-ring"
 				>
 					<span className="mt-2 shrink-0">
 						{advancedOpen ? (

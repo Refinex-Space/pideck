@@ -1,3 +1,4 @@
+import { refreshNavigationHistory, writeNavigationHistory } from "./browserHistory";
 export interface NavigationDriver {
 	read(): string;
 	replace(fragment: string): void;
@@ -6,18 +7,26 @@ export interface NavigationDriver {
 }
 
 export function browserNavigationDriver(): NavigationDriver {
+	refreshNavigationHistory();
 	return {
 		read: () => window.location.hash,
 		replace: (fragment) => {
-			history.replaceState(history.state, "", fragment);
+			writeNavigationHistory(fragment, false);
 		},
 		push: (fragment) => {
-			history.pushState(null, "", fragment);
+			writeNavigationHistory(fragment, true);
 		},
 		onIncoming: (handler) => {
-			const listener = () => handler(window.location.hash);
+			const listener = () => {
+				refreshNavigationHistory();
+				handler(window.location.hash);
+			};
 			window.addEventListener("hashchange", listener);
-			return () => window.removeEventListener("hashchange", listener);
+			window.addEventListener("popstate", refreshNavigationHistory);
+			return () => {
+				window.removeEventListener("hashchange", listener);
+				window.removeEventListener("popstate", refreshNavigationHistory);
+			};
 		},
 	};
 }

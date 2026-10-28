@@ -77,16 +77,16 @@ src/main.ts, src/vibecoding                                        ──▶ src
 detection (Android, iPhone/iPad/iPod, or a touch Mac), the share URL, and native-share-then-clipboard delivery. It
 imports nothing, so the vibecoding island can reuse it without reaching the IDE shell.
 
-- **Fonts are self-hosted; the site makes no external font request.** Packages and stacks are copied
-  from the app's `typography.json`, not imported — and `src/fonts.test.ts` reads that JSON at test time
-  and fails on drift, which is what makes copying safe. `--font-display` mirrors the app's `brand`
+- **Fonts are self-hosted; the site makes no external font request.** This retained upstream website
+  keeps its own Geist / JetBrains Mono / Orbitron contract, checked by `src/fonts.test.ts`. PiDeck's
+  application typography evolves independently under the root design system. `--font-display` uses the upstream `brand`
   family — **Orbitron** (`@fontsource-variable/orbitron`, self-hosted), a distinct display face for the
   brand elements (wordmark + hero heading), falling back to `--font-sans`; section headings and the
-  tagline are the interface face (`--font-sans`), matching the app.
-- **Brand values are copied, not imported.** Theme palettes are lifted at authoring time from
-  `apps/web/src/themes/bundled/*.theme.json` (dark = default, darcula, light, gruvbox) into the site's
-  own CSS custom properties under `[data-theme]`; the site never reaches into `apps/web` at build time
-  (the app's tokens assume the theme engine's runtime swap).
+  tagline are the site's own interface face (`--font-sans`).
+- **Brand values are retained upstream content, not PiDeck's current app palette.** The website keeps
+  its historical theme copies in its own CSS custom properties under `[data-theme]`; it never reaches
+  into `apps/web` at build time. A PiDeck marketing site is a separate product decision, not a side
+  effect of changing the development workbench's design system.
 - **IDE-shell page chrome is single-sourced in components.** `src/components/BaseHead.astro` is the one
   head the landing and blog use: charset/viewport, favicon, their global stylesheet (which bundles the
   fonts), and the pre-paint theme guard. `src/components/Analytics.astro` is presentation-free and is

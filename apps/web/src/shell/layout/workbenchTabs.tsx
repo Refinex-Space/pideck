@@ -25,11 +25,12 @@ import { chatLabel, DOUBLE_CLICK_SETTLE_MS, type LayoutAttention, tupleKey } fro
 import {
 	type AuxiliaryRailControlProps,
 	RAIL_ENTRY_BUTTON_CLASS,
+	RAIL_ENTRY_FRAME_CLASS,
 	RAIL_ICON,
 	railEntryButtonProps,
-	railEntryFrameClass,
 	railTooltipSide,
 } from "./AuxiliaryRail";
+import { focusLayoutElement, type LayoutFocusIntent, readLayoutFocusIntent } from "./layoutFocus";
 import {
 	type CenterSplitDirection,
 	canCreateAuxiliaryGroup,
@@ -91,6 +92,7 @@ export interface TabStripProps {
 	canFocusAdjacentGroup: boolean;
 	renderTabAdornment: WorkbenchProps["renderTabAdornment"];
 	splitGeometry?: { horizontal: boolean; vertical: boolean };
+	leading?: ReactNode;
 	trailing?: ReactNode;
 }
 
@@ -143,6 +145,7 @@ export const TabStrip = memo(function TabStrip({
 	canFocusAdjacentGroup,
 	renderTabAdornment,
 	splitGeometry,
+	leading,
 	trailing,
 }: TabStripProps) {
 	const t = useT();
@@ -150,6 +153,7 @@ export const TabStrip = memo(function TabStrip({
 	const scrollOverflow = useHorizontalOverflow(scroller);
 	const tabRefs = useRef(new Map<string, HTMLElement>());
 	const overflowFocusTarget = useRef<string | null>(null);
+	const overflowFocusIntent = useRef<LayoutFocusIntent>("restore");
 	const [overflowOpen, setOverflowOpen] = useState(false);
 	const overflowing = scrollOverflow.before || scrollOverflow.after;
 	const selectTab = (tabId: string, keep?: boolean) => {
@@ -188,7 +192,8 @@ export const TabStrip = memo(function TabStrip({
 		selectTab(tab.id);
 		const epoch = selectionEpochRef.current;
 		requestAnimationFrame(() => {
-			if (selectionEpochRef.current === epoch) tabRefs.current.get(tab.id)?.focus();
+			if (selectionEpochRef.current === epoch)
+				focusLayoutElement(tabRefs.current.get(tab.id), "keyboard");
 		});
 	};
 
@@ -206,9 +211,20 @@ export const TabStrip = memo(function TabStrip({
 			data-group-id={location.groupId}
 			data-drop-active={groupDropOver || undefined}
 			data-drop-hint={(acceptsAppend && !groupDropOver) || undefined}
-			className="relative flex h-panel-header-row shrink-0 items-stretch border-border-default border-b bg-container-workspace-bg data-[drop-hint]:ring-1 data-[drop-hint]:ring-inset data-[drop-hint]:ring-primary-soft data-[drop-active]:bg-primary-subtle data-[drop-active]:ring-2 data-[drop-active]:ring-inset data-[drop-active]:ring-primary"
+			className={cn(
+				"relative flex shrink-0 items-stretch data-[drop-hint]:ring-1 data-[drop-hint]:ring-inset data-[drop-hint]:ring-primary-soft data-[drop-active]:bg-primary-subtle data-[drop-active]:ring-2 data-[drop-active]:ring-inset data-[drop-active]:ring-primary",
+				location.area === "center"
+					? "window-drag h-topbar-row select-none gap-4 bg-container-content-bg px-8"
+					: "h-panel-header-row border-border-default border-b bg-container-workspace-bg",
+			)}
 		>
-			<div className="relative min-w-0 flex-1 overflow-hidden">
+			{leading}
+			<div
+				className={cn(
+					"relative min-w-0 overflow-hidden",
+					location.area === "center" ? "shrink grow basis-192" : "flex-1",
+				)}
+			>
 				<div
 					ref={scroller}
 					role="tablist"
@@ -304,14 +320,24 @@ export const TabStrip = memo(function TabStrip({
 					<div
 						aria-hidden="true"
 						data-testid="tab-overflow-before"
-						className="pointer-events-none absolute inset-y-0 left-0 z-20 w-16 bg-[linear-gradient(to_right,var(--color-container-workspace-bg),transparent)]"
+						className={cn(
+							"pointer-events-none absolute inset-y-0 left-0 z-20 w-16",
+							location.area === "center"
+								? "bg-[linear-gradient(to_right,var(--color-container-content-bg),transparent)]"
+								: "bg-[linear-gradient(to_right,var(--color-container-workspace-bg),transparent)]",
+						)}
 					/>
 				) : null}
 				{scrollOverflow.after ? (
 					<div
 						aria-hidden="true"
 						data-testid="tab-overflow-after"
-						className="pointer-events-none absolute inset-y-0 right-0 z-20 w-16 bg-[linear-gradient(to_left,var(--color-container-workspace-bg),transparent)]"
+						className={cn(
+							"pointer-events-none absolute inset-y-0 right-0 z-20 w-16",
+							location.area === "center"
+								? "bg-[linear-gradient(to_left,var(--color-container-content-bg),transparent)]"
+								: "bg-[linear-gradient(to_left,var(--color-container-workspace-bg),transparent)]",
+						)}
 					/>
 				) : null}
 			</div>
@@ -331,12 +357,18 @@ export const TabStrip = memo(function TabStrip({
 					<PopoverContent
 						align="end"
 						className="w-288 p-0"
+						onPointerDownCapture={() => {
+							overflowFocusIntent.current = "restore";
+						}}
+						onKeyDownCapture={() => {
+							overflowFocusIntent.current = "keyboard";
+						}}
 						onCloseAutoFocus={(event) => {
 							const targetId = overflowFocusTarget.current;
 							if (!targetId) return;
 							overflowFocusTarget.current = null;
 							event.preventDefault();
-							tabRefs.current.get(targetId)?.focus();
+							focusLayoutElement(tabRefs.current.get(targetId), overflowFocusIntent.current);
 						}}
 					>
 						<Command>
@@ -460,18 +492,18 @@ export const WorkbenchTab = memo(function WorkbenchTab({
 		});
 		return () => cancelAnimationFrame(frame);
 	}, [editingName]);
-	const focusControl = () => {
+	const focusControl = (intent = readLayoutFocusIntent(globalThis.document.activeElement)) => {
 		const epoch = selectionEpochRef.current;
 		requestAnimationFrame(() => {
 			if (selectionEpochRef.current === epoch)
-				globalThis.document.getElementById(tabDomId(location, tab.id))?.focus();
+				focusLayoutElement(globalThis.document.getElementById(tabDomId(location, tab.id)), intent);
 		});
 	};
 	const closeNameEditor = () => {
 		setEditingName(false);
 		if (!restoreTabFocusRef.current) return;
 		restoreTabFocusRef.current = false;
-		focusControl();
+		focusControl("keyboard");
 	};
 	const commitRename = () => {
 		if (cancelNextBlurRef.current) {
@@ -668,8 +700,10 @@ export const WorkbenchTab = memo(function WorkbenchTab({
 					className={cn(
 						"group data-[dragging]:opacity-40",
 						rail
-							? railEntryFrameClass(location.area)
-							: "relative flex min-w-96 max-w-192 shrink-0 items-center border-border-default border-r text-text-muted after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:z-10 after:h-[2px] after:rounded-full after:content-[''] has-[[role=tab]:focus-visible]:ring-2 has-[[role=tab]:focus-visible]:ring-inset has-[[role=tab]:focus-visible]:ring-primary data-[active=true]:bg-control-bg-selected data-[active=true]:text-text-default data-[active=true]:after:bg-primary",
+							? RAIL_ENTRY_FRAME_CLASS
+							: location.area === "center"
+								? "window-no-drag relative flex h-32 min-w-96 max-w-192 shrink-0 items-center self-center rounded-sm text-text-muted ring-focus-ring ring-inset hover:bg-control-bg-hovered has-[[role=tab]:focus-visible:not([data-layout-focus-intent=restore])]:ring-1 has-[[role=tab][data-layout-focus-intent=keyboard]:focus]:ring-1 data-[active=true]:bg-control-bg-selected data-[active=true]:text-text-default"
+								: "relative flex min-w-96 max-w-192 shrink-0 items-center border-border-default border-r text-text-muted ring-focus-ring ring-inset after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:z-10 after:h-[2px] after:rounded-full after:content-[''] has-[[role=tab]:focus-visible:not([data-layout-focus-intent=restore])]:ring-1 has-[[role=tab][data-layout-focus-intent=keyboard]:focus]:ring-1 data-[active=true]:bg-control-bg-selected data-[active=true]:text-text-default data-[active=true]:after:bg-primary",
 					)}
 				>
 					<div

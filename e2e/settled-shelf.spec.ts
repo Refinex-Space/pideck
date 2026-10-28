@@ -6,7 +6,12 @@ import {
 	type Workspace,
 	WS_CHANNELS,
 } from "@thinkrail/contracts";
-import { createWorkspaceViaDialog, openFixtureProject, worktreeRows } from "./fixtures/app";
+import {
+	createWorkspaceViaDialog,
+	openAppSettings,
+	openFixtureProject,
+	worktreeRows,
+} from "./fixtures/app";
 import { E2E_DATA_DIR } from "./fixtures/paths";
 
 const DAY_MS = 24 * 60 * 60_000;
@@ -150,20 +155,20 @@ test("a pre-v78 host keeps the legacy workspace list without shelf affordances",
 	await expect(options.nth(1)).toContainText("workspace-1");
 	await expect(page.getByTestId("scope-workspace-settled-group")).toHaveCount(0);
 	await page.keyboard.press("Escape");
-	await page.getByTestId("open-settings").click();
+	await openAppSettings(page);
 	await expect(page.getByTestId("settings-nav-workspaces")).toHaveCount(0);
 });
 
 test("the settle window is a host setting that survives a reload", async ({ page }) => {
 	await openFixtureProject(page);
-	await page.getByTestId("open-settings").click();
+	await openAppSettings(page);
 	await page.getByTestId("settings-nav-workspaces").click();
 	await expect(page.getByTestId("settle-idle-7")).toHaveAttribute("data-active", "true");
 	await page.getByTestId("settle-idle-14").click();
 	await expect(page.getByTestId("settle-idle-14")).toHaveAttribute("data-active", "true");
 	await page.reload();
 	await expect(page.getByTestId("connection-status")).toHaveAttribute("data-status", "connected");
-	await page.getByTestId("open-settings").click();
+	await openAppSettings(page);
 	await page.getByTestId("settings-nav-workspaces").click();
 	await expect(page.getByTestId("settle-idle-14")).toHaveAttribute("data-active", "true");
 });

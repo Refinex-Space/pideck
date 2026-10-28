@@ -42,7 +42,7 @@ export function VisibleModelsSettings({ models }: Props) {
 				aria-expanded={expanded}
 				aria-controls={listId}
 				onClick={() => setExpanded(!expanded)}
-				className="flex w-full items-start gap-8 py-12 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary"
+				className="flex w-full items-start gap-8 py-12 text-left outline-none transition-colors focus-visible:ring-1 focus-visible:ring-focus-ring"
 			>
 				<span className="flex flex-1 flex-col gap-2">
 					<span className="tr-text-ui text-text-default">{t("settings.visibleModels.title")}</span>

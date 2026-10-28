@@ -16,6 +16,9 @@ image, SVG, CSV, JSON, notebook, PDF, HTML) with their review composers, thread 
 and the shared Monaco, Pierre and markdown-document machinery they run on. It is presentation: it owns no
 content loading, review persistence, tabs or navigation — a host supplies those.
 
+File editors consume the PiDeck design system's 13px code size and generated integer code-row height,
+shared with code blocks. Theme swaps, wrapping and review annotations keep their existing owners.
+
 The package exists so one renderer stack serves every surface that shows a file: the web app's file and
 diff panes, the file-comparison diff tab, and extension tool cards (visualize's file previews,
 [[module-ext-visualize]]), so a renderer fix lands everywhere at once.

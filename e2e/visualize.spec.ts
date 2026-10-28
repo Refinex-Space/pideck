@@ -4,6 +4,7 @@ import { expect, type Locator, type Page, test } from "@playwright/test";
 import {
 	enterDefaultWorkspace,
 	expandDisclosure,
+	openAppSettings,
 	openFixtureProject,
 	openPersistedChat,
 } from "./fixtures/app";
@@ -87,7 +88,7 @@ const mockupHtml = (label: string) =>
 	`<!doctype html><html><body><main><h1>Settings</h1><span class="cta">${label}</span></main></body></html>`;
 
 async function openAppearance(page: Page): Promise<Locator> {
-	await page.getByTestId("open-settings").click();
+	await openAppSettings(page);
 	const dialog = page.getByTestId("settings-dialog");
 	await expect(dialog).toBeVisible();
 	await page.getByTestId("settings-nav-appearance").click();

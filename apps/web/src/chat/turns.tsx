@@ -196,7 +196,7 @@ function userAttachments(content: UserMessage["content"], names?: string[]) {
 }
 
 const USER_BUBBLE_BASE =
-	"whitespace-pre-wrap [overflow-wrap:anywhere] rounded-lg border border-bubble-user-border bg-clip-padding bg-bubble-user-bg px-12 py-8 tr-text-reading text-text-muted";
+	"whitespace-pre-wrap [overflow-wrap:anywhere] rounded-lg border border-bubble-user-border bg-clip-padding bg-bubble-user-bg px-16 py-12 tr-text-reading text-text-default";
 const USER_BUBBLE = cn("max-w-[85%]", USER_BUBBLE_BASE);
 
 // In unbounded chat-width mode the transcript row is a fixed measure that can be far wider than the
@@ -266,7 +266,10 @@ function MessageWithCopy({
 			{copyable ? (
 				<CopyButton
 					getText={getText}
-					className={cn("absolute z-10", side === "right" ? "right-0 bottom-8" : "bottom-0 left-0")}
+					className={cn(
+						"absolute z-10",
+						side === "right" ? "right-0 bottom-12" : "bottom-0 left-0",
+					)}
 				/>
 			) : null}
 		</div>
@@ -426,7 +429,7 @@ function SkillInvocationCard({
 						: t("chat.turn.showSkillInstructions", { skill: invocation.name })
 				}
 				onClick={toggle}
-				className="flex w-full items-center gap-4 px-12 py-8 text-left outline-none transition-colors hover:bg-control-bg-hovered focus-visible:ring-2 focus-visible:ring-primary"
+				className="flex w-full items-center gap-4 px-12 py-8 text-left outline-none transition-colors hover:bg-control-bg-hovered focus-visible:ring-1 focus-visible:ring-focus-ring"
 			>
 				<BookOpen className="size-14 shrink-0 text-text-muted" aria-hidden="true" />
 				<span className="shrink-0 tr-text-ui text-text-muted">{t("chat.turn.skill")}</span>

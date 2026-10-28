@@ -28,8 +28,8 @@ test("renders the branded shell and, with no workspace, the Welcome screen", asy
 	await expect(logo).toHaveAttribute("aria-label", "PiDeck");
 	const logoBox = await logo.boundingBox();
 	expect(logoBox).not.toBeNull();
-	expect(logoBox?.height).toBeCloseTo(32, 0);
-	expect(logoBox?.width).toBeCloseTo(32, 0);
+	expect(logoBox?.height).toBeCloseTo(20, 0);
+	expect(logoBox?.width).toBeCloseTo(20, 0);
 	const logoColors = await logo.evaluate((element) => ({
 		color: getComputedStyle(element).color,
 		fill: getComputedStyle(element.querySelector("path") ?? element).fill,

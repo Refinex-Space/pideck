@@ -2,15 +2,15 @@ import { expect, type Page, test } from "@playwright/test";
 import {
 	createWorkspaceViaDialog,
 	enterDefaultWorkspace,
+	openAppSettings,
 	openFixtureProject,
 	openWorkspaceMenu,
-	waitTerminalReady,
 	worktreeRows,
 } from "./fixtures/app";
 import { installChannelHold } from "./fixtures/channelHold";
 
 async function openChatSettings(page: Page): Promise<void> {
-	await page.getByTestId("open-settings").click();
+	await openAppSettings(page);
 	await page.getByTestId("settings-nav-chat").click();
 	await expect(page.getByTestId("settings-subagents")).toBeVisible();
 }
@@ -64,7 +64,10 @@ test("a maximal unbroken workspace name stays contained on a phone-sized setting
 }) => {
 	await openFixtureProject(page);
 	await createWorkspaceViaDialog(page);
-	await waitTerminalReady(page);
+	await expect(page.getByTestId("workspace-workbench")).toHaveAttribute(
+		"data-layout-status",
+		"settled",
+	);
 	const row = worktreeRows(page).first();
 	const longName = "W".repeat(60);
 	await openWorkspaceMenu(row);

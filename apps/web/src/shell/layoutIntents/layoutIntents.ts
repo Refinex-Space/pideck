@@ -514,6 +514,9 @@ export function useLayoutIntentProcessing(
 					workspaceId,
 					key: layoutIntent.id,
 					location,
+					...(layoutIntent.kind === "toggle-side" || layoutIntent.kind === "toggle-bottom"
+						? { intent: "keyboard" as const }
+						: {}),
 					...(result.focusTabId ? { tabId: result.focusTabId } : {}),
 					...(result.focusOnlyIfLost ? { onlyIfFocusLost: true } : {}),
 				});

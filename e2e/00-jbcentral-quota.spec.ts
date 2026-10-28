@@ -117,7 +117,7 @@ test("stale quota keeps its value, retries immediately, and preserves both numbe
 	await expect(quota(page)).toContainText("18.5 / 20");
 
 	await page.setViewportSize({ width: 390, height: 780 });
-	await expect(quota(page).getByText("credits", { exact: true })).toBeHidden();
+	await expect(quota(page).getByText("credits", { exact: true })).toHaveClass(/sr-only/);
 	await expect(
 		page.getByTestId("connection-status").getByText("Connected", { exact: true }),
 	).toBeHidden();

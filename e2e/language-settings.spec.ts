@@ -1,7 +1,12 @@
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, type Page, test } from "@playwright/test";
-import { enterDefaultWorkspace, openFixtureProject, revealWorkbenchTool } from "./fixtures/app";
+import {
+	enterDefaultWorkspace,
+	openAppSettings,
+	openFixtureProject,
+	revealWorkbenchTool,
+} from "./fixtures/app";
 import { E2E_DATA_DIR } from "./fixtures/paths";
 
 const LOCALES_DIR = join(E2E_DATA_DIR, "locales");
@@ -17,7 +22,7 @@ function removeLocale(name: string): void {
 
 async function openLanguageSettings(page: Page) {
 	if (!(await page.getByTestId("settings-dialog").isVisible())) {
-		await page.getByTestId("open-settings").click();
+		await openAppSettings(page);
 	}
 	await page.getByTestId("settings-nav-language").click();
 	const section = page.getByTestId("settings-language");

@@ -1,6 +1,7 @@
 export { AuxiliaryPaneHeader, AuxiliaryPaneHideButton } from "./AuxiliaryPaneHeader";
 export { AuxiliaryRail, AuxiliaryRailToolButton } from "./AuxiliaryRail";
 export * from "./auxiliaryPresentation";
+export { readLayoutFocusIntent } from "./layoutFocus";
 export * from "./model";
 export * from "./normalized";
 export * from "./presets";

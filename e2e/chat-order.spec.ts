@@ -1,6 +1,6 @@
 import { realpathSync, rmSync, utimesSync } from "node:fs";
 import { expect, type Page, test } from "@playwright/test";
-import { enterDefaultWorkspace, openFixtureProject } from "./fixtures/app";
+import { enterDefaultWorkspace, openAppSettings, openFixtureProject } from "./fixtures/app";
 import {
 	moveMouseToChatViewport,
 	readChatScrollGeometry,
@@ -12,7 +12,7 @@ import { seedWorkspaceSession } from "./fixtures/sessions";
 const BASE_TS = 1_700_700_000_000;
 
 async function selectMessageOrder(page: Page, order: "oldest-first" | "newest-first") {
-	await page.getByTestId("open-settings").click();
+	await openAppSettings(page);
 	await page.getByTestId("settings-nav-chat").click();
 	const option = page.getByTestId(`chat-order-${order}`);
 	await option.click();
@@ -21,7 +21,7 @@ async function selectMessageOrder(page: Page, order: "oldest-first" | "newest-fi
 }
 
 async function setStreamingResponseMovement(page: Page, settle: number, trigger: number) {
-	await page.getByTestId("open-settings").click();
+	await openAppSettings(page);
 	await page.getByTestId("settings-nav-chat").click();
 	const settleInput = page.getByTestId("streaming-movement-settle");
 	const triggerInput = page.getByTestId("streaming-movement-trigger");
@@ -88,7 +88,7 @@ test("browser-local chat preferences persist without changing another browser", 
 			"oldest answer",
 			"oldest request",
 		]);
-		await page.getByTestId("open-settings").click();
+		await openAppSettings(page);
 		await page.getByTestId("settings-nav-chat").click();
 		await expect(page.getByTestId("streaming-movement-settle")).toHaveValue("65");
 		await expect(page.getByTestId("streaming-movement-trigger")).toHaveValue("95");
@@ -102,7 +102,7 @@ test("browser-local chat preferences persist without changing another browser", 
 				"data-status",
 				"connected",
 			);
-			await isolatedPage.getByTestId("open-settings").click();
+			await openAppSettings(isolatedPage);
 			await isolatedPage.getByTestId("settings-nav-chat").click();
 			await expect(isolatedPage.getByTestId("chat-order-oldest-first")).toHaveAttribute(
 				"data-active",

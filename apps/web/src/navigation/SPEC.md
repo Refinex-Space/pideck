@@ -22,7 +22,7 @@ action, never an automatic backend-owned active location.
 
 - **Owns:** `NavigationLocation`; the versioned fragment codec; the `NavigationDriver` seam (`read`/`replace`/`push`/incoming-location subscription); the browser fragment driver; startup/direct-link restoration and canonical fallback; the push-vs-replace history decision; loop/idempotency guards between serialized intent and validated store state.
 - **Public surface (barrel):** route types + codec and `initNavigation(driver?)`; the browser driver is the default. Native adapters may consume/produce the same backend-relative route without changing store or transport.
-- **External deps:** `contracts` (project/workspace/session DTO types, type-only); browser History/Location APIs.
+- **External deps:** `contracts` (project/workspace/session DTO types, type-only); browser History/Location APIs; `lib` (`randomId`, shared browser-safe identity generation).
 - **Forbidden:** server/shared/pi; owning project/workspace/session snapshots; persisting credentials or raw backend secrets; importing panels/chat/shell; writing a backend-owned “active location.”
 
 Sibling dependency edges live only in `module-web`. `main.tsx` initializes the integration, while `shell/chatReconciliation` consumes the store's exact-chat target through its existing hydration integration.
@@ -41,6 +41,16 @@ Each id is one encoded path segment. Empty ids, extra segments, malformed encodi
 Store-driven navigation writes the fragment through the history contract below: user-intent location changes push a browser history entry, passive ones replace in place. Directly opened fragments and later incoming fragment changes still run through validation. The driver compares the derived location before writing, so non-navigation store churn — especially streaming Pi events — causes no History API calls.
 
 ## History contract (browser Back/Forward, issue #152)
+
+The shell's Back/Forward controls traverse this same browser history. The browser driver annotates
+its own contiguous entries with a namespaced chain/index in history.state, preserving other object
+fields, and keeps only the chain's upper bound in sessionStorage. This metadata supplies availability,
+not a second route stack. Reload retains the bounds; push after Back truncates Forward. Fresh direct
+links and unrecognized entries establish a new boundary, so application buttons never leave the app
+for an unrelated document. A pending traversal disables both buttons until popstate. Browser-native
+Back/Forward remain unrestricted. Storage failures degrade to current-document bounds.
+Public history controls are `getNavigationHistory`, `subscribeNavigationHistory`, `goBack`, and
+`goForward`; shell subscribes without writing route or domain state.
 
 Back/Forward must step through the user's in-app navigation. Entries are **locations, not tab state**: every entry is a route the restore contract can validate and re-enter, so Back/Forward is just an incoming fragment — pushes change only the hash, and hash-only traversal fires `hashchange`, which the driver already reports as an incoming route. The new machinery only decides *when a navigation creates an entry*.
 

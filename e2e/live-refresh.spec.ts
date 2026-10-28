@@ -86,6 +86,7 @@ test("worktree changes on disk appear live in Specs, Files, Changes, and an open
 	const workspace = await createWorkspaceViaDialog(page);
 	const worktree = workspace.worktreePath;
 
+	await revealWorkbenchTool(page, "specs");
 	await expect(page.locator('[data-testid="spec-node"][data-spec-id="sample-root"]')).toBeVisible();
 	mkdirSync(join(worktree, "module-live"), { recursive: true });
 	writeFileSync(

@@ -215,7 +215,7 @@ describe("frontend-local layout state", () => {
 		});
 	});
 
-	test("a pristine surface initializes a Balanced workspace locally without transport", async () => {
+	test("a pristine surface initializes a Studio workspace locally without transport", async () => {
 		const local = new MemoryStorage();
 		const session = new MemoryStorage();
 		session.setItem("thinkrail:layout-surface-id", "surface-a");
@@ -231,9 +231,55 @@ describe("frontend-local layout state", () => {
 			toolTab("files"),
 			toolTab("review"),
 		]);
-		expect(first.bottom).toMatchObject({ visible: true, groups: [{ tabs: [] }] });
+		expect(first.left.visible).toBe(true);
+		expect(first.right.visible).toBe(false);
+		expect(first.bottom).toMatchObject({ visible: false, groups: [{ tabs: [] }] });
+		expect(useAppStore.getState().localLayoutPreferences.defaultPresetId).toBe("studio");
 		expect(second).toBe(first);
 		expect(local.getItem(localLayoutStorageKey(endpoint, "surface-a"))).not.toBeNull();
+	});
+
+	test("a saved Balanced frame stays unchanged when Studio becomes the initial default", async () => {
+		const local = new MemoryStorage();
+		const session = new MemoryStorage();
+		session.setItem("thinkrail:layout-surface-id", "saved-balanced");
+		setLayoutStateStorageForTests({ local, session }, endpoint);
+		await ensureWorkspaceLayoutState("workspace");
+		const balanced = BUILTIN_LAYOUT_PRESETS.find((preset) => preset.id === "balanced");
+		if (!balanced) throw new Error("missing Balanced preset");
+		applyLayoutPresetLocally(balanced);
+		const frame = structuredClone(useAppStore.getState().workbenchFrame);
+		resetLayoutStateForTests();
+		resetStore();
+		setLayoutStateStorageForTests({ local, session }, endpoint);
+		const restored = await ensureWorkspaceLayoutState("workspace");
+		expect(useAppStore.getState().workbenchFrame).toEqual(frame);
+		expect(restored.right.visible).toBe(true);
+		expect(restored.bottom.visible).toBe(true);
+	});
+
+	test("viewport sizing runs once and an explicit Studio apply alone resizes a saved frame", async () => {
+		const local = new MemoryStorage();
+		const session = new MemoryStorage();
+		session.setItem("thinkrail:layout-surface-id", "viewport-studio");
+		setLayoutStateStorageForTests({ local, session }, endpoint);
+		await initializeLocalLayoutState(2316);
+		const initial = await ensureWorkspaceLayoutState("workspace");
+		expect(initial.left.width * 2316).toBeCloseTo(288, 5);
+		await initializeLocalLayoutState(1440);
+		expect(useAppStore.getState().layoutDocumentsByWorkspace.workspace).toBe(initial);
+		await commitWorkspaceLayout("workspace", resizeSideRegion(initial, "left", 0.31));
+		const saved = structuredClone(useAppStore.getState().workbenchFrame);
+		resetLayoutStateForTests();
+		resetStore();
+		setLayoutStateStorageForTests({ local, session }, endpoint);
+		await initializeLocalLayoutState(390);
+		await ensureWorkspaceLayoutState("workspace");
+		expect(useAppStore.getState().workbenchFrame).toEqual(saved);
+		const studio = BUILTIN_LAYOUT_PRESETS.find((preset) => preset.id === "studio");
+		if (!studio) throw new Error("missing Studio preset");
+		applyLayoutPresetLocally(studio, 1440);
+		expect((useAppStore.getState().workbenchFrame?.left.width ?? 0) * 1440).toBeCloseTo(288, 5);
 	});
 
 	test("a ready layout installs a new workspace view", async () => {
@@ -418,7 +464,7 @@ describe("frontend-local layout state", () => {
 		expect(useAppStore.getState().layoutAttentionByWorkspace.C).toEqual(pending.attention);
 	});
 
-	test("an invalid local frame falls back directly to Balanced", async () => {
+	test("an invalid local frame falls back directly to Studio", async () => {
 		const local = new MemoryStorage();
 		const session = new MemoryStorage();
 		session.setItem("thinkrail:layout-surface-id", "surface-a");
@@ -448,7 +494,7 @@ describe("frontend-local layout state", () => {
 		const restored = await ensureWorkspaceLayoutState("workspace");
 		expect(restored.center).toMatchObject({ kind: "group", tabs: [] });
 		expect(restored.left.groups[0]?.tabs).toEqual([toolTab("projects")]);
-		expect(restored.bottom.visible).toBe(true);
+		expect(restored.bottom.visible).toBe(false);
 	});
 
 	test("a persisted changes review tab survives reload as a preview-eligible center tab", async () => {

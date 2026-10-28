@@ -2,17 +2,17 @@ import { expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 
 const shellSource = readFileSync(new URL("./Shell.tsx", import.meta.url), "utf8");
-const headerStart = shellSource.indexOf("<header");
-const headerEnd = shellSource.indexOf("</header>");
-const header = shellSource.slice(headerStart, headerEnd);
+const menuSource = readFileSync(new URL("./ApplicationMenu.tsx", import.meta.url), "utf8");
 const jsxTag = (name: string) => new RegExp(`<${name}\\b(?:=>|[^>])*>`, "g");
-const openingTag = jsxTag("header").exec(header)?.[0] ?? "";
-
+const openingTag =
+	[...shellSource.matchAll(jsxTag("div"))]
+		.map((m) => m[0])
+		.find((tag) => tag.includes('data-testid="topbar"')) ?? "";
 const classAttribute = (tag: string) => /className="([^"]*)"/.exec(tag)?.[1]?.split(/\s+/) ?? [];
 
 test("the topbar is a fixed-height window-drag region on the topbar row token", () => {
-	expect(headerStart).toBeGreaterThanOrEqual(0);
-	expect(headerEnd).toBeGreaterThan(headerStart);
+	expect(shellSource).not.toContain("<header");
+	expect(shellSource).not.toContain("grid-rows-[auto_1fr]");
 	const classes = classAttribute(openingTag);
 	expect(openingTag).toContain('data-testid="topbar"');
 	expect(classes).toContain("window-drag");
@@ -22,44 +22,17 @@ test("the topbar is a fixed-height window-drag region on the topbar row token", 
 	expect(classes.some((c) => /^py-/.test(c))).toBe(false);
 });
 
-test("the trailing topbar action cluster owns the no-drag boundary", () => {
-	const actionOpenings = [...header.matchAll(/<div\b[^>]*data-testid="topbar-actions"[^>]*>/g)];
-	expect(actionOpenings).toHaveLength(1);
-	const actionOpening = actionOpenings[0];
-	if (!actionOpening || actionOpening.index === undefined)
-		throw new Error("missing action cluster");
-	expect(classAttribute(actionOpening[0])).toEqual(
-		expect.arrayContaining(["window-no-drag", "ml-auto"]),
-	);
-	const openingEnd = actionOpening.index + actionOpening[0].length;
-	let depth = 1;
-	let closeStart: number | undefined;
-	const divTags = /<\/?div\b[^>]*>/g;
-	divTags.lastIndex = openingEnd;
-	for (const match of header.matchAll(divTags)) {
-		if (match.index === undefined) continue;
-		if (match[0].startsWith("</div")) {
-			depth -= 1;
-			if (depth === 0) {
-				closeStart = match.index;
-				break;
-			}
-		} else if (!match[0].endsWith("/>") && !match[0].endsWith(" />")) {
-			depth += 1;
-		}
-	}
-	expect(closeStart).toBeDefined();
-	const buttons = [...header.matchAll(/<(?:button|Button|IconButton)\b/g)];
-	expect(buttons.length).toBeGreaterThan(0);
-	for (const button of buttons) {
-		expect(button.index).toBeGreaterThanOrEqual(openingEnd);
-		expect(button.index).toBeLessThan(closeStart ?? -1);
-	}
+test("application settings live in the navigation footer outside native drag regions", () => {
+	expect(menuSource).toContain('data-testid="navigation-footer"');
+	expect(menuSource).toContain("window-no-drag");
+	expect(menuSource).toContain('data-testid="app-menu"');
+	expect(menuSource).toContain('data-testid="open-settings"');
+	expect(shellSource).not.toContain('data-testid="open-settings"');
 });
 
 test("the topbar reserves host-published window-chrome insets at both edges through width tokens", () => {
 	for (const edge of ["left", "right"]) {
-		const spacer = [...header.matchAll(jsxTag("div"))]
+		const spacer = [...shellSource.matchAll(jsxTag("div"))]
 			.map((m) => m[0])
 			.find((tag) => tag.includes(`data-testid="window-chrome-inset-${edge}"`));
 		expect(spacer).toContain('aria-hidden="true"');
@@ -71,10 +44,10 @@ test("the topbar reserves host-published window-chrome insets at both edges thro
 test("the native window controls mount once, positioned after the right inset spacer, and the header is a positioning root", () => {
 	const classes = classAttribute(openingTag);
 	expect(classes).toContain("relative");
-	const controlMatches = [...header.matchAll(/<NativeWindowControls\b/g)];
+	const controlMatches = [...shellSource.matchAll(/<NativeWindowControls\b/g)];
 	expect(controlMatches).toHaveLength(1);
 	const controlIndex = controlMatches[0]?.index;
-	const insetRightIndex = header.indexOf('data-testid="window-chrome-inset-right"');
+	const insetRightIndex = shellSource.indexOf('data-testid="window-chrome-inset-right"');
 	expect(insetRightIndex).toBeGreaterThanOrEqual(0);
 	expect(controlIndex).toBeDefined();
 	expect(controlIndex ?? -1).toBeGreaterThan(insetRightIndex);

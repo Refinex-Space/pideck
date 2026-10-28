@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { openAppSettings } from "./fixtures/app";
 
 test("settings shows the Local GitHub status block and degrades gh gracefully", async ({
 	page,
@@ -6,7 +7,7 @@ test("settings shows the Local GitHub status block and degrades gh gracefully", 
 	await page.goto("/");
 	await expect(page.getByTestId("connection-status")).toHaveAttribute("data-status", "connected");
 
-	await page.getByTestId("open-settings").click();
+	await openAppSettings(page);
 	const dialog = page.getByTestId("settings-dialog");
 	await expect(dialog).toBeVisible();
 

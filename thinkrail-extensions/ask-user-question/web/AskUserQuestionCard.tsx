@@ -807,7 +807,7 @@ function TabChip({
 			data-answered={answered}
 			onClick={onClick}
 			className={cn(
-				"flex shrink-0 items-center gap-4 whitespace-nowrap rounded-full px-8 py-2 tr-text-metadata outline-none focus-visible:ring-2 focus-visible:ring-primary",
+				"flex shrink-0 items-center gap-4 whitespace-nowrap rounded-full px-8 py-2 tr-text-metadata outline-none focus-visible:ring-1 focus-visible:ring-focus-ring",
 				active ? "bg-primary-subtle text-primary" : "text-text-muted hover:bg-control-bg-hovered",
 			)}
 		>
@@ -1138,7 +1138,7 @@ function OptionRow({
 			onKeyDown={onKeyDown}
 			onClick={onClick}
 			className={cn(
-				"flex items-start gap-8 rounded-sm border px-12 py-8 text-left outline-none transition-colors focus-visible:border-control-border-active focus-visible:ring-2 focus-visible:ring-primary",
+				"flex items-start gap-8 rounded-sm border px-12 py-8 text-left outline-none transition-colors focus-visible:border-control-border-active focus-visible:ring-1 focus-visible:ring-focus-ring",
 				selected
 					? "border-primary bg-primary-subtle"
 					: "border-border-default hover:bg-control-bg-hovered",
@@ -1212,7 +1212,7 @@ function OtherOptionRow({
 						e.preventDefault();
 						onToggle();
 					}}
-					className="flex items-center rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-primary"
+					className="flex items-center rounded-sm outline-none focus-visible:ring-1 focus-visible:ring-focus-ring"
 				>
 					<Indicator selected={active} multi className="mt-0" />
 				</button>
@@ -1317,7 +1317,7 @@ function ReviewView({
 					data-testid="ask-review-title"
 					data-ask-page-start="true"
 					data-ask-page-focus="true"
-					className="rounded-sm tr-title-dialog text-text-default outline-none focus-visible:ring-2 focus-visible:ring-primary"
+					className="rounded-sm tr-title-dialog text-text-default outline-none focus-visible:ring-1 focus-visible:ring-focus-ring"
 				>
 					{t("tools.ask.reviewTitle")}
 				</p>
@@ -1337,7 +1337,7 @@ function ReviewView({
 					type="button"
 					data-testid="ask-unanswered"
 					onClick={() => onJump(unanswered[0]?.i ?? 0)}
-					className="self-start rounded-sm text-feedback-warning tr-text-metadata outline-none hover:underline focus-visible:ring-2 focus-visible:ring-primary"
+					className="self-start rounded-sm text-feedback-warning tr-text-metadata outline-none hover:underline focus-visible:ring-1 focus-visible:ring-focus-ring"
 				>
 					{t("tools.ask.unanswered", {
 						questions: unanswered

@@ -61,7 +61,7 @@ export function TreeRow({
 			onContextMenu={onContextMenu}
 			onPointerEnter={onWarm && (() => onWarm("hover"))}
 			onFocus={onWarm && (() => onWarm("focus"))}
-			className={`flex h-panel-row w-full min-w-0 items-center gap-4 rounded-sm px-4 text-left tr-text-ui ${tone} outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary ${
+			className={`flex h-panel-row w-full min-w-0 items-center gap-4 rounded-sm px-4 text-left tr-text-ui ${tone} outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-focus-ring ${
 				highlight === "self"
 					? `hover:bg-control-bg-hovered ${active ? "bg-control-bg-selected" : ""}`
 					: ""

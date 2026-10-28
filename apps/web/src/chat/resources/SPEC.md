@@ -29,7 +29,7 @@ subagent reads the same in the chat as in Finished.
   *header*; the detail *body* is a slot the parent fills, and so is the result row's expanded body.
 - **Public surface:** `ResourcesButton`, `ResourcesAttention`, `ResourcesDock`, `ResourcesInspector`,
   `CommandLogView`, `ResultRow`, `ResultReceipt`, `ResultSource`, `ResourceTarget`.
-- **Allowed external deps:** contracts, React, Remix icons, shared UI primitives and theme utilities,
+- **Allowed external deps:** contracts, React, Lucide and retained Remix icons, shared UI primitives and theme utilities,
   `@thinkrail/locales` (UI strings), and `lib` (the shared MCP state vocabulary). Time arrives as a `now` prop so formatting stays pure.
 - **Forbidden:** store/transport, server/portable extension packages, Pi value imports, process
   execution, log persistence, subagent transcript fetching, and workbench placement. Parent-chat
@@ -159,3 +159,5 @@ focus return, safe plain-text logs, row-specific stop failures and stop-all conf
 detail's model item (absent without a model), and the result row's state mapping, teaser derivation, controlled expansion and optional open action.
 Browser coverage must prove current-chat isolation, reload/reconnect rehydration, late completion while
 the inspector is closed, and no cancellation from view closure.
+
+The Resources trigger uses Lucide `package-2` in both closed/open states; selection stays on the button surface. Its existing working animation, count, attention and accessibility semantics remain unchanged.

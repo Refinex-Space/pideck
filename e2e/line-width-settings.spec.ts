@@ -4,6 +4,7 @@ import { expect, type Locator, type Page, test } from "@playwright/test";
 import {
 	createWorkspaceViaDialog,
 	hideAuxiliaryWorkbench,
+	openAppSettings,
 	openFixtureProject,
 	openWorkspaceChat,
 	PHONE_VIEWPORT,
@@ -30,7 +31,7 @@ function widthControls(page: Page, kind: LineWidthKind) {
 
 async function openLineWidthSettings(page: Page, kind: LineWidthKind) {
 	if (!(await page.getByTestId("settings-dialog").isVisible())) {
-		await page.getByTestId("open-settings").click();
+		await openAppSettings(page);
 	}
 	const nav = page.getByTestId(LINE_WIDTH_NAV[kind]);
 	await expect(nav).toBeVisible();

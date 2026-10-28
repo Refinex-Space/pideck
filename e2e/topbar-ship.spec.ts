@@ -6,6 +6,7 @@ import {
 	createWorkspaceViaDialog,
 	enterDefaultWorkspace,
 	openFixtureProject,
+	workspaceDetail,
 	worktreeRow,
 } from "./fixtures/app";
 import { commitFile, gitAs } from "./fixtures/git";
@@ -32,11 +33,11 @@ test("Remote publishes, then pushes new commits, with no PR involved", async ({
 }, testInfo) => {
 	await openFixtureProject(page);
 	const workspace = await createWorkspaceViaDialog(page);
-	const remote = page.getByTestId("scope-remote-segment");
-	const remoteValue = page.getByTestId("scope-remote-value");
-	const remoteAction = page.getByTestId("scope-ship-remote-primary");
+	const remote = await workspaceDetail(page, "scope-remote-segment");
+	const remoteValue = await workspaceDetail(page, "scope-remote-value");
+	const remoteAction = await workspaceDetail(page, "scope-ship-remote-primary");
 	await expect(remoteValue).toHaveAttribute("data-kind", "noOrigin");
-	await expect(page.getByTestId("scope-review-value")).toHaveText("No PR");
+	await expect(await workspaceDetail(page, "scope-review-value")).toHaveText("No PR");
 
 	commitFile(workspace.worktreePath, "ship.ts", "export const ship = 1;\n", "feat: ship it");
 	const bare = bareRemote();
@@ -44,8 +45,8 @@ test("Remote publishes, then pushes new commits, with no PR involved", async ({
 	await revalidate(page);
 	await expect(remoteAction).toHaveAttribute("data-action", "publish");
 	// A local bare origin is no forge: no Open PR, only the (disabled) merge stub.
-	await expect(page.getByTestId("scope-ship-review-primary")).toHaveCount(0);
-	await page.getByTestId("scope-ship-review-menu").click();
+	await expect(await workspaceDetail(page, "scope-ship-review-primary")).toHaveCount(0);
+	await (await workspaceDetail(page, "scope-ship-review-menu")).click();
 	await expect(
 		page.locator('[data-testid="scope-ship-action"][data-action="mergeLocal"]'),
 	).toHaveAttribute("data-disabled", "");
@@ -100,8 +101,11 @@ test("pushing the Default workspace's own base branch asks first", async ({ page
 		gitAs(E2E_FIXTURE_REPO, "push", "-q", "--set-upstream", "origin", "main");
 		const local = commitFile(E2E_FIXTURE_REPO, "notes.txt", "local-only\n", "chore: local note");
 		await revalidate(page);
-		await expect(page.getByTestId("scope-review-value")).toHaveAttribute("data-kind", "base");
-		const push = page.getByTestId("scope-ship-remote-primary");
+		await expect(await workspaceDetail(page, "scope-review-value")).toHaveAttribute(
+			"data-kind",
+			"base",
+		);
+		const push = await workspaceDetail(page, "scope-ship-remote-primary");
 		await expect(push).toHaveAttribute("data-action", "push");
 
 		await push.click();
@@ -140,14 +144,14 @@ test("Try again after a failed base push never pushes a branch the user didn't c
 		);
 		chmodSync(hook, 0o755);
 		await revalidate(page);
-		await page.getByTestId("scope-ship-remote-primary").click();
+		await (await workspaceDetail(page, "scope-ship-remote-primary")).click();
 		await page.getByTestId("ship-confirm-base-push").click();
 		const setup = page.getByTestId("open-pr-setup-dialog");
 		await expect(setup).toBeVisible();
 
 		gitAs(E2E_FIXTURE_REPO, "switch", "-q", "-c", "release");
 		await revalidate(page);
-		await expect(page.getByTestId("scope-branch")).toHaveText("release");
+		await expect(await workspaceDetail(page, "scope-branch")).toHaveText("release");
 		rmSync(hook);
 		await page.getByTestId("open-pr-setup-retry").click();
 		await expect(page.getByText(/moved from "main" to "release"/).first()).toBeVisible();
@@ -188,7 +192,7 @@ test("Open PR from the topbar composes from commits or the repository template",
 		gitAs(workspace.worktreePath, "config", "protocol.https.allow", "never");
 		await revalidate(page);
 
-		const openPr = page.getByTestId("scope-ship-review-primary");
+		const openPr = await workspaceDetail(page, "scope-ship-review-primary");
 		await expect(openPr).toHaveAttribute("data-action", "openPr");
 		await openPr.click();
 		const compose = page.getByTestId("open-pr-compose-dialog");
@@ -252,7 +256,7 @@ test("an Open PR draft belongs to its workspace and closes when the scope moves"
 	gitAs(second.worktreePath, "config", "protocol.https.allow", "never");
 	try {
 		await revalidate(page);
-		await page.getByTestId("scope-ship-review-primary").click();
+		await (await workspaceDetail(page, "scope-ship-review-primary")).click();
 		const compose = page.getByTestId("open-pr-compose-dialog");
 		await expect(compose).toBeVisible();
 

@@ -12,7 +12,7 @@ export function SettingsGroup({ title, description, children, testId }: Settings
 	return (
 		<section data-testid={testId} className="flex flex-col">
 			<div className="flex flex-col gap-2 pb-12">
-				<h3 className="tr-text-label-pill text-text-subtle">{title}</h3>
+				<h3 className="tr-title-section text-text-default">{title}</h3>
 				{description ? <p className="tr-text-metadata text-text-muted">{description}</p> : null}
 			</div>
 			<div className={SETTINGS_ROWS_CONTAINER}>{children}</div>
@@ -31,7 +31,7 @@ export function SettingsPageContainer({ children, testId }: SettingsPageContaine
 			{Children.toArray(children).map((child, index) => (
 				<div
 					key={isValidElement(child) && child.key !== null ? child.key : index}
-					className="flex flex-col empty:hidden [:not(:empty)~&]:mt-24 [:not(:empty)~&]:border-border-muted [:not(:empty)~&]:border-t [:not(:empty)~&]:pt-24"
+					className="flex flex-col empty:hidden [:not(:empty)~&]:mt-32"
 				>
 					{child}
 				</div>

@@ -10,6 +10,9 @@ tags: [ui]
 
 ## Responsibility
 
+The normative PiDeck presentation contract is [design-system.md](../../design-system.md). It governs
+shared visual tokens, workbench hierarchy and platform parity without replacing existing state owners.
+
 The mobile-first React UI. Ships as static assets and dials an engine host over the wire. Renders `pi`'s
 event stream as a chat-centric, multi-session IDE shell.
 
@@ -155,8 +158,8 @@ change. `dist/` therefore has no profiler timers (`actualStartTime` is absent fr
 
 ### Dependency graph
 
-- `navigation` → `store`, `transport`, `contracts` (type-only); neither dependency imports it, and `main.tsx` initializes the integration
-- `shell` → children `shell/layout` + `shell/layoutState`, `@thinkrail/resource-renderers` (`AppResourceHost` registers the bundled renderers and provides one module-level `ResourceHost` — `chat/Markdown`, a code host over `lib/highlighter` + `themes`, `panels/resourcePane` byte URLs, `panels/openTabs` navigation (`openFileInTab` / `openFileComparisonInTab`), `fs.readFile` + the fs-change subscription, and the session-aware `useFileReview` (as the `FileReview` render-prop) + `SendReviewButton` — plus the line-width preferences through `ResourcePreferencesProvider` and the phone class through `ResourceEnvironmentProvider`; `main.tsx` wraps `Shell` in it), `updates` (one optional-capability hook + props-driven Settings content and durable status affordance), `notifications` (mounts the attention observer + permission preface once), `panels`, `chat` (app-integration render/hydration only), `store`, `transport` (domain hydration + endpoint identity), `contracts` (types + the shared `createQuitConfirmation` rule), `ui`, `components` (`ErrorBoundary` around each mounted region + `QuietScrollArea` around shell-owned tool bodies + `preloadedLazy` for the `ChatView` chunk), `constants`, `lib` (platform shortcut semantics), `themes` (the single owner of catalog/media resolution and atomic theme application, driven by the hydrated store preference or pre-hydration hint)
+- `navigation` → `lib` (browser-safe ids), `store`, `transport`, `contracts` (type-only); neither dependency imports it, and `main.tsx` initializes the integration
+- `shell` → `navigation` (browser history availability and traversal only), children `shell/layout` + `shell/layoutState`, `@thinkrail/resource-renderers` (`AppResourceHost` registers the bundled renderers and provides one module-level `ResourceHost` — `chat/Markdown`, a code host over `lib/highlighter` + `themes`, `panels/resourcePane` byte URLs, `panels/openTabs` navigation (`openFileInTab` / `openFileComparisonInTab`), `fs.readFile` + the fs-change subscription, and the session-aware `useFileReview` (as the `FileReview` render-prop) + `SendReviewButton` — plus the line-width preferences through `ResourcePreferencesProvider` and the phone class through `ResourceEnvironmentProvider`; `main.tsx` wraps `Shell` in it), `updates` (one optional-capability hook + props-driven Settings content and durable status affordance), `notifications` (mounts the attention observer + permission preface once), `panels`, `chat` (app-integration render/hydration only), `store`, `transport` (domain hydration + endpoint identity), `contracts` (types + the shared `createQuitConfirmation` rule), `ui`, `components` (`ErrorBoundary` around each mounted region + `QuietScrollArea` around shell-owned tool bodies + `preloadedLazy` for the `ChatView` chunk), `constants`, `lib` (platform shortcut semantics), `themes` (the single owner of catalog/media resolution and atomic theme application, driven by the hydrated store preference or pre-hydration hint)
 - `shell/layout` → `contracts` (`LayoutPreset` + `GitDiffScope` types only), `lib` (attention/id primitives), `ui` (including `@thinkrail/ui/resizable`), and React / `@dnd-kit/core`; `shell/layoutState` → `shell/layout`, `store`, `transport` (browser endpoint identity + error normalization), `clientPreferences` (native-stable persistence), `contracts` (`LayoutPreset` type only), `lib`, and React. The parent injects store state and feature renderers, so the pure layout child has no feature-module runtime edge
 - `updates` → `contracts` (native bridge + host notice types), `store` (host notice, toasts), `ui`, React, and Remix Icon; native snapshots remain shell-local
 - `notifications` → `store` (session-state reads, prompt + `activateWorkspaceFromRoute` / `openSessionSwitcher` actions), `ui` (the permission preface dialog), `contracts` (type-only — `SessionState`/`SessionCompletion`/`NativeNotificationBridge`), React, and Remix Icon; the master-toggle Settings panel lives in `panels`, and `shell` mounts the observer/preface. It emits through a capability-selected channel: the page Notifications API, or the native desktop channel when the optional `__THINKRAIL_NATIVE_NOTIFICATIONS__` bridge is present (capability detection only, no `desktop` branch). No Service Worker: a closed app has no live client to notify
@@ -247,12 +250,11 @@ themselves.
   utility, an arbitrary length always renders, so an off-scale value looks correct in review and passes
   every other gate. Lengths that are not scale steps at all — `max-w-[78ch]`, `w-[320px]`,
   `max-h-[40vh]`, a measured `pl-[calc(…)]` indent — stay allowed; they are layout constraints, not rhythm.
-- **Icons are `@remixicon/react` (Remix Icon) glyphs sized by UI *context*, not location, on the
-  Tailwind `size-*` scale** — imported by name, no `<Icon>` wrapper and no `size=` prop, and never a
+- **Icons**: new and explicitly migrated controls use `lucide-react` with the app-level 1.75 stroke provider; the icon-name mapping in `design-system.md` is authoritative. Existing unconverted Remix glyphs remain. Both are sized by UI *context*, not location, on the
+  Tailwind `size-*` scale — imported by name, no `<Icon>` wrapper and no `size=` prop, and never a
   container added just to resize a glyph. Remix glyphs are `fill="currentColor"`, so the semantic
-  `text-*` utilities colour them. **Style is state-driven: the `Line` (outline) variant is the
-  default; the `Fill` (solid) variant marks the *active/selected* item** — the selected project &
-  active workspace rows (`ProjectTree`), the active/main-spec node (`SpecsPanel`), the active file/dir
+  `text-*` utilities colour them. **For retained Remix icons only**, style is state-driven: the `Line` (outline) variant is the
+  default; the `Fill` (solid) variant marks the *active/selected* item — retained worktree/external-workspace markers (`ProjectTree`), the active/main-spec node (`SpecsPanel`), the active file/dir
   row (`TreeRow`) and the active editor tab (`Workbench`) swap to `Ri…Fill`; everything else (buttons,
   chevrons, status, composer, chat, menus) stays `Ri…Line`. Icons with no Line/Fill pair
   (`RiParagraph`/`RiDraggable`/`RiLinkM`/`RiListCheck3`) render their single style in both states.
@@ -267,7 +269,7 @@ themselves.
   are `size-16` in all contexts regardless of tier — except a chevron inside a button. **Icons inside
   buttons are not tiered by context**: `Button` / `IconButton` (`@thinkrail/ui/button`) size their icon,
   chevrons included, from the button size (S 14, M 16, L 20) and the call site passes the icon component,
-  never a `size-*` class. The **icon↔text gap is `gap-4` (4px)** across all icon+label rows (nav
+  never a `size-*` class. The **icon↔text gap follows its context** (`gap-8` for project navigation; `gap-4` for compact existing rows) across icon+label rows (nav
   rows, menu/command items, tabs). A **two-line** row (e.g. a
   workspace whose branch differs from its name) **top-aligns** the icon to the first line (`items-start`
   + `mt-2`) so the glyph hangs on its title, while a single-line row stays vertically centred
@@ -346,9 +348,9 @@ themselves.
   `font-[var(--font-mono)]` is ambiguous — Tailwind compiles it to an invalid `font-weight`, so it
   silently does nothing; the working form is `font-(family-name:--font-mono)`
   (`styles/fontClasses.test.ts` fails on the bare form).
-- **Fonts ship inside the artifact.** `styles/generated/fonts.css` imports self-hosted variable faces
-  (fontsource; Geist Variable + JetBrains Mono Variable, both with real italics — shared with
-  `apps/website`, so their versions live in the root `workspaces.catalog`). Which packages those are is
+- **Code fonts ship inside the artifact; UI uses platform fonts.** `styles/generated/fonts.css`
+  imports JetBrains Mono Variable with real italics. The interface and brand roles use system-first
+  sans with explicit CJK fallbacks; no proprietary Claude font is copied. Which packages are bundled is
   declared per family as `selfHosted` in `styles/typography.json`, so the stack and the bundled faces
   cannot drift; the imports are generated from it. Vite emits the woff2 files
   into `dist/assets`, and `apps/cli` embeds them. No font CDN — the host is local and often
@@ -356,11 +358,11 @@ themselves.
   load despite the analytics opt-out. `e2e/fonts.spec.ts` pins both halves (no CDN request; the real
   faces present).
 - **The typography system — `typography.json` as the single source of truth, the primitives and the
-  semantic styles generated from them, the `<body>` base, the 370/400/500/600/800 weight policy,
+  semantic styles generated from them, the `<body>` base, the manifest's explicit weight policy,
   code-only mono, the two prose systems, and how to add or change a style — is specced in
   [src/styles/TYPOGRAPHY.md](src/styles/TYPOGRAPHY.md)** (`web-typography`); check changes against it. The
   generator that turns it into CSS is [scripts/SPEC.md](scripts/SPEC.md).
-- **Icons: `@remixicon/react` (Line default, Fill when active/selected). Components: shadcn/ui** (Radix primitives), owned by [[module-ui]]
+- **Icons: Lucide for migrated controls; existing Remix elsewhere. Components: shadcn/ui** (Radix primitives), owned by [[module-ui]]
   and themed with our token utilities (`cn()` in `@thinkrail/ui/utils`) — never shadcn's default oklch
   palette. Use these for accessible menus / dialogs / tooltips. **Every ordinary action button is
   `Button` or `IconButton`** — five variants × three sizes, states owned by the component (see

@@ -17,6 +17,7 @@ import {
 } from "react";
 import { type LayoutAttention, readLayoutNavigationClock, tupleKey } from "../../lib";
 import type { AuxiliaryRailEntry } from "./auxiliaryPresentation";
+import { focusLayoutElement, type LayoutFocusIntent } from "./layoutFocus";
 import {
 	type CenterSplitDirection,
 	type ChatFirstPrompts,
@@ -46,6 +47,7 @@ export interface LayoutTabFocusRequest {
 	location: LayoutGroupLocation;
 	tabId?: string;
 	onlyIfFocusLost?: true;
+	intent?: LayoutFocusIntent;
 }
 
 export interface PreparedLayoutClose {
@@ -54,6 +56,10 @@ export interface PreparedLayoutClose {
 }
 
 export interface WorkbenchProps {
+	workspaceLocation?: ReactNode;
+	navigationActions?: ReactNode;
+	navigationFooter?: ReactNode;
+	collapsedNavigationFooter?: ReactNode;
 	workspaceId: string;
 	document: WorkspaceLayoutDocument;
 	attention: LayoutAttention;
@@ -428,7 +434,10 @@ export function focusLayoutRequest(request: LayoutTabFocusRequest): void {
 	const rail = globalThis.document
 		.getElementById(railGroupDomId(request.location))
 		?.querySelector<HTMLButtonElement>("button");
-	[tab, pane, rail].find((element) => element && element.getClientRects().length > 0)?.focus();
+	focusLayoutElement(
+		[tab, pane, rail].find((element) => element && element.getClientRects().length > 0),
+		request.intent,
+	);
 }
 
 export function useLayoutFocus(

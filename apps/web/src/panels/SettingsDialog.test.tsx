@@ -8,7 +8,12 @@ import {
 } from "@thinkrail/contracts";
 import { t } from "@thinkrail/locales/react";
 import { SettingsSection } from "@/store";
-import { filterSettingsNavGroups, resolveSettingsSection, settingsNavGroups } from "./settingsNav";
+import {
+	filterSettingsNavGroups,
+	resolveSettingsSection,
+	searchSettingsNavGroups,
+	settingsNavGroups,
+} from "./settingsNav";
 
 const LATEST = Math.max(
 	DEFAULT_MODEL_PROTOCOL_VERSION,
@@ -25,6 +30,28 @@ const GATED = [
 
 const ids = (protocolVersion: number | null, hasUpdates: boolean) =>
 	settingsNavGroups(protocolVersion, hasUpdates).flatMap((g) => g.sections.map((s) => s.id));
+
+describe("settings navigation search", () => {
+	test("matches translated labels case-insensitively without changing the source groups", () => {
+		const groups = settingsNavGroups(LATEST, true);
+		const before = groups.map((group) => group.sections.map((section) => section.id));
+		expect(
+			searchSettingsNavGroups(groups, "  MODELS  ", t).flatMap((group) =>
+				group.sections.map((section) => section.id),
+			),
+		).toEqual([SettingsSection.Models]);
+		expect(groups.map((group) => group.sections.map((section) => section.id))).toEqual(before);
+		expect(searchSettingsNavGroups(groups, " ", t)).toBe(groups);
+	});
+
+	test("group matches retain available sections and unknown queries return no entries", () => {
+		const groups = settingsNavGroups(1, false);
+		const expected = groups.find((group) => group.label === "settings.nav.group.interface");
+		expect(searchSettingsNavGroups(groups, "Interface", t)).toEqual([expected]);
+		expect(searchSettingsNavGroups(groups, "Models", t)).toEqual([]);
+		expect(searchSettingsNavGroups(groups, "no-such-setting", t)).toEqual([]);
+	});
+});
 
 describe("settingsNavGroups", () => {
 	test("current hosts with injected updates list every section in its group", () => {

@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test } from "@playwright/test";
-import { openWorkspaceChat, revealWorkbenchTool } from "./fixtures/app";
+import { openAppSettings, openWorkspaceChat, revealWorkbenchTool } from "./fixtures/app";
 import { E2E_PI_AGENT_DIR } from "./fixtures/paths";
 import { seedExternalCwdSessions } from "./fixtures/sessions";
 import {
@@ -71,7 +71,7 @@ test.describe("templates management", () => {
 		await expect(menuHit).toHaveCount(0);
 		await input.fill("");
 
-		await page.getByTestId("open-settings").click();
+		await openAppSettings(page);
 		await page.getByTestId("settings-nav-templates").click();
 		const settingsDialog = page.getByTestId("settings-dialog");
 		await expect(settingsDialog).toContainText("Prompt templates");
@@ -99,7 +99,7 @@ test.describe("templates management", () => {
 		await expect(menuHit).toHaveCount(1);
 		await input.fill("");
 
-		await page.getByTestId("open-settings").click();
+		await openAppSettings(page);
 		await page.getByTestId("settings-nav-templates").click();
 		await row.getByTestId("template-edit").click();
 		await expect(editor).toBeVisible();
@@ -129,7 +129,7 @@ test.describe("templates management", () => {
 		const settingsDialog = page.getByTestId("settings-dialog");
 		const editor = page.getByTestId("template-editor-dialog");
 
-		await page.getByTestId("open-settings").click();
+		await openAppSettings(page);
 		await page.getByTestId("settings-nav-templates").click();
 		await page.getByTestId("template-new-global").click();
 		await expect(editor).toBeVisible();
@@ -152,7 +152,7 @@ test.describe("templates management", () => {
 		await expect(input).toHaveValue("Notes for the day");
 		await input.fill("");
 
-		await page.getByTestId("open-settings").click();
+		await openAppSettings(page);
 		await page.getByTestId("settings-nav-templates").click();
 		const row = page.locator('[data-testid="template-row"][data-name="roundtrip"]');
 		await row.getByTestId("template-edit").click();
@@ -170,7 +170,7 @@ test.describe("templates management", () => {
 
 	test("an invalid template name shows an inline error instead of saving", async ({ page }) => {
 		await openWorkspaceChat(page);
-		await page.getByTestId("open-settings").click();
+		await openAppSettings(page);
 		await page.getByTestId("settings-nav-templates").click();
 		await page.getByTestId("template-new-global").click();
 		const editor = page.getByTestId("template-editor-dialog");
@@ -194,7 +194,7 @@ test.describe("templates management", () => {
 	}) => {
 		await openWorkspaceChat(page);
 
-		await page.getByTestId("open-settings").click();
+		await openAppSettings(page);
 		await page.getByTestId("settings-nav-templates").click();
 		await page.getByTestId("template-new-project").click();
 		const editor = page.getByTestId("template-editor-dialog");
@@ -270,7 +270,7 @@ test.describe("templates management", () => {
 		page,
 	}) => {
 		await openWorkspaceChat(page);
-		await page.getByTestId("open-settings").click();
+		await openAppSettings(page);
 		await page.getByTestId("settings-nav-templates").click();
 		const editor = page.getByTestId("template-editor-dialog");
 
@@ -327,7 +327,7 @@ test.describe("templates management", () => {
 		);
 		try {
 			await openWorkspaceChat(page);
-			await page.getByTestId("open-settings").click();
+			await openAppSettings(page);
 			await page.getByTestId("settings-nav-templates").click();
 
 			const row = page.locator(
@@ -366,7 +366,7 @@ test.describe("templates management", () => {
 		writeFileSync(filePath, `---\ndescription: "Trailing-space name"\n---\nHand-created body\n`);
 		try {
 			await openWorkspaceChat(page);
-			await page.getByTestId("open-settings").click();
+			await openAppSettings(page);
 			await page.getByTestId("settings-nav-templates").click();
 
 			const row = page.locator(

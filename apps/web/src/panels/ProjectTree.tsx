@@ -7,19 +7,15 @@ import {
 	RiExternalLinkLine as ExternalLink,
 	RiFolderOpenLine as FolderOpen,
 	RiGitBranchLine as GitBranch,
-	RiHome2Line as House,
 	RiLoader4Line as Loader2,
 	RiMailOpenLine as MailOpen,
 	RiMailUnreadLine as MailUnread,
-	RiMore2Line as MoreVertical,
+	RiMoreLine as MoreVertical,
 	RiPencilLine as Pencil,
 	RiAddLine as Plus,
-	RiCheckboxCircleLine,
-	RiFolderFill,
-	RiFolderLine,
 	RiFolderOpenFill,
 	RiGitBranchFill,
-	RiHome2Fill,
+	RiSearchLine,
 	RiDeleteBin6Line as Trash2,
 	RiCloseLine as X,
 } from "@remixicon/react";
@@ -45,6 +41,7 @@ import {
 } from "@thinkrail/ui/dropdown-menu";
 import { LoadingRegion } from "@thinkrail/ui/skeleton";
 import { cn } from "@thinkrail/ui/utils";
+import { FolderOpen as ExpandedFolder, FolderClosed } from "lucide-react";
 import { type MouseEvent, type ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { AttentionDot } from "@/components/AttentionDot";
 import { RunningIcon } from "@/components/RunningIcon";
@@ -100,6 +97,9 @@ import {
 	useEditors,
 	useInlineRename,
 } from "./workspaceActions";
+
+const NAVIGATION_ACTION_CLASS =
+	"flex h-32 w-full items-center gap-8 rounded-md px-8 text-left tr-text-ui text-text-default outline-none hover:bg-control-bg-hovered focus-visible:outline-1 focus-visible:outline-focus-ring";
 
 const HOVER_CONTROL_CLASS =
 	"shrink-0 opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100";
@@ -264,27 +264,42 @@ export function ProjectTree() {
 	};
 
 	return (
-		<nav data-testid="project-tree" className="flex flex-col gap-4">
-			<header className="flex h-panel-row items-center justify-between pr-4 pl-8">
-				<span className="tr-text-eyebrow text-text-muted">{t("panels.projectTree.title")}</span>
+		<nav
+			aria-label={t("panels.projectTree.title")}
+			data-testid="project-tree"
+			className="flex flex-col gap-16"
+		>
+			<header className="flex flex-col gap-2">
 				<AddProjectMenu
+					align="start"
 					recentProjects={recentProjects}
 					onOpen={() => void pickAndOpen()}
 					onEnterHostPath={enterHostPath}
 					onOpenRecent={(p) => void openProject(p)}
 				>
-					<IconButton
+					<button
+						type="button"
 						ref={addProjectButtonRef}
-						icon={Plus}
-						label={t("panels.projectTree.addProject")}
-						variant="ghost"
-						size="s"
+						aria-label={t("panels.projectTree.addProject")}
 						data-testid="add-project-menu"
-					/>
+						className={NAVIGATION_ACTION_CLASS}
+					>
+						<Plus className="size-16 shrink-0" />
+						{t("panels.projectTree.addProject")}
+					</button>
 				</AddProjectMenu>
+				<button
+					type="button"
+					className={NAVIGATION_ACTION_CLASS}
+					data-testid="open-session-switcher"
+					onClick={() => useAppStore.getState().openSessionSwitcher()}
+				>
+					<RiSearchLine className="size-16 shrink-0" />
+					{t("shell.sessionSwitcher.title")}
+				</button>
 			</header>
 
-			<ul className="flex flex-col">
+			<ul className="flex flex-col gap-16">
 				{projects.map((project) => {
 					const isExpanded = expandedProjectIds[project.id] === true;
 					const list = workspaces[project.id];
@@ -356,7 +371,7 @@ export function ProjectTree() {
 									data-testid="worktree-creating-row"
 									className="flex items-center gap-8 py-4 pr-8 pl-16 tr-text-ui text-text-muted"
 								>
-									<Loader2 className="size-14 shrink-0 animate-spin motion-reduce:animate-none" />
+									<Loader2 className="size-16 shrink-0 animate-spin motion-reduce:animate-none" />
 									{t("panels.projectTree.creatingWorktree")}
 								</div>
 							)}
@@ -417,7 +432,7 @@ function SettledPartition({
 	const t = useT();
 	if (!enabled) {
 		return (
-			<ul className="mt-2 flex flex-col gap-2 motion-safe:animate-reveal">
+			<ul className="mt-2 flex flex-col gap-2">
 				{partition.live.map((workspace) => renderRow(workspace, null))}
 			</ul>
 		);
@@ -426,27 +441,26 @@ function SettledPartition({
 	const shown = partition.settled.slice(0, shelfShown);
 	const remaining = settledCount - shown.length;
 	return (
-		<div className="mt-2 flex flex-col gap-2 motion-safe:animate-reveal">
+		<div className="mt-2 flex flex-col gap-2">
 			<ul className="flex flex-col gap-2">{partition.live.map((ws) => renderRow(ws, null))}</ul>
 			<div
 				data-testid="settled-shelf"
 				data-count={settledCount}
 				data-expanded={shelfExpanded}
-				className="flex h-panel-row min-w-0 items-center gap-4 rounded-sm pr-4 pl-12 text-text-subtle tr-text-metadata hover:bg-control-bg-hovered"
+				className="flex h-panel-row min-w-0 items-center gap-8 rounded-md px-8 text-text-subtle tr-text-metadata hover:bg-control-bg-hovered"
 			>
 				<button
 					type="button"
 					data-testid="settled-shelf-toggle"
 					aria-expanded={shelfExpanded}
 					onClick={() => useAppStore.getState().toggleSettledShelf(projectId)}
-					className="flex min-w-0 flex-1 items-center gap-4 text-left outline-none focus-visible:ring-2 focus-visible:ring-primary"
+					className="flex min-w-0 flex-1 items-center gap-8 text-left outline-none focus-visible:ring-1 focus-visible:ring-focus-ring"
 				>
 					{shelfExpanded ? (
-						<ChevronDown className="size-14 shrink-0" />
+						<ChevronDown className="size-16 shrink-0" />
 					) : (
-						<ChevronRight className="size-14 shrink-0" />
+						<ChevronRight className="size-16 shrink-0" />
 					)}
-					<RiCheckboxCircleLine className="size-14 shrink-0" />
 					<span className="truncate">
 						{t("panels.projectTree.settledShelf", { total: settledCount })}
 					</span>
@@ -455,7 +469,7 @@ function SettledPartition({
 			{shelfExpanded ? (
 				<ul className="flex flex-col gap-2" data-testid="settled-shelf-rows">
 					{settledCount === 0 ? (
-						<li className="py-4 pr-4 pl-24 text-text-subtle tr-text-metadata">
+						<li className="py-4 pr-4 pl-32 text-text-subtle tr-text-metadata">
 							{t("panels.projectTree.nothingSettled")}
 						</li>
 					) : (
@@ -469,7 +483,7 @@ function SettledPartition({
 								onClick={() =>
 									useAppStore.getState().showMoreSettled(projectId, shelfShown + SETTLED_SHELF_MORE)
 								}
-								className="flex h-panel-row w-full items-center rounded-sm pl-24 text-left text-text-subtle tr-text-metadata hover:bg-control-bg-hovered hover:text-text-muted"
+								className="flex h-panel-row w-full items-center rounded-md pl-32 text-left text-text-subtle tr-text-metadata hover:bg-control-bg-hovered hover:text-text-muted"
 							>
 								{t("panels.projectTree.showMore", {
 									count: Math.min(SETTLED_SHELF_MORE, remaining),
@@ -523,8 +537,7 @@ function ProjectRow({
 		shortcut: platformShortcutLabel("N"),
 		altShortcut: platformShortcutLabel("N", { alt: true }),
 	});
-	const Chevron = isExpanded ? ChevronDown : ChevronRight;
-	const Folder = isSelected ? RiFolderFill : RiFolderLine;
+	const ExpansionIcon = isExpanded ? ExpandedFolder : FolderClosed;
 	const [menuOpen, setMenuOpen] = useState(false);
 	const [confirmOpen, setConfirmOpen] = useState(false);
 	const openingDialogRef = useRef(false);
@@ -540,10 +553,8 @@ function ProjectRow({
 		onRename: (_target, name) => onRename(name),
 	});
 	const folderIcon = isRunning ? (
-		<RunningIcon className={`size-14 ${isSelected ? "text-primary" : "text-text-muted"}`} />
-	) : (
-		<Folder className={`size-14 shrink-0 ${isSelected ? "text-primary" : "text-text-muted"}`} />
-	);
+		<RunningIcon className="size-16 shrink-0 text-text-muted" />
+	) : null;
 	const nameClass = `truncate tr-text-ui ${isSelected ? "text-text-default" : "text-text-muted"}`;
 	const openDialogAfterMenu = (openDialog: () => void) => {
 		openingDialogRef.current = true;
@@ -557,23 +568,24 @@ function ProjectRow({
 			data-menu-open={menuOpen}
 			data-attention={needsAttention || undefined}
 			data-running={isRunning || undefined}
-			className={`group flex h-panel-row items-center gap-4 rounded-sm pr-4 pl-4 transition-colors ${
+			className={`group flex h-32 items-center gap-8 rounded-md px-8 transition-colors ${
 				menuOpen ? "bg-control-bg-selected" : "hover:bg-control-bg-hovered"
 			}`}
 		>
 			<button
 				type="button"
 				data-testid="project-expand"
+				aria-expanded={isExpanded}
 				aria-label={
 					isExpanded
 						? t("panels.projectTree.collapseProject")
 						: t("panels.projectTree.expandProject")
 				}
 				onClick={onToggle}
-				className="flex size-16 shrink-0 items-center justify-center rounded-sm text-text-muted transition-colors hover:text-text-default focus-visible:text-text-default"
+				className="flex size-16 shrink-0 items-center justify-center rounded-sm text-text-muted transition-colors hover:text-text-default focus-visible:text-text-default outline-none focus-visible:outline-1 focus-visible:outline-focus-ring"
 				data-expanded={isExpanded}
 			>
-				<Chevron className="size-16" />
+				<ExpansionIcon className="size-16" />
 			</button>
 			{editing ? (
 				<div className="flex min-w-0 flex-1 items-center gap-4">
@@ -595,9 +607,9 @@ function ProjectRow({
 					type="button"
 					data-testid="project-name"
 					onClick={onSelect}
-					className="flex min-w-0 flex-1 items-center gap-4 text-left"
+					className="flex min-w-0 flex-1 items-center gap-8 text-left outline-none focus-visible:outline-1 focus-visible:outline-focus-ring"
 				>
-					{folderIcon}
+					{isRunning ? folderIcon : null}
 					<span className={nameClass}>{project.name}</span>
 				</button>
 			)}
@@ -615,7 +627,7 @@ function ProjectRow({
 				label={createWorkspaceLabel}
 				variant="ghost"
 				size="s"
-				className="shrink-0"
+				className={HOVER_CONTROL_CLASS}
 				data-testid="add-workspace"
 				onClick={onAddWorkspace}
 			/>
@@ -760,17 +772,13 @@ function WorkspaceRow({
 	const isExternal = isExternalWorkspace(workspace);
 	const isSettled = settled !== null;
 	const settleBlocked = isRunning || needsAttention;
-	const Icon = isActive
-		? isDefault
-			? RiHome2Fill
-			: isExternal
-				? RiFolderOpenFill
-				: RiGitBranchFill
-		: isDefault
-			? House
-			: isExternal
-				? FolderOpen
-				: GitBranch;
+	const Icon = isExternal
+		? isActive
+			? RiFolderOpenFill
+			: FolderOpen
+		: isActive
+			? RiGitBranchFill
+			: GitBranch;
 	const isTwoLine = !isSettled && workspace.branch !== workspace.name;
 	const displayName = workspaceName(t, workspace);
 	const [menuOpen, setMenuOpen] = useState(false);
@@ -791,21 +799,22 @@ function WorkspaceRow({
 		onRename: (_target, name) => onRename(name),
 	});
 
-	const identityClass = `flex min-w-0 flex-1 gap-4 text-left ${isTwoLine ? "items-start" : "items-center"}`;
+	const identityClass = `flex min-h-24 min-w-0 flex-1 gap-8 text-left outline-none focus-visible:outline-1 focus-visible:outline-focus-ring ${isTwoLine ? "items-start" : "items-center"}`;
 	const identityIcon = isRunning ? (
 		<RunningIcon
-			className={cn("size-14", isTwoLine && "mt-2", isActive ? "text-primary" : "text-text-muted")}
+			className={cn(
+				"size-16",
+				isTwoLine && "mt-2",
+				isActive ? "text-text-default" : "text-text-muted",
+			)}
 		/>
-	) : (
+	) : isDefault ? null : (
 		<Icon
-			className={`${isTwoLine ? "mt-2 " : ""}size-14 shrink-0 ${isActive ? "text-primary" : "text-text-muted"}`}
+			className={`${isTwoLine ? "mt-2 " : ""}size-16 shrink-0 ${isActive ? "text-text-default" : "text-text-muted"}`}
 		/>
 	);
 	const branchLabel = isTwoLine ? (
-		<span
-			data-testid="workspace-branch"
-			className="truncate text-text-subtle tr-text-metadata leading-tight"
-		>
+		<span data-testid="workspace-branch" className="truncate text-text-subtle tr-text-metadata">
 			{workspace.branch}
 		</span>
 	) : null;
@@ -868,7 +877,7 @@ function WorkspaceRow({
 				data-running={isRunning || undefined}
 				onContextMenu={openMenuFromContext}
 				className={cn(
-					"group relative flex min-h-panel-row min-w-0 items-center gap-8 rounded-sm border-0 py-2 pr-4 pl-24 transition-colors",
+					"group relative flex min-h-32 min-w-0 items-center gap-8 rounded-md border-0 py-4 pr-4 pl-8 transition-colors",
 					isActive || menuOpen ? "bg-control-bg-selected" : "hover:bg-control-bg-hovered",
 				)}
 			>
@@ -885,7 +894,7 @@ function WorkspaceRow({
 								aria-label={t("panels.projectTree.workspaceName")}
 								defaultValue={workspace.name}
 								{...renameInputProps}
-								className={`w-full min-w-0 truncate border-0 bg-transparent p-0 tr-text-ui leading-tight outline-none ${isActive ? "text-primary" : "text-text-muted"}`}
+								className={`w-full min-w-0 truncate border-0 bg-transparent p-0 tr-text-ui outline-none ${isActive ? "text-text-default" : "text-text-muted"}`}
 							/>
 							{branchLabel}
 						</span>
@@ -896,7 +905,7 @@ function WorkspaceRow({
 						<span className="flex min-w-0 flex-1 flex-col">
 							<span
 								data-testid="workspace-name"
-								className={`truncate tr-text-ui leading-tight ${isActive ? "text-primary" : "text-text-muted"}`}
+								className={`truncate tr-text-ui ${isActive ? "text-text-default" : "text-text-muted"}`}
 							>
 								{displayName}
 							</span>

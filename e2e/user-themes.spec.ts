@@ -2,7 +2,7 @@ import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, type Page, test } from "@playwright/test";
-import { expandDisclosure } from "./fixtures/app";
+import { expandDisclosure, openAppSettings } from "./fixtures/app";
 import { E2E_DATA_DIR } from "./fixtures/paths";
 
 const THEMES_DIR = join(E2E_DATA_DIR, "themes");
@@ -27,7 +27,7 @@ function removeThemes(): void {
 
 async function openThemeList(page: Page) {
 	const dialog = page.getByTestId("settings-dialog");
-	if (!(await dialog.isVisible())) await page.getByTestId("open-settings").click();
+	if (!(await dialog.isVisible())) await openAppSettings(page);
 	await page.getByTestId("settings-nav-appearance").click();
 	await expandDisclosure(dialog.getByTestId("theme-toggle"));
 	return dialog;

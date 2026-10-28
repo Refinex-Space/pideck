@@ -27,7 +27,7 @@ function DeviceLink({ href, children }: { href: string; children?: ReactNode }) 
 			target="_blank"
 			rel="noopener noreferrer"
 			data-testid="login-device-url"
-			className="inline-flex items-center gap-2 break-all rounded-sm text-primary underline underline-offset-2 outline-none hover:opacity-80 focus-visible:ring-2 focus-visible:ring-primary"
+			className="inline-flex items-center gap-2 break-all rounded-sm text-primary underline underline-offset-2 outline-none hover:opacity-80 focus-visible:ring-1 focus-visible:ring-focus-ring"
 		>
 			{children}
 			<ExternalLink className="size-12 shrink-0" />
@@ -213,7 +213,7 @@ export function LoginDialog({
 										data-testid="login-option"
 										data-option={option.id}
 										onClick={() => onReply(option.id)}
-										className="rounded-sm border border-control-border-default bg-control-bg px-12 py-8 text-left tr-text-ui text-text-default outline-none transition-colors hover:bg-control-bg-hovered focus-visible:ring-2 focus-visible:ring-primary"
+										className="rounded-sm border border-control-border-default bg-control-bg px-12 py-8 text-left tr-text-ui text-text-default outline-none transition-colors hover:bg-control-bg-hovered focus-visible:ring-1 focus-visible:ring-focus-ring"
 									>
 										{option.label}
 									</button>
@@ -226,7 +226,7 @@ export function LoginDialog({
 								type="button"
 								data-testid="login-paste-toggle"
 								onClick={() => setPasteOpen(true)}
-								className="self-start rounded-sm text-text-muted tr-text-metadata underline underline-offset-2 outline-none hover:text-text-default focus-visible:ring-2 focus-visible:ring-primary"
+								className="self-start rounded-sm text-text-muted tr-text-metadata underline underline-offset-2 outline-none hover:text-text-default focus-visible:ring-1 focus-visible:ring-focus-ring"
 							>
 								{t("auth.login.pasteToggle")}
 							</button>

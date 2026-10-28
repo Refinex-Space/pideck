@@ -3,7 +3,12 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, type Page, test } from "@playwright/test";
 import type { WsRequest } from "@thinkrail/contracts";
-import { enterDefaultWorkspace, openFixtureProject, openPersistedChat } from "./fixtures/app";
+import {
+	enterDefaultWorkspace,
+	openAppSettings,
+	openFixtureProject,
+	openPersistedChat,
+} from "./fixtures/app";
 import { resolveBunExecutable } from "./fixtures/executables";
 import { E2E_FIXTURE_REPO, E2E_PI_AGENT_DIR } from "./fixtures/paths";
 import { seedWorkspaceSession } from "./fixtures/sessions";
@@ -17,7 +22,7 @@ const MCP_LOG = join(E2E_PI_AGENT_DIR, "mcp.log");
 const PROJECT_CONFIG_DIR = join(E2E_FIXTURE_REPO, ".pi");
 
 async function openMcpSettings(page: Page): Promise<void> {
-	await page.getByTestId("open-settings").click();
+	await openAppSettings(page);
 	await expect(page.getByTestId("settings-dialog")).toBeVisible();
 	await page.getByTestId("settings-nav-mcp").click();
 	await expect(page.getByTestId("settings-mcp")).toBeVisible();

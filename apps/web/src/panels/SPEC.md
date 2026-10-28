@@ -18,7 +18,22 @@ protocol migration for a copy/link change. Language contributions and source-bui
 links target `refinex/dev`; `0.0.0-dev` is not a release tag. Released versions keep their tag links.
 
 
+## PiDeck welcome and navigation presentation
+
+Welcome uses a restrained heading and a bounded vertical list of actionable rows. Existing project,
+worktree, setup-skill, recent-project, host-path and trust flows remain unchanged. The Projects pane has one heading; its body begins with a visible “Add project” ghost action backed
+by the existing AddProjectMenu, including recent and host-path entries. Project/workspace rows
+use neutral selection colours; their attention, running, settled and destructive states retain their semantics.
+
+
 ## Responsibility
+
+PiDeck Settings uses the shared neutral panel surface, a 208px desktop navigation column and a
+maximum 1024px dialog width. A local search filters translated navigation labels/groups; it never
+changes the selected section or discards its draft. Empty search restores all available entries.
+Escape clears a nonempty query before closing, while existing draft-field Escape handling wins.
+On narrow windows search stays above the horizontally scrollable navigation. Group headings use
+normal case and row separators remain subtle; all existing sections and protocol gates stay intact.
 
 The layout-agnostic, store-driven feature views. A panel fills its container and never knows its
 arrangement (so the mobile shell is an additive layer, not a rewrite).
@@ -334,16 +349,15 @@ treatment.
   dialog would preselect it and persist it as the workspace's `baseBranch`, and that worktree would forever
   diff against its own head. Empty means "unknown", so `create` omits `baseRef` and the host resolves the
   real branch. **`WelcomePanel`** is the first-touch surface the shell mounts (centered, left-nav beside it) whenever no
-workspace is active. **One hero heading** (`welcome-title`, the topbar's brand styling — accent font,
-`text-primary` — enlarged): the **shown project's name**, or `PRODUCT_NAME` when no project is shown —
-the wordmark is the empty-state identity, a project's own name is the identity once one is open (so no
-separate project eyebrow). **No pitch prose in any state** — the marketing paragraph was removed as
-unread; the screen is heading → banners → **one-to-three cards** (icon top-left,
-label + explainer bottom-left; the primary is a filled-primary card carrying the stable `welcome-cta`
-hook, others quiet `welcome-action`s). Welcome is **the mode fork**: with a project shown it always pairs
+workspace is active. **One restrained heading** (`welcome-title`, `tr-brand-hero`, system sans and
+`text-default`) shows the **project's name**, or `PRODUCT_NAME` when no project is shown. There is no
+separate project eyebrow or marketing paragraph. The screen is heading → banners → **one-to-three
+action rows** in a bounded vertical list: icon, label and explanation, with an optional trailing tag.
+The primary row has a neutral selected fill and retains `welcome-cta`; other rows keep `welcome-action`.
+All rows have explicit keyboard focus, and loading uses the shared `LoadingRegion`. Welcome is **the mode fork**: with a project shown it always pairs
 **"Start building"** (isolated worktree) with **"Work in project folder"** (the Default workspace) so the
-two working modes are a visible choice, not a hidden default. The cards by state: **no projects** →
-**"Open project"** (one card); **project + `hasSpecs`** → **"Start building"** (primary) + "Work in
+two working modes are a visible choice, not a hidden default. The actions by state: **no projects** →
+**"Open project"** (one action); **project + `hasSpecs`** → **"Start building"** (primary) + "Work in
 project folder"; **project + no specs** → a spec-first **"Set up project"** (primary) + "Start building"
 + "Work in project folder". **"Open project" appears only in the no-projects state** — where it's the
 only possible action; once a project is shown, opening another is the projects-rail **"+"** (the same
@@ -380,7 +394,7 @@ nav's selection updates it). Its `hasSpecs` is **fetched lazily** via `project.h
 project (a full-tree walk, kept off the connect handshake) — pending until it resolves, so the cards wait
 on it. The open-project orchestration lives in the shared **`useOpenProject`** hook
 (above), so the Welcome "Open project" card gets the same non-git init/notice handling as the rail.
-Above the cards, `WelcomePanel` composes **`ProviderWarningBanner`** — a slim gold banner shown **only when
+Above the action list, `WelcomePanel` composes **`ProviderWarningBanner`** — a slim gold banner shown **only when
 no provider is connected** ("No model provider connected — the agent can't run") with a **Connect a provider**
 CTA that opens Settings → Providers (`store.openSettings("providers")`). It reads `provider.status` (a
 provider is "connected" iff any `configured`) on mount and re-checks whenever the settings dialog toggles, so
@@ -2176,3 +2190,5 @@ own section. The kebab menu (`plan-menu`, a
   app; panels themselves don't own the boundary.
 - Streaming invariant (when chat lands): `text_delta`/`thinking_delta` **APPEND**;
   `tool_execution_update.partialResult` **REPLACE**.
+
+Project expansion uses Lucide folder-open/folder-closed, with aria-expanded on the existing toggle. Default workspace rows have no decorative leading icon or reserved icon column; running/attention status remains visible. Other workspace kinds retain their existing branch/external-worktree markers.

@@ -22,6 +22,7 @@ import {
 	ensureWorkbenchToolPlacementIds,
 	instantiateWorkbenchFrame,
 	LAYOUT_TOOLS,
+	layoutPresetForViewport,
 	minimumBottomGroupLimit,
 	minimumSideGroupLimit,
 	normalizeWorkspaceView,
@@ -562,12 +563,12 @@ async function loadPersistedLayout(): Promise<LocalLayoutStatePayload | undefine
 	}
 }
 
-function balancedFrame(): WorkbenchFrame {
+function initialFrame(viewportWidth: number | undefined): WorkbenchFrame {
 	const preset = BUILTIN_LAYOUT_PRESETS.find(
 		(candidate) => candidate.id === DEFAULT_LAYOUT_PRESET_ID,
 	);
-	if (!preset) throw new Error("The Balanced layout preset is missing");
-	return instantiateWorkbenchFrame(preset);
+	if (!preset) throw new Error("The default layout preset is missing");
+	return instantiateWorkbenchFrame(layoutPresetForViewport(preset, viewportWidth));
 }
 
 function documentsForViews(
@@ -582,7 +583,7 @@ function documentsForViews(
 	);
 }
 
-export function initializeLocalLayoutState(): Promise<void> {
+export function initializeLocalLayoutState(initialViewportWidth?: number): Promise<void> {
 	if (initialization) return initialization;
 	const run = (async () => {
 		const state = useAppStore.getState();
@@ -592,7 +593,9 @@ export function initializeLocalLayoutState(): Promise<void> {
 				state.hydrateLocalLayoutState(persisted);
 			} else {
 				state.hydrateLocalLayoutState({
-					frame: balancedFrame(),
+					frame: initialFrame(
+						initialViewportWidth ?? (typeof window === "undefined" ? undefined : window.innerWidth),
+					),
 					viewsByWorkspace: {},
 					documentsByWorkspace: {},
 					attentionByWorkspace: {},
@@ -688,12 +691,15 @@ export function ensureWorkspaceLayoutState(workspaceId: string): Promise<Workspa
 	return request;
 }
 
-export function applyLayoutPresetLocally(preset: LayoutPreset): void {
+export function applyLayoutPresetLocally(preset: LayoutPreset, viewportWidth?: number): void {
 	const state = useAppStore.getState();
 	if (!state.workbenchFrame) throw new Error("The local workbench frame is not ready");
 	const next = applyWorkbenchPreset(
 		{ frame: state.workbenchFrame, viewsByWorkspace: state.workspaceViewsByWorkspace },
-		preset,
+		layoutPresetForViewport(
+			preset,
+			viewportWidth ?? (typeof window === "undefined" ? undefined : window.innerWidth),
+		),
 	);
 	const documentsByWorkspace = documentsForViews(next.frame, next.viewsByWorkspace);
 	const attentionByWorkspace: Record<string, LayoutAttention> = {};

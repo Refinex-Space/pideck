@@ -1,6 +1,7 @@
 import "./index.css";
 import { useT } from "@thinkrail/locales/react";
 import { TooltipProvider } from "@thinkrail/ui/tooltip";
+import { LucideProvider } from "lucide-react";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { initChatPreferencesPersistence } from "./chat/chatPreferences";
@@ -41,9 +42,11 @@ function App() {
 	return (
 		<ErrorBoundary label={t("app.errorBoundary.label")} reportId="app">
 			<TooltipProvider delayDuration={250} skipDelayDuration={400}>
-				<AppResourceHost>
-					<Shell />
-				</AppResourceHost>
+				<LucideProvider strokeWidth={1.75}>
+					<AppResourceHost>
+						<Shell />
+					</AppResourceHost>
+				</LucideProvider>
 			</TooltipProvider>
 		</ErrorBoundary>
 	);

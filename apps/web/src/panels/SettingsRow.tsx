@@ -24,7 +24,7 @@ export function SettingsRow({
 		<div
 			data-testid={testId}
 			className={cn(
-				"flex flex-wrap items-center justify-between gap-12 py-12",
+				"flex flex-wrap items-center justify-between gap-16 py-16",
 				!noBorder && "border-border-muted border-b",
 				className,
 			)}

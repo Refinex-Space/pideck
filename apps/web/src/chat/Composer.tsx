@@ -70,7 +70,7 @@ const WIDE_ONLY = "@max-md:hidden";
 const COMPACT_ONLY = "@md:hidden";
 
 const SEGMENT =
-	"flex items-center gap-4 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary disabled:pointer-events-none";
+	"flex items-center gap-4 outline-none transition-colors focus-visible:ring-1 focus-visible:ring-focus-ring disabled:pointer-events-none";
 
 const SEND_PILL = "flex h-28 shrink-0 items-stretch rounded-full transition-colors";
 const SEND_PILL_ARMED = "bg-control-primary-bg text-control-primary-text";
@@ -490,7 +490,7 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 			data-testid="chat-composer"
 			data-expanded={expanded}
 			data-streaming={isStreaming}
-			className="relative flex shrink-0 flex-col border-border-muted border-t bg-container-workspace-bg"
+			className="relative mx-auto flex w-full max-w-[calc(var(--chat-composer-max-width)+2*var(--chat-gutter))] shrink-0 flex-col bg-container-workspace-bg"
 		>
 			{mentionOpen ? (
 				<div
@@ -567,7 +567,7 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 				<div
 					data-testid="chat-composer-shell"
 					className={cn(
-						"relative grid grid-cols-[auto_minmax(0,1fr)_auto] grid-rows-[minmax(0,1fr)_auto] items-end gap-x-4 gap-y-4 overflow-hidden rounded-md border border-control-border-default bg-control-bg bg-clip-padding p-4 transition-colors focus-within:border-control-border-active",
+						"relative grid grid-cols-[auto_minmax(0,1fr)_auto] grid-rows-[minmax(0,1fr)_auto] items-end gap-x-4 gap-y-4",
 						expanded && growthLimit === "half-chat" && "max-h-[50cqh]",
 					)}
 				>
@@ -586,8 +586,9 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 						/>
 					</div>
 					<div
+						data-testid="chat-input-surface"
 						className={cn(
-							"relative col-span-3 col-start-1 row-start-1 min-h-0 overflow-hidden rounded-sm tr-text-ui",
+							"relative col-span-3 col-start-1 row-start-1 min-h-0 overflow-hidden rounded-xl bg-control-bg shadow-[var(--shadow-sm)] ring-1 ring-inset ring-control-border-default transition-shadow duration-[var(--motion-duration-normal)] focus-within:ring-control-border-active tr-text-ui",
 							COMPOSER_EDITOR_LIMIT_CLASS[growthLimit],
 						)}
 					>

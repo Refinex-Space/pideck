@@ -19,10 +19,10 @@ export function ChatHeader({
 	return (
 		<div
 			data-testid="chat-toolbar"
-			className="flex h-panel-header-row shrink-0 items-center gap-12 overflow-clip border-border-muted border-b bg-container-workspace-bg px-12"
+			className="flex h-panel-header-row shrink-0 items-center gap-8 overflow-clip bg-container-workspace-bg px-16"
 		>
 			<div className="min-w-0 flex-1" />
-			<div className="flex min-w-0 items-center justify-end gap-12 overflow-clip">
+			<div className="flex min-w-0 items-center justify-end gap-8 overflow-clip">
 				{statusEntries.map(([key, text]) => (
 					<span key={key} className="min-w-0 truncate text-text-muted tr-text-metadata">
 						{text}

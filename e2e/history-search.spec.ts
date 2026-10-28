@@ -4,9 +4,10 @@ import {
 	createWorkspaceViaDialog,
 	defaultWorkspaceRow,
 	enterDefaultWorkspace,
+	openAppSettings,
 	openFixtureProject,
-	openTerminal,
 	openWorkspaceChat,
+	revealWorkbenchTerminal,
 	revealWorkbenchTool,
 	visibleTerminal,
 	visibleTerminalScreen,
@@ -572,8 +573,12 @@ test("Ctrl+R and Escape are owned app-wide: both work with focus outside the com
 	const overlay = page.getByTestId("history-overlay");
 	const query = page.getByTestId("history-query");
 	const scopeBadge = page.getByTestId("history-scope");
-	const header = page.getByTestId("topbar");
-	const clickOutside = () => header.click({ position: { x: 4, y: 20 } });
+	const tabList = page.getByTestId("center-tab-strip").first().getByRole("tablist");
+	const clickOutside = async () => {
+		const bounds = await tabList.boundingBox();
+		if (!bounds) throw new Error("Missing workspace chrome");
+		await tabList.click({ position: { x: bounds.width - 16, y: 20 } });
+	};
 
 	await clickOutside();
 	await page.keyboard.press("Control+r");
@@ -622,7 +627,7 @@ test("Ctrl+R inside a terminal belongs to the shell, not to history search", asy
 	await openWorkspaceChat(page);
 	seedExternalCwdSessions();
 
-	await openTerminal(page);
+	await revealWorkbenchTerminal(page);
 	await visibleTerminal(page).locator(".xterm-helper-textarea").focus();
 	await page.keyboard.press("Control+r");
 
@@ -730,7 +735,7 @@ test("the history button toggles the overlay, outside clicks dismiss it, and pic
 	await page.getByTestId("history-scope-option").first().click();
 	await expect(overlay).toBeVisible();
 
-	await page.getByTestId("open-settings").click();
+	await openAppSettings(page);
 	await expect(overlay).toBeHidden();
 	await expect(page.getByTestId("settings-dialog")).toBeVisible();
 });

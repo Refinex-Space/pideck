@@ -1,22 +1,19 @@
 import { useDroppable } from "@dnd-kit/core";
-import {
-	RiLayout2Line as PanelsTopLeft,
-	RiTerminalBoxFill,
-	RiTerminalBoxLine as SquareTerminal,
-} from "@remixicon/react";
+import { RiLayout2Line as PanelsTopLeft } from "@remixicon/react";
 import type { MessageKey } from "@thinkrail/locales";
 import { useT } from "@thinkrail/locales/react";
 import { IconTooltip } from "@thinkrail/ui/tooltip";
 import { cn } from "@thinkrail/ui/utils";
+import { Terminal } from "lucide-react";
 import type { ReactNode } from "react";
 import { type LayoutAttention, tupleKey } from "../../lib";
 import {
 	AuxiliaryRail,
 	type AuxiliaryRailControlProps,
 	RAIL_ENTRY_BUTTON_CLASS,
+	RAIL_ENTRY_FRAME_CLASS,
 	RAIL_ICON,
 	railEntryButtonProps,
-	railEntryFrameClass,
 	railTooltipSide,
 } from "./AuxiliaryRail";
 import {
@@ -109,7 +106,7 @@ export function AuxiliaryRailButton({
 					? t("workbench.rail.terminal")
 					: t(EMPTY_GROUP_LABELS[entry.region], { position: ordinal });
 	return (
-		<div ref={setNodeRef} data-active={active} className={railEntryFrameClass(entry.region)}>
+		<div ref={setNodeRef} data-active={active} className={RAIL_ENTRY_FRAME_CLASS}>
 			<IconTooltip
 				label={
 					entry.kind === "terminals" ? (
@@ -158,11 +155,7 @@ export function AuxiliaryRailButton({
 					{entry.kind === "tool" ? (
 						tabIcon(toolTab(entry.tool), active, RAIL_ICON)
 					) : entry.kind === "terminals" || entry.region === "bottom" ? (
-						active ? (
-							<RiTerminalBoxFill className={RAIL_ICON} />
-						) : (
-							<SquareTerminal className={RAIL_ICON} />
-						)
+						<Terminal className={RAIL_ICON} />
 					) : (
 						<PanelsTopLeft className={RAIL_ICON} />
 					)}
@@ -188,13 +181,16 @@ export function AuxiliaryRegionRail({
 	shared,
 	attention,
 	trailing,
+	orientation,
 }: {
 	region: LayoutAuxiliaryRegion;
 	shared: SharedGroupProps;
 	attention: LayoutAttention;
 	trailing?: ReactNode;
+	orientation?: "horizontal" | "vertical";
 }) {
 	const t = useT();
+	const horizontal = orientation ? orientation === "horizontal" : region === "bottom";
 	const entries = projectAuxiliaryRail(shared.document, attention, region);
 	const groups = shared.document[region].groups;
 	const draggedAuxiliary =
@@ -245,9 +241,7 @@ export function AuxiliaryRegionRail({
 				label={t(NEW_PANE_HERE_LABELS[region])}
 				className={cn(
 					"absolute",
-					region === "bottom"
-						? "-left-6 top-0 h-panel-header-control w-12"
-						: "-top-6 left-0 h-12 w-32",
+					horizontal ? "-left-6 top-0 h-32 w-12" : "-top-6 left-0 h-12 w-32",
 				)}
 			/>
 		);
@@ -255,6 +249,7 @@ export function AuxiliaryRegionRail({
 	return (
 		<>
 			<AuxiliaryRail
+				{...(orientation ? { orientation } : {})}
 				region={region}
 				entries={entries}
 				renderBoundary={renderBoundary}
@@ -303,7 +298,7 @@ export function AuxiliaryRegionRail({
 									rail={{
 										...control,
 										entryKey: entry.key,
-										vertical: region !== "bottom",
+										vertical: !horizontal,
 										beforeIndex: anchor(entry),
 										afterIndex,
 										onActivate: () => activate(entry),
@@ -344,9 +339,9 @@ export function AuxiliaryRegionRail({
 										}
 										if (!event.altKey || !event.shiftKey) return;
 										const target =
-											event.key === (region === "bottom" ? "ArrowLeft" : "ArrowUp")
+											event.key === (horizontal ? "ArrowLeft" : "ArrowUp")
 												? previousIndex
-												: event.key === (region === "bottom" ? "ArrowRight" : "ArrowDown")
+												: event.key === (horizontal ? "ArrowRight" : "ArrowDown")
 													? nextIndex
 													: undefined;
 										if (target === undefined) return;

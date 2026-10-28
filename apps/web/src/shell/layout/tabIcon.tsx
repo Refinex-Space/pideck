@@ -1,24 +1,15 @@
 import {
-	RiBookOpenFill,
-	RiBookOpenLine,
-	RiChat2Fill,
-	RiChat2Line,
 	RiDiscussFill,
 	RiDiscussLine,
 	RiFileFill,
 	RiFileLine,
-	RiFolder2Fill,
-	RiFolder2Line,
 	RiGitPullRequestFill,
 	RiGitPullRequestLine,
 	RiLayout2Fill,
 	RiLayout2Line,
 	RiListCheck3,
-	RiTaskFill,
-	RiTaskLine,
-	RiTerminalBoxFill,
-	RiTerminalBoxLine,
 } from "@remixicon/react";
+import { BookOpen, Folder, PanelLeft, PanelRight, SquareCheckBig, Terminal } from "lucide-react";
 import type { ReactNode } from "react";
 import { CustomIcon } from "../../components/CustomIcon";
 import type { LayoutTab } from "./types";
@@ -36,23 +27,23 @@ export function tabIcon(tab: LayoutTab, active = false, cls = "size-14 shrink-0"
 		case "changes":
 			return <CustomIcon name={active ? "file-diff-fill" : "file-diff-line"} className={cls} />;
 		case "chat":
-			return active ? <RiChat2Fill className={cls} /> : <RiChat2Line className={cls} />;
+			return null;
 		case "document":
 			return <RiListCheck3 className={cls} />;
 		case "terminal":
-			return active ? <RiTerminalBoxFill className={cls} /> : <RiTerminalBoxLine className={cls} />;
+			return <Terminal className={cls} />;
 		case "tool":
 			switch (tab.tool) {
 				case "projects":
-					return active ? <RiFolder2Fill className={cls} /> : <RiFolder2Line className={cls} />;
+					return active ? <PanelLeft className={cls} /> : <PanelRight className={cls} />;
 				case "specs":
-					return active ? <RiBookOpenFill className={cls} /> : <RiBookOpenLine className={cls} />;
+					return <BookOpen className={cls} />;
 				case "files":
-					return active ? <RiFileFill className={cls} /> : <RiFileLine className={cls} />;
+					return <Folder className={cls} />;
 				case "review":
 					return active ? <RiDiscussFill className={cls} /> : <RiDiscussLine className={cls} />;
 				case "plan":
-					return active ? <RiTaskFill className={cls} /> : <RiTaskLine className={cls} />;
+					return <SquareCheckBig className={cls} />;
 				default:
 					return active ? <RiLayout2Fill className={cls} /> : <RiLayout2Line className={cls} />;
 			}

@@ -42,7 +42,7 @@ import { type ShipRunner, useShipRunner } from "../../panels/useShipRunner";
 import { canSettleWorkspace } from "../../panels/workspaceActions";
 import { isDefaultWorkspace, selectWorkspaceChatTab, useAppStore } from "../../store";
 import { ReviewChip, ReviewSegment } from "./BranchSegment";
-import { chipClass, Segment, type SplitTone, splitFrameClass, splitPartClass } from "./Segment";
+import { chipClass, DetailRow, type SplitTone, splitFrameClass, splitPartClass } from "./Segment";
 
 const ACTION_ICON: Record<ShipActionId, RemixiconComponentType> = {
 	publish: UploadCloud,
@@ -149,7 +149,7 @@ function ArmButton({
 	);
 }
 
-const valueText = "flex h-20 items-center gap-4 px-8 tr-text-ui";
+const valueText = "flex h-20 items-center gap-4 tr-text-ui";
 
 function RemoteValueView({ value }: { value: RemoteValue }) {
 	const t = useT();
@@ -237,10 +237,18 @@ function ShipSegments({
 			: t("shell.location.review.pullRequest");
 	return (
 		<>
-			<Segment
+			<DetailRow
 				testid="scope-remote-segment"
 				caption={t("shell.location.remote.caption")}
-				className={cn("shrink-0", remoteAction ? "flex" : "hidden md:flex")}
+				trailing={
+					<ArmButton
+						arm={model.remote}
+						testid="scope-ship-remote"
+						pending={runner.pending}
+						disabled={runner.busy}
+						onRun={runner.run}
+					/>
+				}
 			>
 				{showRemoteValue ? (
 					<span
@@ -251,18 +259,19 @@ function ShipSegments({
 						<RemoteValueView value={model.remote.value} />
 					</span>
 				) : null}
-				<ArmButton
-					arm={model.remote}
-					testid="scope-ship-remote"
-					pending={runner.pending}
-					disabled={runner.busy}
-					onRun={runner.run}
-				/>
-			</Segment>
-			<Segment
+			</DetailRow>
+			<DetailRow
 				testid="scope-review-segment"
 				caption={caption}
-				className={cn("shrink-0", review || model.review.primary ? "flex" : "hidden sm:flex")}
+				trailing={
+					<ArmButton
+						arm={model.review}
+						testid="scope-ship-review"
+						pending={runner.pending}
+						disabled={runner.busy}
+						onRun={runner.run}
+					/>
+				}
 			>
 				{review ? (
 					<ReviewChip review={review} />
@@ -277,14 +286,7 @@ function ShipSegments({
 							: t("shell.location.ship.noReview", { noun: model.noun })}
 					</span>
 				)}
-				<ArmButton
-					arm={model.review}
-					testid="scope-ship-review"
-					pending={runner.pending}
-					disabled={runner.busy}
-					onRun={runner.run}
-				/>
-			</Segment>
+			</DetailRow>
 		</>
 	);
 }

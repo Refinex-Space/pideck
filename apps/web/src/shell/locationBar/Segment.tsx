@@ -31,15 +31,51 @@ export function Segment({
 export const pillClass =
 	"group/pill window-no-drag inline-flex h-24 min-w-0 items-center gap-4 rounded-md px-8 text-text-muted outline-none transition-colors hover:bg-control-bg-hovered hover:text-text-default focus-visible:ring-1 focus-visible:ring-focus-ring data-[state=open]:bg-control-bg-selected data-[state=open]:text-text-default";
 
-export function PillChevron({ className }: { className?: string | undefined }) {
+export function PillChevron({
+	className,
+	always = false,
+}: {
+	className?: string | undefined;
+	always?: boolean;
+}) {
 	return (
 		<ChevronDown
 			aria-hidden="true"
 			className={cn(
-				"size-14 shrink-0 text-text-subtle opacity-0 transition-opacity group-hover/pill:opacity-100 group-focus-visible/pill:opacity-100 group-data-[state=open]/pill:opacity-100",
+				"size-14 shrink-0 text-text-subtle transition-opacity",
+				!always &&
+					"opacity-0 group-hover/pill:opacity-100 group-focus-visible/pill:opacity-100 group-data-[state=open]/pill:opacity-100",
 				className,
 			)}
 		/>
+	);
+}
+
+/** One labelled line of the workspace-details card: caption left, value fills, actions trail. */
+export function DetailRow({
+	caption,
+	children,
+	trailing,
+	className,
+	testid,
+}: {
+	caption: ReactNode;
+	children: ReactNode;
+	trailing?: ReactNode;
+	className?: string | undefined;
+	testid?: string | undefined;
+}) {
+	return (
+		<div
+			data-testid={testid}
+			className={cn("flex min-h-32 items-center gap-8 px-12 py-4", className)}
+		>
+			<span className="w-[72px] shrink-0 text-text-subtle tr-text-metadata">{caption}</span>
+			<div className="flex min-w-0 flex-1 items-center gap-4 tr-text-ui text-text-default">
+				{children}
+			</div>
+			{trailing}
+		</div>
 	);
 }
 

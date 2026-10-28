@@ -169,3 +169,12 @@ project/workspace/branch/remote/review actions and the existing protocol guards 
   unknown, never "In sync with origin." Pre-v78 hosts use the lookup alone and ignore rollback-stale snapshot
   fields. On v87 the same resolution runs over `workspace.branchStatus.review`, and the remote counts come
   from `BranchStatus` itself, so they no longer depend on a review.
+
+## Details card layout
+
+The ⓘ control (with a tooltip) opens one card of hairline-separated rows — `DetailRow`: a 72px caption
+column, then the value, then trailing actions. Project (always-visible chevron), Branch (+ copy), Based
+on, Compare to (the branch picker, inline — there is no nested branch popover), Remote and Pull request
+(with their split action buttons), and the Checks / Decision rows when a review exists. Every value starts
+on the same left edge; pill and picker triggers pull themselves left by their own padding so their icons
+line up with plain text. The branch list loads only while the card is open.

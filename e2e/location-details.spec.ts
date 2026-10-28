@@ -54,10 +54,10 @@ test("workspace details follow their trigger and stay inside resized viewports",
 			.toBeLessThanOrEqual(1);
 	}
 	await page.setViewportSize({ width: 1280, height: 800 });
-	await page.getByTestId("scope-branch-trigger").click();
-	await expect(page.getByTestId("scope-branch-popover")).toBeVisible();
+	await page.getByTestId("scope-diff-base").click();
+	await expect(page.getByTestId("branch-option").first()).toBeVisible();
 	await page.keyboard.press("Escape");
-	await expect(page.getByTestId("scope-branch-popover")).toBeHidden();
+	await expect(page.getByTestId("branch-option")).toHaveCount(0);
 	await expect(details).toBeVisible();
 	await testInfo.attach("anchored-workspace-details", {
 		body: await page.screenshot(),

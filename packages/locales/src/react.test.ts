@@ -120,19 +120,19 @@ test("interpolation can never complete a tag: a value-built attributed tag is re
 	const { T } = await import("./react");
 	const { validateCatalog } = await import("./index");
 	const local = validateCatalog({
-		"shell.location.branch.fromBase": '· von <0>{{base}}</0><{{base}} title="injected"/>',
+		"auth.login.deviceCode": 'Code bei <0>{{url}}</0><{{url}} title="injected"/>',
 		"lib.compactAge.underHour": "<1 год",
 	});
 	expect(local.ok && Object.keys(local.strings)).toEqual(["lib.compactAge.underHour"]);
 	applyLocale("de", { de: local.ok ? local.strings : {} });
 	const markup = renderToStaticMarkup(
 		createElement(T, {
-			i18nKey: "shell.location.branch.fromBase",
-			values: { base: "0" },
+			i18nKey: "auth.login.deviceCode",
+			values: { url: "0" },
 			components: [createElement("code", { key: "c" })],
 		}),
 	);
-	expect(markup).toBe("· from <code>0</code>");
+	expect(markup).toBe("Enter this code at <code>0</code>");
 });
 
 test("plural forms follow the language's own rules, with or without the number", () => {

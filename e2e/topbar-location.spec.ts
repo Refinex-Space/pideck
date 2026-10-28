@@ -30,7 +30,7 @@ test("the location segments name the active workspace and switch through their m
 	await expect(await workspaceDetail(page, "scope-base")).toHaveText("main");
 	await expect(await workspaceDetail(page, "scope-remote-segment")).toHaveCount(1);
 	await expect(await workspaceDetail(page, "scope-review-value")).toHaveText("No PR");
-	for (const id of ["scope-project", "scope-workspace", "scope-branch-trigger"]) {
+	for (const id of ["scope-project", "scope-workspace"]) {
 		await expect(page.getByTestId(id)).toHaveCSS("-webkit-app-region", "no-drag");
 	}
 	await testInfo.attach("location-worktree", {
@@ -85,14 +85,10 @@ test("the location segments name the active workspace and switch through their m
 	);
 	await expect(await workspaceDetail(page, "scope-branch")).toHaveText("workspace-1");
 
-	// Branch card: keyboard-open lands focus inside the card so Tab reaches its actions, then copy the
-	// branch name and retarget the compare base.
-	await (await workspaceDetail(page, "scope-branch-trigger")).focus();
-	await page.keyboard.press("Enter");
-	const card = await workspaceDetail(page, "scope-branch-popover");
+	// Branch rows sit inline in the details card: copy the branch name and retarget the compare base.
+	const card = await workspaceDetail(page, "workspace-details");
 	await expect(card).toBeVisible();
-	await expect(card).toBeFocused();
-	await page.keyboard.press("Tab");
+	await card.getByTestId("scope-branch-copy").focus();
 	await expect(card.getByTestId("scope-branch-copy")).toBeFocused();
 	await expect(card).toContainText("workspace-1");
 	await expect(card).toContainText("main");
@@ -135,11 +131,11 @@ test("the location segments name the active workspace and switch through their m
 	await expect(scope).toHaveAttribute("data-context", "workspace");
 	await expect(page.getByTestId("scope-name")).toHaveText("Image region fix");
 
-	// Narrow windows keep the workspace and drop the project and branch segments.
+	// Narrow windows keep the workspace in the bar; the details card still lists every row.
 	await page.setViewportSize(PHONE_VIEWPORT);
 	await expect(page.getByTestId("scope-name")).toBeVisible();
-	await expect(await workspaceDetail(page, "scope-project-segment")).toBeHidden();
-	await expect(await workspaceDetail(page, "scope-branch-segment")).toBeHidden();
+	await expect(await workspaceDetail(page, "scope-project-segment")).toBeVisible();
+	await expect(await workspaceDetail(page, "scope-branch-segment")).toBeVisible();
 	await testInfo.attach("location-phone", {
 		body: await page
 			.getByTestId("topbar")

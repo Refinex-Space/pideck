@@ -2,8 +2,9 @@ import { RiInformationLine } from "@remixicon/react";
 import type { OpenBranchReview, Project, Workspace } from "@thinkrail/contracts";
 import { useT } from "@thinkrail/locales/react";
 import { buttonVariants } from "@thinkrail/ui/button";
+import { IconTooltip } from "@thinkrail/ui/tooltip";
 import { cn } from "@thinkrail/ui/utils";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNow } from "../../components/useNow";
 import type { BranchFacts } from "../../panels/branchStatusState";
 import { resolveBranchReview } from "../../panels/useBranchStatus";
@@ -14,6 +15,8 @@ import { ShipStrip } from "./ShipSegments";
 import { useActiveWorkspaceSettled, WorkspaceSegment } from "./WorkspaceSegment";
 
 type LocationProps = {
+	/** The details card is open (drives lazy data in its sections). */
+	active?: boolean;
 	placement?: "header" | "tabs";
 	project: Project;
 	workspace: Workspace | null;
@@ -31,6 +34,7 @@ export function LocationDetails({
 	branchStatus,
 	noteOpenReview,
 	refreshBranchStatus,
+	active,
 }: LocationProps) {
 	const workspaceSettlingSupported = useAppStore((state) => state.workspaceSettlingSupported);
 	const now = useNow();
@@ -41,7 +45,7 @@ export function LocationDetails({
 		<div
 			data-testid="workspace-details"
 			data-context={workspace ? "workspace" : "project-home"}
-			className="flex min-w-0 flex-col gap-12 p-12"
+			className="flex min-w-0 flex-col divide-y divide-border-muted py-4"
 		>
 			<ProjectSegment project={project} atHome={workspace === null} />
 			{workspace ? (
@@ -50,6 +54,7 @@ export function LocationDetails({
 					review={shownReview}
 					reviewDetailsKnown={resolvedReview.detailsKnown}
 					status={branchStatus}
+					{...(active !== undefined ? { active } : {})}
 				/>
 			) : null}
 			{workspace ? (
@@ -72,6 +77,7 @@ export function LocationBar(props: LocationProps) {
 	const now = useNow();
 	const settled = useActiveWorkspaceSettled(props.workspace, now);
 	const details = useRef<HTMLDetailsElement>(null);
+	const [open, setOpen] = useState(false);
 	const panelRef = useRef<HTMLElement>(null);
 	const hasWorkspace = props.workspace !== null;
 	useEffect(() => {
@@ -101,7 +107,9 @@ export function LocationBar(props: LocationProps) {
 		if (root.previousElementSibling) resize.observe(root.previousElementSibling);
 		for (let ancestor: HTMLElement | null = root; ancestor; ancestor = ancestor.parentElement)
 			resize.observe(ancestor);
+		const track = () => setOpen(root.open);
 		root.addEventListener("toggle", position);
+		root.addEventListener("toggle", track);
 		window.addEventListener("resize", position);
 		window.addEventListener("scroll", position, true);
 		position();
@@ -117,6 +125,7 @@ export function LocationBar(props: LocationProps) {
 		return () => {
 			document.removeEventListener("pointerdown", dismiss);
 			root.removeEventListener("toggle", position);
+			root.removeEventListener("toggle", track);
 			window.removeEventListener("resize", position);
 			window.removeEventListener("scroll", position, true);
 			resize.disconnect();
@@ -150,19 +159,21 @@ export function LocationBar(props: LocationProps) {
 						event.currentTarget.querySelector("summary")?.focus();
 					}}
 				>
-					<summary
-						aria-label={t("shell.workspaceDetails")}
-						data-testid="open-workspace-details"
-						className={`${buttonVariants({ variant: "ghost", size: "m", shape: "icon" })} list-none cursor-pointer [&::-webkit-details-marker]:hidden group-open/environment:bg-control-bg-selected`}
-					>
-						<RiInformationLine className="size-16" />
-					</summary>
+					<IconTooltip label={t("shell.workspaceDetails")}>
+						<summary
+							aria-label={t("shell.workspaceDetails")}
+							data-testid="open-workspace-details"
+							className={`${buttonVariants({ variant: "ghost", size: "m", shape: "icon" })} list-none cursor-pointer [&::-webkit-details-marker]:hidden group-open/environment:bg-control-bg-selected`}
+						>
+							<RiInformationLine className="size-16" />
+						</summary>
+					</IconTooltip>
 					<section
 						ref={panelRef}
 						aria-label={t("shell.workspaceDetails")}
-						className="invisible fixed top-[var(--workspace-details-top)] left-[var(--workspace-details-left)] z-40 max-h-[var(--workspace-details-max-height)] w-384 max-w-[calc(100vw-2*var(--space-8))] overflow-y-auto rounded-lg border border-border-default bg-container-elevated-bg text-text-default shadow-[var(--shadow-md)] data-[positioned=true]:visible"
+						className="window-no-drag invisible fixed top-[var(--workspace-details-top)] left-[var(--workspace-details-left)] z-40 max-h-[var(--workspace-details-max-height)] w-384 max-w-[calc(100vw-2*var(--space-8))] overflow-y-auto rounded-lg border border-border-default bg-container-elevated-bg text-text-default shadow-[var(--shadow-md)] data-[positioned=true]:visible"
 					>
-						<LocationDetails {...props} />
+						<LocationDetails {...props} active={open} />
 					</section>
 				</details>
 			) : null}

@@ -13,7 +13,7 @@ import { useOpenProject } from "../../panels/useOpenProject";
 import { loadProjectWorkspaces } from "../../panels/workspaceActions";
 import { useAppStore } from "../../store";
 import { projectInitial } from "./locationModel";
-import { PillChevron, pillClass, Segment } from "./Segment";
+import { DetailRow, PillChevron, pillClass } from "./Segment";
 
 function goToProjectHome(projectId: string): void {
 	useAppStore.getState().selectProject(projectId, { reveal: true });
@@ -25,16 +25,12 @@ export function ProjectSegment({ project, atHome }: { project: Project; atHome: 
 	const projects = useAppStore((s) => s.projects);
 	const { pickAndOpen, dialogs } = useOpenProject((opened) => goToProjectHome(opened.id));
 	return (
-		<Segment
-			caption={t("shell.location.project.caption")}
-			testid="scope-project-segment"
-			className="hidden max-w-[220px] shrink-[3] pl-0 sm:flex"
-		>
+		<DetailRow caption={t("shell.location.project.caption")} testid="scope-project-segment">
 			<DropdownMenu>
 				<DropdownMenuTrigger
 					data-testid="scope-project"
 					aria-label={t("shell.location.project.label", { name: project.name })}
-					className={pillClass}
+					className={`${pillClass} -ml-8 max-w-full`}
 				>
 					<span
 						aria-hidden="true"
@@ -45,7 +41,7 @@ export function ProjectSegment({ project, atHome }: { project: Project; atHome: 
 					<span data-testid="scope-project-name" className="truncate tr-title-section">
 						{project.name}
 					</span>
-					<PillChevron />
+					<PillChevron always />
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="start" data-testid="scope-project-menu">
 					<DropdownMenuLabel>{t("shell.location.project.menuTitle")}</DropdownMenuLabel>
@@ -78,6 +74,6 @@ export function ProjectSegment({ project, atHome }: { project: Project; atHome: 
 				</DropdownMenuContent>
 			</DropdownMenu>
 			{dialogs}
-		</Segment>
+		</DetailRow>
 	);
 }

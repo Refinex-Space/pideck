@@ -110,14 +110,12 @@ test("failing checks and requested changes read in the branch card, and Fix with
 		await expect(primary).toHaveAttribute("data-action", "fixChecks");
 		await shoot(page, testInfo, "review-failing");
 
-		await (await workspaceDetail(page, "scope-branch-trigger")).click();
 		await expect(await workspaceDetail(page, "scope-review-checks")).toHaveText(
 			"1 check failing: lint",
 		);
 		await expect(await workspaceDetail(page, "scope-review-decision")).toHaveText(
 			"Changes requested by @anna",
 		);
-		await page.keyboard.press("Escape");
 
 		await primary.click();
 		await expect(lastUserMessage(page)).toContainText(

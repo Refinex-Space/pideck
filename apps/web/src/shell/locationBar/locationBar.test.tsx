@@ -90,9 +90,9 @@ test("a worktree renders project, workspace and branch · from base segments", (
 	expect(html).toContain(">Image selection coordinates bug<");
 	expect(html).toContain(">fix-image-region-comment-coords<");
 	expect(html).toContain(">origin/main<");
-	const caption = /· from <span data-testid="scope-base">origin\/main<\/span>/;
-	expect(html).toMatch(caption);
-	expect(html).toContain('<span class="sr-only">Branch</span>');
+	expect(html).toMatch(/data-testid="scope-base"[^>]*>origin\/main</);
+	expect(html).toContain("Based on");
+	expect(html).toContain("Compare to");
 });
 
 test("an open PR adds the Remote chips and the Pull request chip link", () => {
@@ -149,23 +149,21 @@ test("segments are separated by space alone and the first one starts flush", () 
 	]);
 	for (const [id, classes] of segmentClasses) {
 		expect(classes.filter((c) => /(^|:)border/.test(c))).toEqual([]);
-		if (id === "scope-project-segment") {
-			expect(classes).toContain("pl-0");
-			expect(classes).not.toContain("pl-8");
-		} else if (id === "scope-workspace-segment") {
+		if (id === "scope-workspace-segment") {
 			expect(classes).toEqual(expect.arrayContaining(["pl-0", "sm:pl-8"]));
 		} else {
-			expect(classes).toContain("pl-8");
+			// The details card lists these as hairline-separated rows.
+			expect(classes).toContain("px-12");
 		}
 	}
 });
 
 test("every strip value shares one text style and no caption switches typeface", () => {
 	const html = render(worktree, review);
-	for (const id of ["scope-project-name", "scope-name", "scope-branch"]) {
+	for (const id of ["scope-project-name", "scope-name"]) {
 		expect(html).toMatch(new RegExp(`data-testid="${id}" class="[^"]*\\btr-title-section\\b`));
 	}
-	expect(html).not.toContain("tr-code-text");
+	expect(html).toMatch(/data-testid="scope-branch" class="[^"]*\btr-code-text\b/);
 	const pill = pillClass.split(/\s+/);
 	expect(pill.filter((c) => /^text-text-/.test(c))).toEqual(["text-text-muted"]);
 });
@@ -175,7 +173,9 @@ test("every interactive control in the drag strip opts out of dragging", () => {
 	expect(chipClass("success", true).split(/\s+/)).toContain("window-no-drag");
 	expect(chipClass("success").split(/\s+/)).not.toContain("window-no-drag");
 	const html = render(worktree, review);
-	for (const tag of html.matchAll(/<(?:button|a|input)\b[^>]*class="([^"]*)"/g)) {
+	const card = html.indexOf("<section");
+	expect(html.slice(card, card + 400)).toContain("window-no-drag");
+	for (const tag of html.slice(0, card).matchAll(/<(?:button|a|input)\b[^>]*class="([^"]*)"/g)) {
 		expect(tag[1]?.split(/\s+/)).toContain("window-no-drag");
 	}
 });
@@ -289,9 +289,6 @@ test("v87: Remote and Pull request render for a review-free branch with the next
 	expect(html).toMatch(/data-testid="scope-ship-review-primary"[^>]*data-action="openPr"/);
 	expect(ids).toContain("scope-ship-review-menu");
 	expect(ids).not.toContain("scope-review-value");
-	for (const tag of html.matchAll(/<(?:button|a|input)\b[^>]*class="([^"]*)"/g)) {
-		expect(tag[1]?.split(/\s+/)).toContain("window-no-drag");
-	}
 });
 
 test("v87: an in-sync branch states it; Default on its base shows — and no PR action", () => {

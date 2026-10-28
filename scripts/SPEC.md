@@ -20,6 +20,9 @@ Repository-wide development orchestration and conformance gates that do not belo
 - **Allowed deps:** Bun/Node, the developer's authenticated `gh` CLI (read-only, `ci:flakes` only), the TypeScript compiler API, `pi-spec-graph/core` for the canonical spec/frontmatter model, and `mdast-util-from-markdown` for CommonMark block structure; read-only inspection of workspace manifests and source trees; the public package metadata and bundle outputs each check validates; and test-only imports of real product internals when a root harness must prove a cross-package contract without creating a product dependency.
 - **Forbidden:** product runtime logic, a second source of package or feature behavior, editing source as part of a check, or application-internal imports outside focused root contract tests. A root contract test may compose implementations but must not become the protocol source or a product dependency.
 
+`productBranding.test.ts` pins the native, favicon and interface glyphs to the vendored Pi SVG,
+including the even-odd cutout; it adds no runtime dependency between shared and web.
+
 `check:boundaries` runs the checker's focused tests before scanning the real workspace. It enforces both manifest edges and static source imports, including type-only, dynamic, re-export, CommonJS, import-type, package-subpath, and relative cross-module forms. Generated/build directories, including Hutch's projected `.hutch` SDK trees and transient `.cottontail-tmp` loaders, are excluded. The current product rings and launcher edges are exhaustive: contracts, `pi-delegation`, and `pi-background-commands` → none; `pi-subagents` and `pi-dag` → `pi-delegation`; shared → contracts; server → contracts/shared plus its existing bundled extension and delegation packages; web → contracts, locales, and the browser SDK/extension entries below; CLI → server/shared; desktop → server/shared/contracts/locales; server, UI, and extension web halves may also use locales, which itself has no workspace edges; artifact-tests → CLI/server/shared. Product packages may not import artifact-tests. A future composition root must add an explicit rule rather than silently inheriting access to every workspace package.
 
 The extension boundary follows [[module-thinkrail-extensions]] and is registered from discovered manifests, not a fixed extension-name list:
@@ -56,7 +59,7 @@ shapes: JSX text; text-bearing JSX attributes (`aria-label`, `title`, `placehold
 conditionals, `||`/`??`, `+`, and template parts; literal children inside `{…}`; prose in text-named object
 properties (`label`, `title`, `description`, `detail`, `hint`, `message`, `reason`, …); and literal
 `toast.*()` messages or `errorText()` fallbacks. "Text" means a run of two or more letters after trimming
-symbols, so `⌘K`, `·`, and counts pass; the bare brand `ThinkRail` is the one allowed word. It is a
+symbols, so `⌘K`, `·`, and counts pass; the bare brand `PiDeck` is the one allowed word. It is a
 heuristic floor, not a proof: review still owns strings returned from plain functions. It also checks
 `packages/locales/en.json`: keys sorted, values non-empty, and every key (plural base for `_one`/`_other`)
 referenced as a string literal by some UI, desktop, or locales source, so removed UI leaves no orphaned

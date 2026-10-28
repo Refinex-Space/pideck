@@ -24,7 +24,7 @@ async function hostReportsConnectedProvider(page: Page): Promise<boolean> {
 	}
 }
 
-test("opens a clean ThinkRail with no projects imported", async ({ page }) => {
+test("opens a clean PiDeck with no projects imported", async ({ page }) => {
 	await openAppFresh(page);
 
 	await expect(page.getByTestId("welcome")).toBeVisible();
@@ -32,7 +32,7 @@ test("opens a clean ThinkRail with no projects imported", async ({ page }) => {
 	await expect(page.getByTestId("right-panel")).toHaveCount(0);
 	await expect(page.getByTestId("terminal-panel")).toHaveCount(0);
 
-	await expect(page.getByTestId("welcome-title")).toHaveText("ThinkRail");
+	await expect(page.getByTestId("welcome-title")).toHaveText("PiDeck");
 	await expect(page.getByTestId("welcome-cta")).toContainText("Open project");
 	await expect(page.getByTestId("welcome-action")).toHaveCount(0);
 

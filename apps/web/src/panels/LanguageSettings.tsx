@@ -22,13 +22,16 @@ import { SettingsGroup, SettingsPageContainer } from "./SettingsGroup";
 import { SettingsRadioCards, type SettingsRadioChoice } from "./SettingsRadioCards";
 import { SettingsRow } from "./SettingsRow";
 
-const REPO_URL = "https://github.com/JetBrains/thinkrail";
-export const CONTRIBUTE_TRANSLATIONS_URL = `${REPO_URL}/blob/main/CONTRIBUTING.md#translations`;
+const REPO_URL = "https://github.com/Refinex-Space/pideck";
+export const CONTRIBUTE_TRANSLATIONS_URL = `${REPO_URL}/blob/refinex/dev/CONTRIBUTING.md#translations`;
 
 export function repoSourceUrl(appVersion: string | null, path: string): string {
 	const released =
-		appVersion && /^\d+\.\d+\.\d+(?:-[\w.]+)?$/.test(appVersion) && appVersion !== "0.0.0";
-	return `${REPO_URL}/blob/${released ? `v${appVersion}` : "main"}/${path}`;
+		appVersion &&
+		/^\d+\.\d+\.\d+(?:-[\w.]+)?$/.test(appVersion) &&
+		appVersion !== "0.0.0" &&
+		appVersion !== "0.0.0-dev";
+	return `${REPO_URL}/blob/${released ? `v${appVersion}` : "refinex/dev"}/${path}`;
 }
 
 export function englishSourceUrl(appVersion: string | null): string {

@@ -3,19 +3,19 @@ import { windowsFileIdentity } from "./windowsIdentity";
 
 test("names each channel and maps its version to four numeric parts", () => {
 	expect(windowsFileIdentity({ version: "0.2.0", channel: "stable" })).toEqual({
-		productName: "ThinkRail",
-		companyName: "JetBrains s.r.o.",
-		copyright: "Copyright © 2026 JetBrains s.r.o.",
+		productName: "PiDeck",
+		companyName: "Refinex-Space",
+		copyright: "Copyright © 2026 JetBrains s.r.o. and PiDeck contributors",
 		fileVersion: "0.2.0.0",
 		fileVersionParts: [0, 2, 0, 0],
 	});
 	expect(windowsFileIdentity({ version: "0.3.0-nightly.6", channel: "nightly" })).toMatchObject({
-		productName: "ThinkRail Nightly",
+		productName: "PiDeck Nightly",
 		fileVersion: "0.3.0.6",
 		fileVersionParts: [0, 3, 0, 6],
 	});
 	expect(windowsFileIdentity({ version: "0.0.0-dev", channel: "dev" })).toMatchObject({
-		productName: "ThinkRail Dev",
+		productName: "PiDeck Dev",
 		fileVersion: "0.0.0.0",
 	});
 });

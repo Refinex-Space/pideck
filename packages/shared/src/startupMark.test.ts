@@ -27,14 +27,14 @@ test("wide plain output pins the approved recursive host lockup", () => {
 	const lines = contentLines(output);
 
 	expect(lines).toHaveLength(20);
-	expect(lines[0]).toBe("THINKRAIL·THINKRAIL·THIN RAIL·THINK");
-	expect(lines[6]).toEndWith("THINKRAIL");
+	expect(lines[0]).toBe(" IDECK·PIDECK·PIDECK·PIDECK·PID");
+	expect(lines[6]).toEndWith("PIDECK");
 	expect(lines[7]).toEndWith("agentic IDE for pi");
 	expect(lines[10]).toEndWith("● host ready");
 	expect(lines[11]).toEndWith("  localhost:24242");
 	expect(Math.max(...lines.map((line) => Array.from(line).length))).toBeLessThanOrEqual(80);
 	expect(createHash("sha256").update(output).digest("hex")).toBe(
-		"1d4b5d342b9276bec4a46e5c97cf7865be784041f893a6217bfc3d5a6438890e",
+		"c58ed3ef779fe2aa2daf64210e2e7ba391996969220f82717328ea148555cbd5",
 	);
 });
 
@@ -44,10 +44,10 @@ test("medium terminals stack the identity below the complete mark", () => {
 	);
 
 	expect(lines).toHaveLength(26);
-	expect(lines[19]).toEndWith("RAIL·");
+	expect(lines[19]).toBe(" ·PIDECK·PI                    IDECK·PIDE");
 	expect(lines[20]).toBe("");
 	expect(lines.slice(21)).toEqual([
-		"THINKRAIL",
+		"PIDECK",
 		"agentic IDE for pi",
 		"",
 		"● starting",
@@ -66,7 +66,7 @@ test("very narrow terminals use the identity without wrapping the artwork", () =
 	);
 
 	expect(lines).toEqual([
-		"THINKRAIL",
+		"PIDECK",
 		"agentic IDE for pi",
 		"",
 		"● starting",

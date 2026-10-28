@@ -27,7 +27,7 @@
       "name": "@thinkrail/cli",
       "version": "0.0.0",
       "bin": {
-        "thinkrail": "./src/index.ts",
+        "pideck": "./src/index.ts",
       },
       "dependencies": {
         "@thinkrail/server": "workspace:*",

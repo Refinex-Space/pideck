@@ -13,7 +13,7 @@ import { shot } from "./fixtures/screenshots";
 
 const configPath = join(E2E_DATA_DIR, "config.json");
 const ANALYTICS_COPY =
-	"Share anonymous product usage and how you found ThinkRail. We never collect prompts, code, files, credentials, or account identity.";
+	"Share anonymous product usage and how you found PiDeck. We never collect prompts, code, files, credentials, or account identity.";
 
 function savedConfig(): AppConfig {
 	return JSON.parse(readFileSync(configPath, "utf8")) as AppConfig;
@@ -69,7 +69,7 @@ for (const enabled of [true, false]) {
 		const toggle = dialog.getByRole("switch", { name: "Share additional usage data" });
 		await expect(dialog).toBeVisible();
 		await expect(toggle).toBeChecked();
-		await expect(dialog.getByRole("heading")).toHaveText("Help improve ThinkRail");
+		await expect(dialog.getByRole("heading")).toHaveText("Help improve PiDeck");
 		await expect(dialog).toContainText(ANALYTICS_COPY);
 		await expect(dialog.getByRole("button")).toHaveCount(2);
 		await expect(dialog.getByTestId("analytics-consent-confirm")).toHaveText("Done");

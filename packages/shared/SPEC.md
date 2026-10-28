@@ -89,8 +89,8 @@ bundled into `apps/web`. Exposed through explicit subpath exports, not a barrel.
 - **/freePort** — `findFreePort(preferred, host?)`: the first free port at or above `preferred`, so a
   host can pick an open port instead of colliding with one already running. `isPortFree(port, host?)`:
   the underlying single-port check.
-- **/startupMark** — the launchers' one boot signature: a committed 42×20 `TR` silhouette built from a
-  cyclic `THINKRAIL·` field, composed with the product identity, a caller-supplied honest status, and its
+- **/startupMark** — the launchers' one boot signature: a committed 42×20 block Pi silhouette built from a
+  cyclic `PIDECK·` field, composed with the product identity, a caller-supplied honest status, and its
   resolved endpoint. At 72+ columns it is a right-hand lockup; from 42–71 it stacks, and below 42 it uses
   the identity/status alone rather than wrapping the artwork.
   Rendering is one synchronous write's worth of text: terminal-palette green + sparse bright signals +
@@ -103,21 +103,24 @@ bundled into `apps/web`. Exposed through explicit subpath exports, not a barrel.
   `--version`, desktop package metadata, analytics, and `server.welcome.appVersion` cannot drift. It
   contains identity data plus the release-only public `posthogProjectKey` (empty in source, so
   unstamped builds never report) and has no launcher dependency.
-- **/windowsIdentity** — `windowsFileIdentity({ version, channel })`: what Windows shows for a ThinkRail
+- **/windowsIdentity** — `windowsFileIdentity({ version, channel })`: what Windows shows for a PiDeck
   executable. The product name, which also serves as the file description Task Manager displays, is
-  `ThinkRail` on stable, `ThinkRail Nightly` on nightly and `ThinkRail Dev` on unstamped builds. The
-  publisher and copyright are JetBrains s.r.o., as in `LICENSE` and the signing certificate. The version
+  `PiDeck` on stable, `PiDeck Nightly` on nightly and `PiDeck Dev` on unstamped builds. The
+  publisher is Refinex-Space; file metadata retains the upstream copyright and identifies PiDeck contributors.
+  This metadata does not imply a signing certificate. The version
   takes the four numeric parts Windows requires: `X.Y.Z` plus the prerelease's trailing number
   (`0.3.0-nightly.6` → `0.3.0.6`), else `.0`. An unknown channel or a part above 65535 throws, so a
   release build fails rather than ship wrong properties. The CLI compile, the desktop `postBuild` and
   both Windows smokes (CLI and desktop) derive from it, so they cannot disagree.
-- **/assets** — the native icon set: the hand-authored `icon.svg` and the rasters generated from it.
+- **/assets** — the native icon set: the vendored `pi.svg` reference, native `icon.svg` wrapper and the rasters generated from it.
   Never hand-edit a raster; regenerate them with `bun run --cwd packages/shared generate-icons`
   (`@resvg/resvg-js` rasterizes straight from the vector, `resedit` packs the ICO). The outputs are the
   macOS iconset, the Linux 512 px PNG, and the Windows ICO, whose path `windowsIconPath` exports.
-  - **Artwork.** The mark keeps its rounded-square silhouette: the ThinkRail glyph in the dark-family
-    brand green (`#8dff4f`) on a solid black tile. Translucent glass, highlights, and decorative edging
+  - **Artwork.** The mark keeps its rounded-square silhouette: the Pi block glyph from [theSVG](https://thesvg.org/icon/pi), black on a solid white tile. Translucent glass, highlights, and decorative edging
     are excluded so small taskbar frames stay crisp.
+  - **Provenance.** `pi.svg` retains the downloaded vector geometry; `pi.LICENSE` retains the source
+    library's MIT notice. The favicon and browser glyph use the same two paths and even-odd hole rule,
+    checked by the root branding contract test. Web colours inherit the existing theme; no CDN is loaded.
   - **ICO frames.** PNG-compressed at 256/128/80/72/64/56/48/40/36/32/28/24/20/16: Microsoft's
     documented minimum (16/24/32/48/256), plus 64/128 and every small and big icon size Windows asks for
     between 125% and 250% scaling. `LoadImage` picks the closest frame that does not exceed the requested
@@ -150,7 +153,7 @@ bundled into `apps/web`. Exposed through explicit subpath exports, not a barrel.
   (`context/todos/` — the chat TODO plans, one JSON per session, so they're ephemeral with the rest of
   the scratch). The pi-free `pi-todos/core` can't import this package (it stays vanilla-`pi`-installable),
   so it keeps a local mirror of the todos path; this module is the host-side source of truth. Distinct
-  from the *home* state dir `~/.thinkrail` (server `persistence`). (The `.gitignore` *body* the host seeds
+  from the *home* state dir `~/.pideck` (server `persistence`). (The `.gitignore` *body* the host seeds
   into the scratch dir — a lone `*` — is a one-off inlined at that call site, not a path, so it lives
   there, not here.)
 - **/jbcentral** — the **single Central process/filesystem boundary**. It resolves Central by absolute path,

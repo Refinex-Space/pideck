@@ -9,6 +9,15 @@ references: [central-integration]
 tags: [ui]
 ---
 
+## PiDeck feedback routing
+
+Feedback links and the existing invitation lifecycle point to the PiDeck issue tracker and repository.
+The UI requests written feedback; it does not book upstream interviews or promise JetBrains AI credits.
+Existing translation keys, test IDs and feedback wire fields retain their upstream names to avoid a
+protocol migration for a copy/link change. Language contributions and source-build language/theme
+links target `refinex/dev`; `0.0.0-dev` is not a release tag. Released versions keep their tag links.
+
+
 ## Responsibility
 
 The layout-agnostic, store-driven feature views. A panel fills its container and never knows its

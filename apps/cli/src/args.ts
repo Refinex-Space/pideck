@@ -23,13 +23,13 @@ export function parseSubcommand(argv: readonly string[]): Subcommand | undefined
 	return SUBCOMMANDS.find((name) => name === argv[0]);
 }
 
-export const USAGE = `Usage: thinkrail [options] [project-dir]
-       thinkrail update [--channel stable|nightly] [--version X.Y.Z|X.Y.Z-nightly.N|latest]
-       thinkrail uninstall [--remove-data|--keep-data] [-y]
+export const USAGE = `Usage: pideck [options] [project-dir]
+       pideck update [--channel stable|nightly] [--version X.Y.Z|X.Y.Z-nightly.N|latest]
+       pideck uninstall [--remove-data|--keep-data] [-y]
 
-Boots the ThinkRail engine host in-process and opens the browser to the app.
+Boots the PiDeck engine host in-process and opens the browser to the app.
 The \`update\` subcommand re-downloads + installs the latest build for your channel;
-\`uninstall\` removes ThinkRail from this machine (your ~/.thinkrail app state is kept
+\`uninstall\` removes PiDeck from this machine (your ~/.pideck app state is kept
 unless you ask for it to go). Both take \`--help\`.
 
 Options:
@@ -39,7 +39,7 @@ Options:
   --no-analytics Disable additional usage analytics this run.
                  The saved sharing preference lives in Settings → Privacy.
   --verbose      Debug-level logging (terminal + the rotated log files under
-                 ~/.thinkrail/logs).
+                 ~/.pideck/logs).
   -v, --version  Print the version and exit.
   -h, --help     Show this help.
 

@@ -7,7 +7,7 @@ const host = process.env.THINKRAIL_HOST ?? "localhost";
 const preferred = Number(process.env.THINKRAIL_PORT ?? 24242);
 const port = await findFreePort(preferred, host);
 if (port !== preferred) {
-	console.log(`thinkrail dev: host port ${preferred} is in use → using ${port}`);
+	console.log(`pideck dev: host port ${preferred} is in use → using ${port}`);
 }
 const webPort = await findFreePort(24269, host);
 

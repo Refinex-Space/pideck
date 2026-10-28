@@ -11,9 +11,9 @@ import {
 } from "./windowsTaskbarIdentity";
 
 test("names one AppUserModelID per channel", () => {
-	expect(desktopAppUserModelId("stable")).toBe("JetBrains.ThinkRail");
-	expect(desktopAppUserModelId("nightly")).toBe("JetBrains.ThinkRail.Nightly");
-	expect(desktopAppUserModelId("dev")).toBe("JetBrains.ThinkRail.Dev");
+	expect(desktopAppUserModelId("stable")).toBe("RefinexSpace.PiDeck");
+	expect(desktopAppUserModelId("nightly")).toBe("RefinexSpace.PiDeck.Nightly");
+	expect(desktopAppUserModelId("dev")).toBe("RefinexSpace.PiDeck.Dev");
 	expect(() => desktopAppUserModelId("beta")).toThrow('unknown release channel "beta"');
 });
 
@@ -37,27 +37,27 @@ function pinnedFolders(appData: string): { taskbar: string; implicit: string } {
 
 test("collects Electrobun's Start-menu shortcut and every taskbar pin, but not the Desktop shortcut", () => {
 	withTemp((root) => {
-		const channelRoot = join(root, "local", "ai.thinkrail.app", "canary");
+		const channelRoot = join(root, "local", "space.refinex.pideck", "canary");
 		mkdirSync(join(channelRoot, "app"), { recursive: true });
 		writeFileSync(
 			join(channelRoot, ".electrobun-uninstall.json"),
 			JSON.stringify({
 				schema_version: 1,
-				desktop_shortcut: "C:\\Users\\me\\Desktop\\ThinkRail (Canary).lnk",
-				start_menu_shortcut: "C:\\Users\\me\\Start Menu\\Programs\\ThinkRail (Canary).lnk",
+				desktop_shortcut: "C:\\Users\\me\\Desktop\\PiDeck (Canary).lnk",
+				start_menu_shortcut: "C:\\Users\\me\\Start Menu\\Programs\\PiDeck (Canary).lnk",
 			}),
 		);
 		const appData = join(root, "roaming");
 		const { taskbar, implicit } = pinnedFolders(appData);
-		writeFileSync(join(taskbar, "ThinkRail (Canary).lnk"), "");
+		writeFileSync(join(taskbar, "PiDeck (Canary).lnk"), "");
 		writeFileSync(join(taskbar, "desktop.ini"), "");
-		writeFileSync(join(implicit, "ThinkRail (Canary).lnk"), "");
+		writeFileSync(join(implicit, "PiDeck (Canary).lnk"), "");
 
 		expect(taskbarShortcutCandidates(join(channelRoot, "app"), appData)).toEqual({
 			paths: [
-				"C:\\Users\\me\\Start Menu\\Programs\\ThinkRail (Canary).lnk",
-				join(taskbar, "ThinkRail (Canary).lnk"),
-				join(implicit, "ThinkRail (Canary).lnk"),
+				"C:\\Users\\me\\Start Menu\\Programs\\PiDeck (Canary).lnk",
+				join(taskbar, "PiDeck (Canary).lnk"),
+				join(implicit, "PiDeck (Canary).lnk"),
 			],
 			failures: [],
 		});
@@ -66,7 +66,7 @@ test("collects Electrobun's Start-menu shortcut and every taskbar pin, but not t
 
 test("finds nothing for an unmanaged build or an unknown manifest schema", () => {
 	withTemp((root) => {
-		const appDir = join(root, "build", "ThinkRail-dev");
+		const appDir = join(root, "build", "PiDeck-dev");
 		mkdirSync(appDir, { recursive: true });
 		expect(taskbarShortcutCandidates(appDir, undefined)).toEqual({ paths: [], failures: [] });
 		writeFileSync(
@@ -87,11 +87,11 @@ test("a corrupt manifest is reported without hiding the taskbar pins", () => {
 		writeFileSync(join(root, "channel", ".electrobun-uninstall.json"), "");
 		const appData = join(root, "roaming");
 		const { taskbar } = pinnedFolders(appData);
-		writeFileSync(join(taskbar, "ThinkRail.lnk"), "");
+		writeFileSync(join(taskbar, "PiDeck.lnk"), "");
 
 		const { paths, failures } = taskbarShortcutCandidates(appDir, appData);
 
-		expect(paths).toEqual([join(taskbar, "ThinkRail.lnk")]);
+		expect(paths).toEqual([join(taskbar, "PiDeck.lnk")]);
 		expect(failures).toHaveLength(1);
 		expect(failures[0]).toBeInstanceOf(SyntaxError);
 	});
@@ -109,10 +109,10 @@ test("stamps only existing shortcuts to this launcher that carry another ID", ()
 		const other = file("other");
 		const broken = file("broken");
 		const launcher =
-			"C:\\Users\\me\\AppData\\Local\\ai.thinkrail.app\\stable\\app\\bin\\launcher.exe";
+			"C:\\Users\\me\\AppData\\Local\\space.refinex.pideck\\stable\\app\\bin\\launcher.exe";
 		const ids = new Map<string, string | null>([
 			[ours, null],
-			[current, "JetBrains.ThinkRail"],
+			[current, "RefinexSpace.PiDeck"],
 			[other, null],
 		]);
 		const closed: string[] = [];
@@ -133,13 +133,13 @@ test("stamps only existing shortcuts to this launcher that carry another ID", ()
 			const result = stampTaskbarShortcuts(
 				[ours, current, other, broken, join(root, "missing.lnk")],
 				launcher,
-				"JetBrains.ThinkRail",
+				"RefinexSpace.PiDeck",
 				open,
 			);
 
 			expect(result.stamped).toEqual([ours]);
 			expect(result.failures).toEqual([new Error("not a shortcut")]);
-			expect(ids.get(ours)).toBe("JetBrains.ThinkRail");
+			expect(ids.get(ours)).toBe("RefinexSpace.PiDeck");
 			expect(ids.get(other)).toBeNull();
 			expect(writableOpens).toEqual([ours]);
 			expect(closed).toEqual([ours, ours, current, other]);
@@ -167,8 +167,8 @@ function powershell(script: string): string {
 test.skipIf(process.platform !== "win32")("sets the process AppUserModelID", () => {
 	const shell = loadWindowsShellApi();
 	expect(loadWindowsShellApi()).toBe(shell);
-	shell.setProcessAppUserModelId("JetBrains.ThinkRail.Test");
-	expect(shell.processAppUserModelId()).toBe("JetBrains.ThinkRail.Test");
+	shell.setProcessAppUserModelId("RefinexSpace.PiDeck.Test");
+	expect(shell.processAppUserModelId()).toBe("RefinexSpace.PiDeck.Test");
 });
 
 test.skipIf(process.platform !== "win32")(
@@ -180,7 +180,7 @@ test.skipIf(process.platform !== "win32")(
 			mkdirSync(join(root, "app", "bin"), { recursive: true });
 			writeFileSync(launcher, "");
 			writeFileSync(other, "");
-			const ours = join(root, "ThinkRail.lnk");
+			const ours = join(root, "PiDeck.lnk");
 			const foreign = join(root, "Other.lnk");
 			for (const [path, target] of [
 				[ours, launcher],
@@ -191,7 +191,7 @@ test.skipIf(process.platform !== "win32")(
 				);
 			}
 			const shell = loadWindowsShellApi();
-			const id = "JetBrains.ThinkRail.Test";
+			const id = "RefinexSpace.PiDeck.Test";
 			shell.withComApartment(() => {
 				const opened = shell.openShortcut(ours);
 				try {

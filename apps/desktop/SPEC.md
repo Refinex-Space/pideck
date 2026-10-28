@@ -9,6 +9,16 @@ tags: [desktop, launcher, packaging]
 references: [submodule-web-navigation, module-artifact-tests, module-ci-release, submodule-web-shell, module-cli]
 ---
 
+## PiDeck packaging
+
+The application name is `PiDeck`, its bundle identifier is `space.refinex.pideck`, and Windows
+AppUserModelIDs use `RefinexSpace.PiDeck` with the existing channel suffixes. Native icons use the
+vendored Pi block glyph. The default update feed is empty, so even stable/canary local packages
+expose no automatic updater. A PiDeck release must establish its own feed, signatures and acceptance
+checks before enabling it. References below to JetBrains signing describe inherited upstream tooling,
+not credentials or services available to this fork.
+
+
 ## Responsibility
 
 The native Electrobun launcher/client over the existing web UI and wire. The local-host profile embeds
@@ -65,7 +75,7 @@ another.
    startup continues. An update-metadata failure here precedes host acquisition and quits directly.
    Unless the neutral or hidden artifact modes are set, startup then opens a small, centered, frameless
    splash.
-   - It reads "Starting ThinkRail…", or "Finishing update to X…" when the update journal is pending,
+   - It reads "Starting PiDeck…", or "Finishing update to X…" when the update journal is pending,
      from the saved native labels (`desktop.splash.*`, the desktop fills in `{{version}}`).
    - Its content is a `data:` URL given at creation. The SDK delays `html:` content behind a 100 ms timer,
      which the synchronous server import would block. Startup awaits the splash's own `dom-ready`,
@@ -73,7 +83,7 @@ another.
    - It closes when the main window first reaches `dom-ready`, and the main window is activated.
    - Before the startup error dialog it is hidden, not closed: as the last window it would trigger
      `exitOnLastWindowClosed` before the dialog appears.
-   - Closing the splash before the main window exists quits ThinkRail. Closing the main window before
+   - Closing the splash before the main window exists quits PiDeck. Closing the main window before
      it is ready also closes the splash, so the last window still goes and quit runs through the
      coordinator. A splash the user closed natively is never closed again.
    - The main window, RPC, navigation rules and first-`dom-ready` readiness are unchanged. Creating the
@@ -451,8 +461,8 @@ and shows them as two taskbar buttons (blackboardsh/electrobun#514). The desktop
 itself:
 
 - **Process ID.** The first thing startup does, before any window, is set an explicit per-channel ID
-  derived from the product name: `JetBrains.ThinkRail`, `JetBrains.ThinkRail.Nightly`,
-  `JetBrains.ThinkRail.Dev`. Stable and nightly stay separate apps.
+  derived from the product name: `RefinexSpace.PiDeck`, `RefinexSpace.PiDeck.Nightly`,
+  `RefinexSpace.PiDeck.Dev`. Stable and nightly stay separate apps.
 - **Shortcut IDs.** Once the main window first reaches `dom-ready` and readiness is reported, the desktop
   writes the same ID onto every shortcut whose target is this install's `bin\launcher.exe`:
   - the Start-menu shortcut Electrobun records in `<channel root>\.electrobun-uninstall.json`

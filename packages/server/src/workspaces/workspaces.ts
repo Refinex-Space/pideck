@@ -170,14 +170,13 @@ export async function openExistingWorktree(
 	const projectOwner = loadProjects().find(
 		(candidate) => candidate.id !== projectId && canonicalPath(candidate.path) === wantedPath,
 	);
-	if (projectOwner)
-		throw new Error("This worktree is already open under another ThinkRail project");
+	if (projectOwner) throw new Error("This worktree is already open under another PiDeck project");
 
 	const all = loadWorkspaces();
 	const existing = all.find((workspace) => canonicalPath(workspace.worktreePath) === wantedPath);
 	if (existing) {
 		if (existing.projectId === projectId) return existing;
-		throw new Error("This worktree is already open under another ThinkRail project");
+		throw new Error("This worktree is already open under another PiDeck project");
 	}
 
 	const displayName =
@@ -407,8 +406,7 @@ export function renameWorkspace(
 	if (!project) throw new Error(`Unknown project: ${ws.projectId}`);
 
 	if (ws.kind === "default") throw new Error("The Default workspace cannot be renamed");
-	if (ws.kind === "external")
-		throw new Error("An existing worktree cannot be renamed by ThinkRail");
+	if (ws.kind === "external") throw new Error("An existing worktree cannot be renamed by PiDeck");
 	const displayName = toDisplayName(requestedName);
 	if (!displayName) throw new Error(`Invalid workspace name: ${requestedName}`);
 	const wanted = opts.branch === undefined ? "" : branchSlug(opts.branch);

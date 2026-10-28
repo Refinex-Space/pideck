@@ -2,11 +2,23 @@
 id: architecture
 type: architecture-design
 status: active
-title: ThinkRail — top-level architecture
+title: PiDeck — top-level architecture
 parent: goal-and-requirements
 covers: [client-host-split, cli-entrypoint, wire-contract, transport-endpoint, ui-shell-panels, git-worktrees, remote-tailscale, hydrate-then-stream, domain-vs-view-state, frontend-local-workbench-frame, client-local-navigation, central-integration, portable-pi-packages, thinkrail-extensions]
 tags: [architecture]
 ---
+
+## PiDeck fork identity
+
+PiDeck is maintained by Refinex-Space from ThinkRail `main`
+(`6cd6f9054dc566f8080db1d338cb21bff0c2b7cc`). Product names, launchers, native identity,
+icons and the default host data directory are independent of upstream. Internal `@thinkrail/*`
+packages, `THINKRAIL_*` environment variables, wire/native bridge names and repository-local
+`.thinkrail` workflow paths retain their upstream contracts. This is intentional compatibility,
+not a second product identity. See [fork-maintenance.md](fork-maintenance.md) for branch ownership,
+upgrade procedure and the customization register. Upstream release infrastructure described below
+is historical context; it is not a PiDeck signing or publication service.
+
 
 ## Drivers
 

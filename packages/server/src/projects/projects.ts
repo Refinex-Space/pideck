@@ -105,7 +105,7 @@ export function openProject(inputPath: string): Project {
 	if (loadWorkspaces().some((ws) => canonicalPath(ws.worktreePath) === wanted))
 		throw new CodedError(
 			"ALREADY_OPEN",
-			`This folder is already open in ThinkRail as a workspace: ${root}`,
+			`This folder is already open in PiDeck as a workspace: ${root}`,
 		);
 
 	const taken = new Set(projects.map((p) => p.slug));
@@ -381,7 +381,7 @@ export function initProject(inputPath: string): Project {
 		if (!added.ok) throw new Error(`git add failed: ${path}`);
 
 		const identity: string[] = [];
-		if (!git(path, ["config", "user.name"]).out) identity.push("-c", "user.name=ThinkRail");
+		if (!git(path, ["config", "user.name"]).out) identity.push("-c", "user.name=PiDeck");
 		if (!git(path, ["config", "user.email"]).out)
 			identity.push("-c", "user.email=thinkrail@localhost");
 		const commit = git(path, [...identity, "commit", "--allow-empty", "-m", "Initial commit"]);

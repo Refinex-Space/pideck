@@ -16,45 +16,17 @@ const STROKES: ReadonlyArray<{
 	className: string;
 }> = [
 	{
-		d: "M0 20 H312",
+		d: "M223.97 634.72 V223.97 H458.68 V341.32 H341.32 V458.68 H223.97",
 		join: "miter",
-		width: 40,
-		clip: "tHorizontal",
-		className: "motion-safe:animate-loader-t-bar",
-	},
-	{
-		d: "M0 90 H130 V449.5",
-		join: "miter",
-		width: 40,
-		clip: "tVertical",
+		width: 117.36,
+		clip: "p",
 		className: "motion-safe:animate-loader-t-stem",
 	},
 	{
-		d: "M340 20 H401 C444.6 20 481 55.5 481 98.5 V190 C481 235 462 272 432 290 L540 466",
-		join: "round",
-		width: 46,
-		clip: "rUpperTail",
-		className: "motion-safe:animate-loader-r-tail",
-	},
-	{
-		d: "M200 449.5 V321 C200 270 245 228 304 228 H374 C394 228 410 213 410 194 V120 C410 102 398 90 380 90 H180",
+		d: "M576.04 400 V634.72",
 		join: "miter",
-		width: 44,
-		clip: "rBowl",
-		className: "motion-safe:animate-loader-r-bowl",
-	},
-	{
-		d: "M200 335 V140",
-		join: "miter",
-		width: 40,
-		clip: "rBowl",
-		className: "motion-safe:animate-loader-r-stem",
-	},
-	{
-		d: "M269 449.5 V332 C269 312 285 300 305 300 H350 L457 466",
-		join: "miter",
-		width: 46,
-		clip: "rLowerLeg",
+		width: 117.36,
+		clip: "i",
 		className: "motion-safe:animate-loader-r-leg",
 	},
 ];
@@ -76,7 +48,7 @@ export function RunningIcon({ className }: { className?: string | undefined }) {
 				<defs>
 					{Object.entries(BRAND_MARK_SEGMENTS).map(([name, d]) => (
 						<clipPath key={name} id={clipId(name)}>
-							<path d={d} />
+							<path d={d} fillRule="evenodd" clipRule="evenodd" />
 						</clipPath>
 					))}
 				</defs>
@@ -94,7 +66,7 @@ export function RunningIcon({ className }: { className?: string | undefined }) {
 						className="motion-safe:animate-loader-frame"
 					/>
 				))}
-				<g transform="translate(101.5 155)">
+				<g transform="scale(0.95)">
 					{STROKES.map((stroke) => (
 						<path
 							key={stroke.d}

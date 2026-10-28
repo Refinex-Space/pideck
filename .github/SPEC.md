@@ -7,6 +7,15 @@ parent: architecture
 depends-on: [module-cli, module-desktop, module-shared, module-repo-scripts, module-artifact-tests]
 ---
 
+## PiDeck fork boundary
+
+The reusable native build action collects `PiDeck` framework artifacts and emits `pideck-*`
+filenames. This fork has no configured signing or publication service; the upstream private
+coordinator described below is not available to PiDeck. The empty desktop feed and empty source
+analytics key remain in force. Do not enable inherited deployment, publishing or telemetry jobs as
+part of a local build or upstream synchronization.
+
+
 ## Responsibility
 
 Public PR gates, contribution templates, and reusable native build recipes. Release orchestration,

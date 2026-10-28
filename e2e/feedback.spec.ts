@@ -1,9 +1,9 @@
 import { expect, test, type WebSocketRoute } from "@playwright/test";
 import { WS_CHANNELS } from "@thinkrail/contracts";
 
-const BOOKING_URL = "https://calendar.app.google/5suMJdDEBFvYJ4zN9";
+const BOOKING_URL = "https://github.com/Refinex-Space/pideck/issues";
 const INVITATION_COPY =
-	"Tell us about your experience with ThinkRail in a user interview. After you complete the interview, you will receive 100 bonus credits in Central (JetBrains AI).";
+	"Share feedback or report a problem in the PiDeck repository. Include what you expected and what happened; remove private information before posting.";
 
 type ClientRequest = {
 	id?: string;
@@ -58,7 +58,7 @@ test("feedback settings and the addressed interview prompt preserve the approved
 			socket.send(message);
 		});
 	});
-	await context.route("https://calendar.app.google/**", (route) => route.abort());
+	await context.route("https://github.com/Refinex-Space/pideck/**", (route) => route.abort());
 
 	await page.goto("/");
 	await expect(page.getByTestId("connection-status")).toHaveAttribute("data-status", "connected");
@@ -72,7 +72,7 @@ test("feedback settings and the addressed interview prompt preserve the approved
 	await expect(settingsLink).toHaveAttribute("target", "_blank");
 	await expect(settingsLink).toHaveAttribute("rel", "noopener noreferrer");
 	const discordLink = settings.getByTestId("feedback-join-discord");
-	await expect(discordLink).toHaveAttribute("href", "https://thinkrail.ai/discord");
+	await expect(discordLink).toHaveAttribute("href", "https://github.com/Refinex-Space/pideck");
 	await expect(discordLink).toHaveAttribute("target", "_blank");
 	await expect(discordLink).toHaveAttribute("rel", "noopener noreferrer");
 	const primaryTextColor = await page.evaluate(() => {
@@ -95,7 +95,7 @@ test("feedback settings and the addressed interview prompt preserve the approved
 	sendInvitation(browserSocket);
 	const dialog = page.getByTestId("interview-prompt-dialog");
 	await expect(dialog).toBeVisible();
-	await expect(dialog).toContainText("Help shape ThinkRail");
+	await expect(dialog).toContainText("Share feedback");
 	await expect(dialog).toContainText(INVITATION_COPY);
 	await expect(dialog.getByTestId("interview-postpone")).toBeFocused();
 

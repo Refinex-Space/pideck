@@ -30,7 +30,7 @@ export interface NotificationSpec {
 }
 
 const BODY_MAX = 100;
-const APP_NAME = "ThinkRail";
+const APP_NAME = "PiDeck";
 const AGGREGATE_TAG = "thinkrail-attention";
 
 export function reasonLabel(reason: AttentionReason): string {

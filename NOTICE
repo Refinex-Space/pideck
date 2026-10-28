@@ -1,0 +1,23 @@
+PiDeck
+Maintained by Refinex-Space.
+
+This product includes software developed as ThinkRail by JetBrains s.r.o.
+and its contributors, licensed under the Apache License, Version 2.0.
+The upstream license and copyright notices are retained in LICENSE and source files.
+
+PiDeck starts from ThinkRail main
+(commit 6cd6f9054dc566f8080db1d338cb21bff0c2b7cc).
+Fork modifications include product naming, application identity, icons, default
+application storage, distribution/feedback links and repository documentation.
+See fork-maintenance.md for the maintained modification register.
+
+PiDeck is independently maintained and is not an official JetBrains product.
+The names and trademarks of third-party products belong to their respective owners.
+
+Pi icon
+The Pi glyph is vendored from https://thesvg.org/icon/pi
+Source: https://github.com/GLINCKER/thesvg/blob/main/public/icons/pi/default.svg
+The source library's MIT notice is retained in packages/shared/assets/pi.LICENSE.
+PiDeck uses the glyph in its native icons, favicon and interface mark; native
+background and interface colour/animation are adaptations. This does not imply
+endorsement by Pi or theSVG.

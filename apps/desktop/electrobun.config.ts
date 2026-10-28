@@ -7,15 +7,15 @@ const bun = { entrypoint: "src/index.ts", version: "1.4.4" };
 
 export default {
 	app: {
-		name: "ThinkRail",
-		identifier: "ai.thinkrail.app",
+		name: "PiDeck",
+		identifier: "space.refinex.pideck",
 		version,
 	},
 	runtime: {
 		exitOnLastWindowClosed: true,
 	},
 	release: {
-		baseUrl: "https://github.com/JetBrains/thinkrail/releases/download/desktop-updates",
+		baseUrl: "",
 		generatePatch: false,
 	},
 	build: {

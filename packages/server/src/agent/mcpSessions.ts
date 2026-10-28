@@ -219,7 +219,7 @@ export function restartMcpStatus(sessionId: string): void {
 export function assertMcpServerDisablableInChat(sessionId: string, name: string): void {
 	const view = mcpSessionView(sessionId);
 	if (!ownsMcp(view)) {
-		throw new CodedError("MCP_HANDLED_ELSEWHERE", "MCP is not managed by ThinkRail here.");
+		throw new CodedError("MCP_HANDLED_ELSEWHERE", "MCP is not managed by PiDeck here.");
 	}
 	if (view.loaded?.has(name)) return;
 	if (
@@ -411,7 +411,7 @@ export async function reconnectMcpServer(sessionId: string, name: string): Promi
 			})
 		: null;
 	if (!reconnect) {
-		throw new CodedError("MCP_HANDLED_ELSEWHERE", "MCP is not managed by ThinkRail here.");
+		throw new CodedError("MCP_HANDLED_ELSEWHERE", "MCP is not managed by PiDeck here.");
 	}
 	await reconnect;
 	const failure = failures.at(-1);

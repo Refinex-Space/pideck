@@ -1,22 +1,22 @@
 #!/usr/bin/env bash
-# ThinkRail binary installer — downloads the single-file `thinkrail` executable for your platform from
+# PiDeck binary installer — downloads the single-file `pideck` executable for your platform from
 # the GitHub releases, verifies its checksum, and puts it on your PATH.
 #
-#   curl -fsSL https://raw.githubusercontent.com/JetBrains/thinkrail/main/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/Refinex-Space/pideck/refinex/dev/install.sh | bash
 #
 # Options (pass after `-s --`):
 #   --channel stable|nightly   (default: stable)
 #   --version X.Y.Z|X.Y.Z-nightly.N|latest
 #                              (default: latest)
-#   --prefix DIR               (default: ~/.local; binary lands at <prefix>/bin/thinkrail)
+#   --prefix DIR               (default: ~/.local; binary lands at <prefix>/bin/pideck)
 #   --no-modify-path           don't touch shell rc files; just print PATH advice
 #
-# After install, run `thinkrail`. To update later, run `thinkrail update`; to remove it, run
-# `thinkrail uninstall`.
+# After install, run `pideck`. To update later, run `pideck update`; to remove it, run
+# `pideck uninstall`.
 
 set -euo pipefail
 
-REPO="${THINKRAIL_REPO:-JetBrains/thinkrail}"
+REPO="${THINKRAIL_REPO:-Refinex-Space/pideck}"
 CHANNEL="stable"
 VERSION="latest"
 if [ -z "${HOME:-}" ]; then
@@ -28,21 +28,21 @@ MODIFY_PATH=1
 
 usage() {
     cat >&2 <<'EOF'
-ThinkRail binary installer.
+PiDeck binary installer.
 
 Usage:
-  curl -fsSL https://raw.githubusercontent.com/JetBrains/thinkrail/main/install.sh | bash
+  curl -fsSL https://raw.githubusercontent.com/Refinex-Space/pideck/refinex/dev/install.sh | bash
   curl -fsSL ... | bash -s -- --channel nightly --version 0.2.0-nightly.4 --prefix ~/.local
 
 Options:
   --channel stable|nightly   (default: stable)
   --version X.Y.Z|X.Y.Z-nightly.N|latest
                              (default: latest)
-  --prefix DIR               (default: ~/.local; binary lands at <prefix>/bin/thinkrail)
+  --prefix DIR               (default: ~/.local; binary lands at <prefix>/bin/pideck)
   --no-modify-path           don't touch shell rc files; just print PATH advice
 
-After install, run `thinkrail`. To update later, run `thinkrail update`; to remove it, run
-`thinkrail uninstall`.
+After install, run `pideck`. To update later, run `pideck update`; to remove it, run
+`pideck uninstall`.
 EOF
     exit "${1:-0}"
 }
@@ -213,7 +213,7 @@ if [ "$OS" = "darwin" ] && [ "$ARCH" = "x64" ] \
     && [ "$(sysctl -n sysctl.proc_translated 2>/dev/null || true)" = "1" ]; then
     ARCH="arm64"
 fi
-ASSET_NAME="thinkrail-${OS}-${ARCH}"
+ASSET_NAME="pideck-${OS}-${ARCH}"
 [ "$OS" = "windows" ] && ASSET_NAME="${ASSET_NAME}.exe"
 
 api() {
@@ -302,15 +302,15 @@ echo "  → ok"
 
 BIN_DIR="$PREFIX/bin"
 mkdir -p "$BIN_DIR"
-DEST="$BIN_DIR/thinkrail"
-[ "$OS" = "windows" ] && DEST="$BIN_DIR/thinkrail.exe"
-STAGED_BINARY=$(mktemp "$BIN_DIR/.thinkrail.new.XXXXXX")
+DEST="$BIN_DIR/pideck"
+[ "$OS" = "windows" ] && DEST="$BIN_DIR/pideck.exe"
+STAGED_BINARY=$(mktemp "$BIN_DIR/.pideck.new.XXXXXX")
 if ! cp "$TMP/$ASSET_NAME" "$STAGED_BINARY"; then
-    echo "Failed to stage ThinkRail in $BIN_DIR; the previous executable was left unchanged." >&2
+    echo "Failed to stage PiDeck in $BIN_DIR; the previous executable was left unchanged." >&2
     exit 1
 fi
 if ! chmod +x "$STAGED_BINARY"; then
-    echo "Failed to make the staged ThinkRail executable runnable; the previous executable was left unchanged." >&2
+    echo "Failed to make the staged PiDeck executable runnable; the previous executable was left unchanged." >&2
     exit 1
 fi
 if ! mv -f "$STAGED_BINARY" "$DEST"; then
@@ -320,7 +320,7 @@ fi
 STAGED_BINARY=""
 echo "Installed → $DEST"
 
-CONFIG_DIR="$CONFIG_HOME/.config/thinkrail"
+CONFIG_DIR="$CONFIG_HOME/.config/pideck"
 mkdir -p "$CONFIG_DIR"
 META_TMP=$(mktemp "$CONFIG_DIR/.install.json.tmp.XXXXXX")
 cat > "$META_TMP" <<EOF
@@ -340,7 +340,7 @@ fi
 META_TMP=""
 
 echo
-echo "ThinkRail ${TAG#v} ($CHANNEL) installed."
+echo "PiDeck ${TAG#v} ($CHANNEL) installed."
 
 PATH_NEEDS_MANUAL_ADD=0
 case ":$PATH:" in
@@ -366,15 +366,15 @@ case ":$PATH:" in
                     rc_line="export PATH=\"\$PATH:$BIN_DIR\""
                     ;;
                 fish)
-                    rc_file="$HOME/.config/fish/conf.d/thinkrail.fish"
+                    rc_file="$HOME/.config/fish/conf.d/pideck.fish"
                     rc_line="fish_add_path '$BIN_DIR'"
                     ;;
                 *) PATH_NEEDS_MANUAL_ADD=1 ;;
             esac
 
             if [ -n "$rc_file" ]; then
-                marker_begin="# >>> thinkrail PATH >>>"
-                marker_end="# <<< thinkrail PATH <<<"
+                marker_begin="# >>> pideck PATH >>>"
+                marker_end="# <<< pideck PATH <<<"
                 markers_valid=1
                 if [ -f "$rc_file" ] && ! awk -v begin="$marker_begin" -v end="$marker_end" '
                     $0 == begin {
@@ -390,7 +390,7 @@ case ":$PATH:" in
                     END { exit (bad || in_block) ? 1 : 0 }
                 ' "$rc_file" 2>/dev/null; then
                     markers_valid=0
-                    echo "PATH:           warning: malformed ThinkRail PATH markers in $rc_file; left it unchanged" >&2
+                    echo "PATH:           warning: malformed PiDeck PATH markers in $rc_file; left it unchanged" >&2
                     PATH_NEEDS_MANUAL_ADD=1
                 fi
 
@@ -446,6 +446,6 @@ if [ "$PATH_NEEDS_MANUAL_ADD" -eq 1 ]; then
     echo "Add to PATH:    export PATH=\"\$PATH:$BIN_DIR\""
 fi
 
-echo "Run:            thinkrail"
-echo "Update later:   thinkrail update"
-echo "Uninstall:      thinkrail uninstall"
+echo "Run:            pideck"
+echo "Update later:   pideck update"
+echo "Uninstall:      pideck uninstall"

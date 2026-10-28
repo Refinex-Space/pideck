@@ -87,7 +87,7 @@ async function bootstrap(build: BuildKind): Promise<void> {
 	const openHost = options.host === "0.0.0.0" || options.host === "::" ? "localhost" : options.host;
 	const url = `http://${openHost}:${port}`;
 	printStartupMark({ status: "host ready", endpoint: url });
-	console.log(`thinkrail → ${url}`);
+	console.log(`pideck → ${url}`);
 	openUiThenStartAttribution(options.open, url, openBrowser, server.startAttributionClaim);
 }
 

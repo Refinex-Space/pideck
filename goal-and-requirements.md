@@ -2,14 +2,14 @@
 id: goal-and-requirements
 type: goal-and-requirements
 status: active
-title: ThinkRail — product goal and scope
+title: PiDeck — product goal and scope
 covers: [product-goal, product-audience, product-principles, product-capabilities, product-non-goals, engine-decision]
 tags: [product, scope]
 ---
 
 ## Goal
 
-ThinkRail is the agentic IDE that gets better every time you use it. It is a thin host that runs `pi`
+PiDeck is the agentic IDE that gets better every time you use it. It is a thin host that runs `pi`
 and bridges it to a rich UI, isolates work into separate workspaces, and gives the agent durable
 project knowledge through living specs and reusable skills — so agent work is approachable without a
 terminal and stays isolated, reviewable, and grounded in specs: building with agents without losing
@@ -37,14 +37,14 @@ to move fast without losing control of what the agent did.
 
 ## Value
 
-- **Isolation by default.** A workspace ThinkRail creates is a git worktree with its own branch and cwd:
+- **Isolation by default.** A workspace PiDeck creates is a git worktree with its own branch and cwd:
   agents run in parallel and the main branch stays clean until the user merges. Working directly in the
   project folder (the Default workspace) is an explicit choice, never the default.
 - **A real IDE around the agent.** Editor, diffs, terminals, and review in one workbench, so the user
   sees and steers the agent's work instead of reconstructing it from a scrollback.
 - **Specs as ground truth.** The project's intent lives in a spec graph beside the code that the agent
   reads, searches, and maintains, so intent survives the session.
-- **All of pi, nothing hidden.** Models, skills, extensions, and session state stay pi's; ThinkRail adds
+- **All of pi, nothing hidden.** Models, skills, extensions, and session state stay pi's; PiDeck adds
   a surface, not a second agent.
 
 ## Principles
@@ -57,19 +57,19 @@ Durable decisions every feature follows; [[architecture]] carries the structure 
   `pi` — prompt context, files, pi's own skills/extensions — and the flags a session starts with.
 - **Expose, don't recompute.** The host shows what `pi` reports rather than deriving its own copy.
 - **The user's own tools and credentials.** Git, GitHub, and model access go through the user's `git`,
-  `gh`, `central` CLI, and pi's provider auth; ThinkRail keeps no accounts or tokens of its own.
+  `gh`, `central` CLI, and pi's provider auth; PiDeck keeps no accounts or tokens of its own.
 - **Trust is explicit.** What a cloned repository could inject into the agent — its committed skill
   aliases, pi's own project resources (`.pi/` settings, extensions, skills, prompts, subagent definitions),
   and MCP servers it defines — loads only after a per-project trust grant; a repo-defined MCP server also
   needs a per-entry approval that lapses when the entry changes.
-- **Spec-first.** ThinkRail is built spec-first and helps the projects it opens work the same way.
+- **Spec-first.** PiDeck is built spec-first and helps the projects it opens work the same way.
 
 ## Capabilities
 
-What ThinkRail does, at product level; the linked spec owns the detail.
+What PiDeck does, at product level; the linked spec owns the detail.
 
-- **Two launchers, one app** — a native desktop app and the `thinkrail` CLI that opens the same UI in a
-  browser, both embedding the same host; state lives under `~/.thinkrail` ([[module-desktop]],
+- **Two launchers, one app** — a native desktop app and the `pideck` CLI that opens the same UI in a
+  browser, both embedding the same host; state lives under `~/.pideck` ([[module-desktop]],
   [[module-cli]]).
 - **Projects → workspaces** — a git repo is a project; a workspace is a git worktree, plus the built-in
   Default workspace (the project folder itself) and existing worktrees attached in place
@@ -118,12 +118,12 @@ What ThinkRail does, at product level; the linked spec owns the detail.
   to date ([[submodule-server-editors]], [[submodule-web-updates]]).
 - **Interface language** — the UI follows the system language or the user's choice; English and
   a set of translations ship built-in (an untranslated string shows in English), and a user adds or
-  overrides a language with a flat JSON file in `~/.thinkrail/locales`, live on save. Agent and tool
+  overrides a language with a flat JSON file in `~/.pideck/locales`, live on save. Agent and tool
   output is never translated ([[module-locales]], [[submodule-web-i18n]]).
 - **Themes** — light, dark, minimal and high-contrast themes ship built-in, following the system
   appearance or a fixed choice; a user adds a theme by saving a copy of a bundled theme file with new
-  colours in `~/.thinkrail/themes`, live on save ([[submodule-web-themes]]).
-- **Brand** — ThinkRail green accent (bright on dark themes, deepened on light ones so it clears AA on
+  colours in `~/.pideck/themes`, live on save ([[submodule-web-themes]]).
+- **Brand** — PiDeck green accent (bright on dark themes, deepened on light ones so it clears AA on
   both), a Darcula-family dark background, Orbitron for the brand display role, Geist and JetBrains Mono
   for UI and code ([[submodule-web-themes]], [[web-typography]]).
 
@@ -133,5 +133,5 @@ Only these are excluded by decision. Anything neither listed above nor excluded 
 forbidden.
 
 - **A second agent runtime**, or any host-side agent loop or prompt assembly (see Principles).
-- **ThinkRail accounts or a login UI.** Who may reach a host is decided by the network — Tailscale ACLs
+- **PiDeck accounts or a login UI.** Who may reach a host is decided by the network — Tailscale ACLs
   and device identity ([[architecture]]).

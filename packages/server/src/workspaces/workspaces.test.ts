@@ -302,7 +302,7 @@ test("openExistingWorktree adopts idempotently and removal never reclaims the ch
 	expect((await openExistingWorktree("p1", external)).id).toBe(workspace.id);
 	expect(events).toHaveLength(1);
 	expect(() => renameWorkspace(workspace.id, "hands off")).toThrow(
-		"An existing worktree cannot be renamed by ThinkRail",
+		"An existing worktree cannot be renamed by PiDeck",
 	);
 
 	removeWorkspace(workspace.id);
@@ -341,7 +341,7 @@ test("existing worktrees represented by another project are rejected before its 
 		false,
 	);
 	await expect(openExistingWorktree("p1", external)).rejects.toThrow(
-		"This worktree is already open under another ThinkRail project",
+		"This worktree is already open under another PiDeck project",
 	);
 });
 

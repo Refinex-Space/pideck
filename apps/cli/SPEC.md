@@ -9,9 +9,19 @@ tags: [host]
 references: [module-artifact-tests]
 ---
 
+## PiDeck distribution
+
+The executable and artifact prefix are `pideck`; install metadata and staging live under
+`~/.config/pideck` and the cache root's `pideck` directory. Installer/update URLs target
+`Refinex-Space/pideck`, with scripts read from `refinex/dev` while `refinex/product` remains the
+unmodified upstream baseline. Do not route PiDeck to that baseline's ThinkRail installer. Source builds retain the `dev`
+channel and expose no automatic update notice. Install/update commands require an actual PiDeck
+release; they never substitute a ThinkRail binary. No release is provisioned by this rename.
+
+
 ## Responsibility
 
-The retained browser launcher and standalone rollback artifact: the `thinkrail` bin. It boots the engine
+The retained browser launcher and standalone rollback artifact: the `pideck` bin. It boots the engine
 host in-process and opens the browser UI at its URL. It is a thin sibling of `apps/desktop`; all engine
 and process-boot logic lives in `packages/server`.
 
@@ -24,8 +34,8 @@ and process-boot logic lives in `packages/server`.
    logging, repairs the login-shell environment, initializes the current PI runtime/Central watcher,
    resolves a free serving port at or above the requested one, and embeds the host in this Bun process. Another CLI or desktop
    host using the same data directory does not block startup; each process serves its own endpoint.
-4. On interactive stdout render the shared recursive ThinkRail startup mark with honest `host ready`
-   status + the resolved endpoint, retain the parse-stable `thinkrail → <url>` line, and open the browser
+4. On interactive stdout render the shared recursive PiDeck startup mark with honest `host ready`
+   status + the resolved endpoint, retain the parse-stable `pideck → <url>` line, and open the browser
    there (cross-platform: `open` / `start` / `xdg-open`, best-effort), unless `--no-open`. Exit-only
    commands and redirected output omit the mark.
 5. SIGINT / SIGTERM await the shared idempotent `server.shutdown()` before exit; they do not duplicate
@@ -34,9 +44,9 @@ and process-boot logic lives in `packages/server`.
 ## Interface
 
 `bin` = `./src/index.ts` (bun runs the TS source directly). A leading `update` or `uninstall` positional
-is a **subcommand** (`thinkrail update [--channel stable|nightly]
+is a **subcommand** (`pideck update [--channel stable|nightly]
 [--version X.Y.Z|X.Y.Z-nightly.N|latest]`,
-`thinkrail uninstall [--remove-data|--keep-data] [-y]`) intercepted before the launch flags — see
+`pideck uninstall [--remove-data|--keep-data] [-y]`) intercepted before the launch flags — see
 *Self-update* / *Uninstall* below. The set lives in `args.ts` (`parseSubcommand`) because the compiled
 entry needs it too: a subcommand never boots the host, so it must not pay for (or, in `uninstall`'s case,
 re-create) the staged asset cache. Otherwise the launch args: `--port` (stable default 24242,
@@ -63,16 +73,16 @@ strictly newer version produces `{ currentVersion, availableVersion, channel }` 
 no-update are silent. A different newer release may replace available or failed state, but successful execution
 latches until host restart so the still-running old process can neither rediscover nor install another release.
 
-The shared update surface offers **Run Update** for a compiled host and retains fixed `thinkrail update`
+The shared update surface offers **Run Update** for a compiled host and retains fixed `pideck update`
 guidance for older clients/hosts or a failed run. The action invokes this same installed binary's parameterless
 update subcommand asynchronously; the browser cannot select a command, path, channel, version, or URL. Bounded
 running/succeeded/failed state converges every client, and success requires the user to restart the unsupervised
 host manually rather than aborting active work. Discovery and execution remain absent from
 `update`/`uninstall`/help/version exits and all source/dev launches.
 
-## Self-update (`thinkrail update`)
+## Self-update (`pideck update`)
 
-`src/update.ts` ports the old repo's `thinkrail upgrade` (renamed): it re-invokes the **published
+`src/update.ts` ports the old repo's `pideck upgrade` (renamed): it re-invokes the **published
 installer** for the binary's channel — `install.sh` on macOS/Linux, `install.ps1` on Windows — so the
 installer stays the single source of the download → checksum → replace → PATH logic. For an installed binary,
 the running `<prefix>/bin` layout is authoritative; an explicit channel flag wins, then metadata from that same
@@ -87,8 +97,8 @@ installation, then its baked channel. A source invocation without a running bina
   minefield) hands the installer's own params through argv. All three params are passed **always**,
   including `-Version latest`: install.ps1's params *default from the `THINKRAIL_*` env vars*, which the
   child would inherit, so being explicit is what makes an update deterministic for a user who has one
-  set. Replacing the *running* exe works because install.ps1's `Install-ThinkRailBinary` renames a locked
-  `thinkrail.exe` aside to `thinkrail.exe.<rand>.old` (Windows refuses to *delete* a running image but
+  set. Replacing the *running* exe works because install.ps1's `Install-PiDeckBinary` renames a locked
+  `pideck.exe` aside to `pideck.exe.<rand>.old` (Windows refuses to *delete* a running image but
   permits *renaming* it) and drops the fresh one in; the next install sweeps the leftover.
 
 Any Windows failure (fetch, no PowerShell host, installer non-zero) falls back to *printing* the manual
@@ -98,14 +108,14 @@ and PowerShell's `$env:X='v';` are not interchangeable. Update planning binds me
 different copy. Missing metadata falls back to that running layout, including normalized legacy Git-Bash
 `/c/...` and `/cygdrive/c/...` prefixes. Prefix representability follows [[module-ci-release]] rather than an
 ASCII-only path policy: Unicode and benign punctuation remain valid. A manual binary outside the representable
-layout—including a directly run release asset such as `thinkrail-linux-x64`—fails closed with manual guidance
+layout—including a directly run release asset such as `pideck-linux-x64`—fails closed with manual guidance
 rather than installing under `.local`; that preflight also withholds the host update capability. Version/channel
 combinations are validated after resolution. The planning functions remain pure and unit-tested; only installer
 fetch and execution touch IO.
 `THINKRAIL_INSTALL_SCRIPT_URL` / `THINKRAIL_INSTALL_PS1_URL` override the installer URLs (testing /
 forks). See `module-ci-release` for the installers themselves.
 
-## Uninstall (`thinkrail uninstall`)
+## Uninstall (`pideck uninstall`)
 
 `src/uninstall.ts` is the inverse of the installers, and only of them: it removes **the executable, the
 PATH edit the installer made, `install.json`, and the binary's staging cache** — then *asks* about the
@@ -120,7 +130,7 @@ worktrees and any uncommitted work in them. pi's own state (`~/.pi`) is never to
   `-y`/`--yes` skips both and `--keep-data`/`--remove-data` answers the first one non-interactively; with
   no TTY and no `--yes` the command refuses rather than guessing.
 - **Which executables:** `<prefix>/bin/thinkrail[.exe]` from the install metadata (else the installers'
-  `~/.local` default) **plus `process.execPath` when it is itself a `thinkrail` binary** — that covers a
+  `~/.local` default) **plus `process.execPath` when it is itself a `pideck` binary** — that covers a
   custom prefix whose `install.json` is gone. Nothing else is ever deleted, whatever the metadata says.
 - **The PATH edit, per platform seam:** on Unix the installer's block is *self-identifying*
   (`# >>> thinkrail PATH >>>` … `# <<< thinkrail PATH <<<`), so `stripRcPathBlock` removes it from every
@@ -137,12 +147,12 @@ worktrees and any uncommitted work in them. pi's own state (`~/.pi`) is never to
   user's own `C:/…/bin` entry counts as already present: install never appends a duplicate it would then
   record as its own, which the uninstaller would remove together with the user's entry. The edit itself runs
   as an embedded PowerShell script —
-  the exact inverse of install.ps1's `Add-ThinkRailToUserPath` (same `HKCU\Environment` handling,
+  the exact inverse of install.ps1's `Add-PiDeckToUserPath` (same `HKCU\Environment` handling,
   preserving the value's `REG_EXPAND_SZ` kind, comparing entries raw *and* `%VAR%`-expanded, then
   broadcasting `WM_SETTINGCHANGE`) — because round-tripping a raw PATH value through a pipe would risk
   mangling non-ASCII entries in the console code page.
 - **Deleting the running program:** Unix unlinks a running binary happily. Windows cannot, so the exe is
-  renamed to the same `thinkrail.exe.<rand>.old` name install.ps1's cleanup already recognizes, and a
+  renamed to the same `pideck.exe.<rand>.old` name install.ps1's cleanup already recognizes, and a
   detached PowerShell retries the delete for a few seconds after we exit; the report says which happened.
   Stale `.old`/`.new` leftovers in the bin dir are swept too.
 - `src/powershell.ts` is the shared seam for both Windows paths (find a host, run a script text through
@@ -185,7 +195,7 @@ on-device, bytecode included; the build deletes the external `.map` it also writ
 `.map` files, and compiles from `BINARY_SOURCE_MAP_BASE` (`apps/cli`), which the launcher passes as
 analytics `remapBase` for binary builds because remapped frames are relative to that directory.
 
-`bun run build:binary` produces a **standalone `thinkrail` executable** — one self-contained file per
+`bun run build:binary` produces a **standalone `pideck` executable** — one self-contained file per
 platform — via `bun build --compile`. Bun bundles the host *and* transparently embeds the `bun-pty` native
 lib; the extra steps are the **web UI** (a directory the host normally serves), the **bundled pi
 extensions** (which the server path-loads out of `node_modules` in dev — impossible inside a binary),
@@ -369,7 +379,7 @@ and `trash`'s **native helper sidecars** (which macOS/Windows must execute from 
 - The agent runs in this process — a fatal fault takes the app down (the accepted in-process tradeoff).
 - `resolveShellEnv()` runs once, before any `AgentSession`.
 - The startup mark is a presentation of the resolved launch result, never a second readiness signal:
-  `bootHost` must return first, and the parse-stable `thinkrail → <url>` line remains unchanged beneath it.
+  `bootHost` must return first, and the parse-stable `pideck → <url>` line remains unchanged beneath it.
 
 ## Later
 

@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import type { LocalLocalesSnapshot } from "@thinkrail/contracts";
 import { renderToStaticMarkup } from "react-dom/server";
-import { englishSourceUrl, LanguagePage } from "./LanguageSettings";
+import { englishSourceUrl, LanguagePage, repoSourceUrl } from "./LanguageSettings";
 
 const render = (preference: string, snapshot: LocalLocalesSnapshot | null) =>
 	renderToStaticMarkup(
@@ -43,10 +43,19 @@ test("a missing selected file shows as an unselectable entry", () => {
 	expect(markup).toContain("File not found");
 });
 
-test("the English source link pins released versions and falls back to main", () => {
+test("the English source link pins released versions and falls back to the development branch", () => {
 	expect(englishSourceUrl("0.3.0-nightly.1")).toBe(
-		"https://github.com/JetBrains/thinkrail/blob/v0.3.0-nightly.1/packages/locales/en.json",
+		"https://github.com/Refinex-Space/pideck/blob/v0.3.0-nightly.1/packages/locales/en.json",
 	);
-	expect(englishSourceUrl("0.0.0")).toContain("/blob/main/");
-	expect(englishSourceUrl(null)).toContain("/blob/main/");
+	expect(englishSourceUrl("0.0.0")).toContain("/blob/refinex/dev/");
+	expect(englishSourceUrl(null)).toContain("/blob/refinex/dev/");
+});
+
+test("unstamped builds link to PiDeck development sources instead of a nonexistent release", () => {
+	expect(englishSourceUrl("0.0.0-dev")).toBe(
+		"https://github.com/Refinex-Space/pideck/blob/refinex/dev/packages/locales/en.json",
+	);
+	expect(repoSourceUrl("0.0.0-dev", "apps/web/src/themes/bundled/dark.theme.json")).toBe(
+		"https://github.com/Refinex-Space/pideck/blob/refinex/dev/apps/web/src/themes/bundled/dark.theme.json",
+	);
 });

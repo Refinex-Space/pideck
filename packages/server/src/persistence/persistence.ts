@@ -45,7 +45,7 @@ export {
 export type { InstallationRecord } from "./installation";
 
 export function dataDir(): string {
-	return resolve(process.env.THINKRAIL_DATA_DIR ?? join(homedir(), ".thinkrail"));
+	return resolve(process.env.THINKRAIL_DATA_DIR ?? join(homedir(), ".pideck"));
 }
 
 function storedDirectory(path: string): string {

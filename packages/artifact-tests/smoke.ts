@@ -17,7 +17,7 @@ import {
 import { pollUntil, terminateProcess, within } from "./src/lifecycle";
 import { windowsIdentityMismatches } from "./src/windowsIdentity";
 
-const root = mkdtempSync(join(tmpdir(), "thinkrail-desktop-smoke-"));
+const root = mkdtempSync(join(tmpdir(), "pideck-desktop-smoke-"));
 let sequence = 0;
 
 function readSettledJson(path: string): unknown {

@@ -11,17 +11,17 @@ import {
 } from "./paths";
 
 test("installMetaFile is where both installers write install.json", () => {
-	expect(installMetaFile("/home/u")).toBe(join("/home/u", ".config", "thinkrail", "install.json"));
-	expect(installConfigDir("/home/u")).toBe(join("/home/u", ".config", "thinkrail"));
+	expect(installMetaFile("/home/u")).toBe(join("/home/u", ".config", "pideck", "install.json"));
+	expect(installConfigDir("/home/u")).toBe(join("/home/u", ".config", "pideck"));
 });
 
 test("normalizes native and legacy Windows install prefixes", () => {
-	expect(normalizeWindowsInstallPrefix("C:\\tools\\thinkrail")).toBe("C:/tools/thinkrail");
-	expect(normalizeWindowsInstallPrefix("/c/tools/thinkrail")).toBe("C:/tools/thinkrail");
-	expect(normalizeWindowsInstallPrefix("/cygdrive/c/tools/thinkrail")).toBe("C:/tools/thinkrail");
-	expect(normalizeWindowsInstallPrefix("//nas/share/thinkrail")).toBe("//nas/share/thinkrail");
+	expect(normalizeWindowsInstallPrefix("C:\\tools\\pideck")).toBe("C:/tools/pideck");
+	expect(normalizeWindowsInstallPrefix("/c/tools/pideck")).toBe("C:/tools/pideck");
+	expect(normalizeWindowsInstallPrefix("/cygdrive/c/tools/pideck")).toBe("C:/tools/pideck");
+	expect(normalizeWindowsInstallPrefix("//nas/share/pideck")).toBe("//nas/share/pideck");
 	expect(normalizeWindowsInstallPrefix("/home/u/.local")).toBeUndefined();
-	expect(sameWindowsPath("c:/TOOLS/thinkrail/", "C:\\tools\\thinkrail")).toBe(true);
+	expect(sameWindowsPath("c:/TOOLS/pideck/", "C:\\tools\\pideck")).toBe(true);
 });
 
 test("readInstallMeta reads the installers' file and degrades to {} on anything else", () => {

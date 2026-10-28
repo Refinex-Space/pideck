@@ -44,7 +44,7 @@ Producer → queue → consumer, so the decision to notify is deferred to the mo
   surviving session opens its chat (`activateWorkspaceFromRoute`, landing at the latest message); several
   open the cross-workspace `SessionSwitcher` palette (`openSessionSwitcher` on [[submodule-web-store]]) so
   the user picks the one to attend, instead of landing in a window that may not show the right chat.
-  `formatNotification` keeps the title as the bold **ThinkRail** mark, the worktree as `subtitle`, and the
+  `formatNotification` keeps the title as the bold **PiDeck** mark, the worktree as `subtitle`, and the
   reason as `body` (`N worktrees need your attention` for several); a per-session `tag` lets the browser
   replace rather than stack.
 
@@ -56,7 +56,7 @@ channel-agnostic above it:
 
 - **Web** (`webNotifications`): the page Notifications API. It has no subtitle field, so it folds
   `subtitle · body` into one line, and uses the browser permission flow. It also sets the symbol-only
-  ThinkRail icon (`/favicon.svg`, the browser-tab/shell-logo artwork), honored by Chrome/Edge/Firefox;
+  PiDeck icon (`/favicon.svg`, the browser-tab/shell-logo artwork), honored by Chrome/Edge/Firefox;
   Safari ignores a page notification's icon and shows its own. On mobile the constructor can throw
   (Android Chrome needs a Service Worker; iOS Safari needs an installed PWA) and is swallowed as a no-op.
 - **Desktop** (`desktopNotifications`): the native OS channel via the frozen
@@ -72,7 +72,7 @@ Worker on either channel: a fully-closed app has no live client and raises nothi
 (native title/subtitle/body, OS-requested authorization on first show), Windows a `Shell_NotifyIconW` tray
 **balloon** (title + body; `subtitle` folds in as an extra line per the SDK — not a Windows Toast), Linux
 libnotify/D-Bus (DE-dependent, Wayland caveats, subtitle folded likewise). The macOS bundle id comes from
-`apps/desktop/electrobun.config.ts` (`identifier: ai.thinkrail.app`, name `ThinkRail`), and macOS supplies
+`apps/desktop/electrobun.config.ts` (`identifier: space.refinex.pideck`, name `PiDeck`), and macOS supplies
 the app icon (the native call has no icon field). The Windows balloon shows Electrobun's generic
 application icon. It carries no App User Model ID of its own, so the sender Windows shows follows the
 process's ID ([[module-desktop]]); that attribution is unverified. **Limitation:** the bridge exposes no

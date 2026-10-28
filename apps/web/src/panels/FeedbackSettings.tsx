@@ -1,9 +1,9 @@
-import { RiDiscordLine as Discord, RiExternalLinkLine as ExternalLink } from "@remixicon/react";
+import { RiExternalLinkLine as ExternalLink, RiGithubLine as Github } from "@remixicon/react";
 import { useT } from "@thinkrail/locales/react";
 import { buttonVariants } from "@thinkrail/ui/button";
 import { INTERVIEW_BOOKING_URL, INTERVIEW_INVITATION_KEY } from "./interview";
 
-const DISCORD_URL = "https://thinkrail.ai/discord";
+const REPOSITORY_URL = "https://github.com/Refinex-Space/pideck";
 
 export function FeedbackSettings() {
 	const t = useT();
@@ -28,12 +28,12 @@ export function FeedbackSettings() {
 			</p>
 			<a
 				data-testid="feedback-join-discord"
-				href={DISCORD_URL}
+				href={REPOSITORY_URL}
 				target="_blank"
 				rel="noopener noreferrer"
 				className={buttonVariants({ variant: "outline", size: "l", className: "self-start" })}
 			>
-				<Discord aria-hidden />
+				<Github aria-hidden />
 				{t("settings.feedback.joinDiscord")}
 			</a>
 		</section>

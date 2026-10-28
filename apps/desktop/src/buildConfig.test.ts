@@ -25,10 +25,11 @@ test("selects real Bun and preserves the physical runtime resources without reti
 	expect(result.exitCode).toBe(0);
 	const config = JSON.parse(result.stdout.toString());
 	expect(config.app).toEqual({
-		name: "ThinkRail",
-		identifier: "ai.thinkrail.app",
+		name: "PiDeck",
+		identifier: "space.refinex.pideck",
 		version,
 	});
+	expect(config.release.baseUrl).toBe("");
 	expect(config.runtime).toEqual({ exitOnLastWindowClosed: true });
 	expect(config.build).toMatchObject({
 		mainProcess: "bun",

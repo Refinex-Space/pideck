@@ -168,8 +168,14 @@ test("workbench strips and feature toolbars keep one-row geometry with ARIA tabs
 	await expect(bottomStrip.getByTestId("terminal-tab-close")).toHaveCount(1);
 
 	await revealWorkbenchTool(page, "changes");
+	const topRightGroup = await page
+		.getByTestId("right-column")
+		.getByTestId("auxiliary-pane-header")
+		.first()
+		.getAttribute("data-group-id");
 	for (const header of await page.getByTestId("auxiliary-pane-header").all()) {
-		await expect(header).toHaveCSS("height", "32px");
+		const height = (await header.getAttribute("data-group-id")) === topRightGroup ? "40px" : "32px";
+		await expect(header).toHaveCSS("height", height);
 		await expect(header.getByRole("tablist")).toHaveCount(0);
 	}
 	await expect(page.getByTestId("chat-toolbar")).toHaveCSS("height", "32px");

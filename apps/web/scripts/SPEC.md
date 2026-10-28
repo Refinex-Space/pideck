@@ -106,3 +106,12 @@ in agreement about the same functions.
 Design and rationale for each system itself: [../src/styles/TYPOGRAPHY.md](../src/styles/TYPOGRAPHY.md)
 (`web-typography`), [../src/styles/COLOR.md](../src/styles/COLOR.md) (`web-color`), and
 [../src/styles/SPACING.md](../src/styles/SPACING.md) (`web-spacing`).
+
+## File and folder icon assets
+
+`generate-file-icons.ts` uses the pinned dev-only `material-icon-theme` manifest API and reads its SVGs
+as data. It emits file/folder associations and static Vite SVG URL imports into `src/fileIcons/generated/`,
+plus the upstream license into `public/file-icons.LICENSE.txt`. These are committed and checked by
+`file-icons:check` during every web build. Only referenced file and semantic-folder icons are included;
+no package generator or runtime service enters the browser. This is an explicit dependency/write-path
+extension to the generator boundary above. The package version remains in `apps/web/package.json`.

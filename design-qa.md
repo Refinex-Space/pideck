@@ -107,3 +107,11 @@ final result: targeted checks passed; full-suite follow-up has 3 pending cases; 
 - 右栏及面板使用 workspace 背景，标题继承所在容器底色，滚动渐隐同步继承画布；左导航和终端保留各自语义背景。
 - 新增回归先复现标题几何问题；修复后 39 项相关单测、9 项定向浏览器用例通过。覆盖 Specs、文件、评审、TODO 的明暗主题、Windows 138px inset 仿真，以及布局恢复和标题栏交互。文件列表加载后的截图复验通过；Web typecheck、定向 Biome、React Compiler census 与 diff 检查通过。
 - 使用独立测试 lane 避开其他任务占用的默认端口。本轮局部样式修正未重跑完整浏览器套件；Windows 真机验收仍待完成。
+
+## 文件类型与语义目录图标
+
+- 接入固定版本 Material Icon Theme 5.40.0，采用官方的 2,156 个文件名、1,391 个扩展名和 4,674 个目录名规则；生成 1,181 个被引用的文件/目录 SVG 资源入口。匹配优先级为最长路径后缀文件名、最长复合扩展名，支持 Windows 分隔符与大小写归一化。
+- All/Changed（树形与列表）共用本地图标解析。常见目录使用专用闭合/展开图标，未知目录回退 Lucide folder/folder-open；未知文件回退 file。明暗变体跟随应用主题，Git 状态仍由文字和标记表达；无远程图标请求。
+- 38 项图标单测通过，完整 Web 单测 2,004 项通过。定向浏览器验证覆盖 Word/PDF、Java/XML、React/Vue、特殊配置文件、语义/普通目录、明暗主题、本地 SVG 加载、预览/固定标签以及 Changed 两种视图；原有紧凑目录链用例通过。Web 构建、类型检查、依赖/边界、Compiler census、spec surface、生成结果与定向 Biome 检查通过。
+- 执行了一次完整无智能体浏览器套件：666 项中 630 通过、36 未通过。图标和文件树用例通过；其中右侧首行标题的旧 32px 断言已改为与设计一致的 40px，并单独复验通过。其余 35 项未在本任务修复，分布在聊天/滚动、历史搜索、终端恢复、导航、连接恢复和 runner 等用例；例如消息精确文本断言包含了新增时间戳，终端恢复用例仍假设项目标题点击不会折叠导航。运行期间存在其他界面任务的并行改动，不能把全量结果记为通过或把所有失败都归因于本次图标。
+- 本地完整日志 `/tmp/pideck-file-icons-full-e2e.log`，失败用例清单 `/tmp/pideck-file-icons-full-failures.txt`。本轮未做 macOS/Windows 原生产物真机验收；Windows 真机验收保持待完成。

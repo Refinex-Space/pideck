@@ -4,6 +4,7 @@ import { Button } from "@thinkrail/ui/button";
 import { LoadingRegion } from "@thinkrail/ui/skeleton";
 import { ToggleSegment } from "@thinkrail/ui/toggle-segment";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { FileTypeIcon } from "../fileIcons";
 import { firstClickOnly } from "../lib";
 import {
 	type CenterNavigationStamp,
@@ -253,6 +254,7 @@ export function ChangesPanel({
 												title={change.path}
 												className="flex h-panel-row min-w-0 flex-1 items-center gap-8 px-4 text-left tr-text-ui"
 											>
+												<FileTypeIcon path={change.path} />
 												<span
 													className={`flex min-w-0 flex-1 items-baseline ${isViewed(change.path) ? "opacity-60" : ""}`}
 												>

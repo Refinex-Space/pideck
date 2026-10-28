@@ -101,6 +101,8 @@
 		"colors:check": "bun --filter @thinkrail/web colors:check",
 		"spacing:generate": "bun --filter @thinkrail/web spacing:generate",
 		"spacing:check": "bun --filter @thinkrail/web spacing:check",
+		"file-icons:generate": "bun --filter @thinkrail/web file-icons:generate",
+		"file-icons:check": "bun --filter @thinkrail/web file-icons:check",
 		"provider-glyphs:check": "bun --filter @thinkrail/web provider-glyphs:check",
 		"compiler:census:generate": "bun --filter @thinkrail/web compiler:census:generate"
 	},

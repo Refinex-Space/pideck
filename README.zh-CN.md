@@ -32,6 +32,7 @@ Studio 布局把主画布留给会话，项目导航保持可见，文件、审�
 依据、设计决策与跨平台要求见 [design-system.md](design-system.md)。文件树右键插入会话仍为后续工作。
 左侧导航保持连续，设置入口位于左下角 PiDeck 菜单；分支、远程与 PR 操作归入工作区详情。
 顶部返回/前进按钮使用真实导航历史，主要导航工具采用 Lucide 图标，默认工作区使用无装饰图标的文字行。
+文件与目录使用本地打包的 [Material Icon Theme](https://github.com/material-extensions/vscode-material-icon-theme) 图标，覆盖 Office/PDF、编程语言、框架和常见项目目录；未知类型保留中性默认图标。
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset=".github/readme-assets/pideck-studio-dark.png">
@@ -152,3 +153,5 @@ Fork 来源见 [NOTICE](NOTICE)，定制改动见 [fork-maintenance.md](fork-mai
 
 Pi 图标来自 [theSVG](https://thesvg.org/icon/pi)，来源 MIT 声明保留在
 [pi.LICENSE](packages/shared/assets/pi.LICENSE)。
+
+Material Icon Theme 的 [MIT 许可证](apps/web/public/file-icons.LICENSE.txt)随应用分发。

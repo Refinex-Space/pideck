@@ -2200,3 +2200,11 @@ own section. The kebab menu (`plan-menu`, a
   `tool_execution_update.partialResult` **REPLACE**.
 
 Project expansion uses Lucide folder-open/folder-closed, with aria-expanded on the existing toggle. Default workspace rows have no decorative leading icon or reserved icon column; running/attention status remains visible. Other workspace kinds retain their existing branch/external-worktree markers.
+
+## File explorer icon identity
+
+All-files rows and both Changed view modes use `fileIcons` for filename/extension-specific artwork.
+Directory rows use its expanded/collapsed semantic-folder variants, with Lucide Folder/FolderOpen
+for unmatched names. Compact folder chains pass the resolved deepest path; directory context rules
+therefore apply without changing expansion persistence. Git marks, ignored styling, preview/keep,
+context menus and keyboard behavior remain independent of icon identity.

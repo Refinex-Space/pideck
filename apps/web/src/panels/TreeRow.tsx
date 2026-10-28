@@ -1,12 +1,6 @@
-import {
-	RiArrowDownSLine as ChevronDown,
-	RiArrowRightSLine as ChevronRight,
-	RiFileFill,
-	RiFileLine,
-	RiFolderFill,
-	RiFolderLine,
-} from "@remixicon/react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import type { MouseEvent, ReactNode, Ref } from "react";
+import { FileTypeIcon, FolderTypeIcon } from "../fileIcons";
 
 export function TreeRow({
 	ref,
@@ -18,6 +12,7 @@ export function TreeRow({
 	dataStatus,
 	dataViewed,
 	label,
+	path = label,
 	labelClassName,
 	trailing,
 	highlight = "self",
@@ -35,6 +30,7 @@ export function TreeRow({
 	dataStatus?: string | undefined;
 	dataViewed?: boolean;
 	label: string;
+	path?: string;
 	labelClassName?: string;
 	trailing?: ReactNode;
 	highlight?: "self" | "wrapper";
@@ -44,8 +40,6 @@ export function TreeRow({
 	onWarm?: ((trigger: "hover" | "focus") => void) | undefined;
 }) {
 	const Chevron = expanded ? ChevronDown : ChevronRight;
-	const Folder = active ? RiFolderFill : RiFolderLine;
-	const FileIcon = active ? RiFileFill : RiFileLine;
 	const tone = subtle ? "text-text-subtle" : "text-text-muted";
 	return (
 		<button
@@ -53,6 +47,7 @@ export function TreeRow({
 			type="button"
 			data-testid={testid}
 			data-kind={kind}
+			aria-expanded={kind === "dir" ? Boolean(expanded) : undefined}
 			data-active={active ? true : undefined}
 			data-status={dataStatus}
 			data-viewed={dataViewed ? true : undefined}
@@ -74,9 +69,9 @@ export function TreeRow({
 			)}
 			<span className="flex min-w-0 flex-1 items-center gap-4">
 				{kind === "dir" ? (
-					<Folder className={`size-14 shrink-0 ${tone}`} />
+					<FolderTypeIcon path={path} expanded={Boolean(expanded)} className={tone} />
 				) : (
-					<FileIcon className={`size-14 shrink-0 ${tone}`} />
+					<FileTypeIcon path={path} className={subtle ? "opacity-60" : tone} />
 				)}
 				<span className={`min-w-0 flex-1 truncate ${labelClassName ?? ""}`}>{label}</span>
 			</span>

@@ -42,6 +42,11 @@ high-contrast modes and custom themes remain available.
 The evidence, design decisions and cross-platform requirements live in [design-system.md](design-system.md).
 File-tree “add to conversation” actions remain future work.
 
+File and folder types use locally bundled
+[Material Icon Theme](https://github.com/material-extensions/vscode-material-icon-theme) artwork,
+including Office/PDF, languages, frameworks and common project directories. Unknown types retain
+neutral fallback icons.
+
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset=".github/readme-assets/pideck-studio-dark.png">
   <img src=".github/readme-assets/pideck-studio-light.png" alt="PiDeck Studio with continuous navigation and a centered composer">
@@ -171,3 +176,5 @@ PiDeck retains ThinkRail's [Apache-2.0 license](LICENSE) and upstream notices. S
 
 The Pi icon is vendored from [theSVG](https://thesvg.org/icon/pi); its source MIT notice is retained in
 [pi.LICENSE](packages/shared/assets/pi.LICENSE).
+
+Material Icon Theme: [MIT license](apps/web/public/file-icons.LICENSE.txt).

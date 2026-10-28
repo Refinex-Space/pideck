@@ -5,7 +5,7 @@
 	"type": "module",
 	"scripts": {
 		"dev": "vite",
-		"build": "bun run typography:check && bun run colors:check && bun run spacing:check && bun run provider-glyphs:check && tsc --noEmit && vite build",
+		"build": "bun run typography:check && bun run colors:check && bun run spacing:check && bun run provider-glyphs:check && bun run file-icons:check && tsc --noEmit && vite build",
 		"build:profile": "vite build --mode profile",
 		"typecheck": "tsc --noEmit",
 		"test": "bun test",
@@ -17,6 +17,8 @@
 		"colors:check": "bun scripts/generate-colors.ts --check && bun test src/styles/colorUsage.test.ts",
 		"spacing:generate": "bun scripts/generate-spacing.ts",
 		"spacing:check": "bun scripts/generate-spacing.ts --check && bun test src/styles/spacingUsage.test.ts",
+		"file-icons:generate": "bun scripts/generate-file-icons.ts",
+		"file-icons:check": "bun scripts/generate-file-icons.ts --check",
 		"provider-glyphs:generate": "bun scripts/generate-provider-glyphs.ts",
 		"provider-glyphs:check": "bun scripts/generate-provider-glyphs.ts --check",
 		"compiler:census": "bun scripts/compiler-census.ts",
@@ -62,6 +64,7 @@
 		"@types/react-dom": "catalog:",
 		"@vitejs/plugin-react": "6.1.2",
 		"babel-plugin-react-compiler": "1.0.0",
+		"material-icon-theme": "5.40.0",
 		"tailwindcss": "catalog:",
 		"typescript": "catalog:",
 		"vite": "8.1.6"

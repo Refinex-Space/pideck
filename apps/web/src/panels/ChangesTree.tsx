@@ -50,6 +50,7 @@ function ChangeNodeRow({ node, ...rowProps }: ChangeRowProps & { node: ChangeTre
 							dataStatus={node.status}
 							dataViewed={isViewed(node.path)}
 							label={node.name}
+							path={node.path}
 							labelClassName={`${statusNameClass(node.status)} ${isViewed(node.path) ? "opacity-60" : ""}`}
 							onClick={firstClickOnly(() => onOpen(node.path, "preview"))}
 							onDoubleClick={() => onOpen(node.path, "keep", true)}
@@ -75,6 +76,7 @@ function ChangeNodeRow({ node, ...rowProps }: ChangeRowProps & { node: ChangeTre
 					kind="dir"
 					expanded={expanded}
 					label={node.name}
+					path={node.path}
 					onClick={() => onSetCollapsed(node.path, expanded)}
 					trailing={expanded ? null : <DiffStatBadge added={node.added} removed={node.removed} />}
 				/>

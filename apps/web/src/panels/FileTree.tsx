@@ -151,6 +151,7 @@ function FileNodeRow({
 				dataStatus={ignored ? "ignored" : undefined}
 				expanded={expanded}
 				label={label}
+				path={directory?.path ?? node.path}
 				labelClassName={
 					fileStatus ? statusMarkClass(fileStatus) : dirChanged ? statusMarkClass("modified") : ""
 				}

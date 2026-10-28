@@ -95,6 +95,8 @@ PiDeck 是基于 ThinkRail 的独立 fork，以 Pi 为进程内智能体引擎�
 - 先运行最相关的小测试；修 Bug 先补复现回归，无法自动化时记录可执行的复现与验证步骤。
 - 应用行为或集成改动在组合实现完成后执行一次完整 `bun run e2e` 无智能体浏览器测试。
   文档/spec 或纯测试工具变动按影响做定向验证。
+- 稳定、明确的小改动（如文案、单个组件的样式或显示微调，不改变布局结构、交互流程或测试标识）
+  不必每次跑完整 e2e；运行相关单测、类型检查、lint 及受影响的定向 e2e 即可，并说明未跑完整套件。
 - 真实 agent 行为还需对应 focused live spec；完整 `bun run e2e:full` 须先批准，因其消耗真实 Token。
   `bun run test:workflows` 同样为按需真实调用，不是提交或 CI 必跑项。
 - 快速门禁：`bun run check:deps`、`check:boundaries`、`check:seams`、`lint`、`typecheck`。

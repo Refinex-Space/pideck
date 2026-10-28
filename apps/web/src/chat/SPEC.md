@@ -211,7 +211,10 @@ blocks in order into rows; `ChatTurnView` dispatches on row kind:
   trailing tool/character metadata; the teaser truncates before that metadata and
   disappears when expanded, where the disclosure retains the generic label and contains the exact text.
   Blocks without that convention keep the generic label while folded. Semantic breadcrumb and assistive
-  labels remain `Thinking` in every state. Every following routine
+  labels remain the neutral `Thinking` category (Chinese: 思考过程) in every state. Only a live group
+  whose thought is still streaming uses the ongoing `Thinking…` display label; stopped, interrupted and
+  historical blocks keep the neutral category, never a claim of ongoing or successful completion.
+  Settled step summaries likewise use a neutral noun. Every following routine
   tool call stays under that thought until the next thinking block or activity boundary. Those thinking
   groups are siblings **inside** the outer run, even across assistant-message
   boundaries; the hierarchy is presentational, never invented pi entry parentage. A single atomic step

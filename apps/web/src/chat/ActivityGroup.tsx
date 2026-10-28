@@ -130,7 +130,7 @@ export function ThinkingGroup({
 			live={live}
 			stepCount={tools.length}
 			icon={<Brain className="size-12 shrink-0" />}
-			label={t("chat.activity.thinking")}
+			label={t(live && thought.streaming ? "chat.activity.thinkingLive" : "chat.activity.thinking")}
 			headline={extractThinkingHeading(thought.text)}
 			breadcrumbLabel={t("chat.activity.thinking")}
 			breadcrumbMeta={summary}

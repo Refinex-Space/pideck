@@ -641,3 +641,57 @@ test("sticky activity breadcrumbs expose the off-screen Activity → Thinking �
 	await trail.getByRole("button", { name: "Jump to Thinking" }).click();
 	await expect(thinking.getByTestId("thinking-group-toggle")).toBeFocused();
 });
+
+test("completed Chinese thinking disclosures stay neutral after expansion and reload", async ({
+	page,
+}) => {
+	await openFixtureProject(page);
+	const chat = seedWorkspaceSession(repoCwd(), {
+		name: "completed reasoning",
+		messages: [{ role: "user", text: "Review this example.", timestamp: BASE_TS }],
+	});
+	appendMessage(chat.path, `${chat.id}-a1`, `${chat.id}-m0`, {
+		role: "assistant",
+		content: [
+			{ type: "thinking", thinking: "I should inspect the example before answering." },
+			{ type: "text", text: "The review is complete." },
+		],
+		usage,
+		stopReason: "stop",
+		timestamp: BASE_TS + 1000,
+	});
+	utimesSync(chat.path, new Date(BASE_TS), new Date(BASE_TS));
+	await enterDefaultWorkspace(page);
+	try {
+		await openAppSettings(page);
+		await page.getByTestId("settings-nav-language").click();
+		await page.getByTestId("language-zh-CN").click();
+		await expect(page.locator("html")).toHaveAttribute("lang", "zh-CN");
+		await page
+			.getByTestId("settings-dialog")
+			.getByRole("button", { name: "关闭", exact: true })
+			.click();
+		const thinking = page.getByTestId("thinking-group").first();
+		const toggle = thinking.getByTestId("thinking-group-toggle");
+		await expect(page.getByTestId("chat-scroll")).toHaveAttribute("data-streaming", "false");
+		await expect(thinking).toHaveAttribute("data-live", "false");
+		await expect(toggle).toContainText("思考过程");
+		await expect(toggle).not.toContainText("思考中");
+		await toggle.click();
+		await expect(thinking.getByTestId("thinking-group-text")).toContainText("I should inspect");
+		await expect(toggle).not.toContainText("思考中");
+		await page.reload();
+		await expect(thinking).toHaveAttribute("data-live", "false");
+		await expect(toggle).toContainText("思考过程");
+		await expect(toggle).not.toContainText("思考中");
+	} finally {
+		if (!(await page.getByTestId("settings-dialog").isVisible())) await openAppSettings(page);
+		await page.getByTestId("settings-nav-language").click();
+		await page.getByTestId("language-en").click();
+		await expect(page.locator("html")).toHaveAttribute("lang", "en");
+		await page
+			.getByTestId("settings-dialog")
+			.getByRole("button", { name: "Close", exact: true })
+			.click();
+	}
+});

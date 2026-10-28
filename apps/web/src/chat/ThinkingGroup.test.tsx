@@ -1,6 +1,7 @@
-import { describe, expect, test } from "bun:test";
+import { afterEach, describe, expect, test } from "bun:test";
+import { applyLocale, currentTranslator } from "@thinkrail/locales/react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { ThinkingGroup } from "./ActivityGroup";
+import { ActivityGroup, summarizeSteps, ThinkingGroup } from "./ActivityGroup";
 
 const tool = (id: string, toolName: string) => ({
 	kind: "tool" as const,
@@ -13,7 +14,56 @@ const tool = (id: string, toolName: string) => ({
 	streaming: false,
 });
 
+afterEach(() => applyLocale("en", {}));
+
 describe("ThinkingGroup", () => {
+	for (const { live, streaming, ongoing } of [
+		{ live: true, streaming: true, ongoing: true },
+		{ live: false, streaming: false, ongoing: false },
+		{ live: false, streaming: true, ongoing: false },
+		{ live: true, streaming: false, ongoing: false },
+	])
+		test(`Chinese label reflects actual thinking: live=${live}, streaming=${streaming}`, () => {
+			applyLocale("zh-CN", {});
+			const markup = renderToStaticMarkup(
+				<ThinkingGroup
+					id="thinking-label"
+					thought={{
+						kind: "thinking",
+						id: "thinking-label",
+						text: "需要先检查上下文。",
+						streaming,
+						tools: [],
+					}}
+					tools={[]}
+					live={live}
+				/>,
+			);
+			expect(markup).toContain('data-activity-node-label="思考过程"');
+			if (ongoing) expect(markup).toContain(">思考中…</span>");
+			else {
+				expect(markup).toContain(">思考过程</span>");
+				expect(markup).not.toContain("思考中");
+			}
+			expect(markup).not.toContain("思考完成");
+		});
+
+	test("settled activity summaries use a neutral Chinese reasoning label", () => {
+		applyLocale("zh-CN", {});
+		const steps = [
+			{
+				kind: "thinking" as const,
+				id: "settled-thought",
+				text: "需要检查上下文。",
+				streaming: false,
+				tools: [tool("finished-tool", "read")],
+			},
+		];
+		expect(summarizeSteps(currentTranslator(), steps)).toBe("2 个步骤 · 思考, read");
+		expect(
+			renderToStaticMarkup(<ActivityGroup id="settled-activity" steps={steps} live={false} />),
+		).not.toContain("思考中");
+	});
 	test("renders a collapsed Thinking disclosure that counts its child tools", () => {
 		const tools = [tool("t1", "read"), tool("t2", "bash")];
 		const markup = renderToStaticMarkup(

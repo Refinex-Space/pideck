@@ -76,3 +76,9 @@ final result: targeted checks passed; full-suite follow-up has 3 pending cases; 
 - 20 项定向浏览器回归通过，Web 单测 1960 项通过，导航/资源定向单测 48 项通过；类型、lint、边界、国际化和编译器检查通过。macOS desktop build / smoke 通过，Windows 真机仍待验收。
 - 本轮完整浏览器套件 659 项：656 通过，3 项初次未通过。两项模型选择测试将 Recent 与 All 中同一模型重复计数/定位，测试已改为唯一模型计数和明确 All 项；另一项是终端 Ctrl+C 测试的进程退出。定向复验启动被已有 26060/health 服务占用阻止，未实际执行；按用户快速收尾要求不继续排查，因此这 3 项保留待复验状态。
 - README 明暗截图已更新为 1280×720 的隔离示例；局部图标证据在 `design/claude-reference/lucide-navigation-proof.png`。
+
+## 结束后的思考标签修复
+
+- 现场确认 `chat-scroll` 的 streaming 与 thinking-group 的 live 均为 false，问题来自静态中文类别被译为“思考中”。静态标签改为“思考过程”，历史步骤摘要改为“思考”；仅 live 且 thought.streaming 时显示“思考中…”。西语同步采用中性类别名称，避免把中断或历史记录描述成仍在进行。
+- 新增 5 项回归先复现失败，修复后思考分组/活动摘要/流式状态 25 项单测通过；国际化检查与 Web typecheck 通过。当前开发页面已实测显示“思考过程160 个字符”，状态仍为 false。
+- 2 项定向浏览器回归通过：中文历史记录展开/刷新后保持中性标签，既有模型标题折叠呈现不变。构建通过后使用独立测试 lane 避开被占用端口，未改动现有开发服务。本轮未运行完整浏览器套件。

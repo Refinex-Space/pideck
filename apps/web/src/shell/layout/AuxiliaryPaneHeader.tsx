@@ -42,7 +42,7 @@ export const AuxiliaryPaneHeader = forwardRef<
 			data-testid="auxiliary-pane-header"
 			{...props}
 			className={cn(
-				"relative flex h-panel-header-row shrink-0 items-stretch bg-container-sidebar-bg",
+				"relative flex h-panel-header-row shrink-0 items-stretch bg-inherit",
 				className,
 			)}
 		>

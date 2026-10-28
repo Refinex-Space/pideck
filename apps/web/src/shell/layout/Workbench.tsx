@@ -15,6 +15,7 @@ import {
 	ResizablePanel,
 	ResizablePanelGroup,
 } from "@thinkrail/ui/resizable";
+import { cn } from "@thinkrail/ui/utils";
 import { useCallback, useEffect, useInsertionEffect, useMemo, useRef, useState } from "react";
 import { readLayoutNavigationClock, readLayoutSelection, tupleKey } from "../../lib";
 import { projectWorkbenchRatio, restoreWorkbenchRatio } from "./auxiliaryPresentation";
@@ -802,7 +803,12 @@ export function Workbench({
 	const sideStack = (side: LayoutSide) => (
 		<div
 			data-testid={`${side}-column`}
-			className="flex h-full min-h-0 min-w-0 flex-col bg-container-sidebar-bg"
+			className={cn(
+				"flex h-full min-h-0 min-w-0 flex-col",
+				side === "left"
+					? "bg-container-sidebar-bg"
+					: "bg-container-workspace-bg [--quiet-scroll-surface-bg:var(--color-container-workspace-bg)]",
+			)}
 		>
 			{side === "left" ? (
 				<div
@@ -822,9 +828,7 @@ export function Workbench({
 					/>
 					{navigationActions}
 				</div>
-			) : (
-				<div aria-hidden="true" className="window-drag h-topbar-row shrink-0" />
-			)}
+			) : null}
 			<div className="min-h-0 flex-1">
 				<SideStack
 					side={side}

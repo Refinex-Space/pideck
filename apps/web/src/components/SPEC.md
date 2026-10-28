@@ -50,6 +50,8 @@ primitive. The shared shadcn primitives live in [[module-ui]] (`@thinkrail/ui/*`
   directions. `QuietScrollFrame` also re-skins xterm's non-native slider to the same thumb (transparent
   underlying slider, a 6px optical thumb, opacity gated on intent and measured vertical overflow).
   Surface colour is an explicit semantic prop (`sidebar` or `terminal`), never inferred from arrangement.
+  A container may supply `--quiet-scroll-surface-bg` for the non-terminal curtains when hosting tools on
+  a different semantic canvas; without it they use sidebar. Terminal curtains keep their explicit role.
 - **`AttentionDot.tsx`** — the store-free, static green/accent dot whose sole accessible label is “Needs
   attention.” It carries no reason, count, tooltip, motion, or clearing behavior; callers decide only whether
   it is present. It is the one marker for both needs-input and unread-result attention.

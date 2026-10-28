@@ -28,12 +28,12 @@ const NO_EDGES: QuietScrollEdges = {
 
 const CURTAIN_CLASSES: Record<QuietScrollSurface, Record<ScrollEdge, string>> = {
 	sidebar: {
-		top: "inset-x-0 top-0 h-16 bg-[linear-gradient(to_bottom,var(--color-container-sidebar-bg),transparent)]",
+		top: "inset-x-0 top-0 h-16 bg-[linear-gradient(to_bottom,var(--quiet-scroll-surface-bg,var(--color-container-sidebar-bg)),transparent)]",
 		right:
-			"inset-y-0 right-0 w-16 bg-[linear-gradient(to_left,var(--color-container-sidebar-bg),transparent)]",
+			"inset-y-0 right-0 w-16 bg-[linear-gradient(to_left,var(--quiet-scroll-surface-bg,var(--color-container-sidebar-bg)),transparent)]",
 		bottom:
-			"inset-x-0 bottom-0 h-16 bg-[linear-gradient(to_top,var(--color-container-sidebar-bg),transparent)]",
-		left: "inset-y-0 left-0 w-16 bg-[linear-gradient(to_right,var(--color-container-sidebar-bg),transparent)]",
+			"inset-x-0 bottom-0 h-16 bg-[linear-gradient(to_top,var(--quiet-scroll-surface-bg,var(--color-container-sidebar-bg)),transparent)]",
+		left: "inset-y-0 left-0 w-16 bg-[linear-gradient(to_right,var(--quiet-scroll-surface-bg,var(--color-container-sidebar-bg)),transparent)]",
 	},
 	terminal: {
 		top: "inset-x-0 top-0 h-16 bg-[linear-gradient(to_bottom,var(--color-container-terminal-bg),transparent)]",

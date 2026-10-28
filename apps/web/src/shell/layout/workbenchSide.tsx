@@ -11,6 +11,7 @@ import {
 	DropdownMenuTrigger,
 } from "@thinkrail/ui/dropdown-menu";
 import { type ImperativePanelGroupHandle, ResizablePanelGroup } from "@thinkrail/ui/resizable";
+import { cn } from "@thinkrail/ui/utils";
 import { memo, type ReactNode, useMemo, useRef } from "react";
 import { type LayoutAttention, readLayoutSelection, tupleKey } from "../../lib";
 import { AuxiliaryPaneHeader, AuxiliaryPaneHideButton } from "./AuxiliaryPaneHeader";
@@ -83,6 +84,7 @@ export const SideGroupView = memo(function SideGroupView({
 	side,
 	group,
 	groupIndex,
+	topChrome = false,
 	selectedId,
 	renderToolBody,
 	onFold,
@@ -91,6 +93,7 @@ export const SideGroupView = memo(function SideGroupView({
 	side: LayoutSide;
 	group: LayoutSideGroup;
 	groupIndex: number;
+	topChrome?: boolean;
 	selectedId: string | undefined;
 	renderToolBody: WorkbenchProps["renderToolBody"];
 	onFold: () => void;
@@ -155,7 +158,10 @@ export const SideGroupView = memo(function SideGroupView({
 			data-group-id={group.id}
 			data-tools={group.tabs.flatMap((tab) => (tab.kind === "tool" ? [tab.tool] : [])).join(" ")}
 			data-folded="false"
-			className="relative flex h-full min-h-0 flex-col overflow-hidden bg-container-sidebar-bg"
+			className={cn(
+				"relative flex h-full min-h-0 flex-col overflow-hidden",
+				side === "left" ? "bg-container-sidebar-bg" : "bg-container-workspace-bg",
+			)}
 			onFocusCapture={() => {
 				if (selected) shared.onFocusGroup(location, selected.id);
 			}}
@@ -168,13 +174,29 @@ export const SideGroupView = memo(function SideGroupView({
 				selected?.kind === "tool" &&
 				selected.tool === "projects"
 			) ? (
-				<AuxiliaryGroupHeader
-					region={side}
-					group={group}
-					selected={selected}
-					shared={{ ...shared, renderToolBody }}
-					onFold={onFold}
-				/>
+				<div
+					className={cn(
+						"flex shrink-0",
+						topChrome && "window-drag [--panel-header-row-height:var(--topbar-row-height)]",
+					)}
+				>
+					<div className="window-no-drag min-w-0 flex-1">
+						<AuxiliaryGroupHeader
+							region={side}
+							group={group}
+							selected={selected}
+							shared={{ ...shared, renderToolBody }}
+							onFold={onFold}
+						/>
+					</div>
+					{topChrome ? (
+						<div
+							data-testid="window-chrome-inset-right"
+							aria-hidden="true"
+							className="w-window-chrome-inset-right shrink-0"
+						/>
+					) : null}
+				</div>
 			) : null}
 			<section
 				id={groupPanelId(location)}
@@ -446,6 +468,7 @@ export const SideStack = memo(function SideStack({
 								side={side}
 								group={group}
 								groupIndex={documentIndex}
+								topChrome={side === "right" && index === 0}
 								selectedId={readLayoutSelection(attention, group.id)}
 								renderToolBody={renderToolBody}
 								onFold={() => {

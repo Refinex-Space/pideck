@@ -27,6 +27,13 @@ terminals are created from the bottom pane that the top-bar terminal entry revea
 Toolbar keyboard orientation and reorder keys follow the actual orientation. No feature-store
 dependency is introduced, and saved ratios, tool placement and bottom alignment remain authoritative.
 
+The visible right column has no empty chrome row above its tools. Its first visible pane header (or
+terminal strip) occupies the same 40px row as the center toolbar, with the native right caption inset
+beside the header actions. Subsequent pane headers retain their compact height. Right-column containers
+use the workspace canvas; left navigation keeps the sidebar canvas. Pane headers inherit their container
+background. The right column supplies `--quiet-scroll-surface-bg` to keep non-terminal scroll curtains on
+the same canvas without teaching feature panels about placement; terminal curtains retain their own role.
+
 The shell-owned, headless workbench engine: the normalized frontend-local frame and per-workspace view grammar; legal atomic mutations and projection; recursive center plus left/right/bottom rendering; resize/alignment and drag geometry; keyboard arrangement commands; and focus recovery. It renders containers; feature views remain arrangement-agnostic.
 
 ## Boundary

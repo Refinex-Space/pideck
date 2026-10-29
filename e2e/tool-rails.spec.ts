@@ -394,3 +394,18 @@ test("a workspace switch cancels a singleton drag even though its frame placemen
 	await expect(page.getByTestId("bottom-group")).toHaveCount(1);
 	await expect(page.getByTestId("right-layout-rail").getByTestId("tool-rail-files")).toBeVisible();
 });
+
+test("a single tool reveal does not restore other panes of a hidden sidebar", async ({ page }) => {
+	await openDefaultWorkbench(page);
+	await revealWorkbenchTool(page, "files");
+	await expect(page.getByTestId("review-panel")).toBeVisible();
+	await pressPlatformShortcut(page, "j");
+	await expect(page.getByTestId("right-stack")).toHaveCount(0);
+	await page.getByTestId("tool-rail-files").click();
+	await expect(page.getByTestId("files-panel")).toBeVisible();
+	await expect(page.getByTestId("review-panel")).toHaveCount(0);
+	await expect(page.getByTestId("tool-rail-specs")).toHaveAttribute("aria-pressed", "false");
+	await page.getByTestId("tool-rail-review").click();
+	await expect(page.getByTestId("review-panel")).toBeVisible();
+	await expect(page.getByTestId("files-panel")).toBeVisible();
+});

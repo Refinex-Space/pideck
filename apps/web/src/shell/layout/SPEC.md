@@ -102,7 +102,9 @@ tabs; an empty group is a one-entry cluster. Tools placed nowhere (after *Remove
 trailing, dimmed cluster behind a last separator; activating one restores it to its recorded target.
 Exactly one entry per expanded pane is pressed and none in a folded or hidden one, so the pressed set
 reads as "panes currently open". Clicking an unpressed entry selects it in *its* pane (revealing or
-unfolding the pane); clicking the pressed one folds that pane.
+unfolding the pane); clicking the pressed one folds that pane. When a single entry reveals a hidden
+region, sibling groups stay folded; whole-region visibility commands retain their multi-pane restoration
+behavior. This applies to both rail activation and explicit tool reveal, including restored tools.
 
 **Tools and terminals never share a pane.** A group holding tools is a tool pane; terminals live only in
 tool-free groups (`canJoinAuxiliaryGroup`). Joining a tool into a pane that shows terminals, or a terminal

@@ -1047,6 +1047,22 @@ export function showSide(
 	return tool ? revealTool(document, tool, maxSideGroups) : { document };
 }
 
+export function foldHiddenAuxiliaryGroups(
+	document: WorkspaceLayoutDocument,
+	region: LayoutAuxiliaryRegion,
+): WorkspaceLayoutDocument {
+	if (document[region].visible) return document;
+	return {
+		...document,
+		[region]: {
+			...document[region],
+			groups: document[region].groups.map((group) =>
+				group.folded ? group : { ...group, folded: true },
+			),
+		},
+	};
+}
+
 export function revealTool(
 	document: WorkspaceLayoutDocument,
 	tool: LayoutToolId,
@@ -1056,6 +1072,12 @@ export function revealTool(
 	const requestedTab = withAvailablePlacementId(document, toolTab(tool));
 	const placedTab = resolvePlacedResource(document, requestedTab).placed;
 	const existing = placedTab ? findTabLocation(document, placedTab.id) : null;
+	document = foldHiddenAuxiliaryGroups(
+		document,
+		existing && existing.area !== "center"
+			? existing.area
+			: (document.toolRestoreTargets[tool]?.region ?? LAYOUT_TOOL_DEFAULT_SIDES[tool]),
+	);
 	if (placedTab && existing && existing.area !== "center") {
 		const region = document[existing.area];
 		const group = region.groups.find((candidate) => candidate.id === existing.groupId);

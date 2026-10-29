@@ -126,3 +126,11 @@ final result: targeted checks passed; full-suite follow-up has 3 pending cases; 
 - 本次文件组件通过 React Compiler 检查，整仓仍被已有 LeftPeekPanel / useLeftPeek 两项 bailout 阻挡。未添加抑制或改写 census 基线。
 - 明暗截图来自隔离示例，保存在 `.github/readme-assets/pideck-files-light.png` 与 `pideck-files-dark.png`；目录菜单、源码评论与画布颜色已人工核对。
 - 本轮未做原生产物/系统回收站真机验收；Windows 真机仍待完成。未运行完整真实模型套件。未提交、推送或发布，未操作用户生产文件，其他任务的暂存内容保持原样。
+
+## 单工具展开不连带恢复其他面板（2026-10-29）
+
+- 根因：隐藏辅助区域保留了各组未折叠状态，单工具入口将区域重新设为可见时，其他组也随之显示。
+- 修复：单工具展开隐藏区域前折叠其各组，再仅展开目标；已显示区域的多面板操作、整体区域恢复和原有尺寸保留。工具栏点击与显式 reveal 共用该规则。
+- 新增单测先复现失败，修复后布局相关 106 项通过；两项浏览器回归通过，覆盖隐藏右栏后仅打开文件，以及继续主动打开评审。Web build、Web typecheck、定向 Biome、63 项边界测试与模块边界检查通过。
+- 完整无智能体回归执行一次：608 通过、70 未通过；本次工具面板用例无失败。同一工作区存在并行界面/测试修改，未将全量结果标记为通过；抽查布局失败为标签搜索旧断言与 sessionRows 未定义。日志 `/tmp/pideck-pane-full-e2e.log`，清单 `/tmp/pideck-pane-failures.txt`。
+- 未提交、未推送；本轮未进行原生平台真机验收。

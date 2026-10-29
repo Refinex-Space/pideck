@@ -11,7 +11,7 @@ import {
 	showingAuxiliaryKey,
 	visibleAuxiliaryGroups,
 } from "./auxiliaryPresentation";
-import { closeLayoutTab, reconcileAttention, selectTab, toolTab } from "./model";
+import { closeLayoutTab, reconcileAttention, revealTool, selectTab, toolTab } from "./model";
 import type { LayoutTerminalTab, WorkspaceLayoutDocument } from "./types";
 
 const terminal = (id: string): LayoutTerminalTab => ({
@@ -234,4 +234,38 @@ test("the showing auxiliary key changes with the selected tool, not with the cen
 		showingAuxiliaryKey(doc, filesSelected),
 	);
 	expect(showingAuxiliaryKey(doc, centerReselected)).toBe(showingAuxiliaryKey(doc, filesSelected));
+});
+
+test("opening one tool from a hidden region does not reopen sibling panes", () => {
+	for (const tool of ["files", "review", "specs"] as const) {
+		const doc = document();
+		doc.right.visible = false;
+		doc.right.groups = ["files", "review", "specs"].map((name) => ({
+			id: name,
+			weight: 1 / 3,
+			folded: false,
+			tabs: [toolTab(name as "files" | "review" | "specs")],
+		}));
+		const attention = reconcileAttention(doc);
+		const entry = projectAuxiliaryRail(doc, attention, "right").find(
+			(item) => item.kind === "tool" && item.tool === tool,
+		);
+		if (!entry) throw new Error("Missing tool");
+		const opened = mutation(activateAuxiliaryRailEntry(doc, attention, entry, 6, 3)).document;
+		expect(opened.right.groups.filter((group) => !group.folded).map((group) => group.id)).toEqual([
+			tool,
+		]);
+		expect(opened.right.groups.map((group) => group.weight)).toEqual(
+			doc.right.groups.map((group) => group.weight),
+		);
+	}
+});
+
+test("explicit tool reveal also leaves hidden siblings folded", () => {
+	const doc = document();
+	doc.right.visible = false;
+	for (const tool of ["files", "specs"] as const) {
+		const opened = mutation(revealTool(doc, tool, 6)).document;
+		expect(opened.right.groups.filter((group) => !group.folded)).toHaveLength(1);
+	}
 });

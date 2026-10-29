@@ -4,6 +4,7 @@ import {
 	findAuxiliaryGroup,
 	findPlacedResource,
 	findTabLocation,
+	foldHiddenAuxiliaryGroups,
 	isLayoutUnavailable,
 	type LayoutOperationResult,
 	resizeAuxiliaryGroups,
@@ -225,14 +226,12 @@ function activateGroup(
 	tab: LayoutTab | undefined,
 	hide: boolean,
 ): LayoutOperationResult {
+	document = foldHiddenAuxiliaryGroups(document, region);
 	const visible =
 		region === "bottom"
 			? setBottomVisibility(document, true)
 			: setSideVisibility(document, region, true);
-	const result =
-		group.folded === hide
-			? { document: visible }
-			: setAuxiliaryGroupFolded(visible, region, group.id, hide);
+	const result = setAuxiliaryGroupFolded(visible, region, group.id, hide);
 	if (isLayoutUnavailable(result)) return result;
 	return { ...result, focusGroupId: group.id, ...(!hide && tab ? { focusTabId: tab.id } : {}) };
 }

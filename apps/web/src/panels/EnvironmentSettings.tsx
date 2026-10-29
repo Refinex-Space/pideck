@@ -96,7 +96,7 @@ export function EnvironmentForm({
 				<fieldset
 					disabled={saving}
 					data-testid="settings-environment-form"
-					className="flex min-w-0 flex-col gap-16 px-12 py-12"
+					className="flex min-w-0 flex-col gap-24"
 				>
 					{status.restartRequired ? (
 						<SettingsNotice variant="warning" testId="settings-environment-restart">
@@ -104,13 +104,18 @@ export function EnvironmentForm({
 						</SettingsNotice>
 					) : null}
 
-					<div className="flex flex-col gap-4">
-						<label
-							htmlFor="settings-environment-agent-dir"
-							className="tr-text-ui text-text-default"
-						>
-							{t("settings.environment.agentDir.label")}
-						</label>
+					<div className="flex flex-col gap-8 border-border-muted border-b pb-24">
+						<div className="flex flex-col gap-2">
+							<label
+								htmlFor="settings-environment-agent-dir"
+								className="tr-text-ui text-text-default"
+							>
+								{t("settings.environment.agentDir.label")}
+							</label>
+							<p className="tr-text-metadata text-text-muted">
+								{t("settings.environment.agentDir.hint")}
+							</p>
+						</div>
 						<input
 							id="settings-environment-agent-dir"
 							data-testid="settings-environment-agent-dir"
@@ -129,9 +134,6 @@ export function EnvironmentForm({
 								{t(ISSUE_TEXT[issues.agentDir])}
 							</p>
 						) : null}
-						<p className="tr-text-metadata text-text-muted">
-							{t("settings.environment.agentDir.hint")}
-						</p>
 						{overridden.has(AGENT_DIR_VAR) && status.stored.agentDir !== undefined ? (
 							<p
 								data-testid="settings-environment-agent-dir-overridden"
@@ -151,7 +153,7 @@ export function EnvironmentForm({
 						</p>
 					</div>
 
-					<div className="flex flex-col gap-4">
+					<div className="flex flex-col gap-8">
 						<span className="tr-text-ui text-text-default">
 							{t("settings.environment.vars.label")}
 						</span>

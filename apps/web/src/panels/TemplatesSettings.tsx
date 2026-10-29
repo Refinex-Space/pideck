@@ -244,7 +244,7 @@ function ProjectTemplatesSection({
 					</p>
 				</SettingsNotice>
 			) : templates ? (
-				<div className="flex flex-col gap-8">
+				<div className="flex flex-col divide-y divide-border-muted overflow-hidden rounded-md border border-border-muted">
 					{templates.map((template) => (
 						<TemplateRow
 							key={template.name}
@@ -335,7 +335,7 @@ function GlobalTemplatesSection({
 					</p>
 				</SettingsNotice>
 			) : (
-				<div className="flex flex-col gap-8">
+				<div className="flex flex-col divide-y divide-border-muted overflow-hidden rounded-md border border-border-muted">
 					{templates.map((template) => (
 						<TemplateRow
 							key={template.name}
@@ -401,7 +401,7 @@ function TemplateRow({
 				data-testid="template-row"
 				data-name={template.name}
 				data-scope={template.scope}
-				className="group flex items-center gap-8 rounded-sm bg-control-bg px-12 py-8"
+				className="group flex items-center gap-8 px-12 py-8 hover:bg-control-bg-hovered"
 			>
 				<div className="flex min-w-0 flex-1 flex-col">
 					<span className="truncate tr-text-ui text-text-default">{template.name}</span>

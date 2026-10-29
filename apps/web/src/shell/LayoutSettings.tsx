@@ -237,8 +237,10 @@ export function LayoutSettings() {
 							data-preset-id={preset.id}
 							data-default={isEffectiveDefault}
 							data-applied={isCurrentlyApplied}
-							className={`relative flex flex-col rounded-sm p-12 ${
-								isCurrentlyApplied ? "bg-control-bg-selected" : "bg-control-bg"
+							className={`relative flex flex-col rounded-md border p-12 ${
+								isCurrentlyApplied
+									? "border-control-border-active bg-control-bg-selected"
+									: "border-border-muted bg-control-bg"
 							}`}
 						>
 							{isEffectiveDefault && (
@@ -401,7 +403,7 @@ export function LayoutSettings() {
 									? t("workbench.layoutSettings.customLimit", { limit: MAX_CUSTOM_PRESETS })
 									: undefined
 							}
-							className="group flex flex-col rounded-sm bg-control-bg p-12 text-left transition-colors hover:bg-control-bg-hovered disabled:cursor-not-allowed disabled:bg-control-disabled-bg"
+							className="group flex flex-col rounded-md border border-border-muted bg-control-bg p-12 text-left transition-colors hover:bg-control-bg-hovered disabled:cursor-not-allowed disabled:border-control-disabled-border disabled:bg-control-disabled-bg"
 						>
 							<Plus className="size-24 text-text-muted group-disabled:text-control-disabled-text" />
 							<p className="mt-8 tr-text-ui text-text-default group-disabled:text-control-disabled-text">

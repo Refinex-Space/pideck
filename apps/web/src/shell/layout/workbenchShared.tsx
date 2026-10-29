@@ -81,7 +81,6 @@ export interface WorkbenchProps {
 	) => void;
 	onRenameChat?: (sessionId: string, titleInput: string, currentTitle: string) => void;
 	chatFirstPrompts?: ChatFirstPrompts;
-	onNewChat: (groupId: string) => void;
 	onNewTerminal: (
 		groupId: string,
 		area: "center" | LayoutAuxiliaryRegion,

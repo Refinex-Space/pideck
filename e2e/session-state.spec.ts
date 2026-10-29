@@ -3,15 +3,18 @@ import { join } from "node:path";
 import { expect, type Locator, type Page, test } from "@playwright/test";
 import type { AskUserQuestionArgs } from "@thinkrail/pi-ask-user-question/core";
 import {
+	createWorkspaceViaDialog,
 	defaultWorkspaceRow,
 	enterDefaultWorkspace,
 	goProjectHome,
 	openAppSettings,
 	openFixtureProject,
 	openPersistedChat,
-	openWorkspaceMenu,
+	revealFirstProjectWorkspaces,
 	revealWorkbenchTool,
+	sessionRow,
 	setWindowFocus,
+	worktreeRows,
 } from "./fixtures/app";
 import { E2E_DATA_DIR, E2E_FIXTURE_REPO } from "./fixtures/paths";
 import { seedWorkspaceSession } from "./fixtures/sessions";
@@ -141,7 +144,8 @@ test("marking a workspace unread relights its result until the chat is left, and
 	page,
 }) => {
 	await openFixtureProject(page);
-	const session = seedWorkspaceSession(realpathSync(E2E_FIXTURE_REPO), {
+	const worktree = await createWorkspaceViaDialog(page);
+	const session = seedWorkspaceSession(worktree.worktreePath, {
 		name: "mark unread receipt",
 		messages: [
 			{ role: "user", text: "Finish before marking.", timestamp: BASE_TS + 7 },
@@ -150,15 +154,14 @@ test("marking a workspace unread relights its result until the chat is left, and
 	});
 	try {
 		await reconnectWithSeed(page);
-		const workspace = defaultWorkspaceRow(page);
-		await enterDefaultWorkspace(page);
+		const workspace = worktreeRows(page).first();
 		await openPersistedChat(page, "mark unread receipt");
 		await expect(page.getByText("Result to revisit.", { exact: true })).toBeVisible();
 		await expect(workspace).not.toHaveAttribute("data-attention", /.+/);
 
-		await openWorkspaceMenu(workspace);
-		await expect(page.getByTestId("workspace-mark-read")).toHaveCount(0);
-		await page.getByTestId("workspace-mark-unread").click();
+		await page.getByTestId("scope-workspace").click();
+		await expect(page.getByTestId("scope-workspace-mark-read")).toHaveCount(0);
+		await page.getByTestId("scope-workspace-mark-unread").click();
 		await expectAttentionDot(workspace);
 		await settleFrames(page);
 		await expectAttentionDot(workspace);
@@ -172,8 +175,9 @@ test("marking a workspace unread relights its result until the chat is left, and
 		await page.getByTestId("scope-workspace-mark-unread").click();
 		await expectAttentionDot(workspace);
 		await goProjectHome(page);
+		await revealFirstProjectWorkspaces(page);
 		await expectAttentionDot(workspace);
-		await workspace.getByTestId("workspace-name").click();
+		await sessionRow(page, "mark unread receipt").getByRole("button").first().click();
 		await expect(page.getByText("Result to revisit.", { exact: true })).toBeVisible();
 		await expect(workspace).not.toHaveAttribute("data-attention", /.+/);
 	} finally {

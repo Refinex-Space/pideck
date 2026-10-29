@@ -1,7 +1,12 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test } from "@playwright/test";
-import { createWorkspaceViaDialog, openFixtureProject, revealWorkbenchTool } from "./fixtures/app";
+import {
+	createWorkspaceViaDialog,
+	openFixtureProject,
+	revealWorkbenchTool,
+	startNewChat,
+} from "./fixtures/app";
 
 test("skills badge: ignores capped build churn, flags a skill change, and clears per chat", {
 	tag: "@agent",
@@ -44,7 +49,7 @@ test("skills badge: ignores capped build churn, flags a skill change, and clears
 	await page.keyboard.press("Escape");
 	await expect(skillsBtn).not.toHaveAttribute("data-stale", "true");
 
-	await page.getByTestId("new-chat").first().click();
+	await startNewChat(page);
 	await expect(page.locator('[data-testid="editor-tab"][data-kind="chat"]')).toHaveCount(2);
 	await expect(page.getByTestId("open-skills")).toBeVisible();
 	await expect(page.getByTestId("open-skills")).not.toHaveAttribute("data-stale", "true");

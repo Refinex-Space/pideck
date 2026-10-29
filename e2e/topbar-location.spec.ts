@@ -49,7 +49,7 @@ test("the location segments name the active workspace and switch through their m
 		contentType: "image/png",
 	});
 	await workspaceMenu.getByTestId("scope-workspace-option").filter({ hasText: "Default" }).click();
-	await expect(page.getByTestId("scope-name")).toHaveText("Default");
+	await expect(page.getByTestId("scope-workspace")).toHaveCount(0);
 	await expect(await workspaceDetail(page, "scope-branch")).toHaveText("main");
 	await expect(await workspaceDetail(page, "scope-base")).toHaveCount(0);
 	await expect(defaultWorkspaceRow(page)).toHaveAttribute("data-active", "true");
@@ -60,12 +60,8 @@ test("the location segments name the active workspace and switch through their m
 		contentType: "image/png",
 	});
 
-	// …and back, then rename in place.
-	await page.getByTestId("scope-workspace").click();
-	await workspaceMenu
-		.getByTestId("scope-workspace-option")
-		.filter({ hasText: "workspace-1" })
-		.click();
+	// …and back through the sidebar (the project folder has no location pill), then rename in place.
+	await page.getByTestId("workspace-name").filter({ hasText: "workspace-1" }).click();
 	await expect(page.getByTestId("scope-name")).toHaveText("workspace-1");
 	await page.getByTestId("scope-workspace").click();
 	await workspaceMenu.getByTestId("scope-workspace-rename").click();
@@ -149,7 +145,7 @@ test("the location segments name the active workspace and switch through their m
 	await page.getByTestId("scope-workspace").click();
 	await workspaceMenu.getByTestId("scope-workspace-remove").click();
 	await page.getByTestId("confirm-remove").click();
-	await expect(page.getByTestId("scope-name")).toHaveText("Default");
+	await expect(page.getByTestId("scope-workspace")).toHaveCount(0);
 	await expect(worktreeRows(page)).toHaveCount(0);
 });
 

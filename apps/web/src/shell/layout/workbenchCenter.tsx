@@ -1,4 +1,4 @@
-import { RiChatNewLine as MessageSquarePlus, RiCloseLine as X } from "@remixicon/react";
+import { RiCloseLine as X } from "@remixicon/react";
 import { useT } from "@thinkrail/locales/react";
 import { IconButton } from "@thinkrail/ui/button";
 import {
@@ -35,7 +35,6 @@ import { TabStrip } from "./workbenchTabs";
 export const CenterGroupView = memo(function CenterGroupView({
 	group,
 	selectedId,
-	onNewChat,
 	renderEmptyCenter,
 	topbarLeading,
 	topbarTrailing,
@@ -43,7 +42,6 @@ export const CenterGroupView = memo(function CenterGroupView({
 }: SharedGroupProps & {
 	group: LayoutCenterGroup;
 	selectedId: string | undefined;
-	onNewChat: WorkbenchProps["onNewChat"];
 	renderEmptyCenter: WorkbenchProps["renderEmptyCenter"];
 	topbarLeading?: ReactNode;
 	topbarTrailing?: ReactNode;
@@ -107,15 +105,6 @@ export const CenterGroupView = memo(function CenterGroupView({
 								className="shrink-0 self-center"
 							/>
 						) : null}
-						<IconButton
-							variant="ghost"
-							size="m"
-							icon={MessageSquarePlus}
-							label={t("workbench.center.newChat")}
-							data-testid="new-chat"
-							onClick={() => onNewChat(group.id)}
-							className="shrink-0 self-center"
-						/>
 					</div>
 					{topbarTrailing}
 				</>
@@ -217,7 +206,6 @@ export type CenterNodeProps = SharedGroupProps & {
 	attention: LayoutAttention;
 	projectionEpoch: number;
 	onCommit: WorkbenchProps["onCommit"];
-	onNewChat: WorkbenchProps["onNewChat"];
 	renderEmptyCenter: WorkbenchProps["renderEmptyCenter"];
 	topbarLeading?: ReactNode;
 	topbarTrailing?: ReactNode;
@@ -228,7 +216,6 @@ export const CenterNodeView = memo(function CenterNodeView({
 	attention,
 	projectionEpoch,
 	onCommit,
-	onNewChat,
 	topbarLeading,
 	topbarTrailing,
 	...shared
@@ -238,7 +225,6 @@ export const CenterNodeView = memo(function CenterNodeView({
 			key={tupleKey("center-node", node.id)}
 			group={node}
 			selectedId={readLayoutSelection(attention, node.id)}
-			onNewChat={onNewChat}
 			topbarLeading={topbarLeading}
 			topbarTrailing={topbarTrailing}
 			{...shared}
@@ -250,7 +236,6 @@ export const CenterNodeView = memo(function CenterNodeView({
 			attention={attention}
 			projectionEpoch={projectionEpoch}
 			onCommit={onCommit}
-			onNewChat={onNewChat}
 			topbarLeading={topbarLeading}
 			topbarTrailing={topbarTrailing}
 			{...shared}
@@ -264,7 +249,6 @@ export const CenterSplitView = memo(function CenterSplitView({
 	attention,
 	projectionEpoch,
 	onCommit,
-	onNewChat,
 	topbarLeading,
 	topbarTrailing,
 	...shared
@@ -307,7 +291,6 @@ export const CenterSplitView = memo(function CenterSplitView({
 						attention={attention}
 						projectionEpoch={projectionEpoch}
 						onCommit={onCommit}
-						onNewChat={onNewChat}
 						topbarLeading={topbarLeading}
 						topbarTrailing={horizontal ? undefined : topbarTrailing}
 						{...shared}
@@ -332,7 +315,6 @@ export const CenterSplitView = memo(function CenterSplitView({
 						attention={attention}
 						projectionEpoch={projectionEpoch}
 						onCommit={onCommit}
-						onNewChat={onNewChat}
 						topbarTrailing={horizontal ? topbarTrailing : undefined}
 						{...shared}
 					/>

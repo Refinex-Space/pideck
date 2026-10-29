@@ -23,7 +23,7 @@ test("the Welcome fork's “Work in project folder” enters the Default workspa
 	await enterDefaultWorkspace(page);
 
 	await expect(page.getByTestId("center-tabs")).toBeVisible();
-	await expect(page.getByTestId("scope-name")).toHaveText("Default");
+	await expect(page.getByTestId("scope-workspace")).toHaveCount(0);
 	await expect(await workspaceDetail(page, "scope-branch")).toHaveText("main");
 	await expect(await workspaceDetail(page, "scope-base")).toHaveCount(0);
 

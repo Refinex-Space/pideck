@@ -1,5 +1,10 @@
 import { expect, test } from "@playwright/test";
-import { createWorkspaceViaDialog, openFixtureProject, worktreeRows } from "./fixtures/app";
+import {
+	createWorkspaceViaDialog,
+	openFixtureProject,
+	startNewChat,
+	worktreeRows,
+} from "./fixtures/app";
 
 test("two chats in one workspace stream independently; closing one keeps the other", {
 	tag: "@agent",
@@ -18,7 +23,7 @@ test("two chats in one workspace stream independently; closing one keeps the oth
 	await page.getByTestId("chat-input").fill("Reply with the single word: alpha");
 	await page.getByTestId("chat-send").click();
 
-	await page.getByTestId("new-chat").first().click();
+	await startNewChat(page);
 	await expect(chatTabs).toHaveCount(2);
 	await page.getByTestId("chat-input").fill("Reply with the single word: bravo");
 	await page.getByTestId("chat-send").click();

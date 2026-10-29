@@ -3,6 +3,7 @@ import {
 	createWorkspaceViaDialog,
 	openFixtureProject,
 	revealWorkbenchTool,
+	startNewChat,
 	worktreeRow,
 } from "./fixtures/app";
 
@@ -46,7 +47,7 @@ test("keyboard tab navigation and close recovery retain a thin visible focus rin
 }) => {
 	await openFixtureProject(page);
 	await createWorkspaceViaDialog(page);
-	await page.getByTestId("new-chat").first().click();
+	await startNewChat(page);
 	const tabs = page.getByTestId("center-tab-strip").getByRole("tab");
 	await expect(tabs).toHaveCount(2);
 	const first = tabs.nth(0);

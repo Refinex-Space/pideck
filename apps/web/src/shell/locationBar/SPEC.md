@@ -69,12 +69,16 @@ project/workspace/branch/remote/review actions and the existing protocol guards 
 - Captions stay part of the header drag region; every pill, chip, link, and the inline rename
   input opts out with `window-no-drag` (unit-tested), which is the deliberate relaxation of the shell's
   "buttons only in `topbar-actions`" rule for this strip alone.
+- The workspace pill names a worktree or external workspace and carries its actions (New chat, open in editor, rename,
+  copy path, reveal, mark read/unread, settle, remove, switch). The project folder (default workspace) renders no pill:
+  the sidebar already lists its chats under the project, so only the details control remains. New chats in the project
+  folder start from the project's `+`; the top bar has no separate new-chat button.
 - Drop order as the window narrows: project segment below `sm`, branch segment below `md`, a Remote
   segment **without an action** below `md`, and a Pull request segment with neither a review nor a next
   action below `sm`. The workspace segment, a Pull request segment with a review or a next action, and a
   Remote segment carrying an action never hide; below `md` their split buttons collapse to the icon. The
   workspace keeps a 64px minimum, so a strip squeezed by native insets clips its trailing segments, never
-  the workspace name (e2e `topbar-chrome` keeps `scope-name` visible at phone width with insets). Inside the
+  the workspace name (e2e `topbar-chrome` keeps the details control visible at phone width with insets). Inside the
   row the branch shrinks first (`shrink-[4]`), then the project (`shrink-[3]`), then the workspace, each
   capped by a `max-w`; the Remote and Pull request segments do not shrink. Against a host without `workspace.branchStatus` the old
   rule holds: Remote and the review chip render only with a review, hiding below `md` / `sm`.

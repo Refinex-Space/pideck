@@ -1,6 +1,11 @@
 import { realpathSync, utimesSync } from "node:fs";
 import { expect, test } from "@playwright/test";
-import { defaultWorkspaceRow, enterDefaultWorkspace, openFixtureProject } from "./fixtures/app";
+import {
+	defaultWorkspaceRow,
+	enterDefaultWorkspace,
+	openFixtureProject,
+	startNewChat,
+} from "./fixtures/app";
 import { E2E_FIXTURE_REPO } from "./fixtures/paths";
 import { seedWorkspaceSession } from "./fixtures/sessions";
 
@@ -86,7 +91,7 @@ test("unnamed chats read as their first prompt in the tab strip and Recently clo
 test("a new chat takes its first prompt as its label the moment it is sent", async ({ page }) => {
 	await openFixtureProject(page);
 	await enterDefaultWorkspace(page);
-	await page.getByTestId("new-chat").first().click();
+	await startNewChat(page);
 	const chatTab = page.locator('[data-testid="editor-tab"][data-kind="chat"]');
 	await expect(chatTab).toHaveCount(1);
 	await expect(chatTab).toHaveAttribute("data-title-source", "default");

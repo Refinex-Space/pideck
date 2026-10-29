@@ -8,7 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNow } from "../../components/useNow";
 import type { BranchFacts } from "../../panels/branchStatusState";
 import { resolveBranchReview } from "../../panels/useBranchStatus";
-import { useAppStore } from "../../store";
+import { isDefaultWorkspace, useAppStore } from "../../store";
 import { BranchSegment } from "./BranchSegment";
 import { ProjectSegment } from "./ProjectSegment";
 import { ShipStrip } from "./ShipSegments";
@@ -140,13 +140,15 @@ export function LocationBar(props: LocationProps) {
 				props.placement === "tabs" ? "shrink-0 gap-4" : "flex-1 gap-8",
 			)}
 		>
-			<WorkspaceSegment
-				project={props.project}
-				workspace={props.workspace}
-				activeSettled={settled}
-				now={now}
-				onNewWorkspace={props.onNewWorkspace}
-			/>
+			{props.workspace && isDefaultWorkspace(props.workspace) ? null : (
+				<WorkspaceSegment
+					project={props.project}
+					workspace={props.workspace}
+					activeSettled={settled}
+					now={now}
+					onNewWorkspace={props.onNewWorkspace}
+				/>
+			)}
 			{hasWorkspace ? (
 				<details
 					ref={details}

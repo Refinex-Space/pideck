@@ -160,7 +160,7 @@ test("folder-mode Start with an empty prompt lands in a fresh chat in the Defaul
 	await page.getByTestId("create-workspace").click();
 	await expect(dialog).toBeHidden();
 
-	await expect(page.getByTestId("scope-name")).toHaveText("Default");
+	await expect(page.getByTestId("scope-workspace")).toHaveCount(0);
 	await expect(worktreeRows(page)).toHaveCount(0);
 	await expect(page.locator('[data-testid="editor-tab"][data-kind="chat"]')).toHaveCount(1);
 	await expect(page.getByTestId("chat-input")).toBeVisible();

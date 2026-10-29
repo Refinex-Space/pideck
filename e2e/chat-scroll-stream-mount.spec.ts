@@ -5,6 +5,7 @@ import {
 	openAppSettings,
 	openFixtureProject,
 	openPersistedChat,
+	startNewChat,
 } from "./fixtures/app";
 import { E2E_FIXTURE_REPO } from "./fixtures/paths";
 import { seedWorkspaceSession } from "./fixtures/sessions";
@@ -152,7 +153,7 @@ for (const { order, mode, viewport } of cases) {
 			const stream = playStreamReplay(wire(), replay, FRAME_GAP_MS);
 			if (mode === "tab-return") {
 				await new Promise((resolve) => setTimeout(resolve, SWITCH_AFTER_MS));
-				await page.getByTestId("new-chat").first().click();
+				await startNewChat(page);
 				await expect(chatTab).not.toHaveAttribute("data-active", "true");
 				await chatTab.click();
 				await expect(chatTab).toHaveAttribute("data-active", "true");

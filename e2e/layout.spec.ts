@@ -16,6 +16,7 @@ import {
 	revealFirstProjectWorkspaces,
 	revealWorkbenchTool,
 	sessionRows,
+	startNewChat,
 	waitTerminalReady,
 } from "./fixtures/app";
 import { E2E_FIXTURE_REPO } from "./fixtures/paths";
@@ -1215,7 +1216,7 @@ test("frontend windows keep chat and file placement independent", async ({ page,
 	await expect(peerChat).toHaveCount(0);
 	await expect(chat).toHaveCount(1);
 
-	await page.getByTestId("new-chat").first().click();
+	await startNewChat(page);
 	await expect(page.locator('[data-testid="workspace-session"][data-open="true"]')).toHaveCount(2);
 	await expect(sessionRows(peer)).toHaveCount(2);
 

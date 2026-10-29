@@ -230,7 +230,6 @@ test("panel-header actions are square IconButton m controls", async ({ page }) =
 	};
 
 	const controls = [
-		page.getByTestId("new-chat").first(),
 		page.getByTestId("terminal-rail-group").first(),
 		page.getByTestId("side-group-fold").first(),
 		page.getByTestId("side-group-menu").first(),

@@ -5,6 +5,7 @@ import {
 	expandModelGroup,
 	openNewSessionPage,
 	openWorkspaceChat,
+	startNewChat,
 } from "./fixtures/app";
 import { connectCentral, openProviders, waitForCentralState } from "./fixtures/jbcentral";
 import { shot } from "./fixtures/screenshots";
@@ -28,7 +29,7 @@ async function readConfig(page: Page): Promise<AppConfig> {
 async function openFreshChat(page: Page): Promise<void> {
 	const chatTabs = page.locator('[data-testid="editor-tab"][data-kind="chat"]');
 	const previousChatCount = await chatTabs.count();
-	await page.getByTestId("new-chat").first().click();
+	await startNewChat(page);
 	await expect(chatTabs).toHaveCount(previousChatCount + 1);
 }
 

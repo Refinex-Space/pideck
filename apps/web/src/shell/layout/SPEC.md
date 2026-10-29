@@ -16,8 +16,8 @@ columns. The expanded left rail is horizontal inside its column; when collapsed 
 **One top bar.** The workbench draws no separate header row: the center tab strip *is* the 40px top bar
 (`window-drag`, `h-topbar-row`, `window-no-drag` on tabs and action clusters). The top-left center group's
 strip starts with the window inset spacer (and, when the left column is collapsed, the left rail plus history
-buttons). The top-right group's strip ends with, in order: new chat / history, the shell's location pill and
-details control, the **bottom rail** (the single global terminal entry; the former bottom bar is gone), the
+buttons). The top-right group's strip ends with, in order: the shell's location pill (worktree and external
+workspaces only; the project folder has none) and details control, the **bottom rail** (the single global terminal entry; the former bottom bar is gone), the
 **right rail** tools, the bottom-alignment menu while the bottom body is hidden, and the right inset spacer
 (omitted while the right column is visible, which owns that corner). Both rails are horizontal 32px-frame
 toolbars, so no vertical right column exists; their tooltips open downward. The center strip shows **one chat tab**: the selected chat, else the last one selected in that group.

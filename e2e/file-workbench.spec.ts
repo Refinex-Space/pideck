@@ -7,6 +7,7 @@ import {
 	openAppSettings,
 	openFixtureProject,
 	revealWorkbenchTool,
+	startNewChat,
 } from "./fixtures/app";
 
 const desktopAgent = devices["Desktop Chrome"].userAgent;
@@ -362,7 +363,7 @@ test("references follow the last selected chat when a file temporarily owns the 
 	writeFileSync(join(workspace.worktreePath, "chat-target.ts"), "const target = 1;\n");
 	await page.getByTestId("chat-input").fill("draft A");
 	const firstChatUrl = page.url();
-	await page.getByTestId("new-chat").first().click();
+	await startNewChat(page);
 	await expect(page).not.toHaveURL(firstChatUrl);
 	await page.getByTestId("chat-input").fill("draft B");
 	const secondChatUrl = page.url();

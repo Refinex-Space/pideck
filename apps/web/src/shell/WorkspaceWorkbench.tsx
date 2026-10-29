@@ -915,7 +915,6 @@ export function WorkspaceWorkbench({
 					if (tab.kind === "file") fileClose.requestClose(workspaceId, tab.path, completeClose);
 					else completeClose();
 				}}
-				onNewChat={startChat}
 				onNewTerminal={(groupId, area, options) =>
 					useAppStore
 						.getState()

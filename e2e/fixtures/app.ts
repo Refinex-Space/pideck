@@ -187,6 +187,23 @@ export async function openNewSessionPage(
 	await expect(page.getByTestId("new-workspace-page")).toBeVisible();
 }
 
+/** A fresh chat in the active workspace: its location menu for a worktree, the project's + for the project folder. */
+export async function startNewChat(page: Page): Promise<void> {
+	const location = page.getByTestId("scope-workspace");
+	const inWorktree = await location
+		.waitFor({ timeout: 2_000 })
+		.then(() => true)
+		.catch(() => false);
+	if (inWorktree) {
+		await location.click();
+		await page.getByTestId("scope-workspace-new-chat").click();
+		return;
+	}
+	await openNewSessionPage(page, "default");
+	await page.getByTestId("create-workspace").click();
+	await expect(page.getByTestId("new-workspace-page")).toBeHidden();
+}
+
 /** Switches the target pill on an open new-session page. */
 export async function chooseNewSessionTarget(
 	page: Page,

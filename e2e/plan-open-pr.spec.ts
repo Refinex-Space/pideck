@@ -7,6 +7,7 @@ import {
 	enterDefaultWorkspace,
 	openFixtureProject,
 	revealWorkbenchTool,
+	startNewChat,
 } from "./fixtures/app";
 import { gitAs } from "./fixtures/git";
 
@@ -88,7 +89,7 @@ test("Open PR is disabled in the Default workspace, whose branch is its own base
 }) => {
 	await openFixtureProject(page);
 	await enterDefaultWorkspace(page);
-	await page.getByTestId("new-chat").first().click();
+	await startNewChat(page);
 	await expect(page.getByTestId("chat-input")).toBeVisible();
 
 	await revealWorkbenchTool(page, "plan");

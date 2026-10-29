@@ -8,6 +8,7 @@ import {
 	openWorkspaceChat,
 	pressPlatformShortcut,
 	revealWorkbenchTool,
+	startNewChat,
 	waitTerminalReady,
 	worktreeRow,
 } from "./fixtures/app";
@@ -51,7 +52,7 @@ test("folding, hiding, and showing regions keep the center and the other panes m
 	page,
 }) => {
 	await openDefaultWorkbench(page);
-	await page.getByTestId("new-chat").click();
+	await startNewChat(page);
 	await expect(page.getByTestId("chat-input")).toBeVisible();
 	const center = ["center-tabs", "chat-input", "terminal-instance"] as const;
 	const specs = page.getByTestId("tool-rail-specs");

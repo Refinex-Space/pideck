@@ -1,7 +1,7 @@
 import { rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test } from "@playwright/test";
-import { openWorkspaceChat, revealWorkbenchTool } from "./fixtures/app";
+import { openWorkspaceChat, revealWorkbenchTool, startNewChat } from "./fixtures/app";
 import { E2E_DATA_DIR } from "./fixtures/paths";
 
 const worktree = () => join(E2E_DATA_DIR, "worktrees", "sample-project", "workspace-1");
@@ -107,7 +107,7 @@ test("two chats keep their own TODO lists \u2014 a rail write in chat A never bl
 	await rail.getByTestId("todo-add-input").press("Enter");
 	await expect(rail.getByTestId("todo-row").filter({ hasText: "Chat A item" })).toBeVisible();
 
-	await page.getByTestId("new-chat").first().click();
+	await startNewChat(page);
 	await expect(chatTabs).toHaveCount(2);
 	await expect(chatTabs.last()).toHaveAttribute("data-active", "true");
 	await expect(rail).toBeVisible();

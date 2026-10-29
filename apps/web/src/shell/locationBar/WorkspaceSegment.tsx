@@ -8,6 +8,7 @@ import {
 	RiHome2Line as House,
 	RiMailOpenLine as MailOpen,
 	RiMailUnreadLine as MailUnread,
+	RiChatNewLine as MessageSquarePlus,
 	RiPencilLine as Pencil,
 	RiAddLine as Plus,
 	RiCheckboxCircleLine,
@@ -29,6 +30,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { RunningIcon } from "../../components/RunningIcon";
 import { copyText, platformShortcutLabel } from "../../lib";
+import { startChatInTab } from "../../panels/openChat";
 import { RemoveWorkspaceDialog } from "../../panels/RemoveWorkspaceDialog";
 import {
 	canRenameWorkspace,
@@ -208,6 +210,13 @@ export function WorkspaceSegment({
 								<DropdownMenuLabel className="truncate">
 									{workspaceName(t, workspace)}
 								</DropdownMenuLabel>
+								<DropdownMenuItem
+									data-testid="scope-workspace-new-chat"
+									onSelect={() => void startChatInTab(workspace.id)}
+								>
+									<MessageSquarePlus />
+									{t("shell.location.workspace.newChat")}
+								</DropdownMenuItem>
 								{editors.length > 0 ? (
 									<DropdownMenuSub>
 										<DropdownMenuSubTrigger data-testid="scope-workspace-open-in">

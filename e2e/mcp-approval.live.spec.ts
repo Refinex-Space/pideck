@@ -6,6 +6,7 @@ import {
 	expandAllRoutineGroups,
 	openAppSettings,
 	openWorkspaceChat,
+	startNewChat,
 	waitForAgentSettled,
 } from "./fixtures/app";
 import { resolveBunExecutable } from "./fixtures/executables";
@@ -60,7 +61,7 @@ test("an MCP call asks on its card; Always allow runs it unasked from then on un
 		await expandAllRoutineGroups(page);
 		await expect(step).toHaveAttribute("data-status", "done");
 
-		await page.getByTestId("new-chat").first().click();
+		await startNewChat(page);
 		await expect(page.locator('[data-testid="editor-tab"][data-kind="chat"]')).toHaveCount(2);
 		await send(
 			page,

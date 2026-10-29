@@ -2,7 +2,7 @@ import { mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { expect, type Page, test } from "@playwright/test";
 import type { AppConfig, ModelDefault } from "@thinkrail/contracts";
-import { expandModelGroup, openWorkspaceChat } from "./fixtures/app";
+import { expandModelGroup, openWorkspaceChat, startNewChat } from "./fixtures/app";
 import { connectCentral, openProviders, waitForCentralState } from "./fixtures/jbcentral";
 import { E2E_SCREENSHOT_DIR } from "./fixtures/paths";
 import { E2eWire } from "./fixtures/wire";
@@ -57,7 +57,7 @@ async function disconnectFixtureProvider(page: Page): Promise<void> {
 async function openFreshChat(page: Page): Promise<void> {
 	const chatTabs = page.locator('[data-testid="editor-tab"][data-kind="chat"]');
 	const previousChatCount = await chatTabs.count();
-	await page.getByTestId("new-chat").first().click();
+	await startNewChat(page);
 	await expect(chatTabs).toHaveCount(previousChatCount + 1);
 }
 

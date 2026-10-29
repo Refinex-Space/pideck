@@ -5,6 +5,7 @@ import {
 	createWorkspaceViaDialog,
 	goProjectHome,
 	openFixtureProject,
+	startNewChat,
 	trashSession,
 } from "./fixtures/app";
 
@@ -24,7 +25,7 @@ async function openTwoChats(page: Page): Promise<{ chat1Hash: string; chat2Hash:
 	await expect.poll(() => currentHash(page)).toContain("/chats/");
 	const chat1Hash = await currentHash(page);
 
-	await page.getByTestId("new-chat").first().click();
+	await startNewChat(page);
 	await expect(chatTabs(page)).toHaveCount(2);
 	await expect.poll(() => currentHash(page)).not.toBe(chat1Hash);
 	const chat2Hash = await currentHash(page);
@@ -145,7 +146,7 @@ test("toolbar history survives reload, truncates Forward after a new route and f
 	await expect.poll(() => currentHash(page)).toBe(chat2Hash);
 	await page.getByTestId("navigate-back").click();
 	await expect.poll(() => currentHash(page)).toBe(chat1Hash);
-	await page.getByTestId("new-chat").first().click();
+	await startNewChat(page);
 	await expect.poll(() => currentHash(page)).not.toBe(chat1Hash);
 	await expect(page.getByTestId("navigate-forward")).toBeDisabled();
 	await page.getByTestId("tool-rail-projects").click();

@@ -116,7 +116,6 @@ export function Workbench({
 	onRequestClose,
 	onRenameChat,
 	chatFirstPrompts,
-	onNewChat,
 	onNewTerminal,
 	onGestureCanceled,
 }: WorkbenchProps) {
@@ -937,7 +936,6 @@ export function Workbench({
 					attention={attention}
 					projectionEpoch={projectionEpoch}
 					onCommit={onCommit}
-					onNewChat={onNewChat}
 					renderEmptyCenter={renderEmptyCenter}
 					topbarLeading={topbarLeading}
 					topbarTrailing={topbarTrailing}

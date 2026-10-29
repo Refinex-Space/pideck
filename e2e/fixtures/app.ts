@@ -1,4 +1,12 @@
-import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+	copyFileSync,
+	existsSync,
+	mkdirSync,
+	readFileSync,
+	realpathSync,
+	rmSync,
+	writeFileSync,
+} from "node:fs";
 import { join } from "node:path";
 import type { Locator, Page } from "@playwright/test";
 import { expect } from "@playwright/test";
@@ -25,6 +33,7 @@ import {
 	E2E_PLAIN_DIR,
 } from "./paths";
 import { fixtureRepoHealthy, seedFixtureRepo } from "./repo";
+import { seedWorkspaceSession } from "./sessions";
 import { E2eWire } from "./wire";
 
 export async function workspaceDetail(page: Page, testId: string): Promise<Locator> {
@@ -248,9 +257,23 @@ export async function enterDefaultWorkspace(page: Page): Promise<void> {
 	await expect(page.getByTestId("center-tabs")).toBeVisible();
 }
 
+/** Gives the project folder a chat, which is what makes its rail row exist (and switchable without leaving the workbench). */
+export async function seedDefaultWorkspaceChat(page: Page, name: string): Promise<void> {
+	seedWorkspaceSession(realpathSync(E2E_FIXTURE_REPO), {
+		name,
+		messages: [{ role: "user", text: `${name} prompt`, timestamp: 1_700_910_000_000 }],
+	});
+	await expect(defaultWorkspaceRow(page)).toBeVisible();
+}
+
 /** The Default row only exists while the project folder holds chats, so reach it the way a user does: through Project Home. */
 export async function activateDefaultWorkspace(page: Page): Promise<void> {
 	await goProjectHome(page);
+	const expand = page
+		.getByTestId("project-item")
+		.filter({ hasText: "sample-project" })
+		.getByTestId("project-expand");
+	if ((await expand.getAttribute("aria-expanded")) === "false") await expand.click();
 	await enterDefaultWorkspace(page);
 }
 

@@ -28,10 +28,8 @@ test("the Welcome fork's “Work in project folder” enters the Default workspa
 	await expect(await workspaceDetail(page, "scope-branch")).toHaveText("main");
 	await expect(await workspaceDetail(page, "scope-base")).toHaveCount(0);
 
-	const row = defaultWorkspaceRow(page);
-	await expect(page.getByTestId("workspace-item").first()).toHaveAttribute("data-kind", "default");
-	await expect(row.getByTestId("workspace-name")).toHaveText("Default");
-	await expect(row.getByTestId("workspace-branch")).toHaveText("main");
+	// A project folder with no chats has no rail row; it is reached through Project Home.
+	await expect(defaultWorkspaceRow(page)).toHaveCount(0);
 
 	const ready = page.getByTestId("workspace-ready");
 	await expect(ready).toContainText("Default workspace");
@@ -56,29 +54,22 @@ test("a terminal branch switch converges every Default branch label live", async
 	await openFixtureProject(page);
 	await enterDefaultWorkspace(page);
 
-	const row = defaultWorkspaceRow(page);
 	await expect(await workspaceDetail(page, "scope-branch")).toHaveText("main");
-	await expect(row.getByTestId("workspace-branch")).toHaveText("main");
 
 	await revealWorkbenchTerminal(page);
 	await runInTerminal(page, "git switch -c live-branch");
 
-	await expect(row.getByTestId("workspace-branch")).toHaveText("live-branch");
 	await expect(await workspaceDetail(page, "scope-branch")).toHaveText("live-branch");
 	await expect(page.getByTestId("workspace-ready")).toContainText("on live-branch");
 });
 
-test("the Default workspace is non-removable and unique; project home stays reachable", async ({
+test("the Default workspace has no rail row while it holds no chats; project home stays reachable", async ({
 	page,
 }) => {
 	await openFixtureProject(page);
 
 	await createWorkspaceViaDialog(page);
-	const row = defaultWorkspaceRow(page);
-	await openWorkspaceMenu(row);
-	await expect(page.getByTestId("workspace-actions")).toBeVisible();
-	await expect(page.getByTestId("workspace-remove")).toHaveCount(0);
-	await page.keyboard.press("Escape");
+	await expect(defaultWorkspaceRow(page)).toHaveCount(0);
 	await openWorkspaceMenu(worktreeRows(page).first());
 	await expect(page.getByTestId("workspace-remove")).toBeVisible();
 	await page.keyboard.press("Escape");
@@ -86,11 +77,11 @@ test("the Default workspace is non-removable and unique; project home stays reac
 	await page.getByTestId("add-project-menu").click();
 	await page.getByTestId("menu-open-project").click();
 	await expect(page.getByTestId("welcome")).toBeVisible();
-	await expect(defaultWorkspaceRow(page)).toHaveCount(1);
+	await expect(defaultWorkspaceRow(page)).toHaveCount(0);
 
 	await activateDefaultWorkspace(page);
 	await expect(page.getByTestId("center-tabs")).toBeVisible();
-	await expect(defaultWorkspaceRow(page)).toHaveAttribute("data-active", "true");
+	await expect(page.getByTestId("scope-workspace")).toHaveCount(0);
 	await goProjectHome(page);
 	await expect(page.getByTestId("center-tabs")).toHaveCount(0);
 });

@@ -318,10 +318,8 @@ test("reload from a file tab restores its shared placement under the workspace r
 
 	await page.reload();
 	await expect(page.getByTestId("connection-status")).toHaveAttribute("data-status", "connected");
-	await expect(page.locator('[data-testid="workspace-item"][data-kind="default"]')).toHaveAttribute(
-		"data-active",
-		"true",
-	);
+	await expect(page.getByTestId("center-tabs")).toBeVisible();
+	await expect(page.getByTestId("scope-workspace")).toHaveCount(0);
 	await expect(page.locator('[data-testid="editor-tab"][data-kind="file"]')).toHaveCount(1);
 	await expect(activeTab(page)).toContainText("README.md");
 	expect(await currentHash(page)).toBe(hash);
@@ -336,7 +334,7 @@ test("workspace rows still list after a reload restore (the light list is comple
 	await page.reload();
 	await expect(page.getByTestId("connection-status")).toHaveAttribute("data-status", "connected");
 	await expect(activeWorktreeRow(page)).toHaveCount(1);
-	await expect(page.locator('[data-testid="workspace-item"][data-kind="default"]')).toBeVisible();
+	await expect(page.locator('[data-testid="workspace-item"][data-kind="default"]')).toHaveCount(0);
 	await expect(worktreeRows(page)).toHaveCount(1);
 });
 

@@ -8,9 +8,11 @@ import {
 	openAppSettings,
 	openFixtureProject,
 	openWorkspaceChat,
+	openWorkspaceMenu,
 	revealWorkbenchTool,
 	visibleTerminalScreen,
 	waitTerminalReady,
+	worktreeRows,
 } from "./fixtures/app";
 import { BRAND_FACE, CODE_FACE, INTERFACE_FACE } from "./fixtures/typography";
 
@@ -74,6 +76,14 @@ test("dialog title and card title share one typography", async ({ page }) => {
 test("entity rows, branch metadata and eyebrows are proportional", async ({ page }) => {
 	await openFixtureProject(page);
 	await createWorkspaceViaDialog(page);
+	// The branch line only shows once the display label differs from the branch.
+	const row = worktreeRows(page).first();
+	await openWorkspaceMenu(row);
+	await page.getByTestId("workspace-rename").click();
+	const input = row.getByRole("textbox", { name: "Workspace name" });
+	await input.fill("Typography Probe");
+	await input.press("Enter");
+	await expect(row.getByTestId("workspace-branch")).toBeVisible();
 	for (const testid of ["project-item", "workspace-item", "workspace-name", "workspace-branch"]) {
 		const type = await typeOf(page.getByTestId(testid).first());
 		expect(type.family, `${testid} must be proportional`).toMatch(INTERFACE_FACE);

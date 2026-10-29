@@ -1,14 +1,24 @@
+import { realpathSync } from "node:fs";
 import { expect, test } from "@playwright/test";
-import { defaultWorkspaceRow, enterDefaultWorkspace, openFixtureProject } from "./fixtures/app";
+import { enterDefaultWorkspace, openFixtureProject } from "./fixtures/app";
+import { E2E_FIXTURE_REPO } from "./fixtures/paths";
+import { seedWorkspaceSession } from "./fixtures/sessions";
 
 test("navigation aligns labels and keeps the application menu at the foot of its column", async ({
 	page,
 }) => {
 	await page.setViewportSize({ width: 1440, height: 900 });
 	await openFixtureProject(page);
+	// The project folder is listed only through its chats, so give it one.
+	seedWorkspaceSession(realpathSync(E2E_FIXTURE_REPO), {
+		name: "alignment chat",
+		messages: [{ role: "user", text: "Align the navigation.", timestamp: 1_700_910_000_000 }],
+	});
 	await enterDefaultWorkspace(page);
 	const project = page.getByTestId("project-name").first();
-	const workspace = defaultWorkspaceRow(page).getByTestId("workspace-name");
+	const session = page.getByTestId("workspace-session").first();
+	await expect(session).toBeVisible();
+	const workspace = session.locator("[data-title-source]");
 	const [projectBox, workspaceBox, sidebarBox, footerBox, contextBox] = await Promise.all([
 		project.boundingBox(),
 		workspace.boundingBox(),
@@ -29,7 +39,7 @@ test("navigation aligns labels and keeps the application menu at the foot of its
 		"aria-orientation",
 		"horizontal",
 	);
-	await expect(defaultWorkspaceRow(page).locator("button").first().locator("svg")).toHaveCount(0);
+	await expect(session.locator("button").first().locator("svg")).toHaveCount(0);
 	await page.getByTestId("app-menu").click();
 	await expect
 		.poll(() =>

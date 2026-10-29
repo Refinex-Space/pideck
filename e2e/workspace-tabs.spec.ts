@@ -7,6 +7,7 @@ import {
 	openTerminal,
 	revealWorkbenchTerminal,
 	revealWorkbenchTool,
+	seedDefaultWorkspaceChat,
 	workspaceDetail,
 	worktreeRow,
 	worktreeRows,
@@ -71,7 +72,7 @@ test("the selected side tool follows workspace switches", async ({ page }) => {
 	await expect(page.getByTestId("scope-name")).toHaveText("workspace-2");
 	await expect(projects).toHaveAttribute("aria-pressed", "true");
 	await activateDefaultWorkspace(page);
-	await expect(defaultWorkspaceRow(page)).toHaveAttribute("data-active", "true");
+	await expect(page.getByTestId("scope-workspace")).toHaveCount(0);
 	await expect(projects).toHaveAttribute("aria-pressed", "true");
 
 	const review = page.getByTestId("tool-rail-review");
@@ -87,6 +88,7 @@ test("switching workspaces re-targets the mounted workbench instead of remountin
 	page,
 }) => {
 	await openFixtureProject(page);
+	await seedDefaultWorkspaceChat(page, "workbench switch");
 
 	await createWorkspaceViaDialog(page);
 	await revealWorkbenchTool(page, "files");
@@ -131,7 +133,7 @@ test("switching workspaces re-targets the mounted workbench instead of remountin
 		),
 	).toBe(0);
 
-	await activateDefaultWorkspace(page);
+	await defaultWorkspaceRow(page).getByRole("button").first().click();
 	await expect(defaultWorkspaceRow(page)).toHaveAttribute("data-active", "true");
 	for (const id of ["workspace-workbench", "center-tabs", "left-nav"]) {
 		await expect(page.getByTestId(id)).toHaveAttribute("data-switch-probe", "before");

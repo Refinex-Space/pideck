@@ -1,7 +1,6 @@
 import { expect, test, type WebSocketRoute } from "@playwright/test";
 import {
 	createWorkspaceViaDialog,
-	defaultWorkspaceRow,
 	openFixtureProject,
 	PHONE_VIEWPORT,
 	revealWorkbenchTool,
@@ -52,7 +51,6 @@ test("the location segments name the active workspace and switch through their m
 	await expect(page.getByTestId("scope-workspace")).toHaveCount(0);
 	await expect(await workspaceDetail(page, "scope-branch")).toHaveText("main");
 	await expect(await workspaceDetail(page, "scope-base")).toHaveCount(0);
-	await expect(defaultWorkspaceRow(page)).toHaveAttribute("data-active", "true");
 	await testInfo.attach("location-default", {
 		body: await page
 			.getByTestId("topbar")

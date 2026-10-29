@@ -1,20 +1,22 @@
 import { expect, type Locator, type Page, test } from "@playwright/test";
 import {
-	activateDefaultWorkspace,
 	applyWorkbenchPreset,
 	createWorkspaceViaDialog,
+	defaultWorkspaceRow,
 	enterDefaultWorkspace,
 	openFixtureProject,
 	openWorkspaceChat,
 	pressPlatformShortcut,
 	revealWorkbenchTool,
+	seedDefaultWorkspaceChat,
 	startNewChat,
 	waitTerminalReady,
 	worktreeRow,
 } from "./fixtures/app";
 
-async function openDefaultWorkbench(page: Page): Promise<void> {
+async function openDefaultWorkbench(page: Page, opts?: { withChat?: boolean }): Promise<void> {
 	await openFixtureProject(page);
+	if (opts?.withChat) await seedDefaultWorkspaceChat(page, "rail drag");
 	await enterDefaultWorkspace(page);
 	await applyWorkbenchPreset(page, "Balanced");
 	await waitTerminalReady(page);
@@ -372,10 +374,10 @@ test("the plan rail entry is reachable by keyboard, exposes aria-controls, and l
 test("a workspace switch cancels a singleton drag even though its frame placement still exists", async ({
 	page,
 }) => {
-	await openDefaultWorkbench(page);
+	await openDefaultWorkbench(page, { withChat: true });
 	const other = await createWorkspaceViaDialog(page);
 	await waitTerminalReady(page);
-	await activateDefaultWorkspace(page);
+	await defaultWorkspaceRow(page).getByRole("button").first().click();
 	await waitTerminalReady(page);
 	await startDrag(page, page.getByTestId("tool-rail-files"));
 	const target = page.locator('[data-drop-label="Create bottom group to the right"]');
@@ -391,7 +393,7 @@ test("a workspace switch cancels a singleton drag even though its frame placemen
 	await expect(page.getByTestId("bottom-group")).toHaveCount(1);
 	await expect(page.getByTestId("right-layout-rail").getByTestId("tool-rail-files")).toBeVisible();
 	await expect(page.getByTestId("toast")).toContainText("Your drag was canceled");
-	await activateDefaultWorkspace(page);
+	await defaultWorkspaceRow(page).getByRole("button").first().click();
 	await expect(page.getByTestId("bottom-group")).toHaveCount(1);
 	await expect(page.getByTestId("right-layout-rail").getByTestId("tool-rail-files")).toBeVisible();
 });

@@ -7,11 +7,13 @@ import type {
 	AskUserQuestionOption,
 } from "@thinkrail/pi-ask-user-question/core";
 import {
+	closeTabViaMenu,
 	enterDefaultWorkspace,
 	hideAuxiliaryWorkbench,
 	openAppSettings,
 	openFixtureProject,
 	openPersistedChat,
+	openSessionViaSearch,
 } from "./fixtures/app";
 import {
 	moveMouseToChatViewport,
@@ -49,8 +51,7 @@ async function openPersistedChatAfterInput(page: Page, title: string): Promise<v
 	const chatTab = page
 		.locator('[data-testid="editor-tab"][data-kind="chat"]')
 		.filter({ hasText: title });
-	await chatTab.hover();
-	await chatTab.getByTestId("editor-tab-close").click();
+	await closeTabViaMenu(page, chatTab);
 	await expect(chatTab).toHaveCount(0);
 	await openPersistedChat(page, title);
 }
@@ -183,13 +184,9 @@ test("a persisted tall questionnaire reveals page changes and a restored page wi
 			.toEqual({ heading: true, firstOption: true });
 
 		const chatTabs = page.locator('[data-testid="editor-tab"][data-kind="chat"]');
-		await chatTabs.first().getByTestId("editor-tab-close").click();
+		await closeTabViaMenu(page, chatTabs.first());
 		await expect(chatTabs).toHaveCount(0);
-		await page.getByTestId("chat-history").first().click();
-		await page
-			.getByTestId("closed-chat-item")
-			.filter({ hasText: "tall persisted questionnaire" })
-			.click();
+		await openSessionViaSearch(page, "tall persisted questionnaire");
 		await expect(chatTabs).toHaveCount(1);
 
 		const reopenedCard = page.locator('[data-testid="ask-user-question"][data-tone="active"]');
@@ -257,9 +254,8 @@ test("a key pressed before a reopened questionnaire's first frame does not cance
 		await expect(card.getByTestId("ask-option").first()).toBeFocused();
 
 		const chatTabs = page.locator('[data-testid="editor-tab"][data-kind="chat"]');
-		await chatTabs.first().getByTestId("editor-tab-close").click();
+		await closeTabViaMenu(page, chatTabs.first());
 		await expect(chatTabs).toHaveCount(0);
-		await page.getByTestId("chat-history").first().click();
 		await page.evaluate(() => {
 			const held: FrameRequestCallback[] = [];
 			const request = window.requestAnimationFrame.bind(window);
@@ -269,10 +265,7 @@ test("a key pressed before a reopened questionnaire's first frame does not cance
 				for (const callback of held.splice(0)) request(callback);
 			};
 		});
-		await page
-			.getByTestId("closed-chat-item")
-			.filter({ hasText: "early input questionnaire" })
-			.click();
+		await openSessionViaSearch(page, "early input questionnaire");
 		await expect(card).toBeVisible();
 		await page.keyboard.press("Shift");
 		await page.evaluate(() => (window as HeldFrames).releaseHeldFrames?.());

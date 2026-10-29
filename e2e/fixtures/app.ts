@@ -269,37 +269,42 @@ export async function revealWorkbenchTool(
 	await expect(mode).toHaveAttribute("aria-pressed", "true");
 }
 
+export function sessionRows(page: Page): Locator {
+	return page.getByTestId("workspace-session");
+}
+
+export function sessionRow(page: Page, title: string): Locator {
+	return sessionRows(page).filter({ hasText: title });
+}
+
+export function closedSessionRows(page: Page): Locator {
+	return page.locator('[data-testid="workspace-session"][data-open="false"]');
+}
+
+export async function trashSession(row: Locator): Promise<void> {
+	await row.hover();
+	await row.getByTestId("workspace-session-menu").click();
+	await row.page().getByTestId("workspace-session-trash").click();
+}
+
+export async function openSessionViaSearch(page: Page, title: string): Promise<void> {
+	await page.keyboard.press("ControlOrMeta+k");
+	await expect(page.getByTestId("session-switcher")).toBeVisible();
+	await page.getByTestId("session-switcher-input").fill(title);
+	await page
+		.getByTestId("session-switcher-row")
+		.filter({ hasText: title })
+		.first()
+		.click({ timeout: 30_000 });
+	await expect(page.getByTestId("session-switcher")).toBeHidden();
+}
+
 export async function openPersistedChat(page: Page, title: string): Promise<void> {
 	const chatTab = page
 		.locator('[data-testid="editor-tab"][data-kind="chat"]')
 		.filter({ hasText: title });
-	const historyButton = page.getByTestId("chat-history").first();
-	const historyItem = page.getByTestId("closed-chat-item").filter({ hasText: title });
-	const clickUnlessOpened = async (target: Locator) => {
-		try {
-			await target.click({ timeout: 5_000 });
-		} catch (error) {
-			if (!(await chatTab.isVisible())) throw error;
-		}
-	};
-
-	await expect
-		.poll(async () => (await chatTab.isVisible()) || (await historyButton.isVisible()), {
-			timeout: 30_000,
-		})
-		.toBe(true);
 	if (await chatTab.isVisible()) return;
-
-	await clickUnlessOpened(historyButton);
-	if (await chatTab.isVisible()) return;
-	await expect
-		.poll(async () => (await chatTab.isVisible()) || (await historyItem.isVisible()), {
-			timeout: 30_000,
-		})
-		.toBe(true);
-	if (await chatTab.isVisible()) return;
-
-	await clickUnlessOpened(historyItem);
+	await openSessionViaSearch(page, title);
 	await expect(chatTab).toBeVisible({ timeout: 30_000 });
 }
 

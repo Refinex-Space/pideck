@@ -1,8 +1,8 @@
 import { realpathSync } from "node:fs";
 import { expect, type Page, test } from "@playwright/test";
 import {
+	closedSessionRows,
 	createWorkspaceViaDialog,
-	defaultWorkspaceRow,
 	enterDefaultWorkspace,
 	openAppSettings,
 	openFixtureProject,
@@ -44,20 +44,14 @@ async function openSeededClosedChat(page: Page, messages: SeededMessages) {
 	await page.getByTestId("start-chat").first().click();
 	await expect(page.locator('[data-testid="editor-tab"][data-kind="chat"]')).toHaveCount(1);
 
+	seedWorkspaceSession(realpathSync(E2E_FIXTURE_REPO), { messages });
 	await page.reload();
 	await expect(page.getByTestId("connection-status")).toHaveAttribute("data-status", "connected");
-	seedWorkspaceSession(realpathSync(E2E_FIXTURE_REPO), { messages });
 
-	await page.getByTestId("project-item").first().click();
-	await defaultWorkspaceRow(page).click();
-	await expect(defaultWorkspaceRow(page)).toHaveAttribute("data-active", "true");
 	await expect(page.locator('[data-testid="editor-tab"][data-kind="chat"]')).toHaveCount(1);
-	const history = page.getByTestId("chat-history").first();
-	await expect(history).toBeVisible();
-	await history.click();
-	const closedChat = page.getByTestId("closed-chat-item").first();
+	const closedChat = closedSessionRows(page).first();
 	await expect(closedChat).toBeVisible();
-	await closedChat.click();
+	await closedChat.getByRole("button").first().click();
 
 	const latestUserMessage = messages.filter((message) => message.role === "user").at(-1);
 	if (latestUserMessage) {
@@ -296,7 +290,7 @@ test("plain ArrowUp/ArrowDown recall steps through this chat's own prior prompts
 	await input.press("ArrowUp");
 	await expect(input).toHaveValue("write a test for the jitter!");
 
-	await page.getByTestId("history-open").click();
+	await page.keyboard.press("Control+r");
 	await expect(page.getByTestId("history-overlay")).toBeVisible();
 });
 
@@ -703,23 +697,22 @@ test("the Ctrl+R and Ctrl+S chords fire on a non-Latin keyboard layout", async (
 	await page.getByTestId("template-cancel").click();
 });
 
-test("the history button toggles the overlay, outside clicks dismiss it, and picking a scope does not", async ({
+test("Ctrl+R opens the overlay, Escape and outside clicks dismiss it, and picking a scope does not", async ({
 	page,
 }) => {
 	await openWorkspaceChat(page);
 	seedExternalCwdSessions();
 
-	const historyButton = page.getByTestId("history-open");
 	const overlay = page.getByTestId("history-overlay");
 	const input = page.getByTestId("chat-input");
 
-	await historyButton.click();
+	await page.keyboard.press("Control+r");
 	await expect(overlay).toBeVisible();
 
-	await historyButton.click();
+	await page.keyboard.press("Escape");
 	await expect(overlay).toBeHidden();
 
-	await historyButton.click();
+	await page.keyboard.press("Control+r");
 	await expect(overlay).toBeVisible();
 
 	await input.click();
@@ -729,7 +722,7 @@ test("the history button toggles the overlay, outside clicks dismiss it, and pic
 	await expect(input).toHaveValue("draft");
 	await input.fill("");
 
-	await historyButton.click();
+	await page.keyboard.press("Control+r");
 	await expect(overlay).toBeVisible();
 	await page.getByTestId("history-scope").click();
 	await page.getByTestId("history-scope-option").first().click();
@@ -746,7 +739,6 @@ test("with the scope picker open a press closes only the picker, and a press on 
 	await openWorkspaceChat(page);
 	seedExternalCwdSessions();
 
-	const historyButton = page.getByTestId("history-open");
 	const overlay = page.getByTestId("history-overlay");
 	const query = page.getByTestId("history-query");
 	const scopeBadge = page.getByTestId("history-scope");
@@ -756,7 +748,7 @@ test("with the scope picker open a press closes only the picker, and a press on 
 		page.getByTestId("topbar").click({ position: { x: 4, y: 20 }, force: true });
 
 	await input.fill("draft");
-	await historyButton.click();
+	await page.keyboard.press("Control+r");
 	await expect(overlay).toBeVisible();
 
 	await scopeBadge.click();
@@ -778,7 +770,7 @@ test("with the scope picker open a press closes only the picker, and a press on 
 	await page.keyboard.type("!");
 	await expect(input).toHaveValue("draft!");
 
-	await historyButton.click();
+	await page.keyboard.press("Control+r");
 	await expect(overlay).toBeVisible();
 	await expect(options).toHaveCount(0);
 	await page.keyboard.press("Escape");

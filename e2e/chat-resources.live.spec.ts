@@ -1,5 +1,5 @@
 import { expect, type Locator, type Page, test } from "@playwright/test";
-import { openWorkspaceChat, waitForAgentSettled } from "./fixtures/app";
+import { closeTabViaMenu, openWorkspaceChat, waitForAgentSettled } from "./fixtures/app";
 import { shot } from "./fixtures/screenshots";
 
 const commandRows = '[data-testid="resource-command"]';
@@ -91,10 +91,13 @@ test("command logs and Stop stay scoped through parent Stop, view closure, reloa
 	});
 	await expect(trigger).toHaveAttribute("data-active-count", "1");
 	const parentTab = page.locator(`[data-testid="editor-tab"][data-session-id="${parentId}"]`);
-	await parentTab.getByTestId("editor-tab-close").click();
+	await closeTabViaMenu(page, parentTab);
 	await expect(parentTab).toHaveCount(0);
-	await page.getByTestId("chat-history").first().click();
-	await page.locator(`[data-testid="closed-chat-item"][data-session-id="${parentId}"]`).click();
+	await page
+		.locator(`[data-testid="workspace-session"][data-session-id="${parentId}"]`)
+		.getByRole("button")
+		.first()
+		.click();
 	await expect(trigger).toHaveAttribute("data-active-count", "1");
 	await page.reload();
 	await expect(trigger).toHaveAttribute("data-active-count", "1");

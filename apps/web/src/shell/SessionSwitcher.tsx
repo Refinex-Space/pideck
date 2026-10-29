@@ -16,7 +16,7 @@ import { AttentionDot } from "@/components/AttentionDot";
 import { RunningIcon } from "@/components/RunningIcon";
 import { chatLabel } from "@/lib";
 import { loadProjectWorkspaces } from "@/panels/workspaceActions";
-import { type SwitcherSession, useAppStore, workspaceName } from "@/store";
+import { useAppStore, workspaceName } from "@/store";
 import { useSessionSwitcher } from "./useSessionSwitcher";
 
 export interface SessionSwitcherProps {
@@ -126,7 +126,7 @@ export function SessionSwitcher({ open, onOpenChange }: SessionSwitcherProps) {
 				data-testid="session-switcher-row"
 				data-session-id={session.sessionId}
 				className={ROW_CLASS}
-				onSelect={() => navigate(session as SwitcherSession)}
+				onSelect={() => navigate(session)}
 			>
 				{isRunning ? (
 					<RunningIcon className="size-16 shrink-0 text-text-muted" />
@@ -140,7 +140,7 @@ export function SessionSwitcher({ open, onOpenChange }: SessionSwitcherProps) {
 				>
 					{label.text}
 				</span>
-				{isRunning ? null : <AttentionDot />}
+				{isRunning || session.attention === null ? null : <AttentionDot />}
 				<span className="max-w-[40%] shrink-0 truncate tr-text-metadata text-text-subtle group-data-[selected=true]:hidden">
 					{workspace ? `${projectName} · ${workspace}` : projectName}
 				</span>

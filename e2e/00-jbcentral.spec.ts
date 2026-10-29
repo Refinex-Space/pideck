@@ -2,6 +2,7 @@ import { existsSync, readFileSync, renameSync, rmSync, writeFileSync } from "nod
 import { join } from "node:path";
 import { expect, test } from "@playwright/test";
 import {
+	closedSessionRows,
 	createWorkspaceViaDialog,
 	expandModelGroup,
 	modelGroupToggle,
@@ -9,6 +10,7 @@ import {
 	openFixtureProject,
 	openNewSessionPage,
 	revealModelGroups,
+	trashSession,
 } from "./fixtures/app";
 import {
 	assertOnlyReviewedArgv,
@@ -280,7 +282,6 @@ test("disconnect removes Central from new chats while an existing live chat keep
 		'[data-testid="editor-tab"][data-kind="chat"][data-active="true"]',
 	);
 	await activeChat.getByTestId("editor-tab-close").click();
-	await page.getByTestId("chat-history").first().click();
-	await page.getByTestId("closed-chat-row").first().getByTestId("closed-chat-delete").click();
-	await expect(page.getByTestId("chat-history")).toHaveCount(0);
+	await trashSession(closedSessionRows(page).first());
+	await expect(closedSessionRows(page)).toHaveCount(0);
 });

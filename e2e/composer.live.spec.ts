@@ -49,7 +49,6 @@ test("streaming unfolds the one-line draft into a complete action rail", {
 	expect(shellBox.x).toBeGreaterThanOrEqual(0);
 	expect(shellBox.x + shellBox.width).toBeLessThanOrEqual(PHONE_VIEWPORT.width);
 	for (const control of [
-		page.getByTestId("history-open"),
 		page.getByTestId("chat-abort"),
 		page.getByTestId("send-menu"),
 		page.getByTestId("chat-send"),

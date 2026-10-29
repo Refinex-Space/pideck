@@ -295,7 +295,10 @@ export function ProjectTree() {
 					onClick={() => useAppStore.getState().openSessionSwitcher()}
 				>
 					<RiSearchLine className="size-16 shrink-0" />
-					{t("shell.sessionSwitcher.title")}
+					<span className="min-w-0 flex-1 truncate">{t("shell.sessionSwitcher.title")}</span>
+					<kbd className="shrink-0 tr-text-metadata text-text-subtle">
+						{platformShortcutLabel("K")}
+					</kbd>
 				</button>
 			</header>
 
@@ -765,7 +768,7 @@ function WorkspaceRow({
 	const t = useT();
 	const isDefault = isDefaultWorkspace(workspace);
 	const isExternal = isExternalWorkspace(workspace);
-	const chats = useWorkspaceChats(workspace.id);
+	const { chats, refresh } = useWorkspaceChats(workspace.id);
 	const listsChats = workspaceListsChats(workspace, chats.length);
 	const isSettled = settled !== null;
 	const settleBlocked = isRunning || needsAttention;
@@ -1033,7 +1036,7 @@ function WorkspaceRow({
 					</span>
 				</fieldset>
 			)}
-			<WorkspaceSessions workspace={workspace} chats={chats} />
+			<WorkspaceSessions workspace={workspace} chats={chats} onChanged={refresh} />
 
 			{!isDefault && (
 				<RemoveWorkspaceDialog

@@ -18,7 +18,8 @@ export interface SwitcherSession {
 	workspaceKind: Workspace["kind"] | undefined;
 	chatTitle: string | null;
 	firstPrompt: string | undefined;
-	attention: SessionAttention;
+	attention: SessionAttention | null;
+	updatedAt?: number;
 }
 
 export interface SwitcherProject {
@@ -52,8 +53,14 @@ const ATTENTION_PRIORITY: Record<SessionAttention, number> = {
 	running: 3,
 };
 
+function attentionRank(session: SwitcherSession): number {
+	return session.attention === null
+		? ATTENTION_PRIORITY.running + 1
+		: ATTENTION_PRIORITY[session.attention];
+}
+
 function compareSessionsByAttention(a: SwitcherSession, b: SwitcherSession): number {
-	return ATTENTION_PRIORITY[a.attention] - ATTENTION_PRIORITY[b.attention];
+	return attentionRank(a) - attentionRank(b) || (b.updatedAt ?? 0) - (a.updatedAt ?? 0);
 }
 
 function resolveChatTitle(
@@ -119,6 +126,79 @@ export function selectSwitcherGroups(state: SwitcherGroupsState): SwitcherProjec
 			projectName: project.name,
 			needsAttention: sessions.some((session) => session.attention !== "running"),
 			sessions,
+		});
+	}
+	return groups;
+}
+
+export interface HostSessionRow {
+	sessionId: string;
+	workspaceId: string;
+	projectId: string;
+	title: string;
+	firstPrompt: string | undefined;
+	updatedAt: number;
+}
+
+/**
+ * Widen the attention groups to every chat the host holds: attention rows keep their state, other rows follow
+ * by recency, and chats this client already deleted never come back.
+ */
+export function mergeHostSessions(
+	state: Pick<SwitcherGroupsState, "projects" | "workspaces"> & {
+		deletedSessionsByWorkspace: Record<string, Record<string, true>>;
+	},
+	attentionGroups: SwitcherProject[],
+	rows: HostSessionRow[],
+): SwitcherProject[] {
+	const byProject = new Map<string, Map<string, SwitcherSession>>();
+	const bucket = (projectId: string) => {
+		const existing = byProject.get(projectId);
+		if (existing) return existing;
+		const created = new Map<string, SwitcherSession>();
+		byProject.set(projectId, created);
+		return created;
+	};
+	for (const group of attentionGroups) {
+		const sessions = bucket(group.projectId);
+		for (const session of group.sessions) sessions.set(session.sessionId, session);
+	}
+	for (const row of rows) {
+		if (state.deletedSessionsByWorkspace[row.workspaceId]?.[row.sessionId]) continue;
+		const sessions = bucket(row.projectId);
+		const known = sessions.get(row.sessionId);
+		if (known) {
+			sessions.set(row.sessionId, {
+				...known,
+				chatTitle: known.chatTitle || row.title || null,
+				firstPrompt: known.firstPrompt ?? row.firstPrompt,
+				updatedAt: row.updatedAt,
+			});
+			continue;
+		}
+		const workspace = state.workspaces[row.projectId]?.find((ws) => ws.id === row.workspaceId);
+		sessions.set(row.sessionId, {
+			sessionId: row.sessionId,
+			workspaceId: row.workspaceId,
+			projectId: row.projectId,
+			workspaceName: workspace?.name ?? "",
+			workspaceKind: workspace?.kind,
+			chatTitle: row.title || null,
+			firstPrompt: row.firstPrompt,
+			attention: null,
+			updatedAt: row.updatedAt,
+		});
+	}
+	const groups: SwitcherProject[] = [];
+	for (const project of state.projects) {
+		const sessions = byProject.get(project.id);
+		if (!sessions || sessions.size === 0) continue;
+		const list = [...sessions.values()].sort(compareSessionsByAttention);
+		groups.push({
+			projectId: project.id,
+			projectName: project.name,
+			needsAttention: list.some((s) => s.attention !== null && s.attention !== "running"),
+			sessions: list,
 		});
 	}
 	return groups;

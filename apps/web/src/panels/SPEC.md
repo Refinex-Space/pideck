@@ -1362,9 +1362,8 @@ own section. The kebab menu (`plan-menu`, a
   retry; dialog auto-close cannot release that request, authoritative catalog removal dismisses stale
   confirmation, and a rejected force clears exactly that request with an error so a later close can start
   cleanly. The workbench close command for a chat routes to `store.closeChatToHistory` (keeps the session
-  alive) and shows a
-  **chat-history** dropdown (recently-closed + disk-only chats, shown only when non-empty); each row has
-  a one-click trash action (`session.delete` → idempotent `store.deleteChat`, no confirm); the
+  alive); a closed chat stays listed under its workspace in the sidebar (`WorkspaceSessions`) and in the
+  `Mod+K` search, so there is no separate recently-closed control. Each sidebar row has a trash action (`session.delete` → idempotent `store.deleteChat`, no confirm); the
   `session.deleted` broadcast drives the same fold in every connected client. On workspace activation and
   every reconnect, `session.list` first reconciles the client membership snapshot (runtime/cache identities
   plus placed chat/TODO-document references) captured when the read began, so a baseline session now absent

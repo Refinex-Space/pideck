@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useInsertionEffect, useMemo, useRef, useState } from "react";
 import { hasPlatformModifier } from "../lib";
 import {
+	type HostSessionRow,
+	mergeHostSessions,
 	type SessionRuntime,
 	type SwitcherProject,
 	type SwitcherSession,
@@ -17,7 +19,7 @@ export interface UseSessionSwitcher {
 }
 
 export function useSessionSwitcher(open: boolean, onClose: () => void): UseSessionSwitcher {
-	const [titleBySession, setTitleBySession] = useState<Record<string, string>>({});
+	const [rowsByWorkspace, setRowsByWorkspace] = useState<Record<string, HostSessionRow[]>>({});
 
 	const projects = useAppStore((state) => state.projects);
 	const workspaces = useAppStore((state) => state.workspaces);
@@ -25,8 +27,9 @@ export function useSessionSwitcher(open: boolean, onClose: () => void): UseSessi
 	const sessionStateByWorkspace = useAppStore((state) => state.sessionStateByWorkspace);
 	const layoutDocumentsByWorkspace = useAppStore((state) => state.layoutDocumentsByWorkspace);
 	const closedChatsByWorkspace = useAppStore((state) => state.closedChatsByWorkspace);
+	const deletedSessionsByWorkspace = useAppStore((state) => state.deletedSessionsByWorkspace);
 
-	const baseGroups = useMemo(
+	const attentionGroups = useMemo(
 		() =>
 			selectSwitcherGroups({
 				projects,
@@ -46,62 +49,51 @@ export function useSessionSwitcher(open: boolean, onClose: () => void): UseSessi
 		],
 	);
 
-	const groups = useMemo(() => {
-		if (Object.keys(titleBySession).length === 0) return baseGroups;
-		return baseGroups.map((group) => ({
-			...group,
-			sessions: group.sessions.map((session) => {
-				const fetched = titleBySession[session.sessionId];
-				return !session.chatTitle && fetched ? { ...session, chatTitle: fetched } : session;
-			}),
-		}));
-	}, [baseGroups, titleBySession]);
+	const groups = useMemo(
+		() =>
+			mergeHostSessions(
+				{ projects, workspaces, deletedSessionsByWorkspace },
+				attentionGroups,
+				Object.values(rowsByWorkspace).flat(),
+			),
+		[projects, workspaces, deletedSessionsByWorkspace, attentionGroups, rowsByWorkspace],
+	);
 
-	const groupsRef = useRef(groups);
 	const onCloseRef = useRef(onClose);
 	useInsertionEffect(() => {
-		groupsRef.current = groups;
 		onCloseRef.current = onClose;
 	});
 
 	useEffect(() => {
 		if (!open) return;
 		let cancelled = false;
-		const liveWorkspaces = new Map<string, string>();
-		for (const group of groupsRef.current) {
-			for (const session of group.sessions) {
-				liveWorkspaces.set(session.workspaceId, session.projectId);
-			}
-		}
-		const { workspaces: knownWorkspaces } = useAppStore.getState();
-		const projectsNeedingNames = new Set<string>();
-		for (const [workspaceId, projectId] of liveWorkspaces) {
-			if (!(knownWorkspaces[projectId] ?? []).some((ws) => ws.id === workspaceId)) {
-				projectsNeedingNames.add(projectId);
-			}
-		}
-		for (const projectId of projectsNeedingNames) {
-			// Authoritative workspace hydration must land even if the palette closes:
-			// activateWorkspaceFromRoute relies on this list to resolve a selected
-			// workspace from an unloaded project. Only component-local title state
-			// below respects `cancelled`.
+		for (const { id: projectId } of useAppStore.getState().projects) {
+			// Workspace hydration must land even if the palette closes: activateWorkspaceFromRoute relies on
+			// this list to resolve a selected workspace from an unloaded project. Only the row state below
+			// respects `cancelled`.
 			void getTransport()
 				.request("workspace.list", { projectId })
-				.then((rows) => {
-					useAppStore.getState().setWorkspaces(projectId, rows);
-				})
-				.catch(() => {});
-		}
-		for (const workspaceId of liveWorkspaces.keys()) {
-			void getTransport()
-				.request("session.list", { workspaceId })
-				.then((summaries) => {
-					if (cancelled) return;
-					setTitleBySession((prev) => {
-						const next = { ...prev };
-						for (const summary of summaries) next[summary.sessionId] = summary.title;
-						return next;
-					});
+				.then((list) => {
+					useAppStore.getState().setWorkspaces(projectId, list);
+					for (const workspace of list) {
+						void getTransport()
+							.request("session.list", { workspaceId: workspace.id })
+							.then((summaries) => {
+								if (cancelled) return;
+								setRowsByWorkspace((prev) => ({
+									...prev,
+									[workspace.id]: summaries.map((summary) => ({
+										sessionId: summary.sessionId,
+										workspaceId: workspace.id,
+										projectId,
+										title: summary.title,
+										firstPrompt: summary.firstPrompt,
+										updatedAt: summary.updatedAt,
+									})),
+								}));
+							})
+							.catch(() => {});
+					}
 				})
 				.catch(() => {});
 		}

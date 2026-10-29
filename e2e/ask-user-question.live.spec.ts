@@ -1,6 +1,11 @@
 import type { Locator, Page } from "@playwright/test";
 import { expect, test } from "@playwright/test";
-import { activeWorktreeRow, openWorkspaceChat } from "./fixtures/app";
+import {
+	activeWorktreeRow,
+	closedSessionRows,
+	closeTabViaMenu,
+	openWorkspaceChat,
+} from "./fixtures/app";
 
 async function ask(page: Page, prompt: string): Promise<void> {
 	await openWorkspaceChat(page);
@@ -433,11 +438,10 @@ test("the awaiting card survives closing and reopening the chat", { tag: "@agent
 	await expect(before.getByTestId("ask-submit")).toBeEnabled({ timeout: 30_000 });
 
 	const chatTabs = page.locator('[data-testid="editor-tab"][data-kind="chat"]');
-	await chatTabs.first().getByTestId("editor-tab-close").click();
+	await closeTabViaMenu(page, chatTabs.first());
 	await expect(chatTabs).toHaveCount(0);
 
-	await page.getByTestId("chat-history").first().click();
-	await page.getByTestId("closed-chat-item").first().click();
+	await closedSessionRows(page).first().getByRole("button").first().click();
 	await expect(chatTabs).toHaveCount(1);
 	const card = activeCard(page);
 	await expect(card).toBeVisible({ timeout: 30_000 });

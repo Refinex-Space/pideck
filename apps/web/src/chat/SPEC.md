@@ -1350,9 +1350,7 @@ both message orders. *Rejected:* keeping the modal for non-MCP extensions — ev
   the live index and **overwrote what the user had just typed** (the loss `replaceDraft` guards against on
   the insert paths, arriving through the keyboard path instead). A ref reads at its last written value, so
   commit ordering cannot enter into it. Handlers take **one snapshot per event** — the ref cannot change
-  inside a synchronous handler, and one read stays narrowable where repeated `.current` reads do not. A `History`-icon ghost button (`data-testid="history-open"`, `aria-label="Search history"`,
-  tooltip of the same name, always rendered next to send) calls the same `openHistory` the global `Ctrl+R` reaches — the tap path
-  on mobile, a discoverability affordance on desktop.
+  inside a synchronous handler, and one read stays narrowable where repeated `.current` reads do not. The composer carries no history button: session and project search lives in one place, the sidebar *Search* entry (`Mod+K`, [[submodule-web-shell]] `SessionSwitcher`). Prompt-history search stays reachable through `openHistory`, which the global `Ctrl+R` calls.
 - **Chat TODO plan** — the chat's `pi-todos` list, surfaced in the TODO rail and the Plan page (engine:
   [[module-pi-todos]]; host read/write: [[submodule-server-todos]]):
   `useChatTodos` (the `todo.*` data hook — fetch + live `pi.event` refetch + edits + the add-nudge + the
@@ -1682,8 +1680,7 @@ The chat toolbar uses Lucide `blocks` for Skills and `package-2` for Resources, 
 The composer is one card (`chat-input-surface`): an attachment strip on top, then the text editor with
 the **send / stop controls inside the card's bottom-right** (circular `IconButton round` — primary
 fill, Lucide `arrow-up`; while streaming a stop circle with a turning ring beside it, and the send
-options chevron). The model pill sits under the card on the left and the **history** trigger
-(`history-open`, Lucide `history`) on the right; the history panel opens above the card at the
+options chevron). The model pill sits under the card on the left; the history panel (opened with `Ctrl+R`) opens above the card at the
 composer's width as a rounded elevated panel with a search header (the zoomed stage still takes the full
 chat width). Attachments render as **64px thumbnails inside the card** (`PromptImageStrip`): one row,
 sideways scroll with a fade on the clipped edge, a hover-revealed remove badge, and an sr-only name and

@@ -1,7 +1,13 @@
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test } from "@playwright/test";
-import { createWorkspaceViaDialog, openFixtureProject, revealWorkbenchTool } from "./fixtures/app";
+import {
+	closedSessionRows,
+	closeTabViaMenu,
+	createWorkspaceViaDialog,
+	openFixtureProject,
+	revealWorkbenchTool,
+} from "./fixtures/app";
 import { E2E_DATA_DIR } from "./fixtures/paths";
 import { selectPierreLine } from "./fixtures/pierre";
 
@@ -56,10 +62,9 @@ test("a review send reads back from the chat: summary → file → comment + fra
 	});
 
 	const chatTabs = page.locator('[data-testid="editor-tab"][data-kind="chat"]');
-	await chatTabs.first().getByTestId("editor-tab-close").click();
+	await closeTabViaMenu(page, chatTabs.first());
 	await expect(chatTabs).toHaveCount(0);
-	await page.getByTestId("chat-history").first().click();
-	await page.getByTestId("closed-chat-item").first().click();
+	await closedSessionRows(page).first().getByRole("button").first().click();
 	await expect(chatTabs).toHaveCount(1);
 	await expect(page.getByTestId("review-package-summary")).toContainText(
 		"Sent 1 review comment on script.ts",

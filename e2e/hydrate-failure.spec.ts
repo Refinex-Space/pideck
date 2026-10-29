@@ -2,7 +2,12 @@ import { mkdirSync, realpathSync, rmSync, utimesSync, writeFileSync } from "node
 import { join } from "node:path";
 import { expect, type Page, test } from "@playwright/test";
 import { TodoStore } from "pi-todos/core";
-import { defaultWorkspaceRow, enterDefaultWorkspace, openFixtureProject } from "./fixtures/app";
+import {
+	defaultWorkspaceRow,
+	enterDefaultWorkspace,
+	openFixtureProject,
+	sessionRow,
+} from "./fixtures/app";
 import { E2E_FIXTURE_REPO } from "./fixtures/paths";
 import { seedWorkspaceSession } from "./fixtures/sessions";
 
@@ -76,10 +81,7 @@ test("a transcript that fails to load says so and stays in history", async ({ pa
 			.locator('[data-testid="toast"][data-variant="error"]')
 			.filter({ hasText: "transcript read failed" }),
 	).toBeVisible();
-	await page.getByTestId("chat-history").first().click();
-	await expect(
-		page.getByTestId("closed-chat-item").filter({ hasText: "the unreadable chat" }),
-	).toHaveCount(1);
+	await expect(sessionRow(page, "the unreadable chat")).toHaveCount(1);
 });
 
 test("a failed never-empty fallback keeps its chat reachable too", async ({ page }) => {
@@ -105,8 +107,5 @@ test("a failed never-empty fallback keeps its chat reachable too", async ({ page
 
 	await page.getByTestId("start-chat").first().click();
 	await expect(page.locator('[data-testid="editor-tab"][data-kind="chat"]')).toHaveCount(1);
-	await page.getByTestId("chat-history").first().click();
-	await expect(
-		page.getByTestId("closed-chat-item").filter({ hasText: "the only chat" }),
-	).toHaveCount(1);
+	await expect(sessionRow(page, "the only chat")).toHaveCount(1);
 });

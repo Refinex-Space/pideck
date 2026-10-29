@@ -49,11 +49,15 @@ export function workspaceListsChats(
  * Every chat the host holds for a workspace, newest first, not only the ones this window has opened: the host
  * list is fetched when the row mounts and again whenever this window's own chats change.
  */
-export function useWorkspaceChats(workspaceId: string): WorkspaceChat[] {
+export function useWorkspaceChats(workspaceId: string): {
+	chats: WorkspaceChat[];
+	refresh: () => void;
+} {
 	const tabs = useAppStore((s) => s.tabsByWorkspace[workspaceId]);
 	const closed = useAppStore((s) => s.closedChatsByWorkspace[workspaceId] ?? NO_CLOSED);
 	const deleted = useAppStore((s) => s.deletedSessionsByWorkspace[workspaceId]);
 	const [summaries, setSummaries] = useState<SessionSummary[]>([]);
+	const [nonce, setNonce] = useState(0);
 
 	const openIds: string[] = [];
 	for (const tab of tabs ?? []) if (tab.kind === "chat") openIds.push(tab.sessionId);
@@ -69,15 +73,16 @@ export function useWorkspaceChats(workspaceId: string): WorkspaceChat[] {
 		return () => {
 			cancelled = true;
 		};
-	}, [workspaceId, changeKey]);
+	}, [workspaceId, changeKey, nonce]);
 
+	const closedTitles = new Map(closed.map((chat) => [chat.sessionId, chat.title]));
 	const chats = new Map<string, WorkspaceChat>();
 	for (const row of [...summaries].sort((a, b) => b.updatedAt - a.updatedAt)) {
 		if (deleted?.[row.sessionId]) continue;
 		chats.set(row.sessionId, {
 			sessionId: row.sessionId,
 			open: false,
-			name: row.title,
+			name: closedTitles.get(row.sessionId) ?? row.title,
 			firstPrompt: row.firstPrompt,
 		});
 	}
@@ -100,7 +105,7 @@ export function useWorkspaceChats(workspaceId: string): WorkspaceChat[] {
 			firstPrompt: chat.firstPrompt,
 		});
 	}
-	return [...chats.values()];
+	return { chats: [...chats.values()], refresh: () => setNonce((value) => value + 1) };
 }
 
 /**
@@ -110,9 +115,11 @@ export function useWorkspaceChats(workspaceId: string): WorkspaceChat[] {
 export function WorkspaceSessions({
 	workspace,
 	chats,
+	onChanged,
 }: {
 	workspace: Workspace;
 	chats: WorkspaceChat[];
+	onChanged: () => void;
 }) {
 	const t = useT();
 	const [showAll, setShowAll] = useState(false);
@@ -134,6 +141,7 @@ export function WorkspaceSessions({
 					chat={chat}
 					record={states?.[chat.sessionId]}
 					active={currentSessionId === chat.sessionId}
+					onChanged={onChanged}
 				/>
 			))}
 			{chats.length > SESSIONS_SHOWN && !showAll ? (
@@ -157,11 +165,13 @@ function SessionRow({
 	chat,
 	record,
 	active,
+	onChanged,
 }: {
 	workspace: Workspace;
 	chat: WorkspaceChat;
 	record: SessionStateRecord | undefined;
 	active: boolean;
+	onChanged: () => void;
 }) {
 	const t = useT();
 	const [menuOpen, setMenuOpen] = useState(false);
@@ -203,6 +213,7 @@ function SessionRow({
 				sessionId: chat.sessionId,
 				title: prepared.title,
 			})
+			.then(onChanged)
 			.catch((error) => toast.error(errorText(error), t("shell.workbench.chatRenameFailed")));
 	};
 	const onNameKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {

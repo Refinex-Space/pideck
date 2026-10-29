@@ -109,7 +109,6 @@ export function Workbench({
 	renderTabAdornment,
 	renderToolBody,
 	renderEmptyCenter,
-	renderCenterActions,
 	onCommit,
 	onAttentionChange,
 	onUserNavigation,
@@ -940,7 +939,6 @@ export function Workbench({
 					onCommit={onCommit}
 					onNewChat={onNewChat}
 					renderEmptyCenter={renderEmptyCenter}
-					renderCenterActions={renderCenterActions}
 					topbarLeading={topbarLeading}
 					topbarTrailing={topbarTrailing}
 					{...shared}

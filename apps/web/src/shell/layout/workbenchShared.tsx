@@ -71,7 +71,6 @@ export interface WorkbenchProps {
 	renderTabAdornment: (tab: LayoutTab) => ReactNode;
 	renderToolBody: (tool: LayoutToolId) => ReactNode;
 	renderEmptyCenter: (groupId: string) => ReactNode;
-	renderCenterActions: (groupId: string) => ReactNode;
 	onCommit: (document: WorkspaceLayoutDocument, attention?: LayoutAttention) => void;
 	onAttentionChange: (attention: LayoutAttention) => void;
 	onUserNavigation: () => void;

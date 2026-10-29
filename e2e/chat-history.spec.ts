@@ -3,12 +3,16 @@ import { join } from "node:path";
 import { expect, test, type WebSocketRoute } from "@playwright/test";
 import { TodoStore } from "pi-todos/core";
 import {
+	closedSessionRows,
 	closeTabViaMenu,
 	defaultWorkspaceRow,
 	enterDefaultWorkspace,
 	openFixtureProject,
 	openPersistedChat,
 	revealFirstProjectWorkspaces,
+	sessionRow,
+	sessionRows,
+	trashSession,
 } from "./fixtures/app";
 import {
 	moveMouseToChatViewport,
@@ -72,11 +76,8 @@ test("a disk chat with unfinished work auto-opens; a finished one stays in local
 	const chatTabs = page.locator('[data-testid="editor-tab"][data-kind="chat"]');
 	await expect(chatTabs).toHaveCount(1);
 	await expect(page.getByText("stopped before the final verification pass")).toBeVisible();
-	await page.getByTestId("chat-history").first().click();
-	await expect(page.getByTestId("closed-chat-item")).toHaveCount(1);
-	await expect(
-		page.getByTestId("closed-chat-item").filter({ hasText: "release notes chat" }),
-	).toBeVisible();
+	await expect(closedSessionRows(page)).toHaveCount(1);
+	await expect(sessionRow(page, "release notes chat")).toBeVisible();
 });
 
 test("the native name command renames a chat durably without sending an agent turn", async ({
@@ -148,37 +149,39 @@ test("open and closed chat rename controls edit their labels inline", async ({ p
 	await expect(chatTab.getByRole("tab")).toBeFocused();
 	await expect(chatTab).toContainText("open after rename");
 
-	await page.getByTestId("chat-history").first().click();
-	const closedRow = page.locator(`[data-testid="closed-chat-row"][data-session-id="${closed.id}"]`);
-	const startHistoryRename = async () => {
-		await closedRow.getByTestId("closed-chat-rename").click();
-		const input = closedRow.getByTestId("closed-chat-name-input");
+	const closedRow = page.locator(
+		`[data-testid="workspace-session"][data-session-id="${closed.id}"]`,
+	);
+	const startSidebarRename = async () => {
+		await closedRow.hover();
+		await closedRow.getByTestId("workspace-session-menu").click();
+		await page.getByTestId("workspace-session-rename").click();
+		const input = closedRow.getByTestId("workspace-session-name-input");
 		await expect(input).toBeFocused();
 		return input;
 	};
-	let historyNameInput = await startHistoryRename();
-	await expect(historyNameInput).toHaveValue("closed before rename");
-	await historyNameInput.fill("x".repeat(81));
-	await historyNameInput.press("Enter");
-	await expect(closedRow.getByTestId("closed-chat-item")).toBeFocused();
+	let sidebarNameInput = await startSidebarRename();
+	await expect(sidebarNameInput).toHaveValue("closed before rename");
+	await sidebarNameInput.fill("x".repeat(81));
+	await sidebarNameInput.press("Enter");
+	await expect(sidebarNameInput).toHaveCount(0);
 	await expect(closedRow).toContainText("closed before rename");
 
-	historyNameInput = await startHistoryRename();
-	await historyNameInput.fill("discarded history rename");
-	await historyNameInput.press("Escape");
-	await expect(closedRow.getByTestId("closed-chat-item")).toBeFocused();
+	sidebarNameInput = await startSidebarRename();
+	await sidebarNameInput.fill("discarded sidebar rename");
+	await sidebarNameInput.press("Escape");
+	await expect(sidebarNameInput).toHaveCount(0);
 	await expect(closedRow).toContainText("closed before rename");
 
-	historyNameInput = await startHistoryRename();
-	await historyNameInput.fill("closed after rename");
-	await historyNameInput.press("Enter");
-	await expect(historyNameInput).toHaveCount(0);
-	await expect(closedRow.getByTestId("closed-chat-item")).toBeFocused();
+	sidebarNameInput = await startSidebarRename();
+	await sidebarNameInput.fill("closed after rename");
+	await sidebarNameInput.press("Enter");
+	await expect(sidebarNameInput).toHaveCount(0);
 	await expect(chatTab).toHaveCount(1);
 	await expect(closedRow).toContainText("closed after rename");
 });
 
-test("long chat history remains named and scrollable", async ({ page }) => {
+test("a long chat history is capped in the sidebar and expands on demand", async ({ page }) => {
 	await page.setViewportSize({ width: 1280, height: 760 });
 	await openFixtureProject(page);
 	for (let index = 0; index < 30; index += 1) {
@@ -190,13 +193,11 @@ test("long chat history remains named and scrollable", async ({ page }) => {
 	}
 
 	await enterDefaultWorkspace(page);
-	await page.getByTestId("chat-history").first().click();
-	const popover = page.getByTestId("chat-history-popover");
-	await expect(popover).toHaveAccessibleName("Recently closed");
-	await expect
-		.poll(() => popover.evaluate((node) => node.scrollHeight > node.clientHeight))
-		.toBe(true);
-	const oldest = page.getByTestId("closed-chat-item").filter({ hasText: "history item 00" });
+	await expect(sessionRows(page)).toHaveCount(8);
+	await expect(sessionRow(page, "history item 00")).toHaveCount(0);
+	await page.getByTestId("workspace-sessions-more").click();
+	await expect(sessionRows(page)).toHaveCount(30);
+	const oldest = sessionRow(page, "history item 00");
 	await oldest.scrollIntoViewIfNeeded();
 	await expect(oldest).toBeVisible();
 });
@@ -336,16 +337,10 @@ test("a closed chat can be moved to trash from history", async ({ page }) => {
 
 	await enterDefaultWorkspace(page);
 	await expect(page.getByText("keep this transcript")).toBeVisible();
-	await page.getByTestId("chat-history").first().click();
-	const row = page.getByTestId("closed-chat-row").filter({ hasText: "trash this chat" });
-	await row.getByTestId("closed-chat-delete").click();
+	await trashSession(sessionRow(page, "trash this chat"));
 
 	await expect.poll(() => existsSync(doomed.path)).toBe(false);
-	await page.getByTestId("chat-history").first().click();
-	await expect(
-		page.getByTestId("closed-chat-row").filter({ hasText: "trash this chat" }),
-	).toHaveCount(0);
-	await page.keyboard.press("Escape");
+	await expect(sessionRow(page, "trash this chat")).toHaveCount(0);
 	await expect(page.getByText("remove this transcript")).toHaveCount(0);
 
 	await page.getByTestId("chat-input").press("Control+r");
@@ -379,9 +374,7 @@ test("trashing a chat converges to a second client", async ({ page, context }) =
 
 	const chatTab = page.locator('[data-testid="editor-tab"][data-kind="chat"]');
 	await closeTabViaMenu(page, chatTab);
-	await page.getByTestId("chat-history").first().click();
-	const row = page.getByTestId("closed-chat-row").filter({ hasText: "shared doomed chat" });
-	await row.getByTestId("closed-chat-delete").click();
+	await trashSession(sessionRow(page, "shared doomed chat"));
 
 	await expect.poll(() => existsSync(doomed.path)).toBe(false);
 	await expect(page2.locator('[data-testid="editor-tab"][data-kind="chat"]')).toHaveCount(0);
@@ -428,12 +421,7 @@ test("a client that misses chat deletion while offline reconciles it after recon
 
 	const chatTab = page.locator('[data-testid="editor-tab"][data-kind="chat"]');
 	await closeTabViaMenu(page, chatTab);
-	await page.getByTestId("chat-history").first().click();
-	await page
-		.getByTestId("closed-chat-row")
-		.filter({ hasText: "offline doomed chat" })
-		.getByTestId("closed-chat-delete")
-		.click();
+	await trashSession(sessionRow(page, "offline doomed chat"));
 	await expect.poll(() => existsSync(doomed.path)).toBe(false);
 
 	await expect(page2.getByText("offline doomed transcript")).toBeVisible();
@@ -467,9 +455,6 @@ test("with no TODOs, the single newest disk chat opens as a fallback; older ones
 	const chatTabs = page.locator('[data-testid="editor-tab"][data-kind="chat"]');
 	await expect(chatTabs).toHaveCount(1);
 	await expect(page.getByText("the newest fallback chat")).toBeVisible();
-	await page.getByTestId("chat-history").first().click();
-	await expect(page.getByTestId("closed-chat-item")).toHaveCount(1);
-	await expect(
-		page.getByTestId("closed-chat-item").filter({ hasText: "older fallback chat" }),
-	).toBeVisible();
+	await expect(closedSessionRows(page)).toHaveCount(1);
+	await expect(sessionRow(page, "older fallback chat")).toBeVisible();
 });

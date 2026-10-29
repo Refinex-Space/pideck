@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import type { Project, SessionStateRecord, Workspace } from "@thinkrail/contracts";
 import type { WorkspaceLayoutDocument } from "../shell/layout";
 import { EMPTY_RUNTIME } from "./appStore";
-import { selectSwitcherGroups } from "./selectSwitcherGroups";
+import { mergeHostSessions, selectSwitcherGroups } from "./selectSwitcherGroups";
 
 const project = (id: string, name: string): Project => ({
 	id,
@@ -208,5 +208,41 @@ describe("selectSwitcherGroups", () => {
 		const groups = selectSwitcherGroups(state);
 		expect(groups).toHaveLength(1);
 		expect(groups[0]?.projectId).toBe("p1");
+	});
+});
+
+describe("mergeHostSessions", () => {
+	const row = (sessionId: string, updatedAt: number, title = sessionId) => ({
+		sessionId,
+		workspaceId: "w1",
+		projectId: "p1",
+		title,
+		firstPrompt: undefined,
+		updatedAt,
+	});
+
+	test("lists every host chat after the attention ones, newest first", () => {
+		const state = baseState([stateRecord("s_run", "w1", "p1", { execution: "running" })]);
+		const groups = mergeHostSessions(
+			{ ...state, deletedSessionsByWorkspace: {} },
+			selectSwitcherGroups(state),
+			[row("s_old", 1), row("s_new", 5), row("s_run", 3, "Running title")],
+		);
+		const sessions = groups[0]?.sessions ?? [];
+		expect(sessions.map((s) => s.sessionId)).toEqual(["s_run", "s_new", "s_old"]);
+		expect(sessions.map((s) => s.attention)).toEqual(["running", null, null]);
+		expect(sessions[0]?.chatTitle).toBe("Running title");
+	});
+
+	test("skips chats this client deleted and projects without chats", () => {
+		const state = baseState([]);
+		const groups = mergeHostSessions(
+			{ ...state, deletedSessionsByWorkspace: { w1: { s_gone: true } } },
+			[],
+			[row("s_gone", 9), row("s_kept", 1)],
+		);
+		expect(groups[0]?.sessions.map((s) => s.sessionId)).toEqual(["s_kept"]);
+		expect(groups[0]?.needsAttention).toBe(false);
+		expect(mergeHostSessions({ ...state, deletedSessionsByWorkspace: {} }, [], [])).toEqual([]);
 	});
 });

@@ -9,7 +9,7 @@ import { useT } from "@thinkrail/locales/react";
 import { IconButton } from "@thinkrail/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@thinkrail/ui/popover";
 import { cn } from "@thinkrail/ui/utils";
-import { ArrowUp, ChevronDown, History } from "lucide-react";
+import { ArrowUp, ChevronDown } from "lucide-react";
 import {
 	forwardRef,
 	type KeyboardEvent,
@@ -750,15 +750,6 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 							onSelectLevel={onSelectThinking}
 							preferences={modelPreferences}
 							className="max-w-[60vw] px-4 sm:max-w-[320px]"
-						/>
-					</div>
-					<div className="col-start-2 row-start-2 flex shrink-0 items-center self-end">
-						<IconButton
-							icon={History}
-							data-testid="history-open"
-							data-history-trigger
-							label={t("chat.composer.searchHistory")}
-							onClick={openHistory}
 						/>
 					</div>
 				</div>

@@ -90,7 +90,6 @@ import {
 import { syncLegacySelectionFromAttention, useLegacySelectionAdapter } from "./legacySelection";
 import { useTerminalPlacementReconciliation } from "./terminalReconciliation";
 import { useIdleEditorPreload } from "./useIdleEditorPreload";
-import { WorkspaceChatHistory } from "./WorkspaceChatHistory";
 
 function PlanSummaryAutoDraft({
 	workspaceId,
@@ -805,18 +804,6 @@ export function WorkspaceWorkbench({
 		[chatStarting, contextProject, isDefault, isExternal, startChat, t, workspace],
 	);
 
-	const renderCenterActions = useCallback(
-		(groupId: string): ReactNode => (
-			<WorkspaceChatHistory
-				key={workspaceId}
-				workspaceId={workspaceId}
-				targetGroupId={groupId}
-				{...(canRenameChat ? { onRenameChat: requestRenameChat } : {})}
-			/>
-		),
-		[canRenameChat, requestRenameChat, workspaceId],
-	);
-
 	if (!rendered) {
 		return (
 			<div className="flex h-full items-center justify-center bg-container-content-bg tr-text-ui text-text-muted">
@@ -850,7 +837,6 @@ export function WorkspaceWorkbench({
 				renderTabAdornment={renderTabAdornment}
 				renderToolBody={renderToolBody}
 				renderEmptyCenter={renderEmptyCenter}
-				renderCenterActions={renderCenterActions}
 				onCommit={commit}
 				onAttentionChange={changeAttention}
 				onUserNavigation={() => useAppStore.getState().noteNavigation(workspaceId)}

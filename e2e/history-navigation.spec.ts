@@ -1,9 +1,11 @@
 import { expect, type Locator, type Page, test } from "@playwright/test";
 import {
+	closedSessionRows,
 	closeTabViaMenu,
 	createWorkspaceViaDialog,
 	goProjectHome,
 	openFixtureProject,
+	trashSession,
 } from "./fixtures/app";
 
 // The strip shows only the current chat; the sidebar's session rows are the open chats.
@@ -120,10 +122,8 @@ test("a closed chat's entry survives Back; a deleted chat's entry falls back", a
 	await closeTabViaMenu(page, currentChat(page));
 	await expect(chatTabs(page)).toHaveCount(1);
 	await expect.poll(() => currentHash(page)).toBe(chat1Hash);
-	await page.getByTestId("chat-history").first().click();
-	await page.getByTestId("closed-chat-row").first().getByTestId("closed-chat-delete").click();
-	await expect(page.getByTestId("closed-chat-row")).toHaveCount(0);
-	await page.keyboard.press("Escape");
+	await trashSession(closedSessionRows(page).first());
+	await expect(closedSessionRows(page)).toHaveCount(0);
 
 	await page.goBack();
 	await expect.poll(() => currentHash(page)).toBe(chat1Hash);

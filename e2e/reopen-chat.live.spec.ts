@@ -1,5 +1,10 @@
 import { expect, test } from "@playwright/test";
-import { createWorkspaceViaDialog, openFixtureProject, worktreeRows } from "./fixtures/app";
+import {
+	closeTabViaMenu,
+	createWorkspaceViaDialog,
+	openFixtureProject,
+	worktreeRows,
+} from "./fixtures/app";
 
 test("a closed chat reopens from history with its transcript intact", { tag: "@agent" }, async ({
 	page,
@@ -10,7 +15,6 @@ test("a closed chat reopens from history with its transcript intact", { tag: "@a
 	await expect(worktreeRows(page).first()).toHaveAttribute("data-active", "true");
 
 	const chatTabs = page.locator('[data-testid="editor-tab"][data-kind="chat"]');
-	const history = page.getByTestId("chat-history").first();
 	const userMsg = page
 		.locator('[data-testid="chat-message"][data-role="user"]')
 		.filter({ hasText: "pong" });
@@ -25,12 +29,14 @@ test("a closed chat reopens from history with its transcript intact", { tag: "@a
 	).toBeVisible({ timeout: 80_000 });
 	await expect(userMsg).toBeVisible();
 
-	await chatTabs.first().getByTestId("editor-tab-close").click();
+	await closeTabViaMenu(page, chatTabs.first());
 	await expect(chatTabs).toHaveCount(0);
-	await expect(history).toBeVisible();
 
-	await history.click();
-	await page.locator(`[data-testid="closed-chat-item"][data-session-id="${sessionId}"]`).click();
+	await page
+		.locator(`[data-testid="workspace-session"][data-session-id="${sessionId}"]`)
+		.getByRole("button")
+		.first()
+		.click();
 	await expect(chatTabs).toHaveCount(1);
 	await expect(chatTabs.first()).toHaveAttribute("data-session-id", sessionId);
 	await expect(userMsg).toBeVisible();

@@ -15,6 +15,7 @@ import {
 	pseudoBackgroundColor,
 	revealFirstProjectWorkspaces,
 	revealWorkbenchTool,
+	sessionRows,
 	waitTerminalReady,
 } from "./fixtures/app";
 import { E2E_FIXTURE_REPO } from "./fixtures/paths";
@@ -1214,13 +1215,9 @@ test("frontend windows keep chat and file placement independent", async ({ page,
 	await expect(peerChat).toHaveCount(0);
 	await expect(chat).toHaveCount(1);
 
-	const peerHistory = peer.getByTestId("chat-history").first();
 	await page.getByTestId("new-chat").first().click();
 	await expect(page.locator('[data-testid="workspace-session"][data-open="true"]')).toHaveCount(2);
-	await expect(peerHistory).toBeVisible();
-	await peerHistory.press("Enter");
-	await expect(peer.getByTestId("closed-chat-item")).toHaveCount(2);
-	await peer.keyboard.press("Escape");
+	await expect(sessionRows(peer)).toHaveCount(2);
 
 	await revealWorkbenchTool(page, "files");
 	await page.getByTestId("file-node").filter({ hasText: "README.md" }).dblclick();

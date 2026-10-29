@@ -58,15 +58,13 @@ test("unnamed chats read as their first prompt in the tab strip and Recently clo
 	await expect(chatTab).toContainText("Fix the login redirect");
 	await expect(chatTab.getByRole("tab")).toHaveAttribute("title", "Fix the login redirect");
 
-	await page.getByTestId("chat-history").first().click();
-	const closedTitle = page
-		.locator(`[data-testid="closed-chat-row"][data-session-id="${older.id}"]`)
-		.locator("[data-title-source]");
+	const closedRow = page.locator(
+		`[data-testid="workspace-session"][data-session-id="${older.id}"]`,
+	);
+	const closedTitle = closedRow.locator("[data-title-source]");
 	await expect(closedTitle).toHaveAttribute("data-title-source", "prompt");
 	await expect(closedTitle).toHaveText(LONG_PROMPT_LABEL);
-	await expect(closedTitle).toHaveAttribute("title", LONG_PROMPT_HEAD);
-	await page.keyboard.press("Escape");
-	await expect(page.getByTestId("closed-chat-item")).toHaveCount(0);
+	await expect(closedRow.getByRole("button").first()).toHaveAttribute("title", LONG_PROMPT_HEAD);
 
 	await chatTab.click({ button: "right" });
 	await page.getByRole("menuitem", { name: "Rename chat", exact: true }).click();

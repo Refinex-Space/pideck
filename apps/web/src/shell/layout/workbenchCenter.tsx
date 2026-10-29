@@ -37,7 +37,6 @@ export const CenterGroupView = memo(function CenterGroupView({
 	selectedId,
 	onNewChat,
 	renderEmptyCenter,
-	renderCenterActions,
 	topbarLeading,
 	topbarTrailing,
 	...shared
@@ -46,7 +45,6 @@ export const CenterGroupView = memo(function CenterGroupView({
 	selectedId: string | undefined;
 	onNewChat: WorkbenchProps["onNewChat"];
 	renderEmptyCenter: WorkbenchProps["renderEmptyCenter"];
-	renderCenterActions: WorkbenchProps["renderCenterActions"];
 	topbarLeading?: ReactNode;
 	topbarTrailing?: ReactNode;
 }) {
@@ -89,7 +87,6 @@ export const CenterGroupView = memo(function CenterGroupView({
 			trailing={
 				<>
 					<div className="window-no-drag flex min-w-0 shrink items-center gap-4 self-center overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-						{renderCenterActions(group.id)}
 						{group.tabs.length === 0 ? (
 							<IconButton
 								variant="ghost"
@@ -222,7 +219,6 @@ export type CenterNodeProps = SharedGroupProps & {
 	onCommit: WorkbenchProps["onCommit"];
 	onNewChat: WorkbenchProps["onNewChat"];
 	renderEmptyCenter: WorkbenchProps["renderEmptyCenter"];
-	renderCenterActions: WorkbenchProps["renderCenterActions"];
 	topbarLeading?: ReactNode;
 	topbarTrailing?: ReactNode;
 };

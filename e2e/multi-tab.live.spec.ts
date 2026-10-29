@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import {
+	closedSessionRows,
 	createWorkspaceViaDialog,
 	openFixtureProject,
 	revealFirstProjectWorkspaces,
@@ -31,7 +32,7 @@ test("a second tab reopens the same workspace chat and then sees live updates", 
 	await revealFirstProjectWorkspaces(page2);
 	await worktreeRows(page2).first().getByRole("button").first().click();
 	await expect(page2.locator('[data-testid="editor-tab"][data-kind="chat"]')).toHaveCount(1);
-	await expect(page2.getByTestId("chat-history")).toHaveCount(0);
+	await expect(closedSessionRows(page2)).toHaveCount(0);
 	await expect(message(page2, "user", "alpha")).toBeVisible({ timeout: 30_000 });
 	await expect(message(page2, "assistant", "alpha")).toBeVisible({ timeout: 30_000 });
 

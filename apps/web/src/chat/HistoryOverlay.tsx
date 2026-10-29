@@ -409,7 +409,6 @@ function HistoryPicker({
 			const target = e.target as Element | null;
 			if (!target) return;
 			if (rootRef.current?.contains(target)) return;
-			if (target.closest("[data-history-trigger]")) return;
 			onOutsidePress();
 		};
 		window.addEventListener("pointerdown", onWindowPointerDown, true);

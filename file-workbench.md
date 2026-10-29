@@ -79,11 +79,11 @@ Changed 的专用审查菜单、现有平台打开方式与文件预览分发有
 
 ## 界面证据
 
-以下截图来自隔离示例项目，展示源码选区评论、文件类型图标、路径工具栏和目录菜单；不包含用户真实项目内容。
+以下截图来自隔离示例项目，展示保持可见的聊天、右侧文件标签与工具栏、源码区和目录树；不包含用户真实项目内容。
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset=".github/readme-assets/pideck-files-dark.png">
-  <img src=".github/readme-assets/pideck-files-light.png" alt="PiDeck 文件工作台：源码评论、路径工具栏与文件菜单">
+  <img src=".github/readme-assets/pideck-files-light.png" alt="PiDeck 右侧文件工作台：聊天、文件标签、源码与目录树并排">
 </picture>
 
 ## 验证结果（2026-10-29）
@@ -106,3 +106,21 @@ Changed 的专用审查菜单、现有平台打开方式与文件预览分发有
 本地证据：`/tmp/pideck-workbench-full-e2e.log`、`/tmp/pideck-workbench-final-e2e.log`、
 `/tmp/pideck-workbench-icons-e2e.log` 和 `/tmp/pideck-workbench-unresolved-e2e.txt`。
 本轮未提交、推送或发布；保留同一工作区其他任务已有的暂存和未提交内容。
+
+## 右侧工作台与交互细节
+
+文件、文件差异与改动审查打开在右侧统一工作台，包含资源标签、查看/编辑区与目录树；主聊天区保持可见。
+文件操作进入标签栏，下面的面包屑仅展示路径。外侧分隔条调整整个右侧区域，内部可调整文件与目录树的比例。
+隐藏文件工具保留标签与草稿；重新展开、刷新和工作区切换继续复用既有布局持久化。
+文件行和更多按钮共享 hover 背景，相邻行保留 2px 空隙；右键菜单随指针定位，并在窗口边缘自动避让。
+源码菜单复用应用圆角/阴影；Monaco 首次加载时使用当前应用语言的官方内置语言资源，已加载后的语言切换需刷新。
+查找关闭按钮与其他按钮对齐，取消其 hover 提示而保留可访问性名称；文件工具栏提示向下显示。
+
+## 细节与布局补充验收（2026-10-29）
+
+- 文件行整行 hover、行间距、右键指针定位、更多按钮、Monaco 中文菜单和关闭按钮无 tooltip 已通过浏览器回归。
+- 文件、diff 与 Changes 审查均进入右侧资源区，工具按钮位于标签栏；聊天保留。文件区显示/隐藏、刷新、新建聊天和差异打开已通过验证。Specs 可作为右侧导航继续显示，不被文件打开操作意外隐藏。
+- 文件/评论/审查组合回归 69 项中 67 项首轮通过，另外两项把全局“活动标签”误当成唯一资源标签；改为定位右侧工作台后，两项均复验通过，未删减内容或锚点断言。另一次文件、预览、Specs 与主题组合 35 项通过；最终文件与多格式预览组合 14 项通过。
+- 完整无智能体套件执行一次：681 项中 596 通过、85 未通过。后续修复了本次发现的面板定位、导航与聚焦问题，并完成上述定向复验；未再次运行整仓套件，不把结果描述成整仓全绿。全量日志 `/tmp/pideck-dock-full.log` 与失败清单 `/tmp/pideck-dock-failures.txt` 保留。
+- Web 单测 2,026、UI 单测 56、资源渲染器单测 212 通过；类型检查 24 包通过，Web build、lint、i18n、边界与 spec surface 通过。React Compiler 仍有此前的 LeftPeekPanel/useLeftPeek 两项 bailout，未修改基线或添加抑制。
+- 未进行本轮原生 macOS/Windows 真机验收，未提交或推送。Monaco 在首次加载时固定其内置语言，切换应用语言后刷新页面即可统一菜单和查找文案。

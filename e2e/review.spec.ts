@@ -163,7 +163,9 @@ test("selection → icon → inline composer → draft; the tab wears the violet
 	await page.getByTestId("file-node").filter({ hasText: "notes.txt" }).click();
 	await expect(page.getByTestId("send-review-button")).toHaveCount(0);
 	await expect(
-		page.locator('[data-testid="editor-tab"][data-active="true"] [data-testid="review-tab-flag"]'),
+		page
+			.getByTestId("file-workbench")
+			.locator('[data-testid="editor-tab"][data-active="true"] [data-testid="review-tab-flag"]'),
 	).toHaveCount(0);
 	await revealWorkbenchTool(page, "changes");
 	await page.getByTestId("change-item").filter({ hasText: "script.ts" }).dblclick();
@@ -279,14 +281,14 @@ test("sidebar: an accordion — the active reviewed file's section auto-unfolds;
 
 	await revealWorkbenchTool(page, "files");
 	await page.getByTestId("file-node").filter({ hasText: "notes.txt" }).click();
-	await expect(page.locator('[data-testid="editor-tab"][data-active="true"]')).toContainText(
-		"notes.txt",
-	);
+	await expect(
+		page.getByTestId("file-workbench").locator('[data-testid="editor-tab"][data-active="true"]'),
+	).toContainText("notes.txt");
 	await revealWorkbenchTool(page, "changes");
 	await page.getByTestId("change-item").filter({ hasText: "script.ts" }).dblclick();
-	await expect(page.locator('[data-testid="editor-tab"][data-active="true"]')).toContainText(
-		"script.ts",
-	);
+	await expect(
+		page.getByTestId("file-workbench").locator('[data-testid="editor-tab"][data-active="true"]'),
+	).toContainText("script.ts");
 	await expect(page.getByTestId("tab-review")).toHaveAttribute("data-active", "true");
 	const section = page.locator('[data-testid="review-file-section"][data-path="script.ts"]');
 	await expect(section).toHaveAttribute("data-expanded", "true");
@@ -303,15 +305,18 @@ test("sidebar: an accordion — the active reviewed file's section auto-unfolds;
 	await expect(rows).toHaveCount(2);
 	await revealWorkbenchTool(page, "changes");
 	await page.getByTestId("change-item").filter({ hasText: "script.ts" }).dblclick();
-	await expect(page.locator('[data-testid="editor-tab"][data-active="true"]')).toContainText(
-		"script.ts",
-	);
+	await expect(
+		page.getByTestId("file-workbench").locator('[data-testid="editor-tab"][data-active="true"]'),
+	).toContainText("script.ts");
 	await expect(page.getByTestId("tab-review")).toHaveAttribute("data-active", "true");
 
 	await expect(page.getByTestId("review-comment-edit-input")).toHaveCount(0);
 	await page.getByTestId("review-comment-open").first().click();
 	await expect(
-		page.locator('[data-testid="editor-tab"][data-active="true"]').getByText("script.ts"),
+		page
+			.getByTestId("file-workbench")
+			.locator('[data-testid="editor-tab"][data-active="true"]')
+			.getByText("script.ts"),
 	).toBeVisible();
 
 	const fileRow = section.getByTestId("review-file-row");
@@ -757,9 +762,9 @@ test("the diff's ORIGINAL (left) side is its own anchor space — base, never re
 
 	await revealWorkbenchTool(page, "files");
 	await page.getByTestId("file-node").filter({ hasText: "notes.txt" }).click();
-	await expect(page.locator('[data-testid="editor-tab"][data-active="true"]')).toContainText(
-		"notes.txt",
-	);
+	await expect(
+		page.getByTestId("file-workbench").locator('[data-testid="editor-tab"][data-active="true"]'),
+	).toContainText("notes.txt");
 	await revealWorkbenchTool(page, "review");
 	const reviewSection = page
 		.getByTestId("review-file-section")
@@ -771,13 +776,15 @@ test("the diff's ORIGINAL (left) side is its own anchor space — base, never re
 	}
 	await reviewFileRow.click();
 	await expect(
-		page.locator('[data-testid="editor-tab"][data-active="true"][data-kind="diff"]'),
+		page
+			.getByTestId("file-workbench")
+			.locator('[data-testid="editor-tab"][data-active="true"][data-kind="diff"]'),
 	).toContainText("README.md");
 	await revealWorkbenchTool(page, "files");
 	await page.getByTestId("file-node").filter({ hasText: "notes.txt" }).click();
-	await expect(page.locator('[data-testid="editor-tab"][data-active="true"]')).toContainText(
-		"notes.txt",
-	);
+	await expect(
+		page.getByTestId("file-workbench").locator('[data-testid="editor-tab"][data-active="true"]'),
+	).toContainText("notes.txt");
 	await revealWorkbenchTool(page, "review");
 	if ((await reviewSection.getAttribute("data-expanded")) !== "true") {
 		await reviewSection.getByTestId("review-file-row").click();
@@ -785,7 +792,9 @@ test("the diff's ORIGINAL (left) side is its own anchor space — base, never re
 	await expect(reviewSection).toHaveAttribute("data-expanded", "true");
 	await reviewSection.getByTestId("review-comment-open").first().click();
 	await expect(
-		page.locator('[data-testid="editor-tab"][data-active="true"][data-kind="diff"]'),
+		page
+			.getByTestId("file-workbench")
+			.locator('[data-testid="editor-tab"][data-active="true"][data-kind="diff"]'),
 	).toContainText("README.md");
 	await page.getByTestId("view-toggle-code").click();
 	await expect(
@@ -805,7 +814,9 @@ test("the diff's ORIGINAL (left) side is its own anchor space — base, never re
 	}
 	await reviewSection.getByTestId("review-comment-open").first().click();
 	await expect(
-		page.locator('[data-testid="editor-tab"][data-active="true"][data-kind="diff"]'),
+		page
+			.getByTestId("file-workbench")
+			.locator('[data-testid="editor-tab"][data-active="true"][data-kind="diff"]'),
 	).toContainText("README.md");
 	await page.getByTestId("view-toggle-code").click();
 	const pinnedDiff = page.getByTestId("diff-view");
@@ -1026,7 +1037,9 @@ test("opening a far-off base-side comment scrolls its card into view in the virt
 	}
 	await reviewSection.getByTestId("review-comment-open").first().click();
 	await expect(
-		page.locator('[data-testid="editor-tab"][data-active="true"][data-kind="diff"]'),
+		page
+			.getByTestId("file-workbench")
+			.locator('[data-testid="editor-tab"][data-active="true"][data-kind="diff"]'),
 	).toContainText("FAR.txt");
 	await expect(card).toBeInViewport();
 	await expect(card).toContainText("Far-off base remark.");

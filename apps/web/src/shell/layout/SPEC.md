@@ -343,3 +343,18 @@ strip overflow. File tabs use the shared fileIcons presentation and their full p
 `moveLayoutFilePaths` is a pure explicit-rename projection: it preserves placements/ids/geometry,
 updates file paths and names, and removes stale destination duplicates. Dirty source/destination paths
 are preserved for recovery rather than silently rebound. No external-file rename is inferred.
+
+## File workbench dock
+
+File, file-diff and changes-review opens use one reserved resource group (`pideck-file-workbench`) in the existing persisted frame and
+workspace view model. Its placement/preview/selection/cache/dirty-close ownership is unchanged; the
+shell projects that group beside the Files tree inside the right workbench instead of the conversation
+canvas. The logical resource tree retains the group for existing persistence and reconciliation, while
+conversationCenter removes it from the main canvas projection. Hiding the active Files/Specs navigator hides the dock without closing its resources. Specs can remain
+selected while opening its source files; other resource opens select Files in the same atomic attention
+commit before focusing the resource. The shared right separator resizes both; its stored tree ratio projects at twice
+its size while an editor is present, and commits invert the projection. The inner editor/tree divider
+is shell-owned. Legacy resource placements migrate once per workspace mount after pending opens settle. Multiple old
+preview slots become retained tabs plus one final preview; drafts and resource caches remain intact.
+Passive opens never reveal navigation. Explicit user-created resource splits retain their routing. Source toolbar actions portal into the file tab strip through an
+owned UI slot; breadcrumbs keep their own narrow reading row. No second tab or draft store is added.

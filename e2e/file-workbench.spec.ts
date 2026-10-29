@@ -182,7 +182,7 @@ test("source wrap, comments, breadcrumbs and tab search stay available", async (
 	await page.getByTestId("review-composer-input").fill("Review the selected source.");
 	await page.getByTestId("review-composer-save").click();
 	await expect(page.getByTestId("review-composer")).toBeHidden();
-	await page.getByTestId("open-tabs-search").first().click();
+	await page.getByTestId("file-workbench").getByTestId("open-tabs-search").click();
 	await page.getByPlaceholder("Find an open tab…").fill("commands");
 	await expect(page.getByRole("option").filter({ hasText: "commands.ts" })).toBeVisible();
 	await page.keyboard.press("Escape");

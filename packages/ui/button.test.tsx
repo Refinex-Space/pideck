@@ -11,6 +11,7 @@ const VARIANTS: ButtonVariant[] = [
 	"outline",
 	"quiet",
 	"ghost",
+	"row",
 	"destructive",
 ];
 const SIZES: Record<
@@ -305,4 +306,13 @@ test("a ghost icon-only button draws its focus ring inside its square, so a flus
 		render(<IconButton variant="outline" icon={RiAddLine} label="Comment" />),
 	);
 	expect(outlineIcon).toContain("focus-visible:outline-offset-2");
+});
+
+test("row actions retain focus semantics without a separate hover surface", () => {
+	const classes = buttonVariants({ variant: "row", shape: "icon" }).split(" ");
+	expect(classes).toContain("bg-transparent");
+	expect(
+		classes.some((value) => value.startsWith("hover:bg-") || value.startsWith("active:bg-")),
+	).toBe(false);
+	expect(classes).toContain("focus-visible:outline-focus-ring");
 });

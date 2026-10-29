@@ -68,7 +68,7 @@ export function FileTree({
 					focus.onRevealed();
 				}
 			}}
-			className="flex flex-col motion-safe:animate-reveal"
+			className="flex flex-col gap-2 motion-safe:animate-reveal"
 		>
 			{nodes.map((node) => (
 				<FileNodeRow
@@ -160,10 +160,11 @@ function FileNodeRow({
 				onOpen={isDir ? toggleDirectory : () => open("keep")}
 			>
 				{({ onContextMenu, onKeyDown, trigger }) => (
-					<div className="group/entry flex min-w-0 items-center">
+					<div className="group/entry flex min-w-0 items-center rounded-sm hover:bg-control-bg-hovered has-[[data-active=true]]:bg-control-bg-selected [[data-file-menu-open=true]_&]:bg-control-bg-selected">
 						<TreeRow
 							ref={revealRow}
 							testid="file-node"
+							highlight="wrapper"
 							onContextMenu={onContextMenu}
 							onKeyDown={(event) => {
 								onKeyDown(event);
@@ -259,7 +260,7 @@ function FileNodeRow({
 				)}
 			</FileEntryActions>
 			{isDir && expanded && children && (
-				<ul className="flex flex-col pl-tree-indent">
+				<ul className="mt-2 flex flex-col gap-2 pl-tree-indent">
 					{children.map((child) => (
 						<FileNodeRow
 							key={child.path}

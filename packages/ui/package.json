@@ -12,6 +12,7 @@
 		"./dropdown-menu": "./dropdown-menu.tsx",
 		"./menu-styles": "./menu-styles.ts",
 		"./popover": "./popover.tsx",
+		"./resource-toolbar": "./resource-toolbar.tsx",
 		"./resizable": "./resizable.tsx",
 		"./skeleton": "./skeleton.tsx",
 		"./switch": "./switch.tsx",

@@ -47,7 +47,8 @@ File and folder types use locally bundled
 including Office/PDF, languages, frameworks and common project directories. Unknown types retain
 neutral fallback icons.
 
-The file workbench adds path search and breadcrumbs, source wrap/find/select/comment controls,
+The file workbench keeps the conversation visible and combines file tabs, viewing/editing and the tree
+in the right workspace, with file actions aligned in its tab strip. It adds path search and breadcrumbs, source wrap/find/select/comment controls,
 explicit text editing and hash-checked saves, and confirmed file/folder operations. Unsaved drafts
 survive tab switches and reloads within the current browser or native window session, subject to its
 storage quota; save before closing the window. Copy paths, reveal files or open an installed editor from the same menu. See

@@ -11,6 +11,7 @@ import {
 	rendererImplementationKey,
 } from "@thinkrail/resource-renderers";
 import { withIconClass } from "@thinkrail/ui/button";
+import { ResourceToolbar } from "@thinkrail/ui/resource-toolbar";
 import { useMemo, useState } from "react";
 import { copyText, isPhoneViewport } from "@/lib";
 import type { DiffTab, FileComparisonTab, GitDiffTab } from "../store";
@@ -153,10 +154,8 @@ function GitDiffPane({ tab }: { tab: GitDiffTab }) {
 	return (
 		<div data-testid="diff-pane" className="flex h-full min-h-0 flex-col">
 			<div
-				data-testid="diff-view-toggle"
-				role="toolbar"
-				aria-label={t("panels.diffPane.viewMode")}
-				className="flex h-32 shrink-0 items-center gap-4 border-border-default border-b bg-container-header-bg px-12"
+				data-testid="diff-path"
+				className="flex h-32 shrink-0 items-center gap-4 border-border-default border-b bg-container-workspace-bg px-12"
 			>
 				<span
 					data-testid="diff-path"
@@ -175,41 +174,51 @@ function GitDiffPane({ tab }: { tab: GitDiffTab }) {
 						{base}
 					</span>
 				</span>
-				<SendReviewButton workspaceId={tab.workspaceId} path={tab.path} />
-				{hunkActions ? (
-					<HeaderIconButton
-						testid="diff-revert-file"
-						label={t("panels.diffPane.revertFile")}
-						onClick={() => void hunkActions.revertFile()}
-						icon={Revert}
-					/>
-				) : null}
-				{renderer.capabilities.whitespace ? (
-					<HeaderIconButton
-						testid="diff-toggle-whitespace"
-						label={t("panels.diffPane.hideWhitespace")}
-						active={ignoreWhitespace}
-						onClick={() => setDiffTabIgnoreWhitespace(tab.id, !ignoreWhitespace)}
-						icon={Pilcrow}
-					/>
-				) : null}
-				{renderer.capabilities.copy ? (
-					<HeaderIconButton
-						testid="diff-copy"
-						label={t("panels.diffPane.copyContents")}
-						onClick={() => void copy()}
-						icon={copied ? CopiedCheck : Copy}
-					/>
-				) : null}
-				<RendererToggles
-					candidates={candidates}
-					renderer={renderer}
-					onRendererId={(rendererId) => setTabRenderer(tab.workspaceId, tab.id, rendererId)}
-					layout={{
-						value: view === "inline" ? "unified" : "split",
-						onChange: (layout) => setDiffTabView(tab.id, layout === "unified" ? "inline" : "split"),
-					}}
-				/>
+				<ResourceToolbar>
+					<div
+						data-testid="diff-view-toggle"
+						role="toolbar"
+						aria-label={t("panels.diffPane.viewMode")}
+						className="flex min-w-0 items-center gap-4 overflow-x-auto"
+					>
+						<SendReviewButton workspaceId={tab.workspaceId} path={tab.path} />
+						{hunkActions ? (
+							<HeaderIconButton
+								testid="diff-revert-file"
+								label={t("panels.diffPane.revertFile")}
+								onClick={() => void hunkActions.revertFile()}
+								icon={Revert}
+							/>
+						) : null}
+						{renderer.capabilities.whitespace ? (
+							<HeaderIconButton
+								testid="diff-toggle-whitespace"
+								label={t("panels.diffPane.hideWhitespace")}
+								active={ignoreWhitespace}
+								onClick={() => setDiffTabIgnoreWhitespace(tab.id, !ignoreWhitespace)}
+								icon={Pilcrow}
+							/>
+						) : null}
+						{renderer.capabilities.copy ? (
+							<HeaderIconButton
+								testid="diff-copy"
+								label={t("panels.diffPane.copyContents")}
+								onClick={() => void copy()}
+								icon={copied ? CopiedCheck : Copy}
+							/>
+						) : null}
+						<RendererToggles
+							candidates={candidates}
+							renderer={renderer}
+							onRendererId={(rendererId) => setTabRenderer(tab.workspaceId, tab.id, rendererId)}
+							layout={{
+								value: view === "inline" ? "unified" : "split",
+								onChange: (layout) =>
+									setDiffTabView(tab.id, layout === "unified" ? "inline" : "split"),
+							}}
+						/>
+					</div>
+				</ResourceToolbar>
 			</div>
 			<DiffSurfaceBody
 				surface={surface}

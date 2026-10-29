@@ -306,7 +306,7 @@ test("selected workspace tabs keep their surface and edge marker, and rail entri
 	await expect(page.getByTestId("terminal-tab")).toHaveCount(2);
 
 	const strips = [
-		page.getByTestId("center-tab-strip"),
+		page.getByTestId("file-workbench").getByTestId("center-tab-strip"),
 		page.getByTestId("bottom-tab-strip").filter({ has: page.getByTestId("terminal-tab") }),
 	];
 	for (const strip of strips) {

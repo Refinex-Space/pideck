@@ -1,0 +1,22 @@
+.monaco-editor .find-widget .button:not(.toggle) {
+	box-sizing: content-box;
+}
+.monaco-editor .find-widget .monaco-sash.vertical,
+.monaco-editor .find-widget .monaco-sash.vertical::before {
+	background: transparent;
+}
+.monaco-editor .find-widget {
+	border-radius: var(--radius-lg);
+	box-shadow: var(--shadow-md);
+}
+
+.monaco-menu-container.monaco-menu-container {
+	border-radius: var(--radius-lg);
+	box-shadow: var(--shadow-md);
+}
+.monaco-menu.monaco-menu {
+	border-radius: var(--radius-lg);
+}
+.monaco-menu .action-menu-item {
+	border-radius: var(--radius-sm);
+}

@@ -20,6 +20,7 @@ import { useCallback, useEffect, useInsertionEffect, useMemo, useRef, useState }
 import { readLayoutNavigationClock, readLayoutSelection, tupleKey } from "../../lib";
 import { projectWorkbenchRatio, restoreWorkbenchRatio } from "./auxiliaryPresentation";
 import { closeRequestTarget } from "./closeRequest";
+import { conversationCenter, isFileWorkbenchVisible } from "./fileWorkbench";
 import { LeftPeekPanel, useLeftPeek } from "./LeftPeek";
 import {
 	focusLayoutElement,
@@ -61,13 +62,14 @@ import {
 } from "./model";
 import { tabIcon } from "./tabIcon";
 import type { LayoutAuxiliaryRegion, LayoutTab, LayoutToolId } from "./types";
+import { FILE_WORKBENCH_GROUP } from "./types";
 import {
 	BottomAlignedRow,
 	BottomAlignmentMenu,
 	BottomDropZone,
 	BottomStack,
 } from "./workbenchBottom";
-import { CenterNodeView } from "./workbenchCenter";
+import { CenterGroupView, CenterNodeView } from "./workbenchCenter";
 import { AuxiliaryRegionRail } from "./workbenchRails";
 import type {
 	DragData,
@@ -463,6 +465,9 @@ export function Workbench({
 
 	const leftVisible = document.left.visible && document.left.groups.some((group) => !group.folded);
 	const peek = useLeftPeek(!leftVisible);
+	const dockGroup = findCenterGroup(document.center, FILE_WORKBENCH_GROUP);
+	const dockVisible = !!dockGroup?.tabs.length && isFileWorkbenchVisible(document, attention);
+	const rightScale = dockVisible ? 2 : 1;
 	const rightVisible =
 		document.right.visible && document.right.groups.some((group) => !group.folded);
 	const visibleSideMinimums = (leftVisible ? 8 : 0) + (rightVisible ? 8 : 0);
@@ -484,7 +489,11 @@ export function Workbench({
 		? projectWorkbenchRatio(document.left.width, workbenchWidth, columnsWidth) * 100
 		: 0;
 	const desiredRight = rightVisible
-		? projectWorkbenchRatio(document.right.width, workbenchWidth, columnsWidth) * 100
+		? projectWorkbenchRatio(
+				Math.min(0.7, document.right.width * rightScale),
+				workbenchWidth,
+				columnsWidth,
+			) * 100
 		: 0;
 	const sideCompression = Math.min(1, 90 / Math.max(Number.EPSILON, desiredLeft + desiredRight));
 	const globalLeftCurrent = desiredLeft * sideCompression;
@@ -530,7 +539,8 @@ export function Workbench({
 					next = resizeSideRegion(
 						next,
 						side,
-						restoreWorkbenchRatio(size / 100, workbenchWidth, columnsWidth),
+						restoreWorkbenchRatio(size / 100, workbenchWidth, columnsWidth) /
+							(side === "right" ? rightScale : 1),
 					);
 			}
 			if (collapsedSides.length === 0) {
@@ -543,7 +553,7 @@ export function Workbench({
 			}
 			apply(result);
 		},
-		[apply, document, onCommit, workbenchWidth, columnsWidth],
+		[apply, document, onCommit, workbenchWidth, columnsWidth, rightScale],
 	);
 	const outerSettled = useTopologySettled(
 		tupleKey(String(leftOwnsBottomCorner), String(rightOwnsBottomCorner)),
@@ -683,11 +693,14 @@ export function Workbench({
 					100
 			: 10,
 	);
-	const focusableGroups = useMemo(() => visibleFocusableGroups(document), [document]);
+	const focusableGroups = useMemo(
+		() => visibleFocusableGroups(document, attention),
+		[document, attention],
+	);
 	const readAttention = useCallback(() => attentionRef.current, []);
 	const focusAdjacentGroup = useCallback(
 		(delta: -1 | 1, fromGroupId?: string) => {
-			const groups = visibleFocusableGroups(documentRef.current);
+			const groups = visibleFocusableGroups(documentRef.current, attentionRef.current);
 			if (groups.length < 2) return;
 			const activeGroupId =
 				fromGroupId ??
@@ -842,13 +855,36 @@ export function Workbench({
 				</div>
 			) : null}
 			<div className="min-h-0 flex-1">
-				<SideStack
-					side={side}
-					attention={attention}
-					projectionEpoch={projectionEpoch}
-					onCommit={onCommit}
-					{...shared}
-				/>
+				{side === "right" && dockVisible && dockGroup ? (
+					<ResizablePanelGroup direction="horizontal" data-testid="file-workbench">
+						<ResizablePanel defaultSize={70} minSize={35}>
+							<CenterGroupView
+								group={dockGroup}
+								selectedId={readLayoutSelection(attention, dockGroup.id)}
+								renderEmptyCenter={renderEmptyCenter}
+								{...shared}
+							/>
+						</ResizablePanel>
+						<ResizableHandle direction="horizontal" />
+						<ResizablePanel defaultSize={30} minSize={20}>
+							<SideStack
+								side={side}
+								attention={attention}
+								projectionEpoch={projectionEpoch}
+								onCommit={onCommit}
+								{...shared}
+							/>
+						</ResizablePanel>
+					</ResizablePanelGroup>
+				) : (
+					<SideStack
+						side={side}
+						attention={attention}
+						projectionEpoch={projectionEpoch}
+						onCommit={onCommit}
+						{...shared}
+					/>
+				)}
 			</div>
 			{side === "left" ? navigationFooter : null}
 		</div>
@@ -932,7 +968,7 @@ export function Workbench({
 		<div data-testid="center-column" className="flex h-full min-h-0 min-w-0 flex-col">
 			<main data-testid="center-tabs" className="min-h-0 min-w-0 flex-1">
 				<CenterNodeView
-					node={document.center}
+					node={conversationCenter(document.center) ?? document.center}
 					attention={attention}
 					projectionEpoch={projectionEpoch}
 					onCommit={onCommit}

@@ -46,7 +46,7 @@ const SKIN =
 const REVEAL = /^(opacity-0|opacity-100)$/;
 
 describe("button system adoption", () => {
-	it("uses only the five variants and three sizes", () => {
+	it("uses supported variant and size names", () => {
 		const legacy =
 			/\b(variant\s*[=:]\s*\{?\s*["'](default|soft)["']|size\s*[=:]\s*\{?\s*["'](sm|icon|default|lg)["'])/;
 		const bad: string[] = [];

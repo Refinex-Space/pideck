@@ -17,6 +17,7 @@ import {
 } from "react";
 import { type LayoutAttention, readLayoutNavigationClock, tupleKey } from "../../lib";
 import type { AuxiliaryRailEntry } from "./auxiliaryPresentation";
+import { isFileWorkbenchVisible } from "./fileWorkbench";
 import { focusLayoutElement, type LayoutFocusIntent } from "./layoutFocus";
 import {
 	type CenterSplitDirection,
@@ -40,6 +41,7 @@ import type {
 	LayoutToolId,
 	WorkspaceLayoutDocument,
 } from "./types";
+import { FILE_WORKBENCH_GROUP } from "./types";
 
 export interface LayoutTabFocusRequest {
 	workspaceId: string;
@@ -462,7 +464,10 @@ export function navigationClockSnapshot(attention: LayoutAttention): string {
 	);
 }
 
-export function visibleFocusableGroups(document: WorkspaceLayoutDocument): Array<{
+export function visibleFocusableGroups(
+	document: WorkspaceLayoutDocument,
+	attention: LayoutAttention,
+): Array<{
 	location: LayoutGroupLocation;
 	tabs: LayoutTab[];
 	tabControlsRendered: boolean;
@@ -475,11 +480,15 @@ export function visibleFocusableGroups(document: WorkspaceLayoutDocument): Array
 					tabControlsRendered: !group.folded,
 				}))
 			: []),
-		...collectCenterGroups(document.center).map((group) => ({
-			location: { area: "center" as const, groupId: group.id },
-			tabs: group.tabs,
-			tabControlsRendered: true,
-		})),
+		...collectCenterGroups(document.center)
+			.filter(
+				(group) => group.id !== FILE_WORKBENCH_GROUP || isFileWorkbenchVisible(document, attention),
+			)
+			.map((group) => ({
+				location: { area: "center" as const, groupId: group.id },
+				tabs: group.tabs,
+				tabControlsRendered: true,
+			})),
 		...(document.right.visible
 			? document.right.groups.map((group) => ({
 					location: { area: "right" as const, groupId: group.id },

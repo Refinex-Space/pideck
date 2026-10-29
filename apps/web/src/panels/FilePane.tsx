@@ -14,6 +14,7 @@ import {
 	useRendererSelection,
 } from "@thinkrail/resource-renderers";
 import { Button, IconButton } from "@thinkrail/ui/button";
+import { ResourceToolbar } from "@thinkrail/ui/resource-toolbar";
 import { LoadingRegion } from "@thinkrail/ui/skeleton";
 import {
 	ChevronRight,
@@ -227,95 +228,105 @@ export function FilePane({ tab }: { tab: FileTab }) {
 						/>
 					) : null}
 				</nav>
-				<div className="flex max-w-full shrink-0 items-center gap-2 overflow-x-auto">
-					{!draft && (candidates.length >= 2 || fileHasReviewDraft) ? (
-						<div data-testid="resource-view-toggle" className="flex h-32 items-center gap-4">
-							<SendReviewButton workspaceId={tab.workspaceId} path={tab.path} />
-							<RendererToggles
-								candidates={candidates}
-								renderer={renderer}
-								onRendererId={(id) => setTabRenderer(tab.workspaceId, tab.id, id)}
-							/>
-						</div>
-					) : null}
-					{source ? (
-						<>
-							<IconButton
-								icon={WrapText}
-								label={t("files.wordWrap")}
-								aria-pressed={wrap}
-								selected={wrap}
-								data-testid="file-word-wrap"
-								onClick={() => useAppStore.getState().setFileWordWrap(!wrap)}
-							/>
-							<IconButton
-								icon={Search}
-								label={t("files.find")}
-								data-testid="file-find"
-								disabled={!controls}
-								onClick={() => controls?.find()}
-							/>
-							<IconButton
-								icon={TextSelect}
-								label={t("files.selectAll")}
-								data-testid="file-select-all"
-								disabled={!controls}
-								onClick={() => controls?.selectAll()}
-							/>
-							<IconButton
-								icon={MessageSquareText}
-								label={draft ? t("files.finishBeforeComment") : t("files.commentSelection")}
-								disabled={!selection || !!draft}
-								data-testid="file-comment-selection"
-								onClick={() => controls?.comment()}
-							/>
-						</>
-					) : null}
-					<IconButton
-						icon={MessageSquarePlus}
-						label={selection && source ? t("files.addSelectionToChat") : t("files.addToChat")}
-						data-testid="file-reference-chat"
-						onClick={() => insert(source ? (selection ?? undefined) : undefined)}
-					/>
-					{draft ? (
-						<>
-							<IconButton
-								icon={Save}
-								label={t("files.save")}
-								loading={draft.saving === true}
-								disabled={!dirty || !supported}
-								data-testid="file-save"
-								onClick={save}
-							/>
-							<IconButton
-								icon={X}
-								label={t("files.finishEdit")}
-								disabled={draft.saving}
-								data-testid="file-finish-edit"
-								onClick={finishEditing}
-							/>
-						</>
-					) : (
+				<ResourceToolbar>
+					<div className="flex max-w-full shrink-0 items-center gap-2 overflow-x-auto">
+						{!draft && (candidates.length >= 2 || fileHasReviewDraft) ? (
+							<div data-testid="resource-view-toggle" className="flex h-32 items-center gap-4">
+								<SendReviewButton workspaceId={tab.workspaceId} path={tab.path} />
+								<RendererToggles
+									candidates={candidates}
+									renderer={renderer}
+									onRendererId={(id) => setTabRenderer(tab.workspaceId, tab.id, id)}
+								/>
+							</div>
+						) : null}
+						{source ? (
+							<>
+								<IconButton
+									tooltipSide="bottom"
+									icon={WrapText}
+									label={t("files.wordWrap")}
+									aria-pressed={wrap}
+									selected={wrap}
+									data-testid="file-word-wrap"
+									onClick={() => useAppStore.getState().setFileWordWrap(!wrap)}
+								/>
+								<IconButton
+									tooltipSide="bottom"
+									icon={Search}
+									label={t("files.find")}
+									data-testid="file-find"
+									disabled={!controls}
+									onClick={() => controls?.find()}
+								/>
+								<IconButton
+									tooltipSide="bottom"
+									icon={TextSelect}
+									label={t("files.selectAll")}
+									data-testid="file-select-all"
+									disabled={!controls}
+									onClick={() => controls?.selectAll()}
+								/>
+								<IconButton
+									tooltipSide="bottom"
+									icon={MessageSquareText}
+									label={draft ? t("files.finishBeforeComment") : t("files.commentSelection")}
+									disabled={!selection || !!draft}
+									data-testid="file-comment-selection"
+									onClick={() => controls?.comment()}
+								/>
+							</>
+						) : null}
 						<IconButton
-							icon={FilePenLine}
-							label={
-								!supported
-									? t("files.hostUpdateRequired")
-									: canEdit
-										? t("files.edit")
-										: t("files.editLimit")
-							}
-							disabled={!canEdit}
-							data-testid="file-edit"
-							onClick={() => {
-								const state = useAppStore.getState();
-								state.beginFileEdit(tab.workspaceId, tab.path, tab.content, tab.meta?.hash ?? "");
-								state.requestFileEditorFocus(tab.workspaceId, tab.path);
-							}}
+							tooltipSide="bottom"
+							icon={MessageSquarePlus}
+							label={selection && source ? t("files.addSelectionToChat") : t("files.addToChat")}
+							data-testid="file-reference-chat"
+							onClick={() => insert(source ? (selection ?? undefined) : undefined)}
 						/>
-					)}
-					<FileEntryActions workspaceId={tab.workspaceId} path={tab.path} kind="file" />
-				</div>
+						{draft ? (
+							<>
+								<IconButton
+									tooltipSide="bottom"
+									icon={Save}
+									label={t("files.save")}
+									loading={draft.saving === true}
+									disabled={!dirty || !supported}
+									data-testid="file-save"
+									onClick={save}
+								/>
+								<IconButton
+									tooltipSide="bottom"
+									icon={X}
+									label={t("files.finishEdit")}
+									disabled={draft.saving}
+									data-testid="file-finish-edit"
+									onClick={finishEditing}
+								/>
+							</>
+						) : (
+							<IconButton
+								tooltipSide="bottom"
+								icon={FilePenLine}
+								label={
+									!supported
+										? t("files.hostUpdateRequired")
+										: canEdit
+											? t("files.edit")
+											: t("files.editLimit")
+								}
+								disabled={!canEdit}
+								data-testid="file-edit"
+								onClick={() => {
+									const state = useAppStore.getState();
+									state.beginFileEdit(tab.workspaceId, tab.path, tab.content, tab.meta?.hash ?? "");
+									state.requestFileEditorFocus(tab.workspaceId, tab.path);
+								}}
+							/>
+						)}
+						<FileEntryActions workspaceId={tab.workspaceId} path={tab.path} kind="file" />
+					</div>
+				</ResourceToolbar>
 			</div>
 			{draft?.error || readError || (draft && tab.meta?.hash !== draft.baseHash) ? (
 				<div

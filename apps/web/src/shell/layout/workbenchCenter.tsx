@@ -7,7 +7,8 @@ import {
 	ResizablePanel,
 	ResizablePanelGroup,
 } from "@thinkrail/ui/resizable";
-import { memo, type ReactNode, useMemo, useRef } from "react";
+import { ResourceToolbarProvider } from "@thinkrail/ui/resource-toolbar";
+import { memo, type ReactNode, useMemo, useRef, useState } from "react";
 import { type LayoutAttention, readLayoutSelection, tupleKey } from "../../lib";
 import {
 	canPlaceLayoutTab,
@@ -47,6 +48,7 @@ export const CenterGroupView = memo(function CenterGroupView({
 	topbarTrailing?: ReactNode;
 }) {
 	const t = useT();
+	const [toolbarTarget, setToolbarTarget] = useState<HTMLDivElement | null>(null);
 	const location: LayoutGroupLocation = { area: "center", groupId: group.id };
 	const [sizeRef, size] = useElementSize();
 	const splitGeometry = {
@@ -106,97 +108,108 @@ export const CenterGroupView = memo(function CenterGroupView({
 							/>
 						) : null}
 					</div>
+					{selected &&
+					(selected.kind === "file" || selected.kind === "diff" || selected.kind === "changes") ? (
+						<div
+							ref={setToolbarTarget}
+							className="window-no-drag flex min-w-0 shrink items-center self-center overflow-x-auto"
+						/>
+					) : null}
 					{topbarTrailing}
 				</>
 			}
 		/>
 	);
 	return (
-		<section
-			ref={sizeRef}
-			id={groupDomId(location)}
-			data-testid="center-group"
-			data-group-id={group.id}
-			tabIndex={-1}
-			aria-label={
-				group.tabs.length === 0 ? t("workbench.center.emptyGroup") : t("workbench.center.group")
-			}
-			className="relative flex h-full min-h-0 min-w-0 flex-col bg-container-content-bg outline-none ring-focus-ring ring-inset data-[layout-focus-intent=keyboard]:focus:ring-1 [&:focus-visible:not([data-layout-focus-intent=restore])]:ring-1"
-			onFocusCapture={() => {
-				if (selected) shared.onFocusGroup(location, selected.id);
-			}}
-		>
-			{topbarTrailing ? (
-				<div
-					data-testid="topbar"
-					className="window-drag relative flex h-topbar-row min-w-0 shrink-0 flex-col"
-				>
-					{tabStrip}
-				</div>
-			) : (
-				tabStrip
-			)}
-			<div
-				id={groupPanelId(location)}
-				data-testid="editor-pane"
-				role="tabpanel"
-				aria-labelledby={selected ? tabDomId(location, selected.id) : undefined}
-				className="relative min-h-0 flex-1 overflow-hidden"
+		<ResourceToolbarProvider target={toolbarTarget}>
+			<section
+				ref={sizeRef}
+				id={groupDomId(location)}
+				data-testid="center-group"
+				data-group-id={group.id}
+				tabIndex={-1}
+				aria-label={
+					group.tabs.length === 0 ? t("workbench.center.emptyGroup") : t("workbench.center.group")
+				}
+				className="relative flex h-full min-h-0 min-w-0 flex-col bg-container-content-bg outline-none ring-focus-ring ring-inset data-[layout-focus-intent=keyboard]:focus:ring-1 [&:focus-visible:not([data-layout-focus-intent=restore])]:ring-1"
+				onFocusCapture={() => {
+					if (selected) shared.onFocusGroup(location, selected.id);
+				}}
 			>
-				{selected ? (
-					<GroupTabBody
-						key={selected.id}
-						tab={selected}
-						renderTabBody={shared.renderTabBody}
-						renderToolBody={shared.renderToolBody}
-					/>
+				{topbarTrailing ? (
+					<div
+						data-testid="topbar"
+						className="window-drag relative flex h-topbar-row min-w-0 shrink-0 flex-col"
+					>
+						{tabStrip}
+					</div>
 				) : (
-					renderEmptyCenter(group.id)
+					tabStrip
 				)}
-			</div>
-			{shared.draggingTab &&
-			canPlaceLayoutTab(shared.draggingTab, "center") &&
-			collectCenterGroups(shared.document.center).length < LAYOUT_LIMITS.maxCenterGroups ? (
-				<div className="pointer-events-none absolute inset-0 z-30">
-					{splitGeometry.horizontal ? (
-						<>
-							<CenterSplitTarget
-								groupId={group.id}
-								direction="left"
-								label={t("workbench.center.splitLeft")}
-								edgeClassName="inset-y-1/4 left-4 w-1/5"
-								halfClassName="inset-y-0 left-0 w-1/2"
-							/>
-							<CenterSplitTarget
-								groupId={group.id}
-								direction="right"
-								label={t("workbench.center.splitRight")}
-								edgeClassName="inset-y-1/4 right-4 w-1/5"
-								halfClassName="inset-y-0 right-0 w-1/2"
-							/>
-						</>
-					) : null}
-					{splitGeometry.vertical ? (
-						<>
-							<CenterSplitTarget
-								groupId={group.id}
-								direction="up"
-								label={t("workbench.center.splitUp")}
-								edgeClassName="inset-x-1/4 top-32 h-1/5"
-								halfClassName="inset-x-0 top-0 h-1/2"
-							/>
-							<CenterSplitTarget
-								groupId={group.id}
-								direction="down"
-								label={t("workbench.center.splitDown")}
-								edgeClassName="inset-x-1/4 bottom-4 h-1/5"
-								halfClassName="inset-x-0 bottom-0 h-1/2"
-							/>
-						</>
-					) : null}
+				<div
+					id={groupPanelId(location)}
+					data-testid={
+						selected?.kind === "chat" ? "chat-pane" : selected ? "editor-pane" : "empty-center-pane"
+					}
+					role="tabpanel"
+					aria-labelledby={selected ? tabDomId(location, selected.id) : undefined}
+					className="relative min-h-0 flex-1 overflow-hidden"
+				>
+					{selected ? (
+						<GroupTabBody
+							key={selected.id}
+							tab={selected}
+							renderTabBody={shared.renderTabBody}
+							renderToolBody={shared.renderToolBody}
+						/>
+					) : (
+						renderEmptyCenter(group.id)
+					)}
 				</div>
-			) : null}
-		</section>
+				{shared.draggingTab &&
+				canPlaceLayoutTab(shared.draggingTab, "center") &&
+				collectCenterGroups(shared.document.center).length < LAYOUT_LIMITS.maxCenterGroups ? (
+					<div className="pointer-events-none absolute inset-0 z-30">
+						{splitGeometry.horizontal ? (
+							<>
+								<CenterSplitTarget
+									groupId={group.id}
+									direction="left"
+									label={t("workbench.center.splitLeft")}
+									edgeClassName="inset-y-1/4 left-4 w-1/5"
+									halfClassName="inset-y-0 left-0 w-1/2"
+								/>
+								<CenterSplitTarget
+									groupId={group.id}
+									direction="right"
+									label={t("workbench.center.splitRight")}
+									edgeClassName="inset-y-1/4 right-4 w-1/5"
+									halfClassName="inset-y-0 right-0 w-1/2"
+								/>
+							</>
+						) : null}
+						{splitGeometry.vertical ? (
+							<>
+								<CenterSplitTarget
+									groupId={group.id}
+									direction="up"
+									label={t("workbench.center.splitUp")}
+									edgeClassName="inset-x-1/4 top-32 h-1/5"
+									halfClassName="inset-x-0 top-0 h-1/2"
+								/>
+								<CenterSplitTarget
+									groupId={group.id}
+									direction="down"
+									label={t("workbench.center.splitDown")}
+									edgeClassName="inset-x-1/4 bottom-4 h-1/5"
+									halfClassName="inset-x-0 bottom-0 h-1/2"
+								/>
+							</>
+						) : null}
+					</div>
+				) : null}
+			</section>
+		</ResourceToolbarProvider>
 	);
 });
 CenterGroupView.displayName = "CenterGroupView";

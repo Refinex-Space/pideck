@@ -30,3 +30,9 @@ Bottom show/toggle uses the same consume-once transition as left/right, includin
 Explicit host file-move metadata becomes a `move-files` intent. The controller applies the layout
 module's pure path projection, retaining selection identities and repairing removed duplicate placements.
 It neither reads files nor mutates filesystem state.
+
+Explicit file opens route through openFileWorkbench to the shared right resource group; chat opens
+retain their conversation group. File bodies and file-toolbar slots remain shell-arranged.
+
+Programmatic tool reveals restore focus only if it is lost, so late review-panel requests cannot steal
+focus from an open file-search popup or an active editor.

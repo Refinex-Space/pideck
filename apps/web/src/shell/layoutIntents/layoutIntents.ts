@@ -1,5 +1,5 @@
 import { t } from "@thinkrail/locales/react";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import type { LayoutAttention } from "../../lib";
 import {
 	type EditorTab,
@@ -16,6 +16,7 @@ import {
 	closeLayoutTab,
 	collectAllGroups,
 	createAuxiliaryGroup,
+	FILE_WORKBENCH_GROUP,
 	findAuxiliaryGroup,
 	findCenterGroup,
 	findLayoutTab,
@@ -24,19 +25,23 @@ import {
 	hideBottom,
 	hideSide,
 	isLayoutUnavailable,
+	isToolShowing,
 	keepPreview,
 	type LayoutCenterTab,
 	type LayoutGroupLocation,
 	type LayoutOperationResult,
 	type LayoutTabFocusRequest,
 	type LayoutTerminalTab,
+	migrateLegacyFiles,
 	moveLayoutFilePaths,
 	moveTabToGroup,
 	openCenterTab,
+	openFileWorkbench,
 	primaryCenterGroupId,
 	reconcileAttention,
 	removeSessionLayoutTabs,
 	revealTool,
+	selectFileWorkbenchNavigator,
 	selectTab,
 	setAuxiliaryGroupFolded,
 	showBottom,
@@ -214,6 +219,22 @@ export function useLayoutIntentProcessing(
 		);
 	});
 
+	const migratedWorkspaces = useRef(new Set<string>());
+	useEffect(() => {
+		if (layoutIntent || !document || !attention || migratedWorkspaces.current.has(workspaceId))
+			return;
+		migratedWorkspaces.current.add(workspaceId);
+		const result = migrateLegacyFiles(document, maxSideGroups, maxBottomGroups);
+		if (!isLayoutUnavailable(result) && result.document !== document)
+			commit(
+				result.document,
+				selectFileWorkbenchNavigator(
+					result.document,
+					reconcileAttention(result.document, attention, document),
+				),
+			);
+	}, [layoutIntent, document, attention, commit, maxSideGroups, maxBottomGroups, workspaceId]);
+
 	useEffect(() => {
 		if (!layoutIntent || !document || !attention) return;
 		const currentState = useAppStore.getState();
@@ -260,19 +281,49 @@ export function useLayoutIntentProcessing(
 				if (!cacheTab) break;
 				const tab = withAvailablePlacementId(document, cacheTab);
 				const requestedGroupId = currentRouting?.targetGroupId ?? layoutIntent.targetGroupId;
-				const groupId =
+				const requestedDestination =
 					requestedGroupId && findCenterGroup(document.center, requestedGroupId)
 						? requestedGroupId
 						: findCenterGroup(document.center, attention.lastFocusedCenterGroupId)
 							? attention.lastFocusedCenterGroupId
 							: primaryCenterGroupId(document);
-				const opened = openCenterTab(
-					document,
-					tab,
-					groupId,
-					layoutIntent.intent,
-					layoutIntent.claimPreview,
+				const fileResource = tab.kind === "file" || tab.kind === "diff" || tab.kind === "changes";
+				const groupId =
+					requestedDestination === FILE_WORKBENCH_GROUP && !fileResource
+						? primaryCenterGroupId(document)
+						: requestedDestination;
+				const existingFile = fileResource ? findPlacedResource(document, tab) : null;
+				const existingLocation = existingFile ? findTabLocation(document, existingFile.id) : null;
+				const resourceGroup = findCenterGroup(
+					document.center,
+					existingLocation?.area === "center" ? existingLocation.groupId : groupId,
 				);
+				const manualFileGroup =
+					resourceGroup &&
+					resourceGroup.id !== FILE_WORKBENCH_GROUP &&
+					resourceGroup.tabs.length > 0 &&
+					resourceGroup.tabs.every(
+						(item) => item.kind === "file" || item.kind === "diff" || item.kind === "changes",
+					);
+				const opened =
+					fileResource && !manualFileGroup
+						? openFileWorkbench(
+								document,
+								tab,
+								layoutIntent.intent,
+								layoutIntent.claimPreview ?? false,
+								maxSideGroups,
+								maxBottomGroups,
+								layoutIntent.activate !== false &&
+									currentRouting?.activate !== false &&
+									!(
+										isToolShowing(document, attention, "specs") &&
+										document.right.groups.some((group) =>
+											group.tabs.some((item) => item.kind === "tool" && item.tool === "specs"),
+										)
+									),
+							)
+						: openCenterTab(document, tab, groupId, layoutIntent.intent, layoutIntent.claimPreview);
 				if (!isLayoutUnavailable(opened)) result = opened;
 				break;
 			}
@@ -394,7 +445,7 @@ export function useLayoutIntentProcessing(
 			}
 			case "reveal-tool": {
 				const revealed = revealTool(document, layoutIntent.tool, maxSideGroups, maxBottomGroups);
-				if (!isLayoutUnavailable(revealed)) result = revealed;
+				if (!isLayoutUnavailable(revealed)) result = { ...revealed, focusOnlyIfLost: true };
 				break;
 			}
 			case "move-files":
@@ -496,6 +547,8 @@ export function useLayoutIntentProcessing(
 				: layoutIntent.kind === "place-terminal" && carriesRequestNavigation
 					? currentRouting?.activate !== false
 					: true;
+		if (activateResult && result.focusGroupId === FILE_WORKBENCH_GROUP)
+			nextAttention = selectFileWorkbenchNavigator(result.document, nextAttention);
 		if (activateResult && result.focusGroupId) {
 			const focusGroupId = result.focusGroupId;
 			const location = result.focusTabId

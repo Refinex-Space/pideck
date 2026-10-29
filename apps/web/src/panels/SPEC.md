@@ -2235,3 +2235,7 @@ File actions insert references into the most recently focused eligible chat in t
 creating an empty chat only when none exists. Cursor-aware insertion preserves surrounding text; no
 reference action calls session.prompt. Unsaved file content is quoted explicitly and labeled, rather
 than pretending that the agent can read editor memory from disk. Quotes are bounded to 32,000 characters.
+
+File rows share one hover/selection surface including the trailing action button, with a 2px gap
+between siblings and before expanded children. FileEntryActions uses the owned ContextMenu at the
+pointer; its more button invokes the same menu at its own bounds. File-pane toolbar hints open below.

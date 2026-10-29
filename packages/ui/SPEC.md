@@ -57,7 +57,8 @@ test's documented specialized list names it.
 
 - **Variants** (exactly six): `primary` (accent fill — the main action of a surface), `soft-primary`
   (accent tint + accent text; also every former transparent "green ghost"), `outline` (neutral bordered), `quiet` (transparent with a muted hairline border and muted text — secondary chips such as the turn-summary row),
-  `ghost` (no surface, muted text, neutral hover fill — the default for `IconButton`), `destructive` (danger
+  `ghost` (no surface, muted text, neutral hover fill — the default for `IconButton`),
+  `row` (transparent in every pointer state; the surrounding row owns its highlight), `destructive` (danger
   fill; confirms irreversible actions). A call site picks the variant that matches the action's existing
   look; there is no `soft-default` and no colour override at a call site. `tone` (`warning` | `danger`)
   is the one sanctioned label colour: on `ghost` and `outline` it keeps the feedback colour in every state
@@ -157,3 +158,12 @@ moved here from the app when the resource renderers became a package, because bo
 
 Code highlighting is deliberately absent: `CodeBlock` and shiki depend on the app's theme registration
 and remain app-local until a second extension requires that seam.
+
+The context-menu surface also exports styled Label/Sub/SubTrigger/SubContent primitives, sharing
+menu-styles with dropdown menus and retaining Radix collision handling and keyboard navigation.
+
+resource-toolbar provides an optional React portal target so a layout can host resource actions in
+its tab strip; without a provider, actions remain inline. It owns no domain state.
+
+The row button variant keeps a transparent surface and inherits its surrounding row highlight; it
+retains keyboard focus styling without a separately rounded hover/pressed background.

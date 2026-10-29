@@ -29,6 +29,7 @@ import type {
 	LayoutToolTab,
 	WorkspaceLayoutDocument,
 } from "./types";
+import { FILE_WORKBENCH_GROUP } from "./types";
 
 export const LAYOUT_LIMITS = {
 	maxCenterGroups: 4,
@@ -354,7 +355,9 @@ export function removeLayoutGroup(
 	location: LayoutGroupLocation,
 ): LayoutOperationResult {
 	if (location.area === "center") {
-		const groups = collectCenterGroups(document.center);
+		const groups = collectCenterGroups(document.center).filter(
+			(group) => location.groupId === FILE_WORKBENCH_GROUP || group.id !== FILE_WORKBENCH_GROUP,
+		);
 		if (groups.length === 1) return { reason: t("workbench.layout.finalCenterGroup") };
 		const sourceIndex = groups.findIndex((group) => group.id === location.groupId);
 		if (sourceIndex < 0) return { reason: t("workbench.layout.centerGroupMissing") };
@@ -909,7 +912,9 @@ export function hideSide(
 	attention: LayoutAttention,
 ): LayoutMutationResult {
 	const center =
-		findCenterGroup(document.center, attention.lastFocusedCenterGroupId) ??
+		(side === "right" && attention.lastFocusedCenterGroupId === FILE_WORKBENCH_GROUP
+			? undefined
+			: findCenterGroup(document.center, attention.lastFocusedCenterGroupId)) ??
 		findCenterGroup(document.center, primaryCenterGroupId(document));
 	const selected =
 		center?.tabs.find((tab) => tab.id === readLayoutSelection(attention, center.id)) ??

@@ -14,6 +14,7 @@ import { t } from "@thinkrail/locales/react";
 import type * as monaco from "monaco-editor/editor/editor.api.js";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
+import menuChrome from "./monacoChrome.css?inline";
 
 const svg = (icon: LucideIcon) => renderToStaticMarkup(createElement(icon, { size: 14 }));
 
@@ -30,11 +31,14 @@ const MONACO_ICONS = new Map<string, string>([
 	["Command Palette", svg(Command)],
 ]);
 
-function menuIcon(label: string): string | undefined {
-	return label === t("review.widget.commentOnSelection") ? COMMENT_ICON : MONACO_ICONS.get(label);
+function menuIcon(label: string, icons: ReadonlyMap<string, string>): string | undefined {
+	return label === t("review.widget.commentOnSelection") || label === t("files.addSelectionToChat")
+		? COMMENT_ICON
+		: icons.get(label === t("common.copy") ? "Copy" : label);
 }
 
 const MENU_CSS =
+	menuChrome +
 	".editor-menu-icon{display:inline-flex;align-items:center;justify-content:center;width:14px;margin:0 var(--space-8) 0 var(--space-2);flex-shrink:0;color:inherit}";
 
 function menuRoots(): (Document | ShadowRoot)[] {
@@ -54,7 +58,7 @@ function ensureStyle(root: Document | ShadowRoot): void {
 	parent.appendChild(style);
 }
 
-function decorateOpenMenus(): void {
+function decorateOpenMenus(icons: ReadonlyMap<string, string>): void {
 	for (const root of menuRoots()) {
 		const rows = root.querySelectorAll<HTMLElement>(
 			".monaco-menu .action-menu-item:not([data-tr-icons])",
@@ -68,7 +72,7 @@ function decorateOpenMenus(): void {
 			const holder = document.createElement("span");
 			holder.className = "editor-menu-icon";
 			holder.ariaHidden = "true";
-			const icon = menuIcon(label.textContent.trim().replace(/[.…]+$/u, ""));
+			const icon = menuIcon(label.textContent.trim().replace(/[.…]+$/u, ""), icons);
 			if (icon) holder.innerHTML = icon;
 			label.before(holder);
 		}
@@ -78,8 +82,35 @@ function decorateOpenMenus(): void {
 export function decorateEditorContextMenus(
 	codeEditor: monaco.editor.ICodeEditor,
 ): monaco.IDisposable {
-	return codeEditor.onContextMenu(() => {
-		requestAnimationFrame(decorateOpenMenus);
-		setTimeout(decorateOpenMenus, 80);
+	const host = codeEditor.getDomNode();
+	const suppressCloseHover = (event: Event) => {
+		if (
+			event.target instanceof Element &&
+			event.target.closest(".find-widget .codicon-widget-close")
+		)
+			event.stopImmediatePropagation();
+	};
+	const hoverEvents = ["mouseenter", "mouseover", "pointerenter", "pointerover"];
+	for (const event of hoverEvents) host?.addEventListener(event, suppressCloseHover, true);
+	const subscription = codeEditor.onContextMenu(() => {
+		const icons = new Map(MONACO_ICONS);
+		const actionIcons = new Map([
+			["editor.action.quickCommand", svg(Command)],
+			["editor.action.clipboardCopyAction", svg(Copy)],
+			["editor.action.clipboardCutAction", svg(Scissors)],
+			["editor.action.clipboardPasteAction", svg(ClipboardPaste)],
+		]);
+		for (const action of codeEditor.getSupportedActions()) {
+			const icon = actionIcons.get(action.id);
+			if (icon) icons.set(action.label.replace(/[.…]+$/u, ""), icon);
+		}
+		requestAnimationFrame(() => decorateOpenMenus(icons));
+		setTimeout(() => decorateOpenMenus(icons), 80);
 	});
+	return {
+		dispose() {
+			subscription.dispose();
+			for (const event of hoverEvents) host?.removeEventListener(event, suppressCloseHover, true);
+		},
+	};
 }

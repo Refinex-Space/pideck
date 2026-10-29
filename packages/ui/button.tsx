@@ -10,6 +10,7 @@ export type ButtonVariant =
 	| "outline"
 	| "quiet"
 	| "ghost"
+	| "row"
 	| "destructive";
 export type ButtonSize = "s" | "m" | "l";
 export type ButtonTone = "warning" | "danger";
@@ -36,6 +37,7 @@ const variantClasses = cva(
 					"border-control-border-default bg-control-bg text-text-default hover:bg-control-bg-hovered data-[selected=true]:bg-control-bg-selected button-disabled:border-control-disabled-border button-disabled:bg-control-disabled-bg button-disabled:text-control-disabled-text active:bg-control-bg-hovered",
 				quiet:
 					"border-border-muted bg-transparent text-text-muted hover:bg-control-bg-hovered hover:text-text-default data-[selected=true]:bg-control-bg-selected data-[selected=true]:text-text-default button-disabled:border-control-disabled-border button-disabled:text-control-disabled-text active:bg-control-bg-hovered active:text-text-default",
+				row: "border-transparent bg-transparent text-text-muted hover:text-text-default active:text-text-default focus-visible:text-text-default button-disabled:text-control-disabled-text",
 				ghost: [
 					"border-transparent bg-transparent text-text-muted hover:bg-control-bg-hovered hover:text-text-default focus-visible:bg-control-bg-hovered focus-visible:text-text-default data-[selected=true]:bg-control-bg-selected data-[selected=true]:text-text-default button-disabled:text-control-disabled-text active:bg-control-bg-hovered active:text-text-default",
 					"[[data-row]_&]:hover:bg-container-elevated-bg [[data-row]_&]:focus-visible:bg-container-elevated-bg [[data-row]_&]:data-[selected=true]:bg-container-elevated-bg [[data-row]_&]:active:bg-container-elevated-bg",

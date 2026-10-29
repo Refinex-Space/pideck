@@ -715,3 +715,9 @@ conflict checks and chat routing; Monaco owns its model, undo, selections, find 
 A controlled keystroke echo must not call model.setValue and reset undo. Read-only review annotations are
 hidden while editing; selection-to-chat is a host callback and never sends a prompt. Small viewports retain
 the existing reader and use an accessible text-edit surface when explicit editing is requested.
+
+Monaco loads its bundled Chinese/Japanese/Spanish NLS table before the desktop source module is
+evaluated, using the application language at first load. Monaco module-level labels retain that language
+until page reload. Menu chrome uses application radius/shadow tokens in both document and Monaco
+shadow roots. Find action boxes preserve Monaco content-box sizing despite the application reset.
+The find close button suppresses hover activation only; click and its accessible label remain intact.

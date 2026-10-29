@@ -11,6 +11,7 @@ import type { GitFileChange, GitStatus } from "@thinkrail/contracts";
 import { useT } from "@thinkrail/locales/react";
 import { diffRendererCapabilities } from "@thinkrail/resource-renderers";
 import { Button } from "@thinkrail/ui/button";
+import { ResourceToolbar } from "@thinkrail/ui/resource-toolbar";
 import { LoadingRegion } from "@thinkrail/ui/skeleton";
 import { ToggleSegment } from "@thinkrail/ui/toggle-segment";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -292,114 +293,116 @@ export function ChangesReviewPane({ tab }: { tab: ChangesTab }) {
 
 	return (
 		<div data-testid="changes-review" className="flex h-full min-h-0 flex-col">
-			<div
-				data-testid="changes-review-toolbar"
-				role="toolbar"
-				aria-label={t("changes.review.toolbar")}
-				className="flex h-32 shrink-0 items-center gap-4 border-border-default border-b bg-container-header-bg px-12"
-			>
-				<span
-					data-testid="changes-review-scope"
-					className="flex min-w-0 shrink items-baseline gap-4 truncate tr-text-metadata"
+			<ResourceToolbar>
+				<div
+					data-testid="changes-review-toolbar"
+					role="toolbar"
+					aria-label={t("changes.review.toolbar")}
+					className="flex h-32 min-w-0 items-center gap-4 overflow-x-auto bg-container-workspace-bg px-4"
 				>
-					<span className="text-text-default">{scopeLabel(t, scope, [], turns)}</span>
-					{targetLabel ? <span className="truncate text-text-muted">{targetLabel}</span> : null}
-				</span>
-				{status ? (
 					<span
-						data-testid="changes-review-summary"
-						className="flex min-w-0 shrink items-center gap-4 truncate tr-text-metadata text-text-muted"
+						data-testid="changes-review-scope"
+						className="flex min-w-0 shrink items-baseline gap-4 truncate tr-text-metadata"
 					>
-						<span>{t("changes.review.fileCount", { count: files.length })}</span>
-						<DiffStatBadge added={totals.added} removed={totals.removed} />
-						<span data-testid="changes-review-viewed-count">
-							{t("changes.review.viewedCount", { viewed: viewedCount, total: files.length })}
-						</span>
+						<span className="text-text-default">{scopeLabel(t, scope, [], turns)}</span>
+						{targetLabel ? <span className="truncate text-text-muted">{targetLabel}</span> : null}
 					</span>
-				) : null}
-				<span className="ml-auto flex shrink-0 items-center gap-4">
-					<SendAllReviewsButton
-						workspaceId={workspaceId}
-						testid="changes-review-send"
-						verb={t("changes.review.sendVerb")}
-					/>
-					{layout === "stacked" && files.length > 0 ? (
-						<>
-							<HeaderIconButton
-								testid="changes-review-collapse-all"
-								label={t("changes.review.collapseAll")}
-								onClick={() =>
-									setCollapsed(
-										workspaceId,
-										tab.id,
-										Object.fromEntries(files.map((change) => [change.path, true])),
-									)
-								}
-								icon={ChevronUp}
-							/>
-							<HeaderIconButton
-								testid="changes-review-expand-all"
-								label={t("changes.review.expandAll")}
-								onClick={() =>
-									setCollapsed(
-										workspaceId,
-										tab.id,
-										Object.fromEntries(files.map((change) => [change.path, false])),
-									)
-								}
-								icon={ChevronDown}
-							/>
-						</>
+					{status ? (
+						<span
+							data-testid="changes-review-summary"
+							className="flex min-w-0 shrink items-center gap-4 truncate tr-text-metadata text-text-muted"
+						>
+							<span>{t("changes.review.fileCount", { count: files.length })}</span>
+							<DiffStatBadge added={totals.added} removed={totals.removed} />
+							<span data-testid="changes-review-viewed-count">
+								{t("changes.review.viewedCount", { viewed: viewedCount, total: files.length })}
+							</span>
+						</span>
 					) : null}
-					{guideAvailable && layout === "stacked" && !mobile ? (
-						<HeaderIconButton
-							testid="changes-review-guide-toggle"
-							label={guideOpen ? t("changes.review.hideGuide") : t("changes.review.showGuide")}
-							active={guideOpen}
-							onClick={() => setGuideHidden((hidden) => !hidden)}
-							icon={Guide}
+					<span className="ml-auto flex shrink-0 items-center gap-4">
+						<SendAllReviewsButton
+							workspaceId={workspaceId}
+							testid="changes-review-send"
+							verb={t("changes.review.sendVerb")}
 						/>
-					) : null}
-					{controls.whitespace ? (
-						<HeaderIconButton
-							testid="changes-review-toggle-whitespace"
-							label={t("changes.review.hideWhitespace")}
-							active={ignoreWhitespace}
-							onClick={() => setIgnoreWhitespace(workspaceId, tab.id, !ignoreWhitespace)}
-							icon={Pilcrow}
+						{layout === "stacked" && files.length > 0 ? (
+							<>
+								<HeaderIconButton
+									testid="changes-review-collapse-all"
+									label={t("changes.review.collapseAll")}
+									onClick={() =>
+										setCollapsed(
+											workspaceId,
+											tab.id,
+											Object.fromEntries(files.map((change) => [change.path, true])),
+										)
+									}
+									icon={ChevronUp}
+								/>
+								<HeaderIconButton
+									testid="changes-review-expand-all"
+									label={t("changes.review.expandAll")}
+									onClick={() =>
+										setCollapsed(
+											workspaceId,
+											tab.id,
+											Object.fromEntries(files.map((change) => [change.path, false])),
+										)
+									}
+									icon={ChevronDown}
+								/>
+							</>
+						) : null}
+						{guideAvailable && layout === "stacked" && !mobile ? (
+							<HeaderIconButton
+								testid="changes-review-guide-toggle"
+								label={guideOpen ? t("changes.review.hideGuide") : t("changes.review.showGuide")}
+								active={guideOpen}
+								onClick={() => setGuideHidden((hidden) => !hidden)}
+								icon={Guide}
+							/>
+						) : null}
+						{controls.whitespace ? (
+							<HeaderIconButton
+								testid="changes-review-toggle-whitespace"
+								label={t("changes.review.hideWhitespace")}
+								active={ignoreWhitespace}
+								onClick={() => setIgnoreWhitespace(workspaceId, tab.id, !ignoreWhitespace)}
+								icon={Pilcrow}
+							/>
+						) : null}
+						{!mobile && controls.layout ? (
+							<>
+								<ToggleSegment
+									testid="changes-review-toggle-split"
+									label={t("changes.review.split")}
+									active={view === "split"}
+									onClick={() => setView(workspaceId, tab.id, "split")}
+								/>
+								<ToggleSegment
+									testid="changes-review-toggle-inline"
+									label={t("changes.review.inline")}
+									active={view === "inline"}
+									onClick={() => setView(workspaceId, tab.id, "inline")}
+								/>
+								<span className="mx-4 h-16 w-px bg-border-default" />
+							</>
+						) : null}
+						<ToggleSegment
+							testid="changes-review-layout-stacked"
+							label={t("changes.review.stacked")}
+							active={layout === "stacked"}
+							onClick={() => setLayout("stacked")}
 						/>
-					) : null}
-					{!mobile && controls.layout ? (
-						<>
-							<ToggleSegment
-								testid="changes-review-toggle-split"
-								label={t("changes.review.split")}
-								active={view === "split"}
-								onClick={() => setView(workspaceId, tab.id, "split")}
-							/>
-							<ToggleSegment
-								testid="changes-review-toggle-inline"
-								label={t("changes.review.inline")}
-								active={view === "inline"}
-								onClick={() => setView(workspaceId, tab.id, "inline")}
-							/>
-							<span className="mx-4 h-16 w-px bg-border-default" />
-						</>
-					) : null}
-					<ToggleSegment
-						testid="changes-review-layout-stacked"
-						label={t("changes.review.stacked")}
-						active={layout === "stacked"}
-						onClick={() => setLayout("stacked")}
-					/>
-					<ToggleSegment
-						testid="changes-review-layout-single"
-						label={t("changes.review.oneFile")}
-						active={layout === "single"}
-						onClick={() => setLayout("single")}
-					/>
-				</span>
-			</div>
+						<ToggleSegment
+							testid="changes-review-layout-single"
+							label={t("changes.review.oneFile")}
+							active={layout === "single"}
+							onClick={() => setLayout("single")}
+						/>
+					</span>
+				</div>
+			</ResourceToolbar>
 			{status === null && error !== null ? (
 				<div data-testid="changes-review-error" className="flex flex-col items-start gap-4 p-12">
 					<p className="tr-text-metadata text-feedback-error">

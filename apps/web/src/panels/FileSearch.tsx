@@ -74,7 +74,7 @@ export function FileSearch({
 							}
 						>
 							{({ onContextMenu, onKeyDown, trigger }) => (
-								<div className="group/entry flex min-w-0 items-center rounded-sm hover:bg-control-bg-hovered">
+								<div className="group/entry flex min-w-0 items-center rounded-sm hover:bg-control-bg-hovered [[data-file-menu-open=true]_&]:bg-control-bg-selected">
 									<button
 										type="button"
 										data-testid="file-search-row"

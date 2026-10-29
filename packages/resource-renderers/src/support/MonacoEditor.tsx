@@ -1,3 +1,4 @@
+import "./monacoChrome.css";
 import { useT } from "@thinkrail/locales/react";
 import { type editor, KeyCode, KeyMod, Range } from "monaco-editor/editor/editor.api.js";
 import { useId, useLayoutEffect, useRef, useState } from "react";

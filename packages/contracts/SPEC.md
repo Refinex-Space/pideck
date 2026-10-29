@@ -1057,3 +1057,11 @@ shell panels need `domain` + `wsProtocol`; the `pi` types + `PiEvent` are the wi
 `FILE_WORKBENCH_PROTOCOL_VERSION` (v94) gates `fs.search/create/writeFile/move/trash/openIn/reveal`.
 Save requires the loaded hash; existing STALE_VIEW distinguishes conflicts. Explicit move/trash
 metadata optionally accompanies `workspace.fsChanged`; legacy clients ignore it and still refresh.
+
+## Host network configuration (v95)
+
+`NETWORK_PROXY_PROTOCOL_VERSION` gates `network.get`, `network.update` and `network.diagnose`.
+`network.ts` defines private request/reply config, applied/detected routes, restart/override state and
+closed diagnostic outcomes. Reads redact proxy userinfo and expose only password presence. Updates may
+carry a replacement password or null to clear; it never enters AppConfig or broadcasts. Diagnostics use
+a closed provider selector, not an arbitrary URL. Older clients retain all existing methods.

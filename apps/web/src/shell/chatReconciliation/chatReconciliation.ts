@@ -44,6 +44,11 @@ function claimAutoOpenAttempt(workspaceId: string, connectionGeneration: number)
 	return true;
 }
 
+/** An explicit chat close means this surface has arrived; a later passive auto-open must not undo it. */
+export function settleChatAutoOpen(workspaceId: string, connectionGeneration: number): void {
+	claimAutoOpenAttempt(workspaceId, connectionGeneration);
+}
+
 export function hydrateChatResource(workspaceId: string, sessionId: string): Promise<boolean> {
 	const state = useAppStore.getState();
 	if (

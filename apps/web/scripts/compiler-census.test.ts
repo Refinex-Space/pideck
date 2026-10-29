@@ -1,8 +1,16 @@
 import { describe, expect, it } from "bun:test";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { baselineEntries, censusFile } from "./compiler-census";
 
 const FIXTURE = join(import.meta.dir, "fixture.tsx");
+
+it("the sidebar peek preserves compiler support for its hook and view", () => {
+	const file = join(import.meta.dir, "../src/shell/layout/LeftPeek.tsx");
+	const result = censusFile(file, readFileSync(file, "utf8"));
+	expect(result.bailouts).toEqual([]);
+	expect(result.compiled).toBe(2);
+});
 
 const body = (bails: boolean) =>
 	`{ const ref = useRef(0); ${bails ? "ref.current = 1;" : ""} return <p />; }`;

@@ -122,7 +122,8 @@ not this module; the theme-aware highlighter remains app-local.
   `isMcpActiveState`, the `McpStateTone` type,
   `DOUBLE_CLICK_SETTLE_MS`, `firstClickOnly`, `doubleClickPendingMs`, `tupleKey`, `parseTupleKey`, `layoutResourceIdentity`,
   `readLayoutSelection`, `readLayoutNavigationClock`, `sameLayoutAttention`, the `LayoutAttention`
-  type, and the keyboard gate shared by the shell's chords and the panels' plain-letter review
+  type, `FILE_WORKBENCH_GROUP` (the reserved file-dock group id, here so the store can read the dock's
+  selection without a runtime dependency on the layout engine), and the keyboard gate shared by the shell's chords and the panels' plain-letter review
   shortcuts: `MODAL_LAYER_SELECTOR` + `hasLayer` (an open modal/dialog/alertdialog owns the keyboard)
   and `isTextEntryTarget` (inputs, textareas, selects and contenteditable keep their letters) —
   duck-typed on the target so it holds in DOM-less tests.

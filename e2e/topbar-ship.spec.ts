@@ -2,6 +2,7 @@ import { chmodSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:f
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, type Page, test } from "@playwright/test";
+import { removeTree } from "@thinkrail/shared/removeTree";
 import {
 	createWorkspaceViaDialog,
 	enterDefaultWorkspace,
@@ -229,7 +230,7 @@ test("Open PR from the topbar composes from commits or the repository template",
 	} finally {
 		gitAs(workspace.worktreePath, "config", "--unset", "protocol.https.allow");
 		gitAs(workspace.worktreePath, "config", "--unset", `url.${bare}.pushInsteadOf`);
-		rmSync(bare, { recursive: true, force: true });
+		removeTree(bare);
 	}
 });
 

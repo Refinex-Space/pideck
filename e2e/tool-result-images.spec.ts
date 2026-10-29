@@ -62,8 +62,8 @@ test("an image tool result previews inline and opens full screen", async ({ page
 	});
 	appendToolImageResult(chat.path, chat.id);
 
-	await expect(defaultWorkspaceRow(page)).toBeVisible();
 	await enterDefaultWorkspace(page);
+	await expect(defaultWorkspaceRow(page)).toBeVisible();
 	await expect(page.locator('[data-testid="editor-tab"][data-kind="chat"]')).toHaveCount(1);
 
 	const step = await expandActivityStep(page, "read");

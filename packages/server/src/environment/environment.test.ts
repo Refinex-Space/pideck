@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, expect, test } from "bun:test";
+import { execFileSync } from "node:child_process";
 import { mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
@@ -87,7 +88,27 @@ test("a saved update is private on disk, drops blank rows and requires a restart
 		},
 	});
 	const file = join(dataDir, "environment.json");
-	expect(statSync(file).mode & 0o777).toBe(0o600);
+	if (process.platform === "win32") {
+		const output = execFileSync(
+			"powershell.exe",
+			[
+				"-NoProfile",
+				"-NonInteractive",
+				"-Command",
+				"$acl = [System.IO.File]::GetAccessControl($env:PI_TEST_ENV_FILE); foreach ($rule in $acl.GetAccessRules($true, $true, [System.Security.Principal.SecurityIdentifier])) { if ($rule.AccessControlType -eq 'Allow') { $rule.IdentityReference.Value } }",
+			],
+			{
+				env: { ...process.env, PI_TEST_ENV_FILE: file },
+				encoding: "utf8",
+				windowsHide: true,
+				timeout: 10000,
+			},
+		);
+		const allowed = output.trim().split(/\r?\n/);
+		expect(allowed.some((sid) => sid.startsWith("S-1-"))).toBe(true);
+		for (const broadGroup of ["S-1-1-0", "S-1-5-11", "S-1-5-32-545"])
+			expect(allowed).not.toContain(broadGroup);
+	} else expect(statSync(file).mode & 0o777).toBe(0o600);
 	expect(JSON.parse(readFileSync(file, "utf8")).vars).toEqual([{ name: "TR_ENV_A", value: "a" }]);
 	expect(process.env.TR_ENV_A).toBeUndefined();
 
@@ -98,7 +119,7 @@ test("a saved update is private on disk, drops blank rows and requires a restart
 		restartRequired: false,
 		effectiveAgentDir: agentDir,
 	});
-});
+}, 15000);
 
 test("a launch variable wins and is reported as overridden", () => {
 	process.env.TR_ENV_B = "launch";
@@ -136,7 +157,8 @@ test("an entry that turned invalid on disk is skipped at boot, the rest applies"
 });
 
 test("on Windows names match case-insensitively for launch overrides and duplicates", () => {
-	applyHostEnvironment({ platform: "win32" });
+	const env: Record<string, string | undefined> = {};
+	applyHostEnvironment({ platform: "win32", env });
 	expect(
 		updateHostEnvironment({
 			vars: [
@@ -146,19 +168,21 @@ test("on Windows names match case-insensitively for launch overrides and duplica
 		}),
 	).toEqual({ ok: false, issues: [{ field: "var", index: 1, code: "duplicate" }] });
 
-	process.env.tr_env_b = "launch";
+	env.tr_env_b = "launch";
 	updateHostEnvironment({ vars: [{ name: "TR_ENV_B", value: "stored" }] });
-	applyHostEnvironment({ platform: "win32" });
-	expect(process.env.TR_ENV_B).toBeUndefined();
-	expect(process.env.tr_env_b).toBe("launch");
+	applyHostEnvironment({ platform: "win32", env });
+	expect(env.TR_ENV_B).toBeUndefined();
+	expect(env.tr_env_b).toBe("launch");
 	expect(hostEnvironmentStatus().launchOverridden).toEqual(["TR_ENV_B"]);
 });
 
 test("elsewhere names stay case-sensitive", () => {
-	applyHostEnvironment({ platform: "linux" });
-	process.env.tr_env_b = "launch";
+	const env: Record<string, string | undefined> = {};
+	applyHostEnvironment({ platform: "linux", env });
+	env.tr_env_b = "launch";
 	updateHostEnvironment({ vars: [{ name: "TR_ENV_B", value: "stored" }] });
-	applyHostEnvironment({ platform: "linux" });
-	expect(process.env.TR_ENV_B).toBe("stored");
+	applyHostEnvironment({ platform: "linux", env });
+	expect(env.TR_ENV_B).toBe("stored");
+	expect(env.tr_env_b).toBe("launch");
 	expect(hostEnvironmentStatus().launchOverridden).toEqual([]);
 });

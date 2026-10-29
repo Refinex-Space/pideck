@@ -208,8 +208,29 @@ for (const kind of [
 		}
 		if (kind === "center-split") {
 			await revealWorkbenchTool(page, "files");
-			for (const name of ["README.md", "notes.txt"])
+			for (const name of ["README.md", "notes.txt"]) {
 				await page.getByTestId("file-node").filter({ hasText: name }).dblclick();
+				await expect(page.getByTestId("editor-tab").filter({ hasText: name })).toBeVisible();
+				const dockTab = page
+					.locator('[data-group-id="pideck-file-workbench"] [data-testid="editor-tab"]')
+					.filter({ hasText: name });
+				if (await dockTab.count()) {
+					await dockTab.click({ button: "right" });
+					await page
+						.getByRole("menuitem", { name: /^Move to center pane/ })
+						.first()
+						.click();
+					await expect(dockTab).toHaveCount(0);
+				}
+			}
+			await expect
+				.poll(() =>
+					page
+						.getByTestId("center-group")
+						.first()
+						.evaluate((element) => element.clientWidth),
+				)
+				.toBeGreaterThanOrEqual(640);
 			await page
 				.getByTestId("editor-tab")
 				.filter({ hasText: "notes.txt" })

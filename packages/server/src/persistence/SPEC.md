@@ -48,3 +48,10 @@ JetBrains quota boolean + whole `1–3600` second cadence over their defaults; i
 `customLayoutPresets` catalog as synchronized layout data. Current/default preset ids, group limits, and
 chat message order are not config fields; retired config shapes are stripped rather than upgraded or
 preserved as extensions. Historical `layouts/` files remain untouched and inert.
+
+## Private network settings
+
+`loadNetworkProxyRecord()` returns the raw `network-proxy.json` record, undefined only when absent, and
+throws on unreadable/corrupt input so the network module can fail closed. `saveNetworkProxyRecord(value)`
+atomically replaces that file with mode 0600. The record contains validated config and an opaque OS
+credential-store id; passwords stay outside JSON. Parsing and secret lifecycle belong to network.

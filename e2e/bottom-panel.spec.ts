@@ -223,10 +223,15 @@ test("panel-header actions are square IconButton m controls", async ({ page }) =
 	await openDefaultWorkbench(page);
 
 	const square = async (control: Locator): Promise<void> => {
+		await expect(control).toBeVisible();
 		await expect(control).toHaveCSS("width", "24px");
-		const box = await control.boundingBox();
-		if (!box) throw new Error("panel-header control has no bounding box");
-		expect(Math.abs(box.width - box.height)).toBeLessThanOrEqual(1);
+		// A viewport change re-lays the strips out, so the box is read once the control has settled.
+		await expect
+			.poll(async () => {
+				const box = await control.boundingBox();
+				return box ? Math.abs(box.width - box.height) : Number.POSITIVE_INFINITY;
+			})
+			.toBeLessThanOrEqual(1);
 	};
 
 	const controls = [
@@ -242,7 +247,10 @@ test("panel-header actions are square IconButton m controls", async ({ page }) =
 	for (const name of ["README.md", "notes.txt", "LINKS.md"])
 		await page.getByTestId("file-node").filter({ hasText: name }).dblclick();
 	await page.setViewportSize({ width: 620, height: 800 });
-	await square(page.getByRole("button", { name: "Search open tabs" }).first());
+	// Every group holding a file offers the search; a compressed or hidden one has no box to measure.
+	await square(
+		page.getByRole("button", { name: "Search open tabs" }).filter({ visible: true }).first(),
+	);
 });
 
 test("a new workspace starts with one accessible terminal group in a 30% bottom panel", async ({

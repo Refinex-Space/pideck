@@ -74,10 +74,15 @@ test("Chinese source menus and find buttons use application chrome", async ({ pa
 	await page.getByTestId("file-find").click();
 	const close = page.locator(".find-widget .codicon-widget-close");
 	const next = page.locator(".find-widget .codicon-find-next-match");
-	const c = await close.boundingBox();
-	const n = await next.boundingBox();
-	if (!c || !n) throw new Error("Missing find controls");
-	expect(Math.abs(c.y + c.height / 2 - n.y - n.height / 2)).toBeLessThanOrEqual(2);
+	// The find widget slides in; its controls align once it has settled.
+	await expect
+		.poll(async () => {
+			const c = await close.boundingBox();
+			const n = await next.boundingBox();
+			if (!c || !n) throw new Error("Missing find controls");
+			return Math.abs(c.y + c.height / 2 - n.y - n.height / 2);
+		})
+		.toBeLessThanOrEqual(2);
 	await close.hover();
 	await page.waitForTimeout(1000);
 	await expect(page.locator(".monaco-hover:visible")).toHaveCount(0);

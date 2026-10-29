@@ -354,7 +354,16 @@ conversationCenter removes it from the main canvas projection. Hiding the active
 selected while opening its source files; other resource opens select Files in the same atomic attention
 commit before focusing the resource. The shared right separator resizes both; its stored tree ratio projects at twice
 its size while an editor is present, and commits invert the projection. The inner editor/tree divider
-is shell-owned. Legacy resource placements migrate once per workspace mount after pending opens settle. Multiple old
+is shell-owned. Legacy resource placements migrate once per workspace mount after pending opens settle, and only
+for a document that has no dock group yet: the group survives emptying, so its presence marks files in conversation
+groups as explicit user placements that a reload must not move back. Multiple old
 preview slots become retained tabs plus one final preview; drafts and resource caches remain intact.
+Closing the dock's last resource hides the dock, so close-focus recovery lands on the conversation canvas
+(the last focused conversation group, else the primary one) instead of the unrendered dock group.
 Passive opens never reveal navigation. Explicit user-created resource splits retain their routing. Source toolbar actions portal into the file tab strip through an
 owned UI slot; breadcrumbs keep their own narrow reading row. No second tab or draft store is added.
+
+The collapsed-sidebar peek keeps its recursive hide poll inside the stable callback. Its view destructures
+the callback ref separately from zone handlers, keeping React Compiler from classifying the whole props
+object as a ref. The compiler regression checks both units without expanding the bailout baseline;
+hover grace, overlays, focused inputs and Escape behavior remain unchanged.

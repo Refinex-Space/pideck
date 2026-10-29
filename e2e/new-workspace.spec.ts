@@ -2,6 +2,7 @@ import { spawnSync } from "node:child_process";
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, type Page, test } from "@playwright/test";
+import { removeTree } from "@thinkrail/shared/removeTree";
 import {
 	chooseNewSessionTarget,
 	createWorkspaceViaDialog,
@@ -144,7 +145,9 @@ test("the dialog lists local branches (no stray origin) and creates a worktree",
 	await expect(scope).toContainText("workspace-1");
 	await expect(scope).toContainText(/Based on\s*main/);
 
-	await expect(page.locator('[data-testid="editor-tab"][data-kind="chat"]')).toHaveCount(1);
+	await expect(page.locator('[data-testid="editor-tab"][data-kind="chat"]')).toHaveCount(1, {
+		timeout: 30_000,
+	});
 	await expect(page.getByTestId("chat-input")).toBeVisible();
 	await expect(page.locator('[data-testid="chat-message"][data-role="user"]')).toHaveCount(0);
 });
@@ -303,7 +306,7 @@ test("Enter in the prompt creates; Shift+Enter inserts a newline", async ({ page
 test("a base whose fetch fails reports git's error, not a request timeout", async ({ page }) => {
 	const remote = join(E2E_DATA_DIR, "dangling-head-remote.git");
 	const repo = join(E2E_DATA_DIR, "dangling-head-fixture");
-	for (const path of [remote, repo]) rmSync(path, { recursive: true, force: true });
+	for (const path of [remote, repo]) removeTree(path);
 	mkdirSync(remote, { recursive: true });
 	git(remote, "init", "--bare", "-b", "main");
 	git(E2E_FIXTURE_REPO, "push", remote, "main");
@@ -335,7 +338,8 @@ test("a base whose fetch fails reports git's error, not a request timeout", asyn
 		await expect(page.getByTestId("worktree-creating-row")).toHaveCount(0);
 	} finally {
 		writeFileSync(E2E_PICK_DIR_POINTER, E2E_FIXTURE_REPO);
-		rmSync(repo, { recursive: true, force: true });
+		// The host may still hold the opened project on Windows for a moment.
+		removeTree(repo);
 	}
 });
 

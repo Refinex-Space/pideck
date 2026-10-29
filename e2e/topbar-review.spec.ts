@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, type Page, type TestInfo, test } from "@playwright/test";
 import type { Workspace } from "@thinkrail/contracts";
+import { removeTree } from "@thinkrail/shared/removeTree";
 import { createWorkspaceViaDialog, openFixtureProject, workspaceDetail } from "./fixtures/app";
 import { commitFile, gitAs } from "./fixtures/git";
 import {
@@ -260,7 +261,7 @@ test("the Sync dialog hands a diverged branch to the agent to integrate", async 
 		);
 		await expect(message).toContainText("without force-pushing");
 	} finally {
-		rmSync(bare, { recursive: true, force: true });
+		removeTree(bare);
 		rmSync(other, { recursive: true, force: true });
 	}
 });

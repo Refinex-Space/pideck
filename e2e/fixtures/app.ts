@@ -49,12 +49,17 @@ export async function workspaceDetail(page: Page, testId: string): Promise<Locat
 }
 
 export async function openAppSettings(page: Page): Promise<void> {
-	// A collapsed sidebar keeps no footer on screen; it peeks in while its toggle is hovered.
-	if ((await page.getByTestId("app-menu").filter({ visible: true }).count()) === 0) {
-		await page.mouse.move(200, 400);
-		await page.getByTestId("tool-rail-projects").hover();
+	// A collapsed sidebar keeps no footer on screen; it peeks in while its toggle is hovered. Right
+	// after a collapse the peek ignores the toggle briefly, so a fresh hover is retried.
+	const menu = page.getByTestId("app-menu").filter({ visible: true });
+	if ((await menu.count()) === 0) {
+		await expect(async () => {
+			await page.mouse.move(200, 400);
+			await page.getByTestId("tool-rail-projects").hover();
+			await expect(menu).toHaveCount(1, { timeout: 1_000 });
+		}).toPass({ timeout: 10_000 });
 	}
-	await page.getByTestId("app-menu").filter({ visible: true }).click();
+	await menu.click();
 	await page.getByTestId("open-settings").click();
 }
 
@@ -163,7 +168,7 @@ function loadPersistedWorkspaces(): Workspace[] {
 async function disposeLiveSessions(page: Page): Promise<void> {
 	const workspaces = loadPersistedWorkspaces();
 	if (workspaces.length === 0) return;
-	const health = await page.request.get("/health");
+	const health = await page.request.get("/health", { maxRetries: 2 });
 	const hostUrl = new URL(health.url());
 	health.dispose();
 	const port = Number(hostUrl.port) || (hostUrl.protocol === "https:" ? 443 : 80);
@@ -180,6 +185,15 @@ async function disposeLiveSessions(page: Page): Promise<void> {
 					await wire.request("session.dispose", { sessionId: session.sessionId }, 30_000);
 				}
 			}
+			const { tabs } = await wire.request("terminal.list", { workspaceId: workspace.id });
+			for (const tab of tabs) {
+				await wire.request("terminal.close", {
+					workspaceId: workspace.id,
+					tabKey: tab.tabKey,
+					force: true,
+				});
+			}
+			expect((await wire.request("terminal.list", { workspaceId: workspace.id })).tabs).toEqual([]);
 		}
 	} finally {
 		wire.close();
@@ -198,19 +212,34 @@ export async function openNewSessionPage(
 
 /** A fresh chat in the active workspace: its location menu for a worktree, the project's + for the project folder. */
 export async function startNewChat(page: Page): Promise<void> {
+	// The center strip shows one chat tab, so a new chat replaces the visible one rather than adding a tab.
+	const chats = page.locator('[data-testid="editor-tab"][data-kind="chat"]');
+	const sessionIds = () =>
+		chats.evaluateAll((tabs) => tabs.map((tab) => tab.getAttribute("data-session-id")));
+	const before = new Set(await sessionIds());
+	// Worktree and external workspaces carry a location pill; the project folder has none.
 	const location = page.getByTestId("scope-workspace");
-	const inWorktree = await location
-		.waitFor({ timeout: 2_000 })
-		.then(() => true)
-		.catch(() => false);
+	const routed = /\/workspaces\/([^/]+)/.exec(await page.evaluate(() => window.location.hash));
+	const workspace = routed
+		? loadPersistedWorkspaces().find((item) => item.id === decodeURIComponent(routed[1] ?? ""))
+		: undefined;
+	const inWorktree = workspace
+		? workspace.kind !== "default"
+		: await location
+				.waitFor({ timeout: 2_000 })
+				.then(() => true)
+				.catch(() => false);
 	if (inWorktree) {
 		await location.click();
 		await page.getByTestId("scope-workspace-new-chat").click();
-		return;
+	} else {
+		await openNewSessionPage(page, "default");
+		await page.getByTestId("create-workspace").click();
+		await expect(page.getByTestId("new-workspace-page")).toBeHidden({ timeout: 30_000 });
 	}
-	await openNewSessionPage(page, "default");
-	await page.getByTestId("create-workspace").click();
-	await expect(page.getByTestId("new-workspace-page")).toBeHidden();
+	await expect
+		.poll(async () => (await sessionIds()).some((id) => id !== null && !before.has(id)))
+		.toBe(true);
 }
 
 /** Switches the target pill on an open new-session page. */
@@ -230,8 +259,10 @@ export async function createWorkspaceViaDialog(page: Page): Promise<Workspace> {
 		await expect(dialog).toBeVisible({ timeout: 5_000 });
 	}).toPass({ timeout: 30_000 });
 	await page.getByTestId("create-workspace").click();
-	await expect(dialog).toBeHidden();
-	await expect(page.locator('[data-testid="editor-tab"][data-kind="chat"]').first()).toBeVisible();
+	await expect(dialog).toBeHidden({ timeout: 30_000 });
+	await expect(page.locator('[data-testid="editor-tab"][data-kind="chat"]').first()).toBeVisible({
+		timeout: 30_000,
+	});
 	const created = loadPersistedWorkspaces().find((w) => !before.has(w.id) && w.kind !== "default");
 	if (!created) throw new Error("Workspace was not persisted after creation");
 	return created;
@@ -254,7 +285,7 @@ export async function openFixtureProject(page: Page): Promise<void> {
 
 export async function enterDefaultWorkspace(page: Page): Promise<void> {
 	await page.getByTestId("welcome-action").filter({ hasText: "Work in project folder" }).click();
-	await expect(page.getByTestId("center-tabs")).toBeVisible();
+	await expect(page.getByTestId("center-tabs")).toBeVisible({ timeout: 30_000 });
 }
 
 /** Gives the project folder a chat, which is what makes its rail row exist (and switchable without leaving the workbench). */
@@ -319,6 +350,18 @@ export function sessionRows(page: Page): Locator {
 
 export function sessionRow(page: Page, title: string): Locator {
 	return sessionRows(page).filter({ hasText: title });
+}
+
+/** The center strip shows one chat tab; another chat is reached from its sidebar row. */
+export async function selectSessionRow(page: Page, sessionId: string): Promise<void> {
+	await page
+		.locator(`[data-testid="workspace-session"][data-session-id="${sessionId}"]`)
+		.getByRole("button")
+		.first()
+		.click();
+	await expect(
+		page.locator(`[data-testid="editor-tab"][data-kind="chat"][data-session-id="${sessionId}"]`),
+	).toHaveAttribute("data-active", "true");
 }
 
 export function closedSessionRows(page: Page): Locator {
@@ -389,8 +432,12 @@ export async function openWorkspaceMenu(row: Locator): Promise<void> {
 }
 
 export async function goProjectHome(page: Page): Promise<void> {
-	await page.getByTestId("project-item").first().getByText("sample-project").click();
+	const project = page.getByTestId("project-item").filter({ hasText: "sample-project" });
+	await project.getByTestId("project-name").click();
 	await expect(page.getByTestId("welcome")).toBeVisible();
+	const expand = project.getByTestId("project-expand");
+	if ((await expand.getAttribute("aria-expanded")) !== "true") await expand.click();
+	await expect(expand).toHaveAttribute("aria-expanded", "true");
 }
 
 export async function openWorkspaceChat(page: Page): Promise<Workspace> {
@@ -550,7 +597,14 @@ export async function openTerminal(page: Page): Promise<void> {
 
 export async function runInTerminal(page: Page, command: string): Promise<void> {
 	await visibleTerminal(page).locator(".xterm-helper-textarea").focus();
-	await page.keyboard.type(command);
+	// An MSYS shell under Windows ConPTY may swallow the first key after a resize (every reattach nudges
+	// one; see e2e/SPEC.md). A space and its erasure absorb that key whichever of the two it takes.
+	if (process.platform === "win32") {
+		await page.keyboard.type(" ");
+		await page.keyboard.press("Backspace");
+	}
+	// ConPTY under load can misplace keys that arrive a few milliseconds apart; type at a human pace there.
+	await page.keyboard.type(command, process.platform === "win32" ? { delay: 10 } : {});
 	await page.keyboard.press("Enter");
 }
 

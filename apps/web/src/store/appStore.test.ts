@@ -3385,13 +3385,15 @@ test("selectActiveFilePath follows the active file tab and ignores other tabs", 
 		path: "./src/a.ts",
 		content: "",
 	};
-	const tabsByWorkspace = { w1: [file] };
-	expect(selectActiveFilePath({ tabsByWorkspace, activeTabByWorkspace: { w1: "f" } }, "w1")).toBe(
+	const base = {
+		tabsByWorkspace: { w1: [file] },
+		layoutDocumentsByWorkspace: {},
+		layoutAttentionByWorkspace: {},
+	};
+	expect(selectActiveFilePath({ ...base, activeTabByWorkspace: { w1: "f" } }, "w1")).toBe(
 		"src/a.ts",
 	);
-	expect(
-		selectActiveFilePath({ tabsByWorkspace, activeTabByWorkspace: { w1: "chat" } }, "w1"),
-	).toBeNull();
+	expect(selectActiveFilePath({ ...base, activeTabByWorkspace: { w1: "chat" } }, "w1")).toBeNull();
 });
 
 test("revealChanges and requestChangesView reveal Files in Changed mode", () => {

@@ -1,4 +1,4 @@
-import { chmodSync, copyFileSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, copyFileSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type { FullConfig } from "@playwright/test";
 import { removeTree } from "@thinkrail/shared/removeTree";
@@ -14,7 +14,12 @@ import {
 	waitForCentralTarget,
 	writeE2eAgentSettings,
 } from "./fixtures/centralAgent";
-import { writeFakeGh, writeHermeticE2eShell } from "./fixtures/executables";
+import {
+	windowsGitRoot,
+	writeFakeGh,
+	writeHermeticE2eShell,
+	writeWindowsCommand,
+} from "./fixtures/executables";
 import {
 	E2E_CENTRAL_BAD_EXTENSION_SOURCE,
 	E2E_CENTRAL_EXTENSION_SOURCE,
@@ -55,7 +60,7 @@ export default function globalSetup(config?: FullConfig): void | Promise<void> {
 	const centralMode = isRealCentralE2e();
 	try {
 		const globalCentralArtifact = centralMode ? findGlobalCentralArtifact() : undefined;
-		rmSync(E2E_DATA_DIR, { recursive: true, force: true });
+		removeTree(E2E_DATA_DIR);
 		mkdirSync(E2E_DATA_DIR, { recursive: true });
 		writeFileSync(join(E2E_DATA_DIR, "config.json"), JSON.stringify(CONFIRMED_ANALYTICS_CONFIG));
 		writeFileSync(
@@ -66,12 +71,34 @@ export default function globalSetup(config?: FullConfig): void | Promise<void> {
 		writeFileSync(join(E2E_HOME_DIR, ".zshrc"), "# ThinkRail e2e isolated shell\n");
 
 		for (const rc of [".zshrc", ".bashrc"]) writeFileSync(join(E2E_HOME_DIR, rc), "");
+		// The host's Git must never reach a real remote or the developer's credential store
+		// (Git for Windows' system config enables Git Credential Manager).
+		writeFileSync(
+			join(E2E_HOME_DIR, ".gitconfig"),
+			[
+				"[credential]",
+				"\thelper =",
+				'[protocol "http"]',
+				"\tallow = never",
+				'[protocol "https"]',
+				"\tallow = never",
+				"",
+			].join("\n"),
+		);
 
 		mkdirSync(E2E_FAKE_BIN_DIR, { recursive: true });
 		for (const command of ["central", "code", "github-ssh"]) {
-			const target = join(E2E_FAKE_BIN_DIR, command);
+			const target = join(
+				E2E_FAKE_BIN_DIR,
+				process.platform === "win32" ? `${command}.sh` : command,
+			);
 			copyFileSync(new URL(`./fixtures/bin/${command}`, import.meta.url), target);
 			chmodSync(target, 0o755);
+			if (process.platform === "win32")
+				writeWindowsCommand(E2E_FAKE_BIN_DIR, command, [
+					join(windowsGitRoot(), "usr", "bin", "bash.exe"),
+					target.replaceAll("\\", "/"),
+				]);
 		}
 		writeHermeticE2eShell(E2E_FAKE_BIN_DIR, process.env.SHELL ?? "/bin/bash");
 		writeFakeGh(E2E_FAKE_BIN_DIR, E2E_GH_SCENARIO, E2E_GH_LOG);

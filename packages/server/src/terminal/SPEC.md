@@ -61,6 +61,11 @@ identities. A tab's shell outlives every client that looks at it; each frontend 
   would leave the default unchanged for nearly every install; a user who deliberately swapped their command
   interpreter already has the `SHELL` override, and a second, weaker override would just be dead code. VS
   Code's own default Windows terminal profile detection makes the same call.
+- **Windows busy detection reads Cygwin/MSYS process tables too.** A Git Bash/MSYS/Cygwin shell (reached
+  through `SHELL`) execs its own tools by ending the forked stub, so a running `vim`, `less`, `ssh` or `sleep`
+  has no live Windows parent and the CIM child count reads idle. When that count is zero and a `ps.exe` sits
+  beside the shell executable, `shellBusy.ts` runs it and links the shell's Windows pid to a child through the
+  runtime's own PID/PPID/WINPID columns. Native shells have no such `ps.exe`, so their path is unchanged.
 - **Known, accepted limitation: PowerShell weakens busy-close detection.** `closeTerminalTab`'s busy check
   (`shellBusy.ts`) counts the shell's OS child processes. Many PowerShell cmdlets do their work in-process
   rather than shelling out — `sleep` is a built-in alias for `Start-Sleep`, which blocks inside
@@ -159,6 +164,17 @@ identities. A tab's shell outlives every client that looks at it; each frontend 
 
 - **`attachTerminal` and its handler must stay synchronous.** Lookup and insert in one tick is what makes
   attach atomic on Bun's single event loop; an `await` between them reintroduces double-spawn.
+- **Known platform limitation: an MSYS/Cygwin shell under ConPTY can swallow the first key after a resize.**
+  Measured directly on `bun-pty` with Git for Windows' bash: no resize, no loss; after a resize the next key
+  is sometimes lost however long the wait (300 ms still lost some), while `pwsh` loses none. Every reattach's
+  redraw nudge is such a resize, so a Git Bash user (reached only through `SHELL`; the Windows default is
+  PowerShell) can lose the first letter of the next command after switching back to a terminal. The nudge
+  stays — it is what repaints a full-screen app — and the host otherwise resizes only on a real change.
+- **Windows never forwards focus reports to ConPTY.** ConPTY enables focus reporting (1004) itself, so xterm
+  sends `ESC[I`/`ESC[O` on every focus change; written to the console, they intermittently swallow the keystroke
+  that follows in an MSYS/Cygwin shell (a typed `echo` ran as `cho`, `sleep` as `leep`). `writeTerminal` drops
+  exactly those standalone writes on Windows (`forwardsToPty`); a keystroke is never one of them. The cost is
+  that a Windows console program never sees focus events — none of the supported shells use them.
 - **`closeTerminalTab` checks `busy` and kills in the same synchronous pass.** A separately-asked question
   lets a process started in between die unannounced.
 - Recorder rules: raw bytes (not a serialized grid); never replay resize events; re-emit observed private

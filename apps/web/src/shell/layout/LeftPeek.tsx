@@ -53,21 +53,21 @@ export function useLeftPeek(enabled: boolean): LeftPeek {
 		if (timer.current) clearTimeout(timer.current);
 		timer.current = null;
 	}, []);
-	const check = useCallback(
-		function check() {
+	const check = useCallback(() => {
+		function poll() {
 			clear();
 			timer.current = setTimeout(() => {
 				timer.current = null;
 				if (inside.current) return;
 				if (document.querySelector(OVERLAY_SELECTOR) || textEntryFocused(panel.current)) {
-					check();
+					poll();
 					return;
 				}
 				setOpen(false);
 			}, HIDE_DELAY_MS);
-		},
-		[clear],
-	);
+		}
+		poll();
+	}, [clear]);
 	useEffect(() => {
 		if (!enabled) {
 			clear();
@@ -126,12 +126,18 @@ export function useLeftPeek(enabled: boolean): LeftPeek {
 	};
 }
 
-export function LeftPeekPanel({ peek, children }: { peek: LeftPeek; children: ReactNode }) {
+export function LeftPeekPanel({
+	peek: { panelRef, zoneProps },
+	children,
+}: {
+	peek: LeftPeek;
+	children: ReactNode;
+}) {
 	return (
 		<aside
-			ref={peek.panelRef}
+			ref={panelRef}
 			data-testid="left-peek"
-			{...peek.zoneProps}
+			{...zoneProps}
 			// The invisible strip on the right edge keeps a drifting pointer from closing the panel.
 			className="absolute inset-y-0 left-0 z-40 flex w-288 max-w-[90%] flex-col rounded-r-lg border-border-default border-r bg-container-sidebar-bg shadow-[var(--shadow-lg)] after:absolute after:inset-y-0 after:-right-12 after:w-12 after:content-[''] motion-safe:animate-reveal"
 		>

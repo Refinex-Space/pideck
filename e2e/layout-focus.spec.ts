@@ -3,6 +3,7 @@ import {
 	createWorkspaceViaDialog,
 	openFixtureProject,
 	revealWorkbenchTool,
+	selectSessionRow,
 	startNewChat,
 	worktreeRow,
 } from "./fixtures/app";
@@ -21,8 +22,13 @@ test("pointer selection and restored workspaces keep chat tabs free of keyboard 
 	await createWorkspaceViaDialog(page);
 	const tab = page.getByTestId("center-tab-strip").getByRole("tab").first();
 	await expectTabFocusRing(tab, false);
-	await tab.click();
-	await expect(tab).toBeFocused();
+	// The sole chat chip renames on click; pointer chat selection happens from the sidebar row.
+	const chatId = await page
+		.locator('[data-testid="editor-tab"][data-kind="chat"]')
+		.getAttribute("data-session-id");
+	if (!chatId) throw new Error("The workspace chat has no session id");
+	await startNewChat(page);
+	await selectSessionRow(page, chatId);
 	await expectTabFocusRing(tab, false);
 
 	await createWorkspaceViaDialog(page);
@@ -47,8 +53,11 @@ test("keyboard tab navigation and close recovery retain a thin visible focus rin
 }) => {
 	await openFixtureProject(page);
 	await createWorkspaceViaDialog(page);
-	await startNewChat(page);
-	const tabs = page.getByTestId("center-tab-strip").getByRole("tab");
+	// The main strip holds one chat; the file dock's strip carries several resource tabs.
+	await revealWorkbenchTool(page, "files");
+	for (const name of ["README.md", "notes.txt"])
+		await page.getByTestId("file-node").filter({ hasText: name }).dblclick();
+	const tabs = page.getByTestId("file-workbench").getByTestId("center-tab-strip").getByRole("tab");
 	await expect(tabs).toHaveCount(2);
 	const first = tabs.nth(0);
 	const second = tabs.nth(1);

@@ -124,8 +124,10 @@ function seedNestedActivityChat(name: string) {
 		content: [
 			{
 				type: "text",
+				// Long enough that a centered middle checkpoint keeps the collapsed activity header offscreen
+				// whatever the platform's font metrics.
 				text: Array.from(
-					{ length: 15 },
+					{ length: 22 },
 					(_, index) =>
 						`The watcher checkpoint ${index + 1} now flushes within the bounded window.`,
 				).join("\n\n"),
@@ -189,8 +191,8 @@ test("a model-authored Thinking heading stays bounded and appears only while fol
 	});
 	utimesSync(chat.path, new Date(BASE_TS), new Date(BASE_TS));
 
-	await expect(defaultWorkspaceRow(page)).toBeVisible();
 	await enterDefaultWorkspace(page);
+	await expect(defaultWorkspaceRow(page)).toBeVisible();
 	await expect(page.locator('[data-testid="editor-tab"][data-kind="chat"]')).toHaveCount(1);
 
 	const activity = page.getByTestId("activity-group").first();
@@ -459,7 +461,7 @@ for (const order of ["oldest-first", "newest-first"] as const) {
 		const offscreenAnchor = page.getByText(
 			order === "newest-first"
 				? "Historical watcher checkpoint 8 remained stable."
-				: "The watcher checkpoint 8 now flushes within the bounded window.",
+				: "The watcher checkpoint 12 now flushes within the bounded window.",
 			{ exact: true },
 		);
 		for (let attempt = 0; attempt < 80 && (await offscreenAnchor.count()) === 0; attempt += 1) {
@@ -595,8 +597,8 @@ test("sticky activity breadcrumbs expose the off-screen Activity â†’ Thinking â†
 	await openFixtureProject(page);
 	seedNestedActivityChat("sticky activity");
 
-	await expect(defaultWorkspaceRow(page)).toBeVisible();
 	await enterDefaultWorkspace(page);
+	await expect(defaultWorkspaceRow(page)).toBeVisible();
 	await expect(page.locator('[data-testid="editor-tab"][data-kind="chat"]')).toHaveCount(1);
 
 	const chatScroll = page.getByTestId("chat-scroll");

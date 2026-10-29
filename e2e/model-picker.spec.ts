@@ -26,13 +26,6 @@ async function readConfig(page: Page): Promise<AppConfig> {
 	return withHostWire(page, (wire) => wire.request("settings.update", { config: {} }));
 }
 
-async function openFreshChat(page: Page): Promise<void> {
-	const chatTabs = page.locator('[data-testid="editor-tab"][data-kind="chat"]');
-	const previousChatCount = await chatTabs.count();
-	await startNewChat(page);
-	await expect(chatTabs).toHaveCount(previousChatCount + 1);
-}
-
 /** The Central chat's level as the host holds it — optimistic pill text may run ahead of pi's echo. */
 async function hostLevel(page: Page, workspaceId: string): Promise<ThinkingLevel | undefined> {
 	const sessions = await withHostWire(page, (wire) =>
@@ -64,7 +57,7 @@ test("the composer pill stars a favorite, records it as recent, and saves the pa
 
 	try {
 		await connectFixtureProvider(page);
-		await openFreshChat(page);
+		await startNewChat(page);
 		const pill = page.getByTestId("model-selector").last();
 		await pill.click();
 		// Provider groups start collapsed unless they hold the chat's current model.

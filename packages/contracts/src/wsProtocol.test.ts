@@ -30,6 +30,7 @@ import {
 	MCP_PROTOCOL_VERSION,
 	MCP_TOOL_GRANTS_PROTOCOL_VERSION,
 	MODEL_PICKER_PROTOCOL_VERSION,
+	NETWORK_PROXY_PROTOCOL_VERSION,
 	normalizeSessionTitle,
 	PLAN_REVIEW_SUBAGENT_PROTOCOL_VERSION,
 	PLAN_SUMMARY_GENERATION_PROTOCOL_VERSION,
@@ -236,6 +237,14 @@ test("user theme files are pinned to v92", () => {
 	expect(WS_METHODS.themesList).toBe("themes.list");
 	expect(WS_METHODS.themesReveal).toBe("themes.reveal");
 	expect(WS_CHANNELS.themesChanged).toBe("themes.changed");
+});
+
+test("private network settings are pinned to v95", () => {
+	expect(PROTOCOL_VERSION).toBeGreaterThanOrEqual(NETWORK_PROXY_PROTOCOL_VERSION);
+	expect(NETWORK_PROXY_PROTOCOL_VERSION).toBe(95);
+	expect(WS_METHODS.networkGet).toBe("network.get");
+	expect(WS_METHODS.networkUpdate).toBe("network.update");
+	expect(WS_METHODS.networkDiagnose).toBe("network.diagnose");
 });
 
 test("the stored host environment is pinned to v91", () => {

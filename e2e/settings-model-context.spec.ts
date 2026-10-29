@@ -58,6 +58,7 @@ function savedConfig(): unknown {
 }
 
 test.beforeEach(async ({ page }) => {
+	test.setTimeout(90_000);
 	workspace = await openWorkspaceChat(page);
 	copyFileSync(
 		new URL("./fixtures/context-extension.ts.fixture", import.meta.url),

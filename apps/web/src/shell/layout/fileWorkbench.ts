@@ -84,13 +84,15 @@ export function migrateLegacyFiles(
 	maxSideGroups: number,
 	maxBottomGroups: number,
 ): LayoutOperationResult {
-	const legacy = collectCenterGroups(document.center)
-		.filter((group) => group.id !== FILE_WORKBENCH_GROUP)
-		.flatMap((group) =>
-			group.tabs
-				.filter((tab) => tab.kind === "file" || tab.kind === "diff" || tab.kind === "changes")
-				.map((tab) => ({ tab, preview: group.previewTabId === tab.id })),
-		);
+	const groups = collectCenterGroups(document.center);
+	// The dock group persists once created, so its presence marks a post-migration document whose
+	// conversation files are explicit user placements.
+	if (groups.some((group) => group.id === FILE_WORKBENCH_GROUP)) return { document };
+	const legacy = groups.flatMap((group) =>
+		group.tabs
+			.filter((tab) => tab.kind === "file" || tab.kind === "diff" || tab.kind === "changes")
+			.map((tab) => ({ tab, preview: group.previewTabId === tab.id })),
+	);
 	const previewIndex = legacy.findLastIndex((entry) => entry.preview);
 	let next = document;
 	for (const [index, { tab, preview }] of legacy.entries()) {

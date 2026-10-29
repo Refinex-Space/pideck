@@ -26,7 +26,7 @@ test("selecting a same-workspace message hit opens the chat and flashes the matc
 	await openFixtureProject(page);
 	const workspaceA = await createWorkspaceViaDialog(page);
 
-	seedWorkspaceSession(workspaceA.worktreePath, {
+	const seeded = seedWorkspaceSession(workspaceA.worktreePath, {
 		messages: [
 			{ role: "user", text: "audit the retry backoff", timestamp: 1_700_100_000_000 },
 			{
@@ -60,7 +60,10 @@ test("selecting a same-workspace message hit opens the chat and flashes the matc
 	await query.press("Enter");
 
 	await expect(overlay).toBeHidden();
-	await expect(page.locator('[data-testid="editor-tab"][data-kind="chat"]')).toHaveCount(2);
+	await expect(page.locator('[data-testid="editor-tab"][data-kind="chat"]')).toHaveAttribute(
+		"data-session-id",
+		seeded.id,
+	);
 	const flashRow = page.locator("[data-flash]");
 	await expect(flashRow).toBeVisible();
 	await expect(flashRow).toContainText("jittered ceiling");
@@ -115,7 +118,9 @@ for (const order of ["oldest-first", "newest-first"] as const) {
 		await expect(page.locator("[data-flash]")).toContainText("quartz-offscreen-needle");
 		await expect(chatScroll).toHaveAttribute("data-scroll-moving", "false");
 		await expect(target).toBeAttached();
-		const centerOffsets = await readChatViewportCenterOffsets(target);
+		// The jump centers the matched row, which also carries the message's action bar.
+		const targetRow = target.locator('xpath=ancestor::*[@data-testid="chat-row"][1]');
+		const centerOffsets = await readChatViewportCenterOffsets(targetRow);
 		expect(Math.max(...centerOffsets.map((offset) => Math.abs(offset)))).toBeLessThanOrEqual(5);
 		expect(Math.max(...centerOffsets) - Math.min(...centerOffsets)).toBeLessThanOrEqual(1);
 	});
@@ -126,7 +131,7 @@ test("selecting a cross-workspace message hit switches the active workspace and 
 }) => {
 	await openFixtureProject(page);
 	const workspaceA = await createWorkspaceViaDialog(page);
-	seedWorkspaceSession(workspaceA.worktreePath, {
+	const seeded = seedWorkspaceSession(workspaceA.worktreePath, {
 		messages: [
 			{ role: "user", text: "review the changelog draft", timestamp: 1_700_200_000_000 },
 			{
@@ -161,7 +166,10 @@ test("selecting a cross-workspace message hit switches the active workspace and 
 	await expect(overlay).toBeHidden();
 	await expect(worktreeRow(page, workspaceA.name)).toHaveAttribute("data-active", "true");
 	await expect(worktreeRow(page, workspaceB.name)).not.toHaveAttribute("data-active", "true");
-	await expect(page.locator('[data-testid="editor-tab"][data-kind="chat"]')).toHaveCount(2);
+	await expect(page.locator('[data-testid="editor-tab"][data-kind="chat"]')).toHaveAttribute(
+		"data-session-id",
+		seeded.id,
+	);
 	const flashRow = page.locator("[data-flash]");
 	await expect(flashRow).toBeVisible();
 	await expect(flashRow).toContainText("migration notes");
@@ -246,7 +254,7 @@ test("Shift+Enter on the selected prompt row jumps to the chat and flashes the m
 }) => {
 	await openFixtureProject(page);
 	const workspaceA = await createWorkspaceViaDialog(page);
-	seedWorkspaceSession(workspaceA.worktreePath, {
+	const seeded = seedWorkspaceSession(workspaceA.worktreePath, {
 		messages: [
 			{
 				role: "user",
@@ -280,7 +288,10 @@ test("Shift+Enter on the selected prompt row jumps to the chat and flashes the m
 	await query.press("Shift+Enter");
 
 	await expect(overlay).toBeHidden();
-	await expect(page.locator('[data-testid="editor-tab"][data-kind="chat"]')).toHaveCount(2);
+	await expect(page.locator('[data-testid="editor-tab"][data-kind="chat"]')).toHaveAttribute(
+		"data-session-id",
+		seeded.id,
+	);
 	const flashRow = page.locator("[data-flash]");
 	await expect(flashRow).toBeVisible();
 	await expect(flashRow).toContainText("investigate the zephyr7000 regression");

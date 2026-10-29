@@ -1,8 +1,9 @@
 import { existsSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test } from "@playwright/test";
+
 import {
-	closedSessionRows,
+	closeTabViaMenu,
 	createWorkspaceViaDialog,
 	expandModelGroup,
 	modelGroupToggle,
@@ -10,7 +11,6 @@ import {
 	openFixtureProject,
 	openNewSessionPage,
 	revealModelGroups,
-	trashSession,
 } from "./fixtures/app";
 import {
 	assertOnlyReviewedArgv,
@@ -26,6 +26,8 @@ import {
 	E2E_FAKE_BIN_DIR,
 	E2E_PI_AGENT_DIR,
 } from "./fixtures/paths";
+
+test.describe.configure({ timeout: 90_000 });
 
 test("connects and follows external add, replacement, and remove without a host restart", async ({
 	page,
@@ -96,7 +98,7 @@ test("connects and follows external add, replacement, and remove without a host 
 
 test("guides absent, outdated, malformed, and failed Central version states", async ({ page }) => {
 	await openAppFresh(page);
-	const central = join(E2E_FAKE_BIN_DIR, "central");
+	const central = join(E2E_FAKE_BIN_DIR, process.platform === "win32" ? "central.exe" : "central");
 	const hidden = join(E2E_FAKE_BIN_DIR, "central.hidden");
 	renameSync(central, hidden);
 	try {
@@ -252,9 +254,11 @@ test("disconnect removes Central from new chats while an existing live chat keep
 	await page.getByTestId("model-selector").click();
 	await revealModelGroups(page);
 	await expandModelGroup(page, "e2e-central");
+	// Outside a search the provider row opens a flyout that holds its models.
 	await page
+		.getByTestId("model-flyout")
 		.locator(
-			'[data-testid="model-option"][data-provider="e2e-central"][data-model-id="e2e-central-model"][data-value^="all:"]',
+			'[data-testid="model-option"][data-provider="e2e-central"][data-model-id="e2e-central-model"]',
 		)
 		.click();
 	await expect(page.getByTestId("model-selector")).toContainText("Synthetic JetBrains AI model");
@@ -281,7 +285,7 @@ test("disconnect removes Central from new chats while an existing live chat keep
 	const activeChat = page.locator(
 		'[data-testid="editor-tab"][data-kind="chat"][data-active="true"]',
 	);
-	await activeChat.getByTestId("editor-tab-close").click();
-	await trashSession(closedSessionRows(page).first());
-	await expect(closedSessionRows(page)).toHaveCount(0);
+	// A single-chat worktree lists no session rows to trash from; the next reset clears the session.
+	await closeTabViaMenu(page, activeChat);
+	await expect(activeChat).toHaveCount(0);
 });

@@ -190,8 +190,8 @@ test("assistant Markdown opens safe relative files without navigating the browse
 		],
 	});
 
-	await expect(defaultWorkspaceRow(page)).toBeVisible();
 	await enterDefaultWorkspace(page);
+	await expect(defaultWorkspaceRow(page)).toBeVisible();
 	await expect(page.locator('[data-testid="editor-tab"][data-kind="chat"]')).toHaveCount(1);
 
 	const message = page.locator('[data-testid="chat-message"][data-role="assistant"]').last();
@@ -226,8 +226,8 @@ test("structured tool paths reuse the preview tab while rich tool results stay i
 	});
 	appendToolResults(chat.path, chat.id);
 
-	await expect(defaultWorkspaceRow(page)).toBeVisible();
 	await enterDefaultWorkspace(page);
+	await expect(defaultWorkspaceRow(page)).toBeVisible();
 	await expect(page.locator('[data-testid="editor-tab"][data-kind="chat"]')).toHaveCount(1);
 
 	const localRead = await toolStep(page, "read");

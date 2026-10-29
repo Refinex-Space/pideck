@@ -690,3 +690,10 @@ sound route is snapshot-at-add, never freeze-on-drift.
 One optional persisted `ReviewComment` field carries finding provenance: `origin?: { todoId, reviewedSha,
 sessionId }` — **landed**. The wire `stale?: boolean` is derived by the host per client snapshot, never
 stored. No new tool parameter, no new `status`/`anchorState` enum value.
+
+## Network proxy startup
+
+`bootHost` awaits `initializeNetworkProxy` after applying stored environment and before initializing Pi.
+Standalone `createServer` also awaits the idempotent initializer before Central/Pi startup.
+The `network.*` handlers delegate through the network barrel. Settings reads and diagnostics never
+broadcast secrets; a save requests restart instead of mutating active transports. See [[submodule-server-network]].

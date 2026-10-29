@@ -18,6 +18,7 @@ import {
 	isUserOwnedWorkspace,
 	matchesWorktreePath,
 	selectActiveEditorTab,
+	selectActiveFilePath,
 	selectActiveWorkspace,
 	selectActiveWorkspaceProjectId,
 	selectAgentReviewCommentCount,
@@ -353,6 +354,52 @@ test("a chat is attended only as the selected tab of the last-focused center gro
 	expect(selectChatAttended({ ...state, historyOpenRequest: { sessionId: "a" } }, "w1", "b")).toBe(
 		true,
 	);
+});
+
+test("the active file falls back to the file dock's selection while focus is in the chat", () => {
+	const file = (id: string, path: string) => ({ kind: "file" as const, id, name: path, path });
+	const state = {
+		tabsByWorkspace: {
+			w1: [{ kind: "chat", id: "chat", workspaceId: "w1", name: "Chat", sessionId: "s" }],
+		},
+		activeTabByWorkspace: { w1: "chat" },
+		layoutDocumentsByWorkspace: {
+			w1: {
+				center: {
+					kind: "split" as const,
+					id: "split",
+					orientation: "horizontal" as const,
+					ratio: 0.5,
+					children: [
+						{ kind: "group" as const, id: "conversation", tabs: [] },
+						{
+							kind: "group" as const,
+							id: "pideck-file-workbench",
+							tabs: [file("t-a", "a.md"), file("t-b", "docs/b.md")],
+						},
+					],
+				},
+			},
+		},
+		layoutAttentionByWorkspace: {
+			w1: {
+				selectedByGroup: { "pideck-file-workbench": "t-b" },
+				lastFocusedCenterGroupId: "conversation",
+				lastFocusedSideGroupId: {},
+				navigationClockByGroup: {},
+			},
+		},
+	} as unknown as Parameters<typeof selectActiveFilePath>[0];
+	expect(selectActiveFilePath(state, "w1")).toBe("docs/b.md");
+	expect(selectActiveFilePath({ ...state, layoutDocumentsByWorkspace: {} }, "w1")).toBeNull();
+	const activeFile = {
+		...state,
+		tabsByWorkspace: {
+			w1: [{ kind: "file", id: "f", workspaceId: "w1", name: "c", path: "c.ts" }],
+		},
+		activeTabByWorkspace: { w1: "f" },
+	} as unknown as Parameters<typeof selectActiveFilePath>[0];
+	expect(selectActiveFilePath(activeFile, "w1")).toBe("c.ts");
 });
 
 test("workspace kind predicates distinguish managed and user-owned checkouts", () => {

@@ -94,6 +94,30 @@ test("legacy previews from several groups migrate without replacing another open
 	expect(migrateLegacyFiles(result.document, 6, 3)).toEqual({ document: result.document });
 });
 
+test("a document that already holds the dock keeps files the user moved into the conversation", () => {
+	const document = base();
+	document.center = {
+		kind: "split",
+		id: "explicit",
+		direction: "horizontal",
+		weights: [0.5, 0.5],
+		children: [
+			{
+				kind: "split",
+				id: "conversation",
+				direction: "horizontal",
+				weights: [0.5, 0.5],
+				children: [
+					{ kind: "group", id: "first", tabs: [file("one")] },
+					{ kind: "group", id: "second", tabs: [file("two")] },
+				],
+			},
+			{ kind: "group", id: FILE_WORKBENCH_GROUP, tabs: [] },
+		],
+	};
+	expect(migrateLegacyFiles(document, 6, 3)).toEqual({ document });
+});
+
 test("passive file restoration creates no visible navigator", () => {
 	const before = base();
 	const result = openFileWorkbench(before, file("late"), "keep", false, 6, 3, false);

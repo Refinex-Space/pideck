@@ -1,7 +1,12 @@
 import { rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test } from "@playwright/test";
-import { openWorkspaceChat, revealWorkbenchTool, startNewChat } from "./fixtures/app";
+import {
+	openWorkspaceChat,
+	revealWorkbenchTool,
+	selectSessionRow,
+	startNewChat,
+} from "./fixtures/app";
 import { E2E_DATA_DIR } from "./fixtures/paths";
 
 const worktree = () => join(E2E_DATA_DIR, "worktrees", "sample-project", "workspace-1");
@@ -99,8 +104,10 @@ test("two chats keep their own TODO lists \u2014 a rail write in chat A never bl
 }) => {
 	await openWorkspaceChat(page);
 	await revealWorkbenchTool(page, "plan");
-	const chatTabs = page.locator('[data-testid="editor-tab"][data-kind="chat"]');
-	await expect(chatTabs).toHaveCount(1);
+	const chatTab = page.locator('[data-testid="editor-tab"][data-kind="chat"]');
+	await expect(chatTab).toHaveCount(1);
+	const chatA = await chatTab.getAttribute("data-session-id");
+	if (!chatA) throw new Error("chat A has no session id");
 
 	const rail = page.getByTestId("plan-rail-pane");
 	await rail.getByTestId("todo-add-input").fill("Chat A item");
@@ -108,8 +115,8 @@ test("two chats keep their own TODO lists \u2014 a rail write in chat A never bl
 	await expect(rail.getByTestId("todo-row").filter({ hasText: "Chat A item" })).toBeVisible();
 
 	await startNewChat(page);
-	await expect(chatTabs).toHaveCount(2);
-	await expect(chatTabs.last()).toHaveAttribute("data-active", "true");
+	const chatB = await chatTab.getAttribute("data-session-id");
+	if (!chatB) throw new Error("chat B has no session id");
 	await expect(rail).toBeVisible();
 	await expect(rail.getByTestId("todo-row")).toHaveCount(0);
 	await expect(rail).toContainText("No TODOs yet");
@@ -119,14 +126,12 @@ test("two chats keep their own TODO lists \u2014 a rail write in chat A never bl
 	await expect(rail.getByTestId("todo-row").filter({ hasText: "Chat B item" })).toBeVisible();
 	await expect(rail.getByTestId("todo-row")).toHaveCount(1);
 
-	await chatTabs.first().getByRole("tab").click();
-	await expect(chatTabs.first()).toHaveAttribute("data-active", "true");
+	await selectSessionRow(page, chatA);
 	await expect(rail.getByTestId("todo-row")).toHaveCount(1);
 	await expect(rail.getByTestId("todo-row").filter({ hasText: "Chat A item" })).toBeVisible();
 	await expect(rail.getByTestId("todo-row").filter({ hasText: "Chat B item" })).toHaveCount(0);
 
-	await chatTabs.last().getByRole("tab").click();
-	await expect(chatTabs.last()).toHaveAttribute("data-active", "true");
+	await selectSessionRow(page, chatB);
 	await expect(rail.getByTestId("todo-row")).toHaveCount(1);
 	await expect(rail.getByTestId("todo-row").filter({ hasText: "Chat B item" })).toBeVisible();
 });

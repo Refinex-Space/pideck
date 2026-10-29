@@ -27,7 +27,7 @@ test("a single click previews into one reusable slot, a double click keeps the t
 }) => {
 	await openWorkspaceFiles(page);
 
-	const tabs = page.getByTestId("editor-tab");
+	const tabs = page.locator('[data-testid="editor-tab"]:not([data-kind="chat"])');
 	const readme = page.getByTestId("file-node").filter({ hasText: "README.md" });
 	const notes = page.getByTestId("file-node").filter({ hasText: "notes.txt" });
 	await expect(readme).toBeVisible();
@@ -63,7 +63,7 @@ test("a single click previews into one reusable slot, a double click keeps the t
 
 test("Enter and Space on a file row open its preview", async ({ page }) => {
 	await openWorkspaceFiles(page);
-	const tabs = page.getByTestId("editor-tab");
+	const tabs = page.locator('[data-testid="editor-tab"]:not([data-kind="chat"])');
 
 	await page.getByTestId("file-node").filter({ hasText: "README.md" }).focus();
 	await page.keyboard.press("Enter");
@@ -83,7 +83,7 @@ test("a double click claims the slot on its way to keeping the tab, at any laten
 	page,
 }) => {
 	await openWorkspaceFiles(page);
-	const tabs = page.getByTestId("editor-tab");
+	const tabs = page.locator('[data-testid="editor-tab"]:not([data-kind="chat"])');
 
 	await page.getByTestId("file-node").filter({ hasText: "README.md" }).dblclick();
 	await page.getByTestId("file-node").filter({ hasText: "notes.txt" }).click();
@@ -108,8 +108,11 @@ test("a double click on an unopened file sends exactly one fs.readFile", async (
 
 	await openWorkspaceFiles(page);
 	await page.getByTestId("file-node").filter({ hasText: "README.md" }).dblclick();
-	await expect(page.getByTestId("editor-tab")).toHaveCount(1);
-	await expect(page.getByTestId("editor-tab")).toHaveAttribute("data-preview", "false");
+	await expect(page.locator('[data-testid="editor-tab"]:not([data-kind="chat"])')).toHaveCount(1);
+	await expect(page.locator('[data-testid="editor-tab"]:not([data-kind="chat"])')).toHaveAttribute(
+		"data-preview",
+		"false",
+	);
 
 	expect(reads.filter((frame) => frame.includes("README.md"))).toHaveLength(1);
 });
@@ -165,7 +168,7 @@ test("a browse the user has navigated away from is dropped, not activated on arr
 }) => {
 	const reads = await holdFileReads(page, "notes.txt");
 	await openWorkspaceFiles(page);
-	const tabs = page.getByTestId("editor-tab");
+	const tabs = page.locator('[data-testid="editor-tab"]:not([data-kind="chat"])');
 
 	await page.getByTestId("file-node").filter({ hasText: "README.md" }).dblclick();
 	await expect(tabs).toHaveCount(1);
@@ -181,12 +184,16 @@ test("a browse the user has navigated away from is dropped, not activated on arr
 	await expect(tabs).toHaveCount(1);
 	await expect(tabs.first()).toContainText("README.md");
 	await expect(tabs.first()).toHaveAttribute("data-active", "true");
-	await expect(page.getByTestId("editor-tab").filter({ hasText: "notes.txt" })).toHaveCount(0);
+	await expect(
+		page
+			.locator('[data-testid="editor-tab"]:not([data-kind="chat"])')
+			.filter({ hasText: "notes.txt" }),
+	).toHaveCount(0);
 });
 
 test("of two browse clicks in flight at once, the later one wins", async ({ page }) => {
 	await openWorkspaceFiles(page);
-	const tabs = page.getByTestId("editor-tab");
+	const tabs = page.locator('[data-testid="editor-tab"]:not([data-kind="chat"])');
 
 	await page.evaluate(() => {
 		const row = (text: string): HTMLElement => {
@@ -203,14 +210,18 @@ test("of two browse clicks in flight at once, the later one wins", async ({ page
 	await expect(tabs).toHaveCount(1);
 	await expect(tabs.first()).toContainText("notes.txt");
 	await expect(tabs.first()).toHaveAttribute("data-preview", "true");
-	await expect(page.getByTestId("editor-tab").filter({ hasText: "README.md" })).toHaveCount(0);
+	await expect(
+		page
+			.locator('[data-testid="editor-tab"]:not([data-kind="chat"])')
+			.filter({ hasText: "README.md" }),
+	).toHaveCount(0);
 });
 
 test("a keep that lands first does not invalidate a browse requested after it", async ({
 	page,
 }) => {
 	await openWorkspaceFiles(page);
-	const tabs = page.getByTestId("editor-tab");
+	const tabs = page.locator('[data-testid="editor-tab"]:not([data-kind="chat"])');
 
 	await page.evaluate(() => {
 		const row = (text: string): HTMLElement => {
@@ -236,7 +247,7 @@ test("a keep that lands first does not invalidate a browse requested after it", 
 test("a single click on an open file selects it without a settle wait", async ({ page }) => {
 	await page.clock.install();
 	await openWorkspaceFiles(page);
-	const tabs = page.getByTestId("editor-tab");
+	const tabs = page.locator('[data-testid="editor-tab"]:not([data-kind="chat"])');
 	const readme = page.getByTestId("file-node").filter({ hasText: "README.md" });
 	const notes = page.getByTestId("file-node").filter({ hasText: "notes.txt" });
 
@@ -250,7 +261,7 @@ test("a single click on an open file selects it without a settle wait", async ({
 
 test("a double click after a landed preview keeps that same tab", async ({ page }) => {
 	await openWorkspaceFiles(page);
-	const tabs = page.getByTestId("editor-tab");
+	const tabs = page.locator('[data-testid="editor-tab"]:not([data-kind="chat"])');
 	const notes = page.getByTestId("file-node").filter({ hasText: "notes.txt" });
 
 	await notes.click();
@@ -266,7 +277,7 @@ test("a double click after a landed preview keeps that same tab", async ({ page 
 test("clicking an inactive preview tab selects it at once without keeping it", async ({ page }) => {
 	await page.clock.install();
 	await openWorkspaceFiles(page);
-	const tabs = page.getByTestId("editor-tab");
+	const tabs = page.locator('[data-testid="editor-tab"]:not([data-kind="chat"])');
 	await page.getByTestId("file-node").filter({ hasText: "notes.txt" }).dblclick();
 	await page.getByTestId("file-node").filter({ hasText: "README.md" }).click();
 	const notesTab = tabs.filter({ hasText: "notes.txt" });
@@ -290,8 +301,12 @@ test("a newer tab click cancels an older preview-tab settle timer", async ({ pag
 	await page.getByTestId("file-node").filter({ hasText: "notes.txt" }).dblclick();
 	await page.getByTestId("file-node").filter({ hasText: "README.md" }).click();
 
-	const notes = page.getByTestId("editor-tab").filter({ hasText: "notes.txt" });
-	const readme = page.getByTestId("editor-tab").filter({ hasText: "README.md" });
+	const notes = page
+		.locator('[data-testid="editor-tab"]:not([data-kind="chat"])')
+		.filter({ hasText: "notes.txt" });
+	const readme = page
+		.locator('[data-testid="editor-tab"]:not([data-kind="chat"])')
+		.filter({ hasText: "README.md" });
 	await expect(readme).toHaveAttribute("data-preview", "true");
 	await freezePageTimers(page);
 	await readme.click();
@@ -306,7 +321,7 @@ test("the Specs panel shares the one slot, and closing the preview tab releases 
 	page,
 }) => {
 	await openWorkspaceFiles(page);
-	const tabs = page.getByTestId("editor-tab");
+	const tabs = page.locator('[data-testid="editor-tab"]:not([data-kind="chat"])');
 
 	await page.getByTestId("file-node").filter({ hasText: "README.md" }).dblclick();
 	await page.getByTestId("file-node").filter({ hasText: "notes.txt" }).click();

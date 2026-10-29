@@ -33,8 +33,12 @@ export function ChangeRowActions({
 }) {
 	const t = useT();
 	const [open, setOpen] = useState(false);
+	// A right-click menu must not hand focus to the row's hover button on close: its tooltip would
+	// cover the neighbouring row.
+	const [openedFromRow, setOpenedFromRow] = useState(false);
 	const onContextMenu = (event: MouseEvent) => {
 		event.preventDefault();
+		setOpenedFromRow(true);
 		setOpen(true);
 	};
 	return (
@@ -59,7 +63,14 @@ export function ChangeRowActions({
 					/>
 				</DropdownMenuTrigger>
 			</div>
-			<DropdownMenuContent align="end" data-testid="change-row-actions">
+			<DropdownMenuContent
+				align="end"
+				data-testid="change-row-actions"
+				onCloseAutoFocus={(event) => {
+					if (openedFromRow) event.preventDefault();
+					setOpenedFromRow(false);
+				}}
+			>
 				<DropdownMenuItem data-testid="change-action-view" onSelect={onView}>
 					<FileDiff />
 					{t("panels.changeRowActions.review")}

@@ -629,9 +629,7 @@ test("Ctrl+R inside a terminal belongs to the shell, not to history search", asy
 	await expect(visibleTerminalScreen(page)).toContainText(/i-search|\^R/i);
 });
 
-test("Ctrl+R from an active file tab switches to the chat and opens history search", async ({
-	page,
-}) => {
+test("Ctrl+R from a focused file editor opens the chat's history search", async ({ page }) => {
 	await openWorkspaceChat(page);
 	seedExternalCwdSessions();
 
@@ -641,17 +639,15 @@ test("Ctrl+R from an active file tab switches to the chat and opens history sear
 	await readme.dblclick();
 	const fileTab = page.getByTestId("editor-tab").filter({ hasText: "README.md" });
 	await expect(fileTab).toHaveAttribute("data-active", "true");
-	await expect(page.getByTestId("chat-input")).toHaveCount(0);
+	// Files open in the dock beside the chat, which stays visible.
+	await expect(page.getByTestId("chat-input")).toBeVisible();
 
 	await page.getByTestId("editor-pane").click();
 	await page.keyboard.press("Control+r");
 
-	await expect(page.getByTestId("editor-tab").filter({ hasText: "README.md" })).toHaveAttribute(
-		"data-active",
-		"false",
-	);
 	await expect(page.getByTestId("history-overlay")).toBeVisible();
 	await expect(page.getByTestId("history-query")).toBeFocused();
+	await expect(fileTab).toBeVisible();
 });
 
 test("the Ctrl+R and Ctrl+S chords fire on a non-Latin keyboard layout", async ({ page }) => {

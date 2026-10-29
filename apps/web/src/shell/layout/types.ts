@@ -130,6 +130,6 @@ export interface WorkspaceLayoutDocument {
 	toolRestoreTargets: Partial<Record<LayoutToolId, LayoutToolRestoreTarget>>;
 }
 
-export const FILE_WORKBENCH_GROUP = "pideck-file-workbench";
+export { FILE_WORKBENCH_GROUP } from "../../lib";
 
 export type LayoutFileResourceTab = Extract<LayoutCenterTab, { kind: "file" | "diff" | "changes" }>;

@@ -436,6 +436,19 @@ export function saveHostEnvironment(environment: HostEnvironment): void {
 	writeJsonAtomic("environment.json", environment, 0o600);
 }
 
+export function loadNetworkProxyRecord(): unknown {
+	try {
+		return JSON.parse(readFileSync(join(dataDir(), "network-proxy.json"), "utf8"));
+	} catch (error) {
+		if (error instanceof Error && "code" in error && error.code === "ENOENT") return undefined;
+		throw new Error("Could not read proxy configuration");
+	}
+}
+
+export function saveNetworkProxyRecord(value: unknown): void {
+	writeJsonAtomic("network-proxy.json", value, 0o600);
+}
+
 export function ensureInstallation(): InstallationRecord {
 	return ensureInstallationIn(dataDir());
 }

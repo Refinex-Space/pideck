@@ -1,4 +1,7 @@
 export type WorkbenchSide = "left" | "right";
+
+/** The reserved center group that holds file, diff and changes resources beside the Files tree. */
+export const FILE_WORKBENCH_GROUP = "pideck-file-workbench";
 export type WorkbenchAuxiliaryRegion = WorkbenchSide | "bottom";
 
 export interface LayoutAttention {

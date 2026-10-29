@@ -103,17 +103,20 @@ function launchOverridden(environment: HostEnvironment): string[] {
 	return names.filter((name) => launchKeys.has(nameKey(name)));
 }
 
-export function applyHostEnvironment(options: { platform?: NodeJS.Platform } = {}): void {
+export function applyHostEnvironment(
+	options: { platform?: NodeJS.Platform; env?: Record<string, string | undefined> } = {},
+): void {
+	const env = options.env ?? process.env;
 	platform = options.platform ?? process.platform;
 	const stored = loadHostEnvironment();
 	applied = stored;
-	launchKeys = new Set([...launchEnvKeys()].map(nameKey));
+	launchKeys = new Set([...(options.env ? Object.keys(env) : launchEnvKeys())].map(nameKey));
 	const issues = validateHostEnvironment(stored);
 	const skippedVars = new Set(
 		issues.flatMap((issue) => (issue.field === "var" ? [issue.index] : [])),
 	);
 	stored.vars.forEach(({ name, value }, index) => {
-		if (!skippedVars.has(index) && !launchKeys.has(nameKey(name))) process.env[name] = value;
+		if (!skippedVars.has(index) && !launchKeys.has(nameKey(name))) env[name] = value;
 	});
 	const agentDirInvalid = issues.some((issue) => issue.field === "agentDir");
 	if (
@@ -121,7 +124,7 @@ export function applyHostEnvironment(options: { platform?: NodeJS.Platform } = {
 		!agentDirInvalid &&
 		!launchKeys.has(nameKey(AGENT_DIR_VAR))
 	) {
-		process.env[AGENT_DIR_VAR] = expandAgentDir(stored.agentDir);
+		env[AGENT_DIR_VAR] = expandAgentDir(stored.agentDir);
 	}
 	for (const issue of issues)
 		log.warn(`stored environment entry skipped: ${issue.field}/${issue.code}`);

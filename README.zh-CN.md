@@ -161,3 +161,17 @@ Pi 图标来自 [theSVG](https://thesvg.org/icon/pi)，来源 MIT 声明保留�
 [pi.LICENSE](packages/shared/assets/pi.LICENSE)。
 
 Material Icon Theme 的 [MIT 许可证](apps/web/public/file-icons.LICENSE.txt)随应用分发。
+
+### 网络与代理
+
+在设置 → **网络与代理**中配置宿主的 HTTP/HTTPS 代理。自动模式读取 Windows 当前用户设置、
+macOS 当前网络代理，或 Linux 的 GNOME/KDE 设置；已有代理环境变量优先，无桌面的 Linux 使用
+环境变量。手动模式支持 HTTP、HTTPS 代理监听地址，认证密码保存在操作系统凭据存储中。
+保存后退出并重启宿主，使 Pi OAuth 刷新和模型连接统一使用新配置。
+
+PAC/WPAD、仅 SOCKS 的代理，以及超出域名/IP/主机:端口子集的旁路规则（包括 CIDR、`<local>`
+和 IP 前缀通配符）会显示未支持。遇到这些配置时，可手动填写代理软件的 HTTP/mixed 监听地址及
+支持的旁路规则。回环地址始终直连。连接诊断访问固定提供商端点，不发送账户凭据、不消耗模型
+Token；端点响应不代表登录、模型权限或地区政策通过。外部登录浏览器使用自己的网络设置。
+
+各平台解析器有 fixture 测试；macOS/Linux 原生行为仍须在对应系统验收，不能用 Windows 结果替代。

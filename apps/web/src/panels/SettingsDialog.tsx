@@ -13,6 +13,7 @@ import { GithubSettings } from "./GithubSettings";
 import { LanguageSettings } from "./LanguageSettings";
 import { McpSettings } from "./McpSettings";
 import { ModelsSettings } from "./ModelsSettings";
+import { NetworkSettings } from "./NetworkSettings";
 import { NotificationsSettings } from "./NotificationsSettings";
 import { PrivacySettings } from "./PrivacySettings";
 import { ProvidersSettings } from "./ProvidersSettings";
@@ -161,6 +162,8 @@ export function SettingsDialog({
 							<TemplatesSettings />
 						) : selectedSection === SettingsSection.Environment ? (
 							<EnvironmentSettings />
+						) : selectedSection === SettingsSection.Network ? (
+							<NetworkSettings />
 						) : selectedSection === SettingsSection.Extensions ? (
 							<ExtensionsSettings />
 						) : selectedSection === SettingsSection.Chat ? (

@@ -67,6 +67,7 @@ import {
 	windowChromeGeometry,
 	windowChromePreloadSeed,
 } from "./windowChrome";
+import { windowControlsProbeScript } from "./windowControlsProbe";
 import { loadWindowsFrameApi, restoreWindowsFrameControls } from "./windowsFrame";
 import {
 	desktopAppUserModelId,
@@ -112,22 +113,10 @@ function titleBarProbeScript(testIds: string[]): string {
 	poll();
 })();`;
 }
-const WINDOW_CONTROLS_PROBE_TARGETS: Record<string, { testId: string; label: string }> = {
-	"window-controls-maximize": { testId: "window-maximize", label: "Maximize" },
-	"window-controls-restore": { testId: "window-maximize", label: "Restore" },
+const WINDOW_CONTROLS_PROBE_TARGETS: Record<string, boolean> = {
+	"window-controls-maximize": false,
+	"window-controls-restore": true,
 };
-function windowControlsProbeScript(target: { testId: string; label: string }): string {
-	return `(() => {
-	const selector = ${JSON.stringify(`[data-testid="${target.testId}"][aria-label="${target.label}"]`)};
-	const deadline = Date.now() + 15000;
-	const poll = () => {
-		const element = document.querySelector(selector);
-		if (element) element.click();
-		else if (Date.now() < deadline) setTimeout(poll, 50);
-	};
-	poll();
-})();`;
-}
 let startupQuitCoordinator: ReturnType<typeof createElectrobunQuitCoordinator> | undefined;
 let startupSplash: StartupSplash | undefined;
 
@@ -559,7 +548,7 @@ async function start(): Promise<void> {
 					windowControlsProbePath && Object.hasOwn(WINDOW_CONTROLS_PROBE_TARGETS, command)
 						? WINDOW_CONTROLS_PROBE_TARGETS[command]
 						: undefined;
-				if (windowControlsTarget && !windowControlsProbeCommands.has(command)) {
+				if (windowControlsTarget !== undefined && !windowControlsProbeCommands.has(command)) {
 					windowControlsProbeCommands.add(command);
 					mainWindow.webview.executeJavascript(windowControlsProbeScript(windowControlsTarget));
 				}

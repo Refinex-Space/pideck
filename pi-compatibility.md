@@ -227,3 +227,13 @@ wire capability checks and React presentation are deliberate ThinkRail behavior.
 [[submodule-server-agent-mcp]] and [[submodule-server-agent]]. A pi upgrade does not silently remove
 or weaken them. Reusing an upstream policy is a separate compatibility/product decision, not an
 assumption that similarly named APIs have identical semantics.
+
+## Host proxy policy
+
+Pi 1.4.0 OpenAI ChatGPT OAuth refresh uses global fetch; ModelRuntime has no universal network injection
+parameter. The host applies HTTP_PROXY/HTTPS_PROXY/NO_PROXY before Pi creation. Existing Pi model fetch
+and its Codex WebSocket proxy resolver consume that environment. No Pi production private import, fetch
+replacement, token refresh fork or additional runtime is added. `network/piProxy.test.ts` checks the
+installed private OAuth implementation, OpenAI Responses stream and native WebSocket with local fixtures.
+Recheck these paths, proxy precedence, NO_PROXY syntax, HTTP/HTTPS proxy authentication and connection
+reuse on every Pi/Bun upgrade. SOCKS/PAC remain unsupported and are reported explicitly.

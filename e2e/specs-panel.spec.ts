@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { expect, type Page, test } from "@playwright/test";
 import { createWorkspaceViaDialog, openFixtureProject, revealWorkbenchTool } from "./fixtures/app";
 
-async function proxyOneSpecGraphFailure(page: Page) {
+async function proxySpecGraphFailures(page: Page) {
 	let armed = false;
 	let injected = false;
 	let readCount = 0;
@@ -20,7 +20,8 @@ async function proxyOneSpecGraphFailure(page: Page) {
 			}
 			if (frame.id && frame.method === "spec.graph") {
 				readCount += 1;
-				if (armed && !injected) {
+				// Every read fails while armed: one write can raise several watcher reads on Windows.
+				if (armed) {
 					injected = true;
 					ws.send(JSON.stringify({ id: frame.id, ok: false, error: "injected spec failure" }));
 					return;
@@ -33,6 +34,9 @@ async function proxyOneSpecGraphFailure(page: Page) {
 	return {
 		arm: () => {
 			armed = true;
+		},
+		disarm: () => {
+			armed = false;
 		},
 		readCount: () => readCount,
 		wasInjected: () => injected,
@@ -142,7 +146,7 @@ test("Specs offers Retry only after its automatic graph read fails", async ({ pa
 	const root = page.locator('[data-testid="spec-node"][data-spec-id="sample-root"]');
 	await expect(root).toBeVisible();
 
-	const failure = await proxyOneSpecGraphFailure(page);
+	const failure = await proxySpecGraphFailures(page);
 	failure.arm();
 	await page.reload();
 	await expect(page.getByTestId("connection-status")).toHaveAttribute("data-status", "connected");
@@ -152,6 +156,7 @@ test("Specs offers Retry only after its automatic graph read fails", async ({ pa
 	await expect(page.getByRole("button", { name: "Refresh specs" })).toHaveCount(0);
 	await expect(page.getByTestId("right-panel").getByTestId("skeleton-rows")).toHaveCount(0);
 	const failedReadCount = failure.readCount();
+	failure.disarm();
 	await retry.click();
 	await expect.poll(failure.readCount).toBeGreaterThan(failedReadCount);
 	await expect(page.getByTestId("specs-error")).toHaveCount(0);
@@ -162,7 +167,7 @@ test("Specs offers Retry only after its automatic graph read fails", async ({ pa
 test("a failed automatic Specs update keeps the previous tree until Retry succeeds", async ({
 	page,
 }) => {
-	const failure = await proxyOneSpecGraphFailure(page);
+	const failure = await proxySpecGraphFailures(page);
 	await openFixtureProject(page);
 	const workspace = await createWorkspaceViaDialog(page);
 	await revealWorkbenchTool(page, "specs");
@@ -184,6 +189,7 @@ test("a failed automatic Specs update keeps the previous tree until Retry succee
 	await expect(added).toHaveCount(0);
 	await expect(page.getByTestId("right-panel").getByTestId("skeleton-rows")).toHaveCount(0);
 	const failedReadCount = failure.readCount();
+	failure.disarm();
 	await retry.click();
 	await expect.poll(failure.readCount).toBeGreaterThan(failedReadCount);
 	await expect(page.getByTestId("specs-error")).toHaveCount(0);

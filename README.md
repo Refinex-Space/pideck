@@ -185,3 +185,20 @@ The Pi icon is vendored from [theSVG](https://thesvg.org/icon/pi); its source MI
 [pi.LICENSE](packages/shared/assets/pi.LICENSE).
 
 Material Icon Theme: [MIT license](apps/web/public/file-icons.LICENSE.txt).
+
+### Network and proxy
+
+Settings → **Network & proxy** configures the host's HTTP/HTTPS proxy. Automatic mode reads Windows
+current-user settings, macOS active proxy settings, or GNOME/KDE settings on Linux. Existing proxy
+environment variables take priority; headless Linux uses those variables. Manual mode supports HTTP
+and HTTPS proxy listeners, with optional credentials saved in the OS credential store. Save, quit and
+restart the host to apply the route to Pi OAuth refresh and model connections.
+
+PAC/WPAD, SOCKS-only proxies and bypass formats outside the supported domain/IP/host:port subset
+(including CIDR, `<local>` and IP-prefix wildcards) are reported as unsupported. Use a manual HTTP/mixed
+listener with supported bypass rules in that case. Loopback is always direct. Diagnostics use fixed
+provider endpoints without account credentials or model tokens; a response is not proof of login, model
+permissions or regional eligibility. The external login browser uses its own network settings.
+
+Platform parsers are tested with fixtures. Native macOS/Linux behavior must be verified on those systems;
+Windows results do not establish cross-platform native acceptance.

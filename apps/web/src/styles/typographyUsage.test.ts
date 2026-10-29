@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test";
+import { beforeAll, describe, expect, it } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -19,7 +19,11 @@ const RENDERERS = fileURLToPath(
 );
 
 const FILES = designSourceFiles();
-const read = (p: string) => normalizeEol(readFileSync(p, "utf8"));
+const contents = new Map<string, string>();
+beforeAll(() => {
+	for (const path of FILES) contents.set(path, normalizeEol(readFileSync(path, "utf8")));
+}, 30_000);
+const read = (p: string) => contents.get(p) ?? normalizeEol(readFileSync(p, "utf8"));
 const code = (p: string) =>
 	read(p)
 		.replace(/\/\*[\s\S]*?\*\//g, "")

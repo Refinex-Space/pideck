@@ -72,8 +72,8 @@ test("a transcript that fails to load says so and stays in history", async ({ pa
 	utimesSync(readable.path, new Date(BASE_TS + 1_000), new Date(BASE_TS + 1_000));
 	seedOpenTodo(readable.id, "finish the readable work");
 
-	await expect(defaultWorkspaceRow(page)).toBeVisible();
 	await enterDefaultWorkspace(page);
+	await expect(defaultWorkspaceRow(page)).toBeVisible();
 
 	await expect(page.getByText("load me fine")).toBeVisible();
 	await expect(
@@ -96,8 +96,8 @@ test("a failed never-empty fallback keeps its chat reachable too", async ({ page
 	onlyId = only.id;
 	utimesSync(only.path, new Date(BASE_TS), new Date(BASE_TS));
 
-	await expect(defaultWorkspaceRow(page)).toBeVisible();
 	await enterDefaultWorkspace(page);
+	await expect(defaultWorkspaceRow(page)).toBeVisible();
 
 	await expect(
 		page

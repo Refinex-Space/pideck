@@ -1045,7 +1045,9 @@ test("A source diff keeps its scroll position across a tab switch", async ({ pag
 	});
 	expect(top).toBeGreaterThan(1_000);
 
-	await page.locator('[data-testid="editor-tab"][data-kind="chat"]').click();
+	// The chat stays beside the file dock, so the switch is to another resource tab in the dock.
+	await revealWorkbenchTool(page, "files");
+	await page.getByTestId("file-node").filter({ hasText: "README.md" }).dblclick();
 	await expect(diff).toHaveCount(0);
 	await page.locator('[data-testid="editor-tab"][data-kind="diff"]').click();
 	await expect.poll(() => diff.evaluate((node) => node.scrollTop)).toBe(top);

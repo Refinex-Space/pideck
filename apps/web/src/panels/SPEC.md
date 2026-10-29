@@ -726,7 +726,9 @@ a project picker, the prompt hero, and the reused
   Update/connect/disconnect state is host-authoritative and shared across clients; every mutation re-reads
   `provider.status`, while `provider.changed` invalidations from watched external changes trigger the same
   re-read plus model-list invalidation. Status reads are request-sequenced so an older response cannot replace
-  a newer watched/action result. Copy never promises only Claude/GPT, never asks for standalone PI,
+  a newer watched/action result. The configuring fallback poll allows only one outstanding read: a slow
+  host must not have every response invalidated by the next 500 ms tick. Read failures remain owned by
+  the provider page, and the next idle tick retries. Copy never promises only Claude/GPT, never asks for standalone PI,
   never renders child output/diagnostics/artifact content/paths/proxy data/secrets/raw models, and maps only
   closed reason codes to ThinkRail-authored text. On protocol v59+, the same card always shows the
   synchronized **Show quota in top bar** switch and **Refresh every _ seconds** field, in every Central
@@ -2081,6 +2083,7 @@ own section. The kebab menu (`plan-menu`, a
 - **Row actions: one menu, two triggers.** Every **file** row (both views) is wrapped in
   **`ChangeRowActions`**: a hover/focus-revealed `⌄` button *and* right-click on the row open the same
   dropdown. The `⌄` is not garnish — it is the **touch path**, where right-click does not exist (mobile-first).
+  A right-click-opened menu does not return focus to the `⌄` on close, so its tooltip never covers the row above.
   Items: **View** (the same action as a plain click) and **Copy path** (worktree-relative). Deliberately
   nothing else: the panel is **read-only** — no discard-file/-folder/-all — and no “Open in ‹external app›”,
   which a host-side `open` would make silently wrong for every remote/phone client (Copy path is the portable
@@ -2168,7 +2171,10 @@ own section. The kebab menu (`plan-menu`, a
   **Historical replay is input-inert:** the PTY id
   remains unadopted until xterm's replay callback, which rechecks attach freshness before binding and draining
   genuinely live frames; replies xterm synthesizes for recorded terminal queries can therefore never enter the
-  live shell. PTY sizing distinguishes desired, in-flight, and
+  live shell. After a successful bind, an already focused xterm whose current mode requests focus reporting
+  synchronizes Focus-In once; the corresponding notification may have been suppressed while replay was
+  input-inert. This reports current DOM focus, not historical cursor queries, and never steals focus.
+  PTY sizing distinguishes desired, in-flight, and
   host-acknowledged grids; only a successful `terminal.resize` advances the acknowledgement, so reconnect
   replay cannot leave a full-screen app permanently sized to a request the host never applied. The 16 ANSI
   slots come from the theme's `--ansi-*` domain palette (never the semantic UI text tokens); on top of it
@@ -2215,7 +2221,8 @@ context menus and keyboard behavior remain independent of icon identity.
 `WorkspaceSessions` lists a workspace's chats (open tabs, then recently closed) under its row so that a project
 folder — one `default` workspace holding many chats — is navigable by session rather than as a single row. It
 renders for default/external workspaces and for any workspace with two or more chats; a worktree with a single chat
-keeps its one row. A row activates through `activateWorkspaceFromRoute(workspace, sessionId)`, the same route the
+keeps its one row. Only the project folder drops its own row while it lists chats (it has no rename, remove or
+settle action to lose); worktree and external rows stay above their chat rows, keeping name, branch and menu. A row activates through `activateWorkspaceFromRoute(workspace, sessionId)`, the same route the
 session switcher uses, and is marked active when it is the workspace's current chat.
 
 ## Interactive file workbench
@@ -2241,3 +2248,13 @@ than pretending that the agent can read editor memory from disk. Quotes are boun
 File rows share one hover/selection surface including the trailing action button, with a 2px gap
 between siblings and before expanded children. FileEntryActions uses the owned ContextMenu at the
 pointer; its more button invokes the same menu at its own bounds. File-pane toolbar hints open below.
+
+## Network and proxy settings
+
+`NetworkSettings` is available from protocol 95 in the System group. It uses private `network.*` replies,
+keeps draft and applied settings distinct, masks replacement passwords and shows only saved-password
+presence. Modes are automatic OS static-proxy detection, manual HTTP/HTTPS and application-direct.
+The form exposes environment precedence, unsupported detection/bypass cases and restart requirements.
+Diagnosis is disabled for unsaved or pending-restart settings; results distinguish network reachability
+from authentication, region policy and actual model access. Render-time translations use useT.
+The form and navigation have unit coverage; `e2e/network-settings.spec.ts` covers persistence and layout.

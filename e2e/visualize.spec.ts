@@ -7,6 +7,7 @@ import {
 	openAppSettings,
 	openFixtureProject,
 	openPersistedChat,
+	revealWorkbenchTool,
 } from "./fixtures/app";
 import { E2E_FIXTURE_REPO } from "./fixtures/paths";
 import { pierreLines } from "./fixtures/pierre";
@@ -138,6 +139,10 @@ test("completed visualize diagrams expand by default and support fullscreen zoom
 	const viewport = dialog.getByTestId("mermaid-fullscreen-svg");
 	const svg = viewport.locator("svg");
 	await expect(svg).toBeVisible();
+	// The dialog opens with a scale animation; measuring mid-animation reads a scaled width.
+	await dialog.evaluate((element) =>
+		Promise.all(element.getAnimations({ subtree: true }).map((animation) => animation.finished)),
+	);
 	const widthBefore = (await svg.boundingBox())?.width ?? 0;
 	expect(widthBefore).toBeGreaterThan(0);
 	await expect(dialog.getByTestId("mermaid-zoom-level")).toHaveText("100%");
@@ -564,7 +569,9 @@ test("an HTML preview width is shared by the card and its full screen and surviv
 			"data-viewport",
 			"tablet",
 		);
-		await page.locator('[data-testid="editor-tab"][data-kind="chat"]').first().click();
+		// The chat stays beside the file dock, so the switch is to another resource tab in the dock.
+		await revealWorkbenchTool(page, "files");
+		await page.getByTestId("file-node").filter({ hasText: "README.md" }).dblclick();
 		await expect(pane).toHaveCount(0);
 		await page
 			.locator('[data-testid="editor-tab"][data-kind="diff"]')

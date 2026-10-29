@@ -91,3 +91,10 @@ CLI 安装/更新代码使用 fork 的 releases 与 `refinex/dev` 脚本，未�
 `packages/shared/assets/pi.svg` 和 `pi.LICENSE`。原生图标使用白底黑色标识，网页 favicon 随明暗模式
 切换黑白，界面标识沿用语义主题色。浏览器与原生资源共享相同图形几何，通过根目录品牌契约测试防止漂移。
 不引入远程图标运行时或额外依赖；各平台 PNG/ICO 由现有 `generate-icons` 命令生成。
+
+## Host network customization
+
+The network module and Settings → Network & proxy add OS static-proxy discovery, HTTP/HTTPS manual
+configuration, OS-store proxy credentials and credential-free diagnostics. Pi keeps authentication and
+model ownership. This is a host customization, validated by policy/parser tests, local Pi transport probes,
+browser e2e and native packaging; macOS/Linux native verification remains distinct from Windows fixtures.

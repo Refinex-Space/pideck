@@ -4,6 +4,7 @@ import { reportError } from "../analytics";
 import { initializeJbcentralRuntime } from "../auth";
 import { applyHostEnvironment } from "../environment";
 import { initLogging, logger } from "../log";
+import { initializeNetworkProxy } from "../network";
 import { installCrashLog } from "./crashLog";
 import { type CreateServerOptions, createServer, type RunningServer } from "./server";
 
@@ -68,6 +69,7 @@ export async function bootHost(options: BootHostOptions): Promise<BootedHost> {
 	installCrashLog(options.appVersion);
 	await shellEnv;
 	applyHostEnvironment();
+	await initializeNetworkProxy();
 	await initializeJbcentralRuntime();
 
 	const requested = options.port;

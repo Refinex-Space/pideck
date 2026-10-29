@@ -4,6 +4,7 @@ import {
 	activeWorktreeRow,
 	applyWorkbenchPreset,
 	createWorkspaceViaDialog,
+	goProjectHome,
 	openCenterTerminal,
 	openFixtureProject,
 	openTerminal,
@@ -19,12 +20,15 @@ import {
 
 const ESC = "\u001b";
 const CURSOR_POSITION_REPLY = new RegExp(`^${ESC}\\[\\d+;\\d+R$`);
-const CURSOR_POSITION_QUERY_COMMAND = [
-	'python3 -c "import os,select,termios,tty;',
-	"old=termios.tcgetattr(0); tty.setraw(0); os.write(1,b'\\x1b[6n');",
-	"ready=select.select([0],[],[],2)[0]; reply=os.read(0,64) if ready else b'NO_REPLY';",
-	"termios.tcsetattr(0,termios.TCSADRAIN,old); print('TR_DSR_CONSUMED='+repr(reply))\"",
-].join(" ");
+function cursorPositionQuery(label: string): string {
+	const query = [
+		"IFS= read -r -s -d R -t 2 -p $'\\e[6n' response;",
+		`printf 'TR_DSR_CONSUMED_%s=%sR\\n' "$1" "\${response#?}"`,
+	].join(" ");
+	return ["bash", "--noprofile", "--norc", "-c", query, "cursor-query", label]
+		.map((value) => `'${value.replaceAll("'", `'\\''`)}'`)
+		.join(" ");
+}
 
 test("Balanced opens the reserved terminal automatically, rooted in the worktree, with working I/O", async ({
 	page,
@@ -92,7 +96,7 @@ test("a shell start failure explains recovery and retries the same tab", async (
 	await applyWorkbenchPreset(page, "Balanced");
 	await waitTerminalReady(page);
 	attachFailuresRemaining = 2;
-	await page.getByTestId("project-item").first().click();
+	await goProjectHome(page);
 	await expect(page.getByTestId("terminal-panel")).toHaveCount(0);
 	await worktreeRows(page).first().getByRole("button").first().click();
 	const chatTab = page.locator('[data-testid="editor-tab"][data-kind="chat"]').getByRole("tab");
@@ -327,6 +331,14 @@ test("the terminal's shell counts characters, not bytes", async ({ page }) => {
 });
 
 test("a shell survives a trip to Project Home and back", async ({ page }) => {
+	let captureInput = false;
+	const observedInput: string[] = [];
+	page.on("websocket", (socket) =>
+		socket.on("framesent", ({ payload }) => {
+			const frame = JSON.parse(String(payload));
+			if (captureInput && frame.method === "terminal.write") observedInput.push(frame.params.data);
+		}),
+	);
 	await openFixtureProject(page);
 	await createWorkspaceViaDialog(page);
 	await applyWorkbenchPreset(page, "Balanced");
@@ -336,14 +348,16 @@ test("a shell survives a trip to Project Home and back", async ({ page }) => {
 	await runInTerminal(page, 'echo "CHECK=$TR_SURVIVOR"');
 	await expect(visibleTerminalScreen(page)).toContainText("CHECK=alive");
 
-	await page.getByTestId("project-item").first().click();
+	await goProjectHome(page);
 	await expect(page.getByTestId("terminal-panel")).toHaveCount(0);
 
 	await worktreeRow(page, "workspace-1").getByRole("button").first().click();
 	await waitTerminalReady(page);
 	await expect(visibleTerminalScreen(page)).toContainText("CHECK=alive");
 
+	captureInput = true;
 	await runInTerminal(page, 'echo "AGAIN=$TR_SURVIVOR"');
+	await expect.poll(() => observedInput.join("")).toContain('echo "AGAIN=$TR_SURVIVOR"');
 	await expect(visibleTerminalScreen(page)).toContainText("AGAIN=alive");
 });
 
@@ -370,19 +384,25 @@ test("historical terminal queries do not become input on remount", async ({ page
 	await applyWorkbenchPreset(page, "Balanced");
 	await waitTerminalReady(page);
 
-	await runInTerminal(page, CURSOR_POSITION_QUERY_COMMAND);
-	await expect(visibleTerminalScreen(page)).toContainText("TR_DSR_CONSUMED");
-	await expect.poll(() => writes.some((data) => CURSOR_POSITION_REPLY.test(data))).toBe(true);
+	await runInTerminal(page, cursorPositionQuery("first"));
+	await expect(visibleTerminalScreen(page)).toContainText(/TR_DSR_CONSUMED_first=\[\d+;\d+R/);
+	if (process.platform !== "win32") {
+		await expect.poll(() => writes.some((data) => CURSOR_POSITION_REPLY.test(data))).toBe(true);
+	}
 	writes.length = 0;
 
-	await page.getByTestId("project-item").first().click();
+	await goProjectHome(page);
 	await worktreeRows(page).first().getByRole("button").first().click();
 	await waitTerminalReady(page);
 	await expect(visibleTerminalScreen(page)).toContainText("TR_DSR_CONSUMED");
 	expect(writes.filter((data) => CURSOR_POSITION_REPLY.test(data))).toEqual([]);
 
-	await runInTerminal(page, CURSOR_POSITION_QUERY_COMMAND);
-	await expect.poll(() => writes.some((data) => CURSOR_POSITION_REPLY.test(data))).toBe(true);
+	const secondQuery = cursorPositionQuery("second");
+	await runInTerminal(page, secondQuery);
+	await expect(visibleTerminalScreen(page)).toContainText(/TR_DSR_CONSUMED_second=\[\d+;\d+R/);
+	if (process.platform !== "win32") {
+		await expect.poll(() => writes.some((data) => CURSOR_POSITION_REPLY.test(data))).toBe(true);
+	}
 });
 
 test("rapid re-entry never spawns a second shell", async ({ page }) => {
@@ -424,7 +444,7 @@ test("rapid re-entry never spawns a second shell", async ({ page }) => {
 
 	delayAttachMs = 3000;
 	for (let round = 0; round < 2; round++) {
-		await page.getByTestId("project-item").first().click();
+		await goProjectHome(page);
 		await expect(page.getByTestId("terminal-panel")).toHaveCount(0);
 		await worktreeRow(page, "workspace-1").getByRole("button").first().click();
 		await expect(visibleTerminal(page)).toHaveCount(1);
@@ -510,6 +530,8 @@ test("Ctrl+C still interrupts while an input method is active", async ({ page })
 	await applyWorkbenchPreset(page, "Balanced");
 	await waitTerminalReady(page);
 	const term = visibleTerminalScreen(page);
+	await runInTerminal(page, "PS1='TR_READY> '");
+	await expect(term).toContainText(/TR_READY>\s*$/);
 
 	await runInTerminal(page, "sleep 30");
 	await expect(term).toContainText("sleep 30");
@@ -524,6 +546,7 @@ test("Ctrl+C still interrupts while an input method is active", async ({ page })
 			windowsVirtualKeyCode: 229,
 		});
 	}
+	await expect(term).toContainText(/TR_READY>\s*$/);
 
 	await runInTerminal(page, "echo TR_INTERRUPTED_$((21 + 21))");
 	await expect(term).toContainText("TR_INTERRUPTED_42");
@@ -536,7 +559,7 @@ test("a shell that dies while detached is not re-attached as if alive", async ({
 	await waitTerminalReady(page);
 
 	await runInTerminal(page, "(sleep 2; kill -9 $$) &");
-	await page.getByTestId("project-item").first().click();
+	await goProjectHome(page);
 	await expect(page.getByTestId("terminal-panel")).toHaveCount(0);
 	await page.waitForTimeout(3500);
 

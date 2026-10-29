@@ -7,6 +7,7 @@ import {
 	enterDefaultWorkspace,
 	openFixtureProject,
 	revealWorkbenchTool,
+	selectSessionRow,
 	startNewChat,
 	worktreeRows,
 } from "./fixtures/app";
@@ -14,7 +15,19 @@ import { E2E_DATA_DIR } from "./fixtures/paths";
 
 const chatTabs = (page: Page) => page.locator('[data-testid="editor-tab"][data-kind="chat"]');
 const activeTab = (page: Page) => page.locator('[data-testid="editor-tab"][data-active="true"]');
+const openChatRows = (page: Page) =>
+	page.locator('[data-testid="workspace-session"][data-open="true"]');
 const currentHash = (page: Page) => page.evaluate(() => window.location.hash);
+
+/** The strip shows one chat chip, so a chat's identity is read while it is the visible one. */
+async function visibleChat(page: Page): Promise<{ sessionId: string; placementId: string }> {
+	const tab = chatTabs(page);
+	await expect(tab).toHaveCount(1);
+	const sessionId = await tab.getAttribute("data-session-id");
+	const placementId = await tab.getByRole("tab").getAttribute("data-layout-tab-id");
+	if (!sessionId || !placementId) throw new Error("chat tab carries no session or layout id");
+	return { sessionId, placementId };
+}
 
 function chatIdFromHash(hash: string): string {
 	const encoded = hash.split("/chats/")[1]?.split("/")[0];
@@ -42,26 +55,22 @@ test("reloading from the older of two chats returns to that exact chat without r
 }) => {
 	await openFixtureProject(page);
 	await createWorkspaceViaDialog(page);
-	await expect(chatTabs(page)).toHaveCount(1);
+	const older = await visibleChat(page);
 	await startNewChat(page);
-	await expect(chatTabs(page)).toHaveCount(2);
+	await expect(openChatRows(page)).toHaveCount(2);
 
-	const older = chatTabs(page).first();
-	const olderPlacementId = await older.getByRole("tab").getAttribute("data-layout-tab-id");
-	if (!olderPlacementId) throw new Error("chat tab carries no layout id");
-	await older.getByRole("tab").click();
-	await expect(older).toHaveAttribute("data-active", "true");
+	await selectSessionRow(page, older.sessionId);
+	await expect.poll(async () => chatIdFromHash(await currentHash(page))).toBe(older.sessionId);
 	const hash = await currentHash(page);
-	chatIdFromHash(hash);
 
 	await page.reload();
 	await expect(page.getByTestId("connection-status")).toHaveAttribute("data-status", "connected");
 	await expect(activeWorktreeRow(page)).toHaveCount(1);
 	await expect(activeTab(page).getByRole("tab")).toHaveAttribute(
 		"data-layout-tab-id",
-		olderPlacementId,
+		older.placementId,
 	);
-	await expect(chatTabs(page)).toHaveCount(2);
+	await expect(openChatRows(page)).toHaveCount(2);
 	expect(await currentHash(page)).toBe(hash);
 });
 
@@ -71,26 +80,20 @@ test("a directly opened exact-chat fragment restores that chat; two tabs keep in
 }) => {
 	await openFixtureProject(page);
 	await createWorkspaceViaDialog(page);
-	await expect(chatTabs(page)).toHaveCount(1);
+	const first = await visibleChat(page);
 	await startNewChat(page);
-	await expect(chatTabs(page)).toHaveCount(2);
+	const second = await visibleChat(page);
+	await expect(openChatRows(page)).toHaveCount(2);
+	const firstPlacementId = first.placementId;
+	const secondPlacementId = second.placementId;
 
-	const first = chatTabs(page).first();
-	await first.getByRole("tab").click();
-	await expect(first).toHaveAttribute("data-active", "true");
+	await selectSessionRow(page, first.sessionId);
+	await expect.poll(async () => chatIdFromHash(await currentHash(page))).toBe(first.sessionId);
 	const firstHash = await currentHash(page);
-	chatIdFromHash(firstHash);
-	const firstPlacementId = await first.getByRole("tab").getAttribute("data-layout-tab-id");
-	if (!firstPlacementId) throw new Error("first chat carries no layout id");
 
-	const second = chatTabs(page).last();
-	await second.getByRole("tab").click();
-	await expect(second).toHaveAttribute("data-active", "true");
-	await expect.poll(() => currentHash(page)).not.toBe(firstHash);
+	await selectSessionRow(page, second.sessionId);
+	await expect.poll(async () => chatIdFromHash(await currentHash(page))).toBe(second.sessionId);
 	const secondHash = await currentHash(page);
-	chatIdFromHash(secondHash);
-	const secondPlacementId = await second.getByRole("tab").getAttribute("data-layout-tab-id");
-	if (!secondPlacementId) throw new Error("second chat carries no layout id");
 
 	const page2 = await context.newPage();
 	await page2.goto(`/${firstHash}`);

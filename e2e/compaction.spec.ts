@@ -34,8 +34,8 @@ test("a compacted transcript marks where the summarized messages were", async ({
 	);
 	utimesSync(chat.path, new Date(BASE_TS), new Date(BASE_TS));
 
-	await expect(defaultWorkspaceRow(page)).toBeVisible();
 	await enterDefaultWorkspace(page);
+	await expect(defaultWorkspaceRow(page)).toBeVisible();
 	await expect(page.locator('[data-testid="editor-tab"][data-kind="chat"]')).toHaveCount(1);
 
 	await expect(page.getByText("kept question")).toBeVisible();

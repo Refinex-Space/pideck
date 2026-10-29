@@ -4,6 +4,7 @@ import { expect, type Page, test } from "@playwright/test";
 import {
 	chooseNewSessionTarget,
 	createWorkspaceViaDialog,
+	goProjectHome,
 	openAppFresh,
 	openAppSettings,
 	openFixtureProject,
@@ -163,7 +164,11 @@ test("the Welcome trust notice names a project's Pi resources, grants them, and 
 		const notice = page.getByTestId("project-trust-notice");
 		await expect(notice).toHaveAttribute("data-state", "untrusted");
 		await expect(notice).toContainText("1 skill and its own Pi resources");
-		await expect(page.getByTestId("project-trust-enables")).toHaveText("Trust loads its prompts.");
+		// Pi gates `.agents/skills` in every ancestor; on Windows the fixture sits under the user profile,
+		// so a developer's own `~/.agents/skills` legitimately adds skills to what trust loads.
+		await expect(page.getByTestId("project-trust-enables")).toHaveText(
+			/^Trust loads its (skills and )?prompts\.$/,
+		);
 		await expect(page.getByTestId("project-untrust-button")).toHaveCount(0);
 
 		await page.getByTestId("project-trust-button").click();
@@ -189,7 +194,7 @@ test("a project with specs offers Start building over Set up, beside the project
 	await expect(page.getByTestId("welcome-title")).toHaveText("sample-project");
 	const scope = page.getByTestId("scope-context");
 	await expect(scope).toHaveAttribute("data-context", "project-home");
-	await expect(scope).toContainText("sample-project");
+	// The sidebar names the project; the location pill only says where you are.
 	await expect(scope).toContainText("Project home");
 	await expect(page.getByTestId("welcome-cta")).toContainText("Start building");
 	await expect(page.getByTestId("welcome-action")).toHaveCount(1);
@@ -282,8 +287,7 @@ test("clicking a project returns to its Welcome, deselecting the active workspac
 	await expect(page.getByTestId("center-tabs")).toBeVisible();
 	await expect(page.locator('[data-testid="workspace-item"][data-active="true"]')).toHaveCount(1);
 
-	await page.getByTestId("project-item").first().getByText("sample-project").click();
-	await expect(page.getByTestId("welcome")).toBeVisible();
+	await goProjectHome(page);
 	await expect(page.getByTestId("center-tabs")).toHaveCount(0);
 	await expect(page.locator('[data-testid="workspace-item"][data-active="true"]')).toHaveCount(0);
 

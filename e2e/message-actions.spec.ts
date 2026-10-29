@@ -5,6 +5,7 @@ import {
 	enterDefaultWorkspace,
 	openAppSettings,
 	openFixtureProject,
+	openPersistedChat,
 } from "./fixtures/app";
 import { E2E_FIXTURE_REPO } from "./fixtures/paths";
 import { seedWorkspaceSession } from "./fixtures/sessions";
@@ -56,8 +57,9 @@ test("a large user message with an agent reply collapses, and Show more re-expan
 		],
 	});
 
-	await expect(defaultWorkspaceRow(page)).toBeVisible();
 	await enterDefaultWorkspace(page);
+	await expect(defaultWorkspaceRow(page)).toBeVisible();
+	await openPersistedChat(page, "large message chat");
 	await expect(page.locator('[data-testid="editor-tab"][data-kind="chat"]')).toHaveCount(1);
 
 	const body = page.getByTestId("user-message-body");
@@ -89,8 +91,9 @@ test("a huge message expands into a bounded, scrollable body instead of a giant 
 		],
 	});
 
-	await expect(defaultWorkspaceRow(page)).toBeVisible();
 	await enterDefaultWorkspace(page);
+	await expect(defaultWorkspaceRow(page)).toBeVisible();
+	await openPersistedChat(page, "huge message chat");
 	await expect(page.locator('[data-testid="editor-tab"][data-kind="chat"]')).toHaveCount(1);
 
 	const body = page.getByTestId("user-message-body");
@@ -123,8 +126,9 @@ test("an unbounded transcript keeps the user message within the visible pane", a
 	});
 
 	await page.setViewportSize({ width: 620, height: 900 });
-	await expect(defaultWorkspaceRow(page)).toBeVisible();
 	await enterDefaultWorkspace(page);
+	await expect(defaultWorkspaceRow(page)).toBeVisible();
+	await openPersistedChat(page, "unbounded paste chat");
 	await expect(page.locator('[data-testid="editor-tab"][data-kind="chat"]')).toHaveCount(1);
 
 	try {
@@ -162,8 +166,9 @@ test("a large user message with no agent reply stays expanded", async ({ page })
 		messages: [{ role: "user", text: LARGE_TEXT, timestamp: BASE_TS }],
 	});
 
-	await expect(defaultWorkspaceRow(page)).toBeVisible();
 	await enterDefaultWorkspace(page);
+	await expect(defaultWorkspaceRow(page)).toBeVisible();
+	await openPersistedChat(page, "unanswered large message chat");
 	await expect(page.locator('[data-testid="editor-tab"][data-kind="chat"]')).toHaveCount(1);
 
 	const body = page.getByTestId("user-message-body");
@@ -182,8 +187,9 @@ test("a short user message has no collapse controls", async ({ page }) => {
 		],
 	});
 
-	await expect(defaultWorkspaceRow(page)).toBeVisible();
 	await enterDefaultWorkspace(page);
+	await expect(defaultWorkspaceRow(page)).toBeVisible();
+	await openPersistedChat(page, "short message chat");
 	await expect(page.locator('[data-testid="editor-tab"][data-kind="chat"]')).toHaveCount(1);
 
 	const body = page.getByTestId("user-message-body");
@@ -209,8 +215,9 @@ test("only the round's final agent answer carries a copy action, not intermediat
 		],
 	});
 
-	await expect(defaultWorkspaceRow(page)).toBeVisible();
 	await enterDefaultWorkspace(page);
+	await expect(defaultWorkspaceRow(page)).toBeVisible();
+	await openPersistedChat(page, "intermediate vs final chat");
 	await expect(page.locator('[data-testid="editor-tab"][data-kind="chat"]')).toHaveCount(1);
 
 	const assistantMessages = page.locator('[data-testid="chat-message"][data-role="assistant"]');
@@ -221,7 +228,7 @@ test("only the round's final agent answer carries a copy action, not intermediat
 	await expect(final.getByTestId("chat-copy")).toHaveCount(1);
 });
 
-test("copy actions share the content line at the assistant left and user right without overlap", async ({
+test("copy actions reserve a row below content at the assistant left and user right", async ({
 	page,
 }) => {
 	await openFixtureProject(page);
@@ -237,8 +244,9 @@ test("copy actions share the content line at the assistant left and user right w
 		],
 	});
 
-	await expect(defaultWorkspaceRow(page)).toBeVisible();
 	await enterDefaultWorkspace(page);
+	await expect(defaultWorkspaceRow(page)).toBeVisible();
+	await openPersistedChat(page, "copy spacing chat");
 	await expect(page.locator('[data-testid="editor-tab"][data-kind="chat"]')).toHaveCount(1);
 
 	const userMessage = page.locator('[data-testid="chat-message"][data-role="user"]');
@@ -252,6 +260,9 @@ test("copy actions share the content line at the assistant left and user right w
 		assistantBox,
 		assistantCopyBox,
 		assistantContentBox,
+		userActionsBox,
+		assistantActionsBox,
+		assistantIconBox,
 	] = await Promise.all([
 		userMessage.boundingBox(),
 		userMessage.getByTestId("chat-copy").boundingBox(),
@@ -259,6 +270,9 @@ test("copy actions share the content line at the assistant left and user right w
 		assistantMessage.boundingBox(),
 		assistantMessage.getByTestId("chat-copy").boundingBox(),
 		assistantMessage.locator("p").last().boundingBox(),
+		userMessage.getByTestId("message-actions").boundingBox(),
+		assistantMessage.getByTestId("message-actions").boundingBox(),
+		assistantMessage.getByTestId("chat-copy").locator("svg").boundingBox(),
 	]);
 	if (
 		!userBox ||
@@ -266,21 +280,23 @@ test("copy actions share the content line at the assistant left and user right w
 		!userContentBox ||
 		!assistantBox ||
 		!assistantCopyBox ||
-		!assistantContentBox
+		!assistantContentBox ||
+		!userActionsBox ||
+		!assistantActionsBox ||
+		!assistantIconBox
 	) {
 		throw new Error("expected message, content, and copy-action boxes to be visible");
 	}
 
-	expectContained(assistantCopyBox, assistantBox);
-	expectContained(userCopyBox, userBox);
-	expect(Math.abs(assistantCopyBox.x - assistantBox.x)).toBeLessThan(2);
+	expectContained(assistantCopyBox, assistantActionsBox);
+	expectContained(userCopyBox, userActionsBox);
+	expect(Math.abs(assistantIconBox.x - assistantBox.x)).toBeLessThan(2);
 	expect(Math.abs(userBox.x + userBox.width - (userCopyBox.x + userCopyBox.width))).toBeLessThan(2);
-	expect(assistantCopyBox.x + assistantCopyBox.width).toBeLessThanOrEqual(
-		assistantContentBox.x + 1,
-	);
-	expect(userContentBox.x + userContentBox.width).toBeLessThanOrEqual(userCopyBox.x + 1);
-	expect(Math.abs(boxBottom(assistantCopyBox) - boxBottom(assistantContentBox))).toBeLessThan(2);
-	expect(Math.abs(boxBottom(userCopyBox) - boxBottom(userContentBox))).toBeLessThan(2);
+	expect(assistantActionsBox.y).toBeGreaterThanOrEqual(boxBottom(assistantContentBox) - 1);
+	expect(userActionsBox.y).toBeGreaterThanOrEqual(boxBottom(userContentBox) - 1);
+	await assistantMessage.hover();
+	await expect(assistantMessage.getByTestId("message-actions")).toHaveCSS("opacity", "1");
+	expect(await assistantMessage.boundingBox()).toEqual(assistantBox);
 });
 
 test("copy actions copy the full source of both user and agent messages", async ({ page }) => {
@@ -298,8 +314,9 @@ test("copy actions copy the full source of both user and agent messages", async 
 		],
 	});
 
-	await expect(defaultWorkspaceRow(page)).toBeVisible();
 	await enterDefaultWorkspace(page);
+	await expect(defaultWorkspaceRow(page)).toBeVisible();
+	await openPersistedChat(page, "copy chat");
 	await expect(page.locator('[data-testid="editor-tab"][data-kind="chat"]')).toHaveCount(1);
 
 	const userMessage = page.locator('[data-testid="chat-message"][data-role="user"]');

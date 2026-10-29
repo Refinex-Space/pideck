@@ -331,6 +331,13 @@ function announceDisplaced(id: string, caller: string): void {
 	pushToClient(caller, WS_CHANNELS.terminalDetached, push);
 }
 
+// See SPEC: on Windows these reports reach ConPTY and can swallow the keystroke that follows.
+const FOCUS_REPORTS: ReadonlySet<string> = new Set(["\x1b[I", "\x1b[O"]);
+
+export function forwardsToPty(data: string, platform: string = process.platform): boolean {
+	return platform !== "win32" || !FOCUS_REPORTS.has(data);
+}
+
 export function writeTerminal(id: string, data: string, caller: string): string | null {
 	assertTerminalData(data);
 	const entry = attachedEntry(id, caller);
@@ -338,7 +345,7 @@ export function writeTerminal(id: string, data: string, caller: string): string 
 		announceDisplaced(id, caller);
 		return null;
 	}
-	entry.pty.write(data);
+	if (forwardsToPty(data)) entry.pty.write(data);
 	return entry.workspaceId;
 }
 

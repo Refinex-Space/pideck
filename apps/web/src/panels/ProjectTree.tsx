@@ -769,7 +769,8 @@ function WorkspaceRow({
 	const isDefault = isDefaultWorkspace(workspace);
 	const isExternal = isExternalWorkspace(workspace);
 	const { chats, refresh } = useWorkspaceChats(workspace.id);
-	const listsChats = workspaceListsChats(workspace, chats.length);
+	// Only the project folder trades its row for its chat rows; other workspaces list chats under their row.
+	const headerless = isDefault && workspaceListsChats(workspace, chats.length);
 	const isSettled = settled !== null;
 	const settleBlocked = isRunning || needsAttention;
 	const Icon = isExternal
@@ -865,7 +866,7 @@ function WorkspaceRow({
 
 	return (
 		<li
-			{...(listsChats
+			{...(headerless
 				? {
 						"data-testid": "workspace-item",
 						"data-kind": workspace.kind ?? "worktree",
@@ -875,7 +876,7 @@ function WorkspaceRow({
 					}
 				: {})}
 		>
-			{listsChats ? null : (
+			{headerless ? null : (
 				<fieldset
 					aria-label={displayName}
 					data-testid="workspace-item"

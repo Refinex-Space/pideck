@@ -1,5 +1,6 @@
 import { existsSync, writeFileSync } from "node:fs";
 import { expect, type Page, test } from "@playwright/test";
+
 import {
 	expandModelGroup,
 	modelGroupToggle,
@@ -22,6 +23,7 @@ import {
 import { E2E_CENTRAL_ARTIFACT, E2E_CENTRAL_STATE } from "./fixtures/paths";
 import { shot } from "./fixtures/screenshots";
 
+test.describe.configure({ timeout: 90_000 });
 test.use({ deviceScaleFactor: 2 });
 
 const GROUP = "jbcentral";

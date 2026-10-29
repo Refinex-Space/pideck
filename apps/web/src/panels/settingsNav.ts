@@ -1,5 +1,4 @@
 import {
-	type RemixiconComponentType,
 	RiApps2Line,
 	RiBrainLine,
 	RiChat2Line,
@@ -23,16 +22,19 @@ import {
 	HOST_ENVIRONMENT_PROTOCOL_VERSION,
 	LOCALES_PROTOCOL_VERSION,
 	MCP_PROTOCOL_VERSION,
+	NETWORK_PROXY_PROTOCOL_VERSION,
 	WORKSPACE_SETTLE_PROTOCOL_VERSION,
 } from "@thinkrail/contracts";
 import type { MessageKey } from "@thinkrail/locales";
 import type { Translator } from "@thinkrail/locales/react";
+import { Network } from "lucide-react";
+import type { ComponentType } from "react";
 import { SettingsSection } from "@/store";
 
 export interface SettingsNavSection {
 	id: SettingsSection;
 	label: MessageKey;
-	icon: RemixiconComponentType;
+	icon: ComponentType<{ className?: string | undefined }>;
 	requiresInjectedContent?: true;
 	requiresProtocolVersion?: number;
 }
@@ -86,6 +88,12 @@ const NAV_GROUPS: SettingsNavGroup[] = [
 	{
 		label: "settings.nav.group.system",
 		sections: [
+			{
+				id: SettingsSection.Network,
+				label: "network.title",
+				icon: Network,
+				requiresProtocolVersion: NETWORK_PROXY_PROTOCOL_VERSION,
+			},
 			{
 				id: SettingsSection.Workspaces,
 				label: "settings.nav.workspaces",

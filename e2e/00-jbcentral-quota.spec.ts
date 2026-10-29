@@ -9,6 +9,20 @@ import {
 	waitForCentralState,
 } from "./fixtures/jbcentral";
 import { E2E_CENTRAL_STATE } from "./fixtures/paths";
+import { E2eWire } from "./fixtures/wire";
+
+test.describe.configure({ timeout: 90_000 });
+
+test.beforeEach(async () => {
+	const wire = await E2eWire.connect();
+	try {
+		await wire.request("settings.update", {
+			config: { jbcentralQuotaEnabled: true, jbcentralQuotaRefreshSeconds: 30 },
+		});
+	} finally {
+		wire.close();
+	}
+});
 
 const quota = (page: import("@playwright/test").Page) => page.getByTestId("jbcentral-quota");
 

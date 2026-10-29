@@ -132,6 +132,7 @@ import { githubAuthStatus, githubRefresh } from "../github";
 import { clampLimit, getHistoryIndex } from "../history";
 import { localesDir, readLocalLocales } from "../locales";
 import { logger } from "../log";
+import { diagnoseNetwork, networkProxyStatus, updateNetworkProxy } from "../network";
 import {
 	deleteRemoteBranch,
 	mergePr,
@@ -1293,6 +1294,9 @@ const handlers: WsHandlers = {
 		return updateConfig(config);
 	},
 	"environment.get": () => hostEnvironmentStatus(),
+	"network.get": (params) => networkProxyStatus(params.refresh === true),
+	"network.update": (params) => updateNetworkProxy(params),
+	"network.diagnose": (params) => diagnoseNetwork(params.provider),
 	"environment.update": (params) => updateHostEnvironment(params.environment),
 	"feedback.respond": (params) => {
 		respondToInterview(params.action);

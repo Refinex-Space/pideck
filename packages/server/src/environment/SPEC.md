@@ -63,3 +63,14 @@ ThinkRail terminal uses the same config folder.
   gains a scoped agent dir.
 - **Consequence the user accepted:** pi keeps transcripts under `<agentDir>/sessions`, so switching the
   folder hides chats made under another one until switched back, as in pi's CLI.
+
+## Proxy interaction
+
+Existing proxy variables remain accepted here. Network policy snapshots them after environment application;
+they take priority over the dedicated proxy page. Removing or changing them still requires restart. The
+network page reports that override; it does not silently rewrite environment.json.
+
+Platform tests inject a plain environment map into `applyHostEnvironment` to exercise Windows and POSIX
+case rules independently of the runner's native process.env implementation. Production still targets
+process.env. File privacy tests check POSIX mode 0600 on POSIX and broad-principal access rules in the
+Windows fixture's inherited DACL on Windows, whose stat mode does not represent ACL permissions.

@@ -30,6 +30,7 @@ import type { LoginState } from "../auth";
 import {
 	chatDisplayName,
 	compactAge,
+	FILE_WORKBENCH_GROUP,
 	isAbsolutePath,
 	isMcpActiveState,
 	isMcpAttentionState,
@@ -891,14 +892,27 @@ export function selectFilesTreeView(
 }
 
 export function selectActiveFilePath(
-	state: {
+	state: LayoutAttentionState & {
 		tabsByWorkspace: Record<string, EditorTab[]>;
 		activeTabByWorkspace: Record<string, string | null>;
 	},
 	workspaceId: string,
 ): string | null {
 	const tab = selectActiveEditorTab(state, workspaceId);
-	return tab?.kind === "file" || tab?.kind === "diff" ? normalizePath(tab.path) : null;
+	if (tab?.kind === "file" || tab?.kind === "diff") return normalizePath(tab.path);
+	// The file dock sits beside the Files tree, so its selected resource stays the tree's current
+	// file while focus is elsewhere (usually the chat).
+	const document = state.layoutDocumentsByWorkspace[workspaceId];
+	const attention = state.layoutAttentionByWorkspace[workspaceId];
+	if (!document || !attention) return null;
+	const find = (node: WorkspaceLayoutDocument["center"]): LayoutCenterTab | null => {
+		if (node.kind === "split") return find(node.children[0]) ?? find(node.children[1]);
+		if (node.id !== FILE_WORKBENCH_GROUP) return null;
+		const selectedId = readLayoutSelection(attention, node.id);
+		return node.tabs.find((candidate) => candidate.id === selectedId) ?? node.tabs[0] ?? null;
+	};
+	const docked = find(document.center);
+	return docked?.kind === "file" || docked?.kind === "diff" ? normalizePath(docked.path) : null;
 }
 
 export function selectDiffBaseRef(state: ActiveWorkspaceState, workspaceId: string): string {

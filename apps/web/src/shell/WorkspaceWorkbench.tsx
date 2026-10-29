@@ -59,6 +59,7 @@ import { errorText, getTransport } from "../transport";
 import {
 	currentChatDestination,
 	hydrateChatResource,
+	settleChatAutoOpen,
 	useChatLocationReconciliation,
 	useDeletedChatPlacementReconciliation,
 	useWorkspaceChatCatalogReconciliation,
@@ -831,8 +832,11 @@ export function WorkspaceWorkbench({
 						return;
 					}
 					const completeClose = () => {
-						const latest = useAppStore.getState().layoutDocumentsByWorkspace[workspaceId];
+						const requested = useAppStore.getState();
+						const latest = requested.layoutDocumentsByWorkspace[workspaceId];
 						if (!latest) return;
+						if (tab.kind === "chat")
+							settleChatAutoOpen(workspaceId, requested.connectionGeneration);
 						const prepared = prepare(latest);
 						const closedIdentity = layoutResourceIdentity(tab);
 						void commitWorkspaceLayout(workspaceId, prepared.document, { baseDocument: latest })

@@ -17,6 +17,7 @@ test("opens a file in a center Monaco tab, focuses on re-open, and closes", asyn
 
 	await readme.dblclick();
 	await expect(page.getByTestId("editor-tab").filter({ hasText: "README.md" })).toBeVisible();
+	await expect(chatTab).toHaveCount(0);
 	await expect(page.getByTestId("markdown-preview")).toContainText("sample-project");
 	await expect(page.getByTestId("view-toggle-markdown")).toHaveAttribute("data-active", "true");
 

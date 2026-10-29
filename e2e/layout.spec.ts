@@ -60,8 +60,23 @@ async function openKeptFiles(page: Page, names: string[]): Promise<void> {
 	await revealWorkbenchTool(page, "files");
 	for (const name of names) {
 		await page.getByTestId("file-node").filter({ hasText: name }).dblclick();
+		await moveFileToConversation(page, name);
 	}
 	await expect(page.getByTestId("editor-tab")).toHaveCount(names.length);
+}
+
+async function moveFileToConversation(page: Page, name: string): Promise<void> {
+	await expect(page.getByTestId("editor-tab").filter({ hasText: name })).toBeVisible();
+	const tab = page
+		.locator('[data-group-id="pideck-file-workbench"] [data-testid="editor-tab"]')
+		.filter({ hasText: name });
+	if (!(await tab.count())) return;
+	await tab.click({ button: "right" });
+	await page
+		.getByRole("menuitem", { name: /^Move to center pane/ })
+		.first()
+		.click();
+	await expect(tab).toHaveCount(0);
 }
 
 async function width(locator: Locator): Promise<number> {
@@ -413,6 +428,9 @@ test("one local frame survives workspace switches while resource tabs stay works
 	await createWorkspaceViaDialog(page);
 	await expect(page.getByTestId("editor-tab").filter({ hasText: "README.md" })).toHaveCount(0);
 	await expect(page.getByTestId("bottom-panel")).toHaveCount(0);
+	// The right ratio projects differently while the file dock holds an editor; compare like with like.
+	await revealWorkbenchTool(page, "files");
+	await page.getByTestId("file-node").filter({ hasText: "notes.txt" }).dblclick();
 	await expect.poll(() => width(page.getByTestId("right-stack"))).toBeCloseTo(resized, 0);
 
 	await activateDefaultWorkspace(page);
@@ -764,7 +782,8 @@ test("keyboard and menu commands reorder, search, recursively split, and explici
 
 	const centerStrip = page.getByTestId("center-tab-strip").first();
 	const searchTabs = centerStrip.getByRole("button", { name: "Search open tabs" });
-	await expect(searchTabs).toHaveCount(0);
+	// A group holding a file always offers the tab search, at any width.
+	await expect(searchTabs).toBeVisible();
 
 	await page.setViewportSize({ width: 620, height: 800 });
 	await expect(searchTabs).toBeVisible();
@@ -774,17 +793,7 @@ test("keyboard and menu commands reorder, search, recursively split, and explici
 	await expect(tabs.filter({ hasText: "notes.txt" })).toHaveAttribute("data-active", "true");
 	await expect(tabs.filter({ hasText: "notes.txt" }).getByRole("tab")).toBeFocused();
 	await page.setViewportSize({ width: 1440, height: 900 });
-	await expect(searchTabs).toHaveCount(0);
-
-	await page.setViewportSize({ width: 620, height: 800 });
-	await searchTabs.click();
-	await expect(page.getByPlaceholder("Find an open tab…")).toBeVisible();
-	await page.setViewportSize({ width: 1440, height: 900 });
-	await expect(searchTabs).toHaveCount(0);
-	await page.setViewportSize({ width: 620, height: 800 });
 	await expect(searchTabs).toBeVisible();
-	await expect(page.getByPlaceholder("Find an open tab…")).toHaveCount(0);
-	await page.setViewportSize({ width: 1440, height: 900 });
 
 	await tabs.filter({ hasText: "notes.txt" }).click({ button: "right" });
 	await page.getByRole("menuitem", { name: "Split right" }).click();
@@ -824,9 +833,14 @@ test("each center group owns an independent preview slot", async ({ page }) => {
 	await collapseToOneCenterGroup(page);
 	await revealWorkbenchTool(page, "files");
 	await page.getByTestId("file-node").filter({ hasText: "notes.txt" }).dblclick();
+	await moveFileToConversation(page, "notes.txt");
 	await page.getByTestId("file-node").filter({ hasText: "README.md" }).click();
 
 	const notes = page.getByTestId("editor-tab").filter({ hasText: "notes.txt" });
+	await expect(page.getByTestId("center-group")).toHaveCount(1);
+	await expect
+		.poll(() => width(page.getByTestId("center-group").filter({ has: notes })))
+		.toBeGreaterThanOrEqual(640);
 	await notes.click({ button: "right" });
 	await page.getByRole("menuitem", { name: "Split right" }).click();
 	await expect(page.getByTestId("center-group")).toHaveCount(2);
@@ -901,6 +915,15 @@ test("deferred opens stay with their request-time group and reroute only when it
 	await openDefaultWorkbench(page);
 	await collapseToOneCenterGroup(page);
 	await openKeptFiles(page, ["README.md", "notes.txt"]);
+	await expect
+		.poll(() =>
+			width(
+				page
+					.getByTestId("center-group")
+					.filter({ has: page.getByTestId("editor-tab").filter({ hasText: "notes.txt" }) }),
+			),
+		)
+		.toBeGreaterThanOrEqual(640);
 	await page.getByTestId("editor-tab").filter({ hasText: "notes.txt" }).click({ button: "right" });
 	await page.getByRole("menuitem", { name: "Split right" }).click();
 	await expect(page.getByTestId("center-group")).toHaveCount(2);

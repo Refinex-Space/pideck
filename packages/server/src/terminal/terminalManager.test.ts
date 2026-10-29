@@ -9,6 +9,7 @@ import {
 	attachTerminal,
 	closeTerminalTab,
 	closeWorkspaceTerminals,
+	forwardsToPty,
 	listTerminals,
 	persistTerminalSessions,
 	reserveTerminal,
@@ -511,6 +512,20 @@ test(
 	},
 	TERMINAL_TEST_TIMEOUT_MS,
 );
+
+describe("forwardsToPty", () => {
+	test("Windows keeps standalone focus reports away from ConPTY", () => {
+		expect(forwardsToPty("\x1b[I", "win32")).toBe(false);
+		expect(forwardsToPty("\x1b[O", "win32")).toBe(false);
+	});
+
+	test("keystrokes, other sequences and other platforms are forwarded", () => {
+		for (const data of ["e", "\r", "\x1b[A", "\x1b[Ie", "\x1b"])
+			expect(forwardsToPty(data, "win32")).toBe(true);
+		expect(forwardsToPty("\x1b[I", "linux")).toBe(true);
+		expect(forwardsToPty("\x1b[O", "darwin")).toBe(true);
+	});
+});
 
 describe("membership survives an ungraceful exit", () => {
 	test("a tab closed before a crash does not come back", () => {

@@ -153,10 +153,7 @@ function GitDiffPane({ tab }: { tab: GitDiffTab }) {
 
 	return (
 		<div data-testid="diff-pane" className="flex h-full min-h-0 flex-col">
-			<div
-				data-testid="diff-path"
-				className="flex h-32 shrink-0 items-center gap-4 border-border-default border-b bg-container-workspace-bg px-12"
-			>
+			<div className="flex h-32 shrink-0 items-center gap-4 border-border-default border-b bg-container-workspace-bg px-12">
 				<span
 					data-testid="diff-path"
 					title={tab.path}

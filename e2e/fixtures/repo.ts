@@ -24,6 +24,8 @@ export function seedFixtureRepo(): void {
 	git("config", "user.email", "e2e@thinkrail.test");
 	git("config", "user.name", "ThinkRail E2E");
 	git("config", "commit.gpgsign", "false");
+	// Fixtures are LF (an LFS pointer must be); Git for Windows' system autocrlf would check them out as CRLF.
+	git("config", "core.autocrlf", "false");
 	writeFileSync(join(E2E_FIXTURE_REPO, "README.md"), "# sample-project\n");
 	writeFileSync(join(E2E_FIXTURE_REPO, "notes.txt"), "plain-text-fixture\n");
 	writeFileSync(

@@ -42,6 +42,7 @@ export {
 	TODO_NUDGE_PREFIX,
 } from "./domain";
 export type * from "./nativeClient";
+export type * from "./network";
 export type * from "./piProtocol";
 export {
 	assistantToolCallsAreExecutable,

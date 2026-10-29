@@ -78,6 +78,7 @@ import { forgetOpenBranchReview } from "../branch-review";
 import { redeliverInterview, releaseInterview, setFeedbackPublisher } from "../feedback";
 import { watchLocalLocales } from "../locales";
 import { logger, observeLoggedErrors } from "../log";
+import { initializeNetworkProxy } from "../network";
 import { loadWorkspaces } from "../persistence";
 import {
 	getProjects,
@@ -221,6 +222,7 @@ function sameHostUpdateRelease(
 }
 
 export async function createServer(options: CreateServerOptions = {}): Promise<RunningServer> {
+	await initializeNetworkProxy();
 	await initializeJbcentralRuntime();
 	getConfig();
 	setPiTrustSeed(piTrustsProjectPath);

@@ -165,7 +165,17 @@ export function JetBrainsAiCard({
 
 	useEffect(() => {
 		if (status.state !== "configuring") return;
-		const timer = setInterval(() => void onChanged(), 500);
+		let refreshing = false;
+		const timer = setInterval(() => {
+			if (refreshing) return;
+			refreshing = true;
+			void Promise.resolve()
+				.then(onChanged)
+				.catch(() => {})
+				.finally(() => {
+					refreshing = false;
+				});
+		}, 500);
 		return () => clearInterval(timer);
 	}, [status.state, onChanged]);
 

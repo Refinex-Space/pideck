@@ -70,6 +70,7 @@ import type {
 	Workspace,
 } from "./domain";
 import { isDelegationRunDetails } from "./domain";
+import type { NetworkDiagnostic, NetworkProxyStatus, NetworkProxyUpdate } from "./network";
 import type {
 	ExtUiResponse,
 	ImageContent,
@@ -122,7 +123,8 @@ export type TemplateReadLocation =
 	| { projectId: string; workspaceId?: never }
 	| { workspaceId?: never; projectId?: never };
 
-export const PROTOCOL_VERSION = 94;
+export const PROTOCOL_VERSION = 95;
+export const NETWORK_PROXY_PROTOCOL_VERSION = 95;
 export const FILE_WORKBENCH_PROTOCOL_VERSION = 94;
 export const TOOL_RESPONSE_PROTOCOL_VERSION = 93;
 export const USER_THEMES_PROTOCOL_VERSION = 92;
@@ -341,6 +343,9 @@ export const WS_METHODS = {
 	hostUpdate: "host.update",
 	settingsUpdate: "settings.update",
 	environmentGet: "environment.get",
+	networkGet: "network.get",
+	networkUpdate: "network.update",
+	networkDiagnose: "network.diagnose",
 	environmentUpdate: "environment.update",
 	feedbackRespond: "feedback.respond",
 	clientReportError: "client.reportError",
@@ -966,6 +971,9 @@ export interface WsMethodMap {
 	"host.update": { params: Record<string, never>; result: Ack };
 	"settings.update": { params: { config: AppConfigUpdate }; result: AppConfig };
 	"environment.get": { params: Record<string, never>; result: HostEnvironmentStatus };
+	"network.get": { params: { refresh?: boolean }; result: NetworkProxyStatus };
+	"network.update": { params: NetworkProxyUpdate; result: NetworkProxyStatus };
+	"network.diagnose": { params: { provider: "openai" | "anthropic" }; result: NetworkDiagnostic[] };
 	"environment.update": {
 		params: { environment: HostEnvironment };
 		result: HostEnvironmentUpdateResult;

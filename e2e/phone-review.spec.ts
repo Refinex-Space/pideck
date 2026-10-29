@@ -14,6 +14,17 @@ import { pierreLines, selectPierreLine } from "./fixtures/pierre";
 const worktree = () => join(E2E_DATA_DIR, "worktrees", "sample-project", "workspace-1");
 
 async function goPhone(page: Page): Promise<void> {
+	const dockTab = page.locator(
+		'[data-group-id="pideck-file-workbench"] [data-testid="editor-tab"][data-active="true"]',
+	);
+	if (await dockTab.count()) {
+		await dockTab.click({ button: "right" });
+		await page
+			.getByRole("menuitem", { name: /^Move to center pane/ })
+			.first()
+			.click();
+		await expect(dockTab).toHaveCount(0);
+	}
 	await page.setViewportSize(PHONE_VIEWPORT);
 	await hideAuxiliaryWorkbench(page);
 }

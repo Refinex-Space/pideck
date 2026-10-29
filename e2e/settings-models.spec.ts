@@ -54,13 +54,6 @@ async function disconnectFixtureProvider(page: Page): Promise<void> {
 	await waitForCentralState(page, "supported");
 }
 
-async function openFreshChat(page: Page): Promise<void> {
-	const chatTabs = page.locator('[data-testid="editor-tab"][data-kind="chat"]');
-	const previousChatCount = await chatTabs.count();
-	await startNewChat(page);
-	await expect(chatTabs).toHaveCount(previousChatCount + 1);
-}
-
 test("Models settings save host defaults and apply them to a fresh chat", async ({ page }) => {
 	await openWorkspaceChat(page);
 	const defaults = await readDefaults(page);
@@ -115,7 +108,7 @@ test("Models settings save host defaults and apply them to a fresh chat", async 
 		await section.screenshot({ path: SCREENSHOT_PATH, animations: "disabled" });
 
 		await page.keyboard.press("Escape");
-		await openFreshChat(page);
+		await startNewChat(page);
 		const freshChatModel = page.getByTestId("model-selector").last();
 		await expect(freshChatModel).toBeVisible();
 		await expect(freshChatModel).toContainText(modelName);
@@ -155,7 +148,7 @@ test("without saved defaults, Settings and a fresh chat use the first available 
 		await expect(row.getByTestId("thinking-selector")).toContainText(effortLevel);
 
 		await page.keyboard.press("Escape");
-		await openFreshChat(page);
+		await startNewChat(page);
 		await expect(page.getByTestId("model-selector").last()).toContainText(modelName);
 		await expect(page.getByTestId("thinking-selector").last()).toContainText(effortLevel);
 

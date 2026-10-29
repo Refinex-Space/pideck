@@ -34,8 +34,8 @@ test("a persisted expanded skill renders as one collapsed invocation with its re
 		],
 	});
 
-	await expect(defaultWorkspaceRow(page)).toBeVisible();
 	await enterDefaultWorkspace(page);
+	await expect(defaultWorkspaceRow(page)).toBeVisible();
 	await expect(page.locator('[data-testid="editor-tab"][data-kind="chat"]')).toHaveCount(1);
 
 	const userTurns = page.locator('[data-testid="chat-message"][data-role="user"]');

@@ -376,6 +376,19 @@ asserts the exact mutations. Without a scenario it fails like an unauthenticated
 keeps the gh-less behaviour; `THINKRAIL_GH_OFFLINE` still keeps `pr.open` on the compare hand-off. The reset
 deletes the scenario and log and unsets the ssh config. The host caches repository merge settings per origin
 URL for the whole run, so a spec that sets its own repository settings names its own repository.
+The lane HOME's `.gitconfig` empties `credential.helper` and disallows the `http`/`https` transports, so a
+spec that names an `https://github.com/...` origin (Open PR compare hand-off) never lets the host's background
+fetch reach the network or the developer's credential manager — Git for Windows' system config enables Git
+Credential Manager, whose orphaned helper would otherwise pin the worktree directory past the reset. Test-side
+bare remotes are removed with the retrying `removeTree`, since a host fetch may still hold one on Windows.
+
+**Windows host specifics.** The fixture repository sets `core.autocrlf=false`: fixtures are LF and an LFS
+pointer is only a pointer with LF line ends, while Git for Windows' system config would check them out as CRLF.
+The Windows temp directory lives under the user profile, so the developer's own `~/.agents/skills` is an
+ancestor of every fixture project and Pi's trust gate (which walks every ancestor, unlike its skill loader,
+which stops at the repository root) legitimately counts it; trust-text assertions accept that. `runInTerminal`
+types a space and erases it before each command on Windows: an MSYS shell under ConPTY may swallow the first key
+after a resize, and every reattach nudges one (see `packages/server/src/terminal/SPEC.md`).
 
 Every concurrent lane derives a distinct data dir, HOME, pi-agent dir, fixture repository, binary cache,
 desktop cache/state plus ready/control files, Playwright transform cache, restart artifacts,
@@ -510,3 +523,52 @@ Monaco keys and native EditContext otherwise disagree with Playwright's Windows 
 on macOS. Undo assertions allow the editor's normal input grouping and verify restoration of the original
 source. System-trash failure/recovery and external-editor argv are unit-tested with injected seams;
 browser deletion tests inspect confirmation/cancel rather than touching the user's system Trash.
+
+## Windows fixture executables
+
+Windows host PATH uses the lane's fake-bin directory, a discovered Git for Windows installation,
+and Windows system tools; it never imports the caller's full PATH. Central, VS Code and GitHub SSH
+fixtures reuse the existing shell implementations through native Bun forwarding executables. The gh
+fixture forwards to its existing TypeScript implementation. Forwarders preserve argv with direct process
+spawning, carry reviewed absolute targets in adjacent JSON, and use a content/version-addressed temporary
+cache across lanes. Windows shell scripts have .sh names so executable lookup cannot select them instead
+of the native entry. Installation/removal tests rename the .exe only; sidecar configuration stays local.
+The Windows forwarder normalizes only the known shell-fixture path variables, never provider credentials.
+Interactive Windows terminals start Git Bash directly under ConPTY. A persistent forwarding process
+would make the idle shell look like a running child command and incorrectly trigger close confirmation.
+`e2eExecutables.test.ts` verifies real Git lookup and literal spaces, quotes and Unicode in stub arguments.
+
+On Windows, fixture directory removal is registered for runner exit: Playwright runs global teardown
+before stopping its webServer plugin, so deleting native stubs or a live process working directory
+there produces EPERM. Synchronous removal still uses bounded retries and propagates failures. POSIX
+keeps its existing global-teardown cleanup. Generic center-layout probes explicitly move files from the
+new file dock into conversation groups before testing per-group preview and recursive splitting, and
+wait for actual split width after the dock closes; dedicated file-dock probes retain the default routing.
+
+Fixture temp and repository roots use `realpathSync.native`: on Windows, ordinary realpath can retain
+8.3 aliases while Git reports long names. Pi's per-CWD session directory is spelling-sensitive; using
+ADMINI~1 for seeded histories and Administrator for workspace lookup makes valid fixtures invisible.
+The native-root regression pins both root spelling and the derived Pi history bucket. Initial chat
+creation waits for the real chat tab within the host request bound, rather than clicking the transient
+Starting state or assuming cold resource loading finishes within the default five-second assertion.
+
+Per-test resets dispose live sessions and explicitly close every terminal tab through the existing host
+wire before deleting worktree fixtures. A detached PTY still owns its Windows working directory even
+when the browser view is gone; catalog-only terminals do not reproduce that lock. `fixture-reset.spec.ts`
+attaches a real PTY, then verifies removal and subsequent workspace creation.
+
+Configuring-provider polling has a delayed-response browser regression: a one-second status response
+must still settle despite the 500 ms fallback cadence. Central's CLI/runtime journeys allow 30 seconds
+per exact lifecycle assertion and 90 seconds per multi-stage scenario. Windows measurements exceeded the
+old 15-second assertion during SDK initialization; the independent slow-response UI regression retains
+its 10-second bound. Context-settings scenarios use the same budget for their Central-backed setup.
+
+Navigation helpers reopen the project list after using its name to reach Home; row-toggle tests exercise
+the name directly. Tests needing a project-folder row create a chat first, and message-rendering tests
+explicitly open seeded history instead of relying on automatic restoration. New-chat helpers wait for
+the new tab before callers inspect it. Copy geometry follows the reserved hover strip documented by chat.
+
+The terminal cursor query uses the fixture's Bash, without Python/termios. Windows ConPTY answers
+DSR natively, so its live-response check inspects the consumed cursor reply; POSIX also asserts the browser
+wire reply. Both retain the no-input-on-replay check. Interrupt tests await the returned shell prompt before
+typing another command, avoiding input flushed while the foreground process is still exiting.

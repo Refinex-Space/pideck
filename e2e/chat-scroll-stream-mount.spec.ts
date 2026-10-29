@@ -5,7 +5,7 @@ import {
 	openAppSettings,
 	openFixtureProject,
 	openPersistedChat,
-	startNewChat,
+	selectSessionRow,
 } from "./fixtures/app";
 import { E2E_FIXTURE_REPO } from "./fixtures/paths";
 import { seedWorkspaceSession } from "./fixtures/sessions";
@@ -127,6 +127,11 @@ for (const { order, mode, viewport } of cases) {
 			name: title,
 			messages: history(4),
 		});
+		// The strip shows one chat, so the tab-return leaves for another persisted chat from the sidebar.
+		const other = seedWorkspaceSession(realpathSync(E2E_FIXTURE_REPO), {
+			name: `elsewhere ${order} ${mode}${size}`,
+			messages: history(1),
+		});
 		await enterDefaultWorkspace(page);
 		const chatTab = page
 			.locator('[data-testid="editor-tab"][data-kind="chat"]')
@@ -153,10 +158,9 @@ for (const { order, mode, viewport } of cases) {
 			const stream = playStreamReplay(wire(), replay, FRAME_GAP_MS);
 			if (mode === "tab-return") {
 				await new Promise((resolve) => setTimeout(resolve, SWITCH_AFTER_MS));
-				await startNewChat(page);
-				await expect(chatTab).not.toHaveAttribute("data-active", "true");
-				await chatTab.click();
-				await expect(chatTab).toHaveAttribute("data-active", "true");
+				await selectSessionRow(page, other.id);
+				await expect(chatTab).toHaveCount(0);
+				await selectSessionRow(page, seeded.id);
 				activatedAt = await now(page);
 			}
 			await stream;

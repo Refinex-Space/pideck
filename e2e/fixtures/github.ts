@@ -1,6 +1,7 @@
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { removeTree } from "@thinkrail/shared/removeTree";
 import type { FakeGhScenario } from "./fakeGh";
 import { gitAs } from "./git";
 import { E2E_FAKE_BIN_DIR, E2E_GH_LOG, E2E_GH_SCENARIO } from "./paths";
@@ -25,7 +26,7 @@ export function githubOrigin(
 		`${shellQuote(join(E2E_FAKE_BIN_DIR, "github-ssh"))} ${shellQuote(bare)}`,
 	);
 	gitAs(worktree, "config", "ssh.variant", "simple");
-	return { bare, dispose: () => rmSync(bare, { recursive: true, force: true }) };
+	return { bare, dispose: () => removeTree(bare) };
 }
 
 export function writeGhScenario(scenario: FakeGhScenario): void {

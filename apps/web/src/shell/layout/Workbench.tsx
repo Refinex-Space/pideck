@@ -51,6 +51,7 @@ import {
 	type LayoutSide,
 	layoutTabName,
 	moveTabToGroup,
+	primaryCenterGroupId,
 	reconcileAttention,
 	resizeBottomRegion,
 	resizeSideRegion,
@@ -320,9 +321,19 @@ export function Workbench({
 								location?.area === "center"
 									? findCenterGroup(acceptedDocument.center, location.groupId)
 									: null;
+							// An emptied file dock is not rendered, so focus returns to the conversation canvas.
+							const renderedGroup =
+								survivingCenterGroup?.id === FILE_WORKBENCH_GROUP &&
+								survivingCenterGroup.tabs.length === 0
+									? null
+									: survivingCenterGroup;
 							focusLocation = {
 								area: "center",
-								groupId: survivingCenterGroup?.id ?? nextAttention.lastFocusedCenterGroupId,
+								groupId:
+									renderedGroup?.id ??
+									(nextAttention.lastFocusedCenterGroupId === FILE_WORKBENCH_GROUP
+										? primaryCenterGroupId(acceptedDocument)
+										: nextAttention.lastFocusedCenterGroupId),
 							};
 						}
 						const focusTabId = focusLocation

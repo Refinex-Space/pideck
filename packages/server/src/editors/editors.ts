@@ -1,3 +1,4 @@
+import { dirname } from "node:path";
 import type { EditorInfo } from "@thinkrail/contracts";
 import { spawnDetached } from "@thinkrail/shared/spawn";
 
@@ -10,6 +11,9 @@ interface GuiCandidate {
 const GUI_CANDIDATES: GuiCandidate[] = [
 	{ id: "vscode", label: "VS Code", bin: "code" },
 	{ id: "emacs", label: "Emacs", bin: "emacs" },
+	{ id: "zed", label: "Zed", bin: "zed" },
+	{ id: "sublime", label: "Sublime Text", bin: "subl" },
+	{ id: "cursor", label: "Cursor", bin: "cursor" },
 ];
 
 const JETBRAINS_CANDIDATES: { label: string; bin: string }[] = [
@@ -79,13 +83,18 @@ export function revealInFileManager(
 	worktreePath: string,
 	spawn: SpawnFn = defaultSpawn,
 	platform: NodeJS.Platform = process.platform,
+	selectFile = false,
 ): void {
 	const cmd =
 		platform === "darwin"
-			? ["open", worktreePath]
+			? selectFile
+				? ["open", "-R", worktreePath]
+				: ["open", worktreePath]
 			: platform === "win32"
-				? ["explorer", worktreePath]
-				: ["xdg-open", worktreePath];
+				? selectFile
+					? ["explorer", "/select,", worktreePath]
+					: ["explorer", worktreePath]
+				: ["xdg-open", selectFile ? dirname(worktreePath) : worktreePath];
 	try {
 		spawn(cmd);
 	} catch {

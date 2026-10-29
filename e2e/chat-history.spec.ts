@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { expect, test, type WebSocketRoute } from "@playwright/test";
 import { TodoStore } from "pi-todos/core";
 import {
+	closeTabViaMenu,
 	defaultWorkspaceRow,
 	enterDefaultWorkspace,
 	openFixtureProject,
@@ -377,7 +378,7 @@ test("trashing a chat converges to a second client", async ({ page, context }) =
 	await expect(page2.getByText("shared doomed transcript")).toBeVisible();
 
 	const chatTab = page.locator('[data-testid="editor-tab"][data-kind="chat"]');
-	await chatTab.getByTestId("editor-tab-close").click();
+	await closeTabViaMenu(page, chatTab);
 	await page.getByTestId("chat-history").first().click();
 	const row = page.getByTestId("closed-chat-row").filter({ hasText: "shared doomed chat" });
 	await row.getByTestId("closed-chat-delete").click();
@@ -426,7 +427,7 @@ test("a client that misses chat deletion while offline reconciles it after recon
 	);
 
 	const chatTab = page.locator('[data-testid="editor-tab"][data-kind="chat"]');
-	await chatTab.getByTestId("editor-tab-close").click();
+	await closeTabViaMenu(page, chatTab);
 	await page.getByTestId("chat-history").first().click();
 	await page
 		.getByTestId("closed-chat-row")

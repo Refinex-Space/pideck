@@ -9,6 +9,7 @@ import { selectFilesTreeView, type TabIntent, useAppStore } from "../store";
 import { getTransport } from "../transport";
 import { type ChangeMarks, statusMarkClass } from "./changesModel";
 import { holdEditorWarm, useEditorWarm, warmOnHover } from "./editorWarm";
+import { FileEntryActions } from "./FileEntryActions";
 import { type ResolvedFolderChain, resolveFolderChain } from "./folderChains";
 import { openFileInTab } from "./openTabs";
 import { TreeRow } from "./TreeRow";
@@ -59,7 +60,16 @@ export function FileTree({
 			<p className="px-4 py-4 tr-text-metadata text-text-muted">{t("panels.fileTree.empty")}</p>
 		);
 	return (
-		<ul className="flex flex-col motion-safe:animate-reveal">
+		<ul
+			data-testid="file-tree"
+			ref={(node) => {
+				if (node && focus.revealTarget === ".") {
+					node.scrollIntoView({ block: "start" });
+					focus.onRevealed();
+				}
+			}}
+			className="flex flex-col motion-safe:animate-reveal"
+		>
 			{nodes.map((node) => (
 				<FileNodeRow
 					key={node.path}
@@ -132,7 +142,8 @@ function FileNodeRow({
 	const dirChanged = isDir && marks.dirs.has(directory?.path ?? node.path);
 	const ignored = (directory?.deepest ?? node).gitignored === true;
 	const revealRow =
-		!isDir && focus.revealTarget === node.path
+		focus.revealTarget !== null &&
+		(isDir ? representedPaths.includes(focus.revealTarget) : focus.revealTarget === node.path)
 			? (row: HTMLButtonElement | null) => {
 					if (!row) return;
 					row.scrollIntoView({ block: "nearest" });
@@ -142,43 +153,111 @@ function FileNodeRow({
 
 	return (
 		<li>
-			<TreeRow
-				ref={revealRow}
-				testid="file-node"
-				kind={isDir ? "dir" : "file"}
-				active={!isDir && focus.activePath === node.path}
-				subtle={ignored}
-				dataStatus={ignored ? "ignored" : undefined}
-				expanded={expanded}
-				label={label}
+			<FileEntryActions
+				workspaceId={workspaceId}
 				path={directory?.path ?? node.path}
-				labelClassName={
-					fileStatus ? statusMarkClass(fileStatus) : dirChanged ? statusMarkClass("modified") : ""
-				}
-				trailing={
-					fileStatus ? (
-						<span
-							data-testid="file-status"
-							className={`shrink-0 tr-text-metadata ${statusMarkClass(fileStatus)}`}
-						>
-							{statusLetter(fileStatus)}
-						</span>
-					) : dirChanged ? (
-						<span
-							data-testid="file-folder-dot"
-							className="mr-4 size-6 shrink-0 rounded-full bg-feedback-warning"
+				kind={isDir ? "dir" : "file"}
+				onOpen={isDir ? toggleDirectory : () => open("keep")}
+			>
+				{({ onContextMenu, onKeyDown, trigger }) => (
+					<div className="group/entry flex min-w-0 items-center">
+						<TreeRow
+							ref={revealRow}
+							testid="file-node"
+							onContextMenu={onContextMenu}
+							onKeyDown={(event) => {
+								onKeyDown(event);
+								if (
+									event.defaultPrevented ||
+									event.altKey ||
+									event.ctrlKey ||
+									event.metaKey ||
+									event.shiftKey
+								)
+									return;
+								const rows = [
+									...(event.currentTarget
+										.closest('[data-testid="file-tree"]')
+										?.querySelectorAll<HTMLButtonElement>('[data-testid="file-node"]') ?? []),
+								];
+								const index = rows.indexOf(event.currentTarget);
+								const key = event.key;
+								if (key === "ArrowDown" || key === "ArrowUp" || key === "Home" || key === "End") {
+									event.preventDefault();
+									rows[
+										key === "Home"
+											? 0
+											: key === "End"
+												? rows.length - 1
+												: index + (key === "ArrowDown" ? 1 : -1)
+									]?.focus();
+								} else if (
+									isDir &&
+									((key === "ArrowRight" && !expanded) || (key === "ArrowLeft" && expanded))
+								) {
+									event.preventDefault();
+									toggleDirectory();
+								} else if (key === "ArrowRight" && isDir) {
+									event.preventDefault();
+									event.currentTarget
+										.closest("li")
+										?.querySelector<HTMLButtonElement>(':scope > ul [data-testid="file-node"]')
+										?.focus();
+								} else if (key === "ArrowLeft") {
+									event.preventDefault();
+									event.currentTarget
+										.closest("li")
+										?.parentElement?.closest("li")
+										?.querySelector<HTMLButtonElement>('[data-testid="file-node"]')
+										?.focus();
+								}
+							}}
+							kind={isDir ? "dir" : "file"}
+							active={!isDir && focus.activePath === node.path}
+							subtle={ignored}
+							dataStatus={ignored ? "ignored" : undefined}
+							expanded={expanded}
+							label={label}
+							path={directory?.path ?? node.path}
+							labelClassName={
+								fileStatus
+									? statusMarkClass(fileStatus)
+									: dirChanged
+										? statusMarkClass("modified")
+										: ""
+							}
+							trailing={
+								fileStatus ? (
+									<span
+										data-testid="file-status"
+										className={`shrink-0 tr-text-metadata ${statusMarkClass(fileStatus)}`}
+									>
+										{statusLetter(fileStatus)}
+									</span>
+								) : dirChanged ? (
+									<span
+										data-testid="file-folder-dot"
+										className="mr-4 size-6 shrink-0 rounded-full bg-feedback-warning"
+									/>
+								) : undefined
+							}
+							onClick={isDir ? toggleDirectory : firstClickOnly(() => open("preview"))}
+							onDoubleClick={isDir ? undefined : () => open("keep")}
+							onWarm={
+								isDir || !warmFile
+									? undefined
+									: (trigger) =>
+											trigger === "focus"
+												? warmFile(node.path)
+												: warmOnHover(() => warmFile(node.path))
+							}
 						/>
-					) : undefined
-				}
-				onClick={isDir ? toggleDirectory : firstClickOnly(() => open("preview"))}
-				onDoubleClick={isDir ? undefined : () => open("keep")}
-				onWarm={
-					isDir || !warmFile
-						? undefined
-						: (trigger) =>
-								trigger === "focus" ? warmFile(node.path) : warmOnHover(() => warmFile(node.path))
-				}
-			/>
+						<div className="shrink-0 opacity-0 group-hover/entry:opacity-100 group-focus-within/entry:opacity-100 focus-within:opacity-100">
+							{trigger}
+						</div>
+					</div>
+				)}
+			</FileEntryActions>
 			{isDir && expanded && children && (
 				<ul className="flex flex-col pl-tree-indent">
 					{children.map((child) => (

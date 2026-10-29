@@ -1,5 +1,5 @@
 import { ChevronDown, ChevronRight } from "lucide-react";
-import type { MouseEvent, ReactNode, Ref } from "react";
+import type { KeyboardEvent, MouseEvent, ReactNode, Ref } from "react";
 import { FileTypeIcon, FolderTypeIcon } from "../fileIcons";
 
 export function TreeRow({
@@ -19,6 +19,7 @@ export function TreeRow({
 	onClick,
 	onDoubleClick,
 	onContextMenu,
+	onKeyDown,
 	onWarm,
 }: {
 	ref?: Ref<HTMLButtonElement> | undefined;
@@ -36,6 +37,7 @@ export function TreeRow({
 	highlight?: "self" | "wrapper";
 	onClick?: ((event: MouseEvent) => void) | undefined;
 	onDoubleClick?: (() => void) | undefined;
+	onKeyDown?: ((event: KeyboardEvent<HTMLButtonElement>) => void) | undefined;
 	onContextMenu?: ((event: MouseEvent) => void) | undefined;
 	onWarm?: ((trigger: "hover" | "focus") => void) | undefined;
 }) {
@@ -54,6 +56,7 @@ export function TreeRow({
 			onClick={onClick}
 			onDoubleClick={onDoubleClick}
 			onContextMenu={onContextMenu}
+			onKeyDown={onKeyDown}
 			onPointerEnter={onWarm && (() => onWarm("hover"))}
 			onFocus={onWarm && (() => onWarm("focus"))}
 			className={`flex h-panel-row w-full min-w-0 items-center gap-4 rounded-sm px-4 text-left tr-text-ui ${tone} outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-focus-ring ${

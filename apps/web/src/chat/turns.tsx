@@ -129,7 +129,7 @@ function ChatTurnViewImpl({
 						className={cn(
 							"tr-text-reading text-text-default",
 							isFinalAnswer &&
-								"w-full min-w-0 pl-24 [&>div>*:last-child]:mb-0 [&_ol]:list-inside [&_ul]:list-inside",
+								"w-full min-w-0 [&>div>*:last-child]:mb-0 [&_ol]:list-inside [&_ul]:list-inside",
 						)}
 					>
 						<AssistantMarkdown
@@ -797,7 +797,7 @@ function ArtifactChip({
 	const first = paths[0];
 	return (
 		<Button
-			variant="soft-primary"
+			variant="quiet"
 			size="s"
 			iconLeft={Icon}
 			{...(many ? { iconRight: expanded ? ChevronDown : ChevronRight } : {})}
@@ -849,9 +849,9 @@ function ArtifactList({
 								{projectRelativePath(path, workspaceRoot)}
 							</span>
 							{stat ? (
-								<span className="shrink-0 tabular-nums">
-									<span className="text-feedback-success">+{stat.added}</span>{" "}
-									<span className="text-feedback-error">−{stat.removed}</span>
+								<span className="flex shrink-0 gap-4 tabular-nums">
+									<span className="min-w-32 text-right text-feedback-success">+{stat.added}</span>
+									<span className="min-w-32 text-right text-feedback-error">−{stat.removed}</span>
 								</span>
 							) : null}
 						</button>
@@ -972,7 +972,7 @@ export function TurnDivider({
 				))}
 				{receipt && onReviewTurn ? (
 					<Button
-						variant="soft-primary"
+						variant="quiet"
 						size="s"
 						iconLeft={Eye}
 						data-testid="turn-divider-review"
@@ -989,7 +989,7 @@ export function TurnDivider({
 				) : null}
 				{running ? (
 					<Button
-						variant="soft-primary"
+						variant="quiet"
 						size="s"
 						iconLeft={WorkingStack}
 						data-testid="turn-divider-running"

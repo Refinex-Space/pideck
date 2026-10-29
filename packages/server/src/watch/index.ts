@@ -1,5 +1,6 @@
 export {
 	ensureWatch,
+	notifyWorkspaceFiles,
 	setRepoMetaPublisher,
 	setSkillPathClassifier,
 	setWatchPublisher,

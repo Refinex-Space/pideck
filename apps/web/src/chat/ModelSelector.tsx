@@ -29,6 +29,7 @@ import {
 	groupRowValue,
 	initialGroupExpansion,
 	NO_MODELS_HINT,
+	PICKER_LIST,
 	type PickerGroup,
 	PROVIDER_GROUP,
 	pickerEmptyState,
@@ -211,7 +212,7 @@ export function ModelSelector({
 						value={query}
 						onValueChange={setQuery}
 					/>
-					<CommandList className="max-h-340 min-h-0 flex-1 pb-24">
+					<CommandList className={cn("max-h-340 min-h-0 flex-1 pb-24", PICKER_LIST)}>
 						{emptyState === "no-match" ? (
 							<CommandEmpty>{t("chat.modelPicker.noMatch")}</CommandEmpty>
 						) : null}

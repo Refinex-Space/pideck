@@ -65,28 +65,28 @@ test("browser-local chat preferences persist without changing another browser", 
 
 		const messages = page.getByTestId("chat-message");
 		await expect(messages).toHaveText([
-			"oldest request",
-			"oldest answer",
-			"newest request",
-			"newest answer",
+			/^oldest request/,
+			/^oldest answer/,
+			/^newest request/,
+			/^newest answer/,
 		]);
 
 		await selectMessageOrder(page, "newest-first");
 		await expect(messages).toHaveText([
-			"newest answer",
-			"newest request",
-			"oldest answer",
-			"oldest request",
+			/^newest answer/,
+			/^newest request/,
+			/^oldest answer/,
+			/^oldest request/,
 		]);
 		await expect(page.getByText("newest answer")).toBeInViewport();
 
 		await page.reload();
 		await expect(page.getByTestId("connection-status")).toHaveAttribute("data-status", "connected");
 		await expect(messages).toHaveText([
-			"newest answer",
-			"newest request",
-			"oldest answer",
-			"oldest request",
+			/^newest answer/,
+			/^newest request/,
+			/^oldest answer/,
+			/^oldest request/,
 		]);
 		await openAppSettings(page);
 		await page.getByTestId("settings-nav-chat").click();

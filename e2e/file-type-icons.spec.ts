@@ -52,7 +52,7 @@ test("file and semantic folder icons load locally and follow expansion and app a
 		.filter({ has: page.getByText("icon-probe", { exact: true }) });
 	const row = (name: string) =>
 		probe
-			.locator("..")
+			.locator("xpath=ancestor::li[1]")
 			.getByTestId("file-node")
 			.filter({ has: page.getByText(name, { exact: true }) });
 	await expect(probe.locator("[data-file-icon]")).toHaveAttribute("data-file-icon", "folder");

@@ -178,8 +178,8 @@ describe("markdown prose systems", () => {
 			h6: { fontSize: "s12", fontWeight: "medium", textTransform: "none" },
 			inlineCode: { fontFamily: "code", fontSize: "s13" },
 			codeBlock: { fontFamily: "code", fontSize: "s13" },
-			tableBody: { fontSize: "s12", fontWeight: "regular" },
-			tableHeader: { fontSize: "s14", fontWeight: "semibold" },
+			tableBody: { fontSize: "s16", fontWeight: "regular" },
+			tableHeader: { fontSize: "s16", fontWeight: "semibold" },
 		};
 		for (const [name, shape] of Object.entries(expected))
 			expect(resolveStyle(typography, `chat.${name}`), `chat.${name}`).toMatchObject(shape);

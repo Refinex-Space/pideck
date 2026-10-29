@@ -5,7 +5,14 @@ import { Button, type ButtonSize, type ButtonVariant, buttonVariants, IconButton
 import { DropdownMenu, DropdownMenuTrigger } from "./dropdown-menu";
 import { TooltipProvider } from "./tooltip";
 
-const VARIANTS: ButtonVariant[] = ["primary", "soft-primary", "outline", "ghost", "destructive"];
+const VARIANTS: ButtonVariant[] = [
+	"primary",
+	"soft-primary",
+	"outline",
+	"quiet",
+	"ghost",
+	"destructive",
+];
 const SIZES: Record<
 	ButtonSize,
 	{ h: string; px: string; gap: string; icon: string; square: string }

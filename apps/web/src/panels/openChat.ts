@@ -25,7 +25,7 @@ export async function startChatInTab(
 	workspaceId: string,
 	preferredGroupId?: string,
 	prompt?: string,
-): Promise<void> {
+): Promise<string | null> {
 	const navigation = useAppStore.getState().beginCenterNavigation(workspaceId, preferredGroupId);
 	useAppStore.getState().beginChatStart(workspaceId);
 	try {
@@ -43,6 +43,7 @@ export async function startChatInTab(
 			layoutOpenOptionsForNavigation(store, workspaceId, navigation),
 		);
 		if (prompt) sendPrompt(sessionId, prompt);
+		return sessionId;
 	} catch {
 		const state = useAppStore.getState();
 		if (
@@ -51,6 +52,7 @@ export async function startChatInTab(
 		) {
 			toast.error(t("panels.openChat.sessionCreateFailed"), t("panels.openChat.startFailed"));
 		}
+		return null;
 	} finally {
 		useAppStore.getState().endChatStart(workspaceId);
 	}
@@ -151,7 +153,10 @@ export async function promptWorkspaceChat(
 	sessionId: string | null,
 	text: string,
 ): Promise<void> {
-	if (!sessionId) return startChatInTab(workspaceId, undefined, text);
+	if (!sessionId) {
+		await startChatInTab(workspaceId, undefined, text);
+		return;
+	}
 	await openChatInTab(workspaceId, sessionId);
 	const runtime = useAppStore.getState().sessions[sessionId];
 	if (!runtime) return;

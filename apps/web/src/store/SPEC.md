@@ -787,3 +787,28 @@ branch's review — a commit sha means nothing in another worktree — and dropp
   (`ConnectionStatus`, **type-only**); `@thinkrail/locales` (default chat/terminal names, settled-reason
   copy and toasts, resolved when created); `zustand`.
 - **Forbidden:** `server`/`shared`/`pi`; importing `panels`, shell runtime (the web-local layout state edge is type-only), or transport runtime.
+
+## File editing and composer insertion
+
+File drafts are separate from cached disk contents and layout documents, keyed by workspace/path.
+They retain the loaded hash/base text, current text and save status. Saving advances the base without
+discarding edits typed while the request was pending. Dirty drafts are recovered within the current window session;
+the shell flushes on unload and warns before leaving with unsaved work.
+Composer cursor memory is session-local. One insertChatText action splices the current draft, queues
+a caret/focus request and selects the target chat; it never sends a prompt. Stale cursor snapshots
+append instead of overwriting content. lastFocusedChatByWorkspace identifies the current composer
+independently from a subsequently opened file tab.
+
+Editing recovery uses sessionStorage on Web and native WebViews, so windows cannot overwrite each
+other's backups. It survives reloads within that window session, not closing the window or application.
+The native stable-preference adapter is deliberately reserved for preferences: its small, asynchronous
+write limit cannot guarantee file draft persistence. Only dirty or in-flight drafts persist; save status
+and errors do not. Storage failure is reported while the in-memory draft and unload guard remain.
+Source wrap is a separate client preference. Files search/reveal and editor-focus requests remain
+transient, workspace-scoped UI state; mutation pushes update clean cached paths and queue a pure layout
+path projection while retaining dirty paths for recovery. Cache and layout share lib.fileMoveProjection
+for protected paths and stale destination deduplication.
+
+A file tab retains read failures separately from its last valid disk snapshot. Reopening a missing file
+with a recovery draft uses that draft's base snapshot and reports the read error, so Save as remains
+available. Older tick responses cannot clear a newer error or replace newer disk contents.

@@ -20,7 +20,10 @@ buttons). The top-right group's strip ends with, in order: new chat / history, t
 details control, the **bottom rail** (the single global terminal entry; the former bottom bar is gone), the
 **right rail** tools, the bottom-alignment menu while the bottom body is hidden, and the right inset spacer
 (omitted while the right column is visible, which owns that corner). Both rails are horizontal 32px-frame
-toolbars, so no vertical right column exists; their tooltips open downward. Center tabs are 32px rounded (`sm`)
+toolbars, so no vertical right column exists; their tooltips open downward. The center strip shows **one chat tab**: the selected chat, else the last one selected in that group.
+Other chat tabs stay in the layout (and in the tab search) but are reached from the sidebar's session rows; the
+visible chat chip is the title control — clicking it while selected renames in place, its chevron
+(`chat-title-menu`) opens Rename / Close chat. Adjacent center chips sit on a 2px gap. Center tabs are 32px rounded (`sm`)
 chips with a selected fill and hover fill — no divider, no underline, no chat icon — and the strip has no
 bottom border. Side and bottom tab strips keep the bordered strip. There is no center "New terminal" button:
 terminals are created from the bottom pane that the top-bar terminal entry reveals.
@@ -330,3 +333,11 @@ along its right edge), while any menu, dialog, listbox or text field opened from
 toggle suppresses the peek until the pointer leaves it, so a click never bounces the panel back. The
 footer (app menu, updates, connection) is reachable only in the expanded sidebar or the peek. `Mod+[` and
 `Mod+]` step the toolbar history back and forward (never inside a terminal, where `Ctrl+[` is Escape).
+
+## File workbench integration
+
+Center groups expose the existing tab-search palette whenever they contain a file, even without
+strip overflow. File tabs use the shared fileIcons presentation and their full path as the tooltip.
+`moveLayoutFilePaths` is a pure explicit-rename projection: it preserves placements/ids/geometry,
+updates file paths and names, and removes stale destination duplicates. Dirty source/destination paths
+are preserved for recovery rather than silently rebound. No external-file rename is inferred.

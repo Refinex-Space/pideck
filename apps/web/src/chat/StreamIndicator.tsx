@@ -54,7 +54,7 @@ export function StreamIndicator({ status }: { status: StreamStatus }) {
 			data-phase={status.phase}
 			role="status"
 			aria-live="polite"
-			className="flex min-w-0 items-center gap-8 overflow-hidden py-4 text-text-muted tr-text-metadata"
+			className="flex min-w-0 items-center gap-4 overflow-hidden px-4 py-4 text-text-muted tr-text-metadata"
 		>
 			<span aria-hidden="true" className="flex shrink-0">
 				<RunningIcon className="size-16 text-primary" />

@@ -32,7 +32,7 @@ export function MessageActionBar({
 			data-testid="message-actions"
 			className={cn(
 				"flex h-24 items-center gap-2 opacity-0 transition-opacity duration-[var(--motion-duration-fast)] focus-within:opacity-100 group-hover/message:opacity-100",
-				side === "right" ? "justify-end" : "justify-start",
+				side === "right" ? "justify-end" : "-ml-4 justify-start",
 			)}
 		>
 			{side === "right" ? time : null}

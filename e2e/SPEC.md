@@ -500,3 +500,13 @@ no `pi` executable on `PATH` for default and custom `PI_CODING_AGENT_DIR`; deskt
 staged `.ts` PI runtime and physical resources. Real Central acceptance remains explicitly authorized and
 isolated: the dedicated `@agent` suite stages the opaque artifact, validates the exact model, and proves a
 real turn rather than accepting another provider or a fake agent.
+
+## Interactive file workbench
+
+`file-workbench.spec.ts` exercises real contained create/save/move/search paths, dirty-close and reload
+recovery, conflict refusal, independent browser drafts, reference insertion without prompts, menus,
+source controls and old-host gating. Editor cases align userAgent with the local browser OS because
+Monaco keys and native EditContext otherwise disagree with Playwright's Windows Desktop Chrome profile
+on macOS. Undo assertions allow the editor's normal input grouping and verify restoration of the original
+source. System-trash failure/recovery and external-editor argv are unit-tested with injected seams;
+browser deletion tests inspect confirmation/cancel rather than touching the user's system Trash.

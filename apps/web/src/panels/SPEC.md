@@ -2208,3 +2208,31 @@ Directory rows use its expanded/collapsed semantic-folder variants, with Lucide 
 for unmatched names. Compact folder chains pass the resolved deepest path; directory context rules
 therefore apply without changing expansion persistence. Git marks, ignored styling, preview/keep,
 context menus and keyboard behavior remain independent of icon identity.
+
+## Workspace sessions in the project tree
+
+`WorkspaceSessions` lists a workspace's chats (open tabs, then recently closed) under its row so that a project
+folder — one `default` workspace holding many chats — is navigable by session rather than as a single row. It
+renders for default/external workspaces and for any workspace with two or more chats; a worktree with a single chat
+keeps its one row. A row activates through `activateWorkspaceFromRoute(workspace, sessionId)`, the same route the
+session switcher uses, and is marked active when it is the workspace's current chat.
+
+## Interactive file workbench
+
+The implementation contract and reference study live in [file-workbench.md](../../../../file-workbench.md).
+FilesPanel owns the visible search/results surface; query/reveal commands remain workspace-scoped store
+state. The bounded host search honors the injected Git-ignore classifier and never walks symlinks.
+All-files rows, search results and FilePane use FileEntryActions and FileOperationDialog; Changed rows
+retain their scope-specific review menu. Root actions cannot rename, move or trash the workspace root.
+Arrow/Home/End navigation stays within the file list; F2 opens Rename and Delete opens the explicit
+Trash confirmation. Editing below a path blocks destructive file operations and workspace removal.
+FilePane combines path breadcrumbs, view toggles, explicit edit/save, wrap, find/select/comment and chat
+reference actions with the existing renderer stack. Dirty source suppresses saved-file review affordances.
+Drafts remain separate from live disk snapshots; save requires the loaded hash and preserves edits typed
+while saving. Save as creates an exclusive new path, then releases only the unchanged original draft.
+A persisted draft never overwrites a newer disk version automatically. FileDraftGuard flushes recoveries
+and guards unload; useFileClose asks Save/Discard/Cancel on explicit dirty-tab closure.
+File actions insert references into the most recently focused eligible chat in the same workspace,
+creating an empty chat only when none exists. Cursor-aware insertion preserves surrounding text; no
+reference action calls session.prompt. Unsaved file content is quoted explicitly and labeled, rather
+than pretending that the agent can read editor memory from disk. Quotes are bounded to 32,000 characters.

@@ -1,4 +1,4 @@
-import type { GitDiffScope } from "@thinkrail/contracts";
+import type { GitDiffScope, ResourceMeta } from "@thinkrail/contracts";
 import {
 	DOUBLE_CLICK_SETTLE_MS,
 	fileName,
@@ -12,6 +12,7 @@ import {
 	createChangesTab,
 	type EditorTab,
 	type FileComparisonTab,
+	fileDraftKey,
 	isCenterNavigationCurrent,
 	layoutOpenOptionsForNavigation,
 	selectDiffTabTargetRef,
@@ -21,7 +22,7 @@ import {
 	type TabIntent,
 	useAppStore,
 } from "../store";
-import { getTransport } from "../transport";
+import { errorText, getTransport } from "../transport";
 import { changesTabId, diffTabId } from "./changesModel";
 
 function baseName(path: string): string {
@@ -135,14 +136,31 @@ export function openFileInTab(
 		id,
 		layoutResourceIdentity({ kind: "file", id, name: baseName(path), path }),
 		intent,
-		() => getTransport().request("fs.readFile", { workspaceId, path }),
-		({ content, meta }, loadedTick) => ({
+		async (): Promise<{ content: string; meta: ResourceMeta; loadError?: string }> => {
+			try {
+				return await getTransport().request("fs.readFile", { workspaceId, path });
+			} catch (error) {
+				const draft = useAppStore.getState().fileDrafts[fileDraftKey(workspaceId, path)];
+				if (!draft) throw error;
+				return {
+					content: draft.baseContent,
+					meta: {
+						hash: draft.baseHash,
+						byteLength: new TextEncoder().encode(draft.baseContent).byteLength,
+						text: true,
+					},
+					loadError: errorText(error),
+				};
+			}
+		},
+		({ content, meta, loadError }, loadedTick) => ({
 			kind: "file",
 			id,
 			workspaceId,
 			path,
 			name: baseName(path),
 			content,
+			...(loadError ? { loadError } : {}),
 			meta,
 			loadedTick,
 		}),

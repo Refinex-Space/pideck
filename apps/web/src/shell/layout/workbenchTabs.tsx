@@ -1,5 +1,9 @@
 import { useDraggable, useDroppable } from "@dnd-kit/core";
-import { RiSearchLine as Search, RiCloseLine as X } from "@remixicon/react";
+import {
+	RiArrowDownSLine as ChevronDown,
+	RiSearchLine as Search,
+	RiCloseLine as X,
+} from "@remixicon/react";
 import type { MessageKey } from "@thinkrail/locales";
 import { useT } from "@thinkrail/locales/react";
 import { IconButton } from "@thinkrail/ui/button";
@@ -157,6 +161,8 @@ export const TabStrip = memo(function TabStrip({
 	const overflowFocusIntent = useRef<LayoutFocusIntent>("restore");
 	const [overflowOpen, setOverflowOpen] = useState(false);
 	const overflowing = scrollOverflow.before || scrollOverflow.after;
+	const canSearch =
+		overflowing || (location.area === "center" && tabs.some((tab) => tab.kind === "file"));
 	const selectTab = (tabId: string, keep?: boolean) => {
 		selectionEpochRef.current += 1;
 		onSelect(tabId, keep);
@@ -184,11 +190,24 @@ export const TabStrip = memo(function TabStrip({
 	}, [selectedId]);
 
 	useEffect(() => {
-		if (!overflowing) setOverflowOpen(false);
-	}, [overflowing]);
+		if (!canSearch) setOverflowOpen(false);
+	}, [canSearch]);
 
+	const [lastChatId, setLastChatId] = useState<string | null>(null);
+	const selectedChat = tabs.find((tab) => tab.kind === "chat" && tab.id === selectedId);
+	if (selectedChat && selectedChat.id !== lastChatId) setLastChatId(selectedChat.id);
+	// The center strip shows one chat — the one being worked on; the others are reached from the sidebar.
+	const currentChatId = (
+		selectedChat ??
+		tabs.find((tab) => tab.kind === "chat" && tab.id === lastChatId) ??
+		tabs.find((tab) => tab.kind === "chat")
+	)?.id;
+	const visibleTabs =
+		location.area === "center"
+			? tabs.filter((tab) => tab.kind !== "chat" || tab.id === currentChatId)
+			: tabs;
 	const selectAt = (index: number) => {
-		const tab = tabs[index];
+		const tab = visibleTabs[index];
 		if (!tab) return;
 		selectTab(tab.id);
 		const epoch = selectionEpochRef.current;
@@ -198,6 +217,60 @@ export const TabStrip = memo(function TabStrip({
 		});
 	};
 
+	const tabSearch = canSearch ? (
+		<Popover open={overflowOpen} onOpenChange={setOverflowOpen}>
+			<PopoverTrigger asChild>
+				<IconButton
+					variant="ghost"
+					size="m"
+					icon={Search}
+					label={t("workbench.tabs.search")}
+					data-testid="open-tabs-search"
+					wrapTrigger
+					className="shrink-0 self-center"
+				/>
+			</PopoverTrigger>
+			<PopoverContent
+				align={location.area === "center" ? "start" : "end"}
+				className="w-288 p-0"
+				onPointerDownCapture={() => {
+					overflowFocusIntent.current = "restore";
+				}}
+				onKeyDownCapture={() => {
+					overflowFocusIntent.current = "keyboard";
+				}}
+				onCloseAutoFocus={(event) => {
+					const targetId = overflowFocusTarget.current;
+					if (!targetId) return;
+					overflowFocusTarget.current = null;
+					event.preventDefault();
+					focusLayoutElement(tabRefs.current.get(targetId), overflowFocusIntent.current);
+				}}
+			>
+				<Command>
+					<CommandInput placeholder={t("workbench.tabs.findPlaceholder")} />
+					<CommandList>
+						<CommandEmpty>{t("workbench.tabs.noMatches")}</CommandEmpty>
+						{tabs.map((tab) => (
+							<CommandItem
+								key={tab.id}
+								value={tab.id}
+								keywords={tabSearchKeywords(t, tab, chatFirstPrompts)}
+								onSelect={() => {
+									overflowFocusTarget.current = tab.id;
+									selectTab(tab.id);
+									setOverflowOpen(false);
+								}}
+							>
+								{tabIcon(tab)}
+								<span className="truncate">{layoutTabName(t, tab, chatFirstPrompts)}</span>
+							</CommandItem>
+						))}
+					</CommandList>
+				</Command>
+			</PopoverContent>
+		</Popover>
+	) : null;
 	const testId =
 		location.area === "center"
 			? "center-tab-strip"
@@ -220,6 +293,7 @@ export const TabStrip = memo(function TabStrip({
 			)}
 		>
 			{leading}
+			{location.area === "center" ? tabSearch : null}
 			<div
 				className={cn(
 					"relative min-w-0 overflow-hidden",
@@ -230,78 +304,85 @@ export const TabStrip = memo(function TabStrip({
 					ref={scroller}
 					role="tablist"
 					aria-label={t(GROUP_TABS_LABELS[location.area])}
-					className="flex h-full w-full min-w-0 items-stretch overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+					className={cn(
+						"flex h-full w-full min-w-0 items-stretch overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+						location.area === "center" && "gap-2",
+					)}
 					onWheel={(event) => {
 						if (!scroller.current || Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
 						scroller.current.scrollLeft += event.deltaY;
 					}}
 				>
-					{tabs.map((tab, index) => (
-						<WorkbenchTab
-							key={tab.id}
-							tab={tab}
-							index={index}
-							reorderIndexes={{
-								previous: index > 0 ? index - 1 : undefined,
-								next: index < tabs.length - 1 ? index + 1 : undefined,
-							}}
-							location={location}
-							readAttention={readAttention}
-							selectionEpochRef={selectionEpochRef}
-							active={tab.id === selectedId}
-							preview={tab.id === previewId}
-							document={document}
-							maxSideGroups={maxSideGroups}
-							maxBottomGroups={maxBottomGroups}
-							register={(node) => {
-								if (node) tabRefs.current.set(tab.id, node);
-								else tabRefs.current.delete(tab.id);
-							}}
-							onSelect={selectTab}
-							onClose={() => closeTab(tab)}
-							onApply={applyResult}
-							onFocusAdjacentGroup={onFocusAdjacentGroup}
-							onHideSide={onHideSide}
-							onRevealTool={onRevealTool}
-							onRenameChat={onRenameChat}
-							{...(chatFirstPrompts ? { chatFirstPrompts } : {})}
-							canFocusAdjacentGroup={canFocusAdjacentGroup}
-							renderTabAdornment={renderTabAdornment}
-							draggingTab={draggingTab}
-							panelId={panelId}
-							{...(splitGeometry ? { splitGeometry } : {})}
-							onKeyDown={(event) => {
-								if (event.altKey && event.shiftKey && event.key === "ArrowLeft") {
-									event.preventDefault();
-									if (index > 0) {
-										const moved = moveTabToGroup(document, tab, location, index - 1);
-										if (!isLayoutUnavailable(moved)) applyResult(moved);
+					{visibleTabs.map((tab, visibleIndex) => {
+						const index = tabs.indexOf(tab);
+						return (
+							<WorkbenchTab
+								key={tab.id}
+								tab={tab}
+								index={index}
+								reorderIndexes={{
+									previous: index > 0 ? index - 1 : undefined,
+									next: index < tabs.length - 1 ? index + 1 : undefined,
+								}}
+								location={location}
+								readAttention={readAttention}
+								selectionEpochRef={selectionEpochRef}
+								active={tab.id === selectedId}
+								preview={tab.id === previewId}
+								document={document}
+								maxSideGroups={maxSideGroups}
+								maxBottomGroups={maxBottomGroups}
+								register={(node) => {
+									if (node) tabRefs.current.set(tab.id, node);
+									else tabRefs.current.delete(tab.id);
+								}}
+								onSelect={selectTab}
+								onClose={() => closeTab(tab)}
+								onApply={applyResult}
+								onFocusAdjacentGroup={onFocusAdjacentGroup}
+								onHideSide={onHideSide}
+								onRevealTool={onRevealTool}
+								onRenameChat={onRenameChat}
+								{...(chatFirstPrompts ? { chatFirstPrompts } : {})}
+								canFocusAdjacentGroup={canFocusAdjacentGroup}
+								renderTabAdornment={renderTabAdornment}
+								draggingTab={draggingTab}
+								panelId={panelId}
+								{...(splitGeometry ? { splitGeometry } : {})}
+								sole={visibleTabs.length === 1}
+								onKeyDown={(event) => {
+									if (event.altKey && event.shiftKey && event.key === "ArrowLeft") {
+										event.preventDefault();
+										if (index > 0) {
+											const moved = moveTabToGroup(document, tab, location, index - 1);
+											if (!isLayoutUnavailable(moved)) applyResult(moved);
+										}
+									} else if (event.altKey && event.shiftKey && event.key === "ArrowRight") {
+										event.preventDefault();
+										if (index < tabs.length - 1) {
+											const moved = moveTabToGroup(document, tab, location, index + 1);
+											if (!isLayoutUnavailable(moved)) applyResult(moved);
+										}
+									} else if (event.key === "ArrowLeft") {
+										event.preventDefault();
+										selectAt(visibleIndex === 0 ? visibleTabs.length - 1 : visibleIndex - 1);
+									} else if (event.key === "ArrowRight") {
+										event.preventDefault();
+										selectAt(visibleIndex === visibleTabs.length - 1 ? 0 : visibleIndex + 1);
+									} else if (event.key === "Home") {
+										event.preventDefault();
+										selectAt(0);
+									} else if (event.key === "End") {
+										event.preventDefault();
+										selectAt(visibleTabs.length - 1);
+									} else if (event.key === "Delete") {
+										event.preventDefault();
+										closeTab(tab);
 									}
-								} else if (event.altKey && event.shiftKey && event.key === "ArrowRight") {
-									event.preventDefault();
-									if (index < tabs.length - 1) {
-										const moved = moveTabToGroup(document, tab, location, index + 1);
-										if (!isLayoutUnavailable(moved)) applyResult(moved);
-									}
-								} else if (event.key === "ArrowLeft") {
-									event.preventDefault();
-									selectAt(index === 0 ? tabs.length - 1 : index - 1);
-								} else if (event.key === "ArrowRight") {
-									event.preventDefault();
-									selectAt(index === tabs.length - 1 ? 0 : index + 1);
-								} else if (event.key === "Home") {
-									event.preventDefault();
-									selectAt(0);
-								} else if (event.key === "End") {
-									event.preventDefault();
-									selectAt(tabs.length - 1);
-								} else if (event.key === "Delete") {
-									event.preventDefault();
-									closeTab(tab);
-								}
-							}}
-						/>
-					))}
+								}}
+							/>
+						);
+					})}
 					{acceptsAppend ? (
 						<DropZone
 							id={tupleKey(
@@ -343,59 +424,7 @@ export const TabStrip = memo(function TabStrip({
 				) : null}
 			</div>
 			{trailing}
-			{overflowing ? (
-				<Popover open={overflowOpen} onOpenChange={setOverflowOpen}>
-					<PopoverTrigger asChild>
-						<IconButton
-							variant="ghost"
-							size="m"
-							icon={Search}
-							label={t("workbench.tabs.search")}
-							wrapTrigger
-							className="shrink-0 self-center"
-						/>
-					</PopoverTrigger>
-					<PopoverContent
-						align="end"
-						className="w-288 p-0"
-						onPointerDownCapture={() => {
-							overflowFocusIntent.current = "restore";
-						}}
-						onKeyDownCapture={() => {
-							overflowFocusIntent.current = "keyboard";
-						}}
-						onCloseAutoFocus={(event) => {
-							const targetId = overflowFocusTarget.current;
-							if (!targetId) return;
-							overflowFocusTarget.current = null;
-							event.preventDefault();
-							focusLayoutElement(tabRefs.current.get(targetId), overflowFocusIntent.current);
-						}}
-					>
-						<Command>
-							<CommandInput placeholder={t("workbench.tabs.findPlaceholder")} />
-							<CommandList>
-								<CommandEmpty>{t("workbench.tabs.noMatches")}</CommandEmpty>
-								{tabs.map((tab) => (
-									<CommandItem
-										key={tab.id}
-										value={tab.id}
-										keywords={tabSearchKeywords(t, tab, chatFirstPrompts)}
-										onSelect={() => {
-											overflowFocusTarget.current = tab.id;
-											selectTab(tab.id);
-											setOverflowOpen(false);
-										}}
-									>
-										{tabIcon(tab)}
-										<span className="truncate">{layoutTabName(t, tab, chatFirstPrompts)}</span>
-									</CommandItem>
-								))}
-							</CommandList>
-						</Command>
-					</PopoverContent>
-				</Popover>
-			) : null}
+			{location.area !== "center" ? tabSearch : null}
 		</div>
 	);
 });
@@ -435,6 +464,8 @@ export interface WorkbenchTabProps {
 	panelId: string;
 	splitGeometry?: { horizontal: boolean; vertical: boolean };
 	onKeyDown: (event: React.KeyboardEvent<HTMLButtonElement>) => void;
+	/** The only tab the strip shows: its selected fill would only decorate it. */
+	sole?: boolean;
 }
 
 export const WorkbenchTab = memo(function WorkbenchTab({
@@ -465,6 +496,7 @@ export const WorkbenchTab = memo(function WorkbenchTab({
 	panelId,
 	splitGeometry,
 	onKeyDown,
+	sole = false,
 }: WorkbenchTabProps) {
 	const t = useT();
 	const {
@@ -621,6 +653,27 @@ export const WorkbenchTab = memo(function WorkbenchTab({
 		if (!isLayoutUnavailable(result)) onApply(result);
 	};
 	const reorder = (nextIndex: number) => move(location, nextIndex);
+	const frameRef = useRef<HTMLDivElement | null>(null);
+	const chatTitleChip = tab.kind === "chat" && location.area === "center" && !rail;
+	const openTabMenu = (event: React.MouseEvent<HTMLElement>) => {
+		const anchor = event.currentTarget.getBoundingClientRect();
+		frameRef.current?.dispatchEvent(
+			new MouseEvent("contextmenu", {
+				bubbles: true,
+				cancelable: true,
+				clientX: anchor.left,
+				clientY: anchor.bottom + 4,
+			}),
+		);
+	};
+	const startChatRename = () => {
+		if (tab.kind !== "chat") return;
+		editStartNameRef.current = tab.name;
+		cancelNextBlurRef.current = false;
+		restoreTabFocusRef.current = false;
+		enterRenameRef.current = true;
+		setEditingName(true);
+	};
 	const focusTab = (keep?: boolean) => {
 		onSelect(tab.id, keep);
 		focusControl();
@@ -652,10 +705,22 @@ export const WorkbenchTab = memo(function WorkbenchTab({
 			tabIndex={rail ? rail.tabIndex : active ? 0 : -1}
 			{...dragListeners}
 			title={
-				rail ? undefined : preview ? t("workbench.tab.previewTitle") : (chatTitle?.tooltip ?? name)
+				rail
+					? undefined
+					: tab.kind === "file"
+						? tab.path
+						: preview
+							? t("workbench.tab.previewTitle")
+							: (chatTitle?.tooltip ?? name)
 			}
 			onFocus={rail?.onFocus}
-			onClick={rail ? rail.onActivate : selectFromClick}
+			onClick={
+				rail
+					? rail.onActivate
+					: tab.kind === "chat" && active && onRenameChat && location.area === "center"
+						? startChatRename
+						: selectFromClick
+			}
 			onDoubleClick={rail ? undefined : selectFromDoubleClick}
 			onKeyDown={onKeyDown}
 			className={
@@ -693,7 +758,10 @@ export const WorkbenchTab = memo(function WorkbenchTab({
 		<ContextMenu>
 			<ContextMenuTrigger asChild>
 				<div
-					ref={setDragRef}
+					ref={(node) => {
+						frameRef.current = node;
+						setDragRef(node);
+					}}
 					role="presentation"
 					data-testid={tabTestId}
 					data-active={active}
@@ -706,9 +774,14 @@ export const WorkbenchTab = memo(function WorkbenchTab({
 						"group data-[dragging]:opacity-40",
 						rail
 							? RAIL_ENTRY_FRAME_CLASS
-							: location.area === "center"
-								? "window-no-drag relative flex h-32 min-w-96 max-w-192 shrink-0 items-center self-center rounded-sm text-text-muted ring-focus-ring ring-inset hover:bg-control-bg-hovered has-[[role=tab]:focus-visible:not([data-layout-focus-intent=restore])]:ring-1 has-[[role=tab][data-layout-focus-intent=keyboard]:focus]:ring-1 data-[active=true]:bg-control-bg-selected data-[active=true]:text-text-default"
-								: "relative flex min-w-96 max-w-192 shrink-0 items-center border-border-default border-r text-text-muted ring-focus-ring ring-inset after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:z-10 after:h-[2px] after:rounded-full after:content-[''] has-[[role=tab]:focus-visible:not([data-layout-focus-intent=restore])]:ring-1 has-[[role=tab][data-layout-focus-intent=keyboard]:focus]:ring-1 data-[active=true]:bg-control-bg-selected data-[active=true]:text-text-default data-[active=true]:after:bg-primary",
+							: chatTitleChip
+								? cn(
+										"window-no-drag relative flex h-32 min-w-96 max-w-192 shrink-0 items-center self-center rounded-sm text-text-default ring-focus-ring ring-inset hover:bg-control-bg-hovered has-[[role=tab][data-layout-focus-intent=keyboard]:focus]:ring-1",
+										!sole && "data-[active=true]:bg-control-bg-selected",
+									)
+								: location.area === "center"
+									? "window-no-drag relative flex h-32 min-w-96 max-w-192 shrink-0 items-center self-center rounded-sm text-text-muted ring-focus-ring ring-inset hover:bg-control-bg-hovered has-[[role=tab]:focus-visible:not([data-layout-focus-intent=restore])]:ring-1 has-[[role=tab][data-layout-focus-intent=keyboard]:focus]:ring-1 data-[active=true]:bg-control-bg-selected data-[active=true]:text-text-default"
+									: "relative flex min-w-96 max-w-192 shrink-0 items-center border-border-default border-r text-text-muted ring-focus-ring ring-inset after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:z-10 after:h-[2px] after:rounded-full after:content-[''] has-[[role=tab]:focus-visible:not([data-layout-focus-intent=restore])]:ring-1 has-[[role=tab][data-layout-focus-intent=keyboard]:focus]:ring-1 data-[active=true]:bg-control-bg-selected data-[active=true]:text-text-default data-[active=true]:after:bg-primary",
 					)}
 				>
 					<div
@@ -760,7 +833,19 @@ export const WorkbenchTab = memo(function WorkbenchTab({
 					) : (
 						tabButton
 					)}
-					{tab.kind !== "tool" ? (
+					{chatTitleChip ? (
+						<IconButton
+							variant="ghost"
+							size="s"
+							icon={ChevronDown}
+							label={t("workbench.tab.chatMenu")}
+							tooltip={null}
+							aria-haspopup="menu"
+							data-testid="chat-title-menu"
+							onClick={openTabMenu}
+							className="mr-4 shrink-0"
+						/>
+					) : tab.kind !== "tool" ? (
 						<IconButton
 							variant="ghost"
 							size="s"
@@ -781,17 +866,11 @@ export const WorkbenchTab = memo(function WorkbenchTab({
 					event.preventDefault();
 				}}
 			>
-				<ContextMenuItem onSelect={() => focusTab()}>{t("workbench.tab.focus")}</ContextMenuItem>
+				{chatTitleChip ? null : (
+					<ContextMenuItem onSelect={() => focusTab()}>{t("workbench.tab.focus")}</ContextMenuItem>
+				)}
 				{tab.kind === "chat" && onRenameChat ? (
-					<ContextMenuItem
-						onSelect={() => {
-							editStartNameRef.current = tab.name;
-							cancelNextBlurRef.current = false;
-							restoreTabFocusRef.current = false;
-							enterRenameRef.current = true;
-							setEditingName(true);
-						}}
-					>
+					<ContextMenuItem onSelect={startChatRename}>
 						{t("workbench.tab.renameChat")}
 					</ContextMenuItem>
 				) : null}
@@ -811,31 +890,35 @@ export const WorkbenchTab = memo(function WorkbenchTab({
 						? t("workbench.tab.focusNextGroup")
 						: t("workbench.tab.focusNextGroupUnavailable")}
 				</ContextMenuItem>
-				{location.area === "center" ? (
+				{location.area === "center" && !chatTitleChip ? (
 					<ContextMenuItem disabled={!preview} onSelect={() => focusTab(true)}>
 						{preview ? t("workbench.tab.keepPreview") : t("workbench.tab.keepPreviewUnavailable")}
 					</ContextMenuItem>
 				) : null}
-				<ContextMenuItem
-					disabled={previousIndex === undefined}
-					onSelect={() => {
-						if (previousIndex !== undefined) reorder(previousIndex);
-					}}
-				>
-					{previousIndex === undefined
-						? t(rail?.vertical ? "workbench.tab.moveUpFirst" : "workbench.tab.moveLeftFirst")
-						: t(rail?.vertical ? "workbench.tab.moveUp" : "workbench.tab.moveLeft")}
-				</ContextMenuItem>
-				<ContextMenuItem
-					disabled={nextIndex === undefined}
-					onSelect={() => {
-						if (nextIndex !== undefined) reorder(nextIndex);
-					}}
-				>
-					{nextIndex === undefined
-						? t(rail?.vertical ? "workbench.tab.moveDownLast" : "workbench.tab.moveRightLast")
-						: t(rail?.vertical ? "workbench.tab.moveDown" : "workbench.tab.moveRight")}
-				</ContextMenuItem>
+				{chatTitleChip ? null : (
+					<>
+						<ContextMenuItem
+							disabled={previousIndex === undefined}
+							onSelect={() => {
+								if (previousIndex !== undefined) reorder(previousIndex);
+							}}
+						>
+							{previousIndex === undefined
+								? t(rail?.vertical ? "workbench.tab.moveUpFirst" : "workbench.tab.moveLeftFirst")
+								: t(rail?.vertical ? "workbench.tab.moveUp" : "workbench.tab.moveLeft")}
+						</ContextMenuItem>
+						<ContextMenuItem
+							disabled={nextIndex === undefined}
+							onSelect={() => {
+								if (nextIndex !== undefined) reorder(nextIndex);
+							}}
+						>
+							{nextIndex === undefined
+								? t(rail?.vertical ? "workbench.tab.moveDownLast" : "workbench.tab.moveRightLast")
+								: t(rail?.vertical ? "workbench.tab.moveDown" : "workbench.tab.moveRight")}
+						</ContextMenuItem>
+					</>
+				)}
 				{location.area === "center" ? (
 					<>
 						<ContextMenuSeparator />
@@ -1034,6 +1117,7 @@ export const WorkbenchTab = memo(function WorkbenchTab({
 						: t("workbench.group.remove")}
 				</ContextMenuItem>
 				<ContextMenuItem
+					data-testid="tab-menu-close"
 					onSelect={onClose}
 					className="text-feedback-error focus:text-feedback-error"
 				>

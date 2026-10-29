@@ -16,8 +16,7 @@ async function openWorkspaceFiles(page: import("@playwright/test").Page): Promis
 	await openFixtureProject(page);
 	await createWorkspaceViaDialog(page);
 	const chatTab = page.locator('[data-testid="editor-tab"][data-kind="chat"]');
-	await chatTab.hover();
-	await chatTab.getByTestId("editor-tab-close").click();
+	await chatTab.getByRole("tab").press("Delete");
 	await expect(chatTab).toHaveCount(0);
 	await revealWorkbenchTool(page, "files");
 	await expect(page.getByTestId("file-node").first()).toBeVisible();

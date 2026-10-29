@@ -383,16 +383,16 @@
 }
 .tr-prose-chat :is(table, td) {
 	font-family: var(--tr-font-family-interface);
-	font-size: var(--tr-font-size-s12);
+	font-size: var(--tr-font-size-s16);
 	font-weight: var(--tr-font-weight-regular);
-	line-height: 17px;
+	line-height: 24px;
 	letter-spacing: var(--tr-letter-spacing-normal);
 	text-transform: none;
 	font-style: normal;
 }
 .tr-prose-chat th {
 	font-family: var(--tr-font-family-interface);
-	font-size: var(--tr-font-size-s14);
+	font-size: var(--tr-font-size-s16);
 	font-weight: var(--tr-font-weight-semibold);
 	line-height: 20px;
 	letter-spacing: var(--tr-letter-spacing-normal);
@@ -401,9 +401,9 @@
 }
 .tr-prose-chat :is(td, th) > code {
 	font-family: var(--tr-font-family-code);
-	font-size: var(--tr-font-size-s11);
+	font-size: var(--tr-font-size-s13);
 	font-weight: var(--tr-font-weight-regular);
-	line-height: 16px;
+	line-height: 19px;
 	letter-spacing: var(--tr-letter-spacing-normal);
 	text-transform: none;
 	font-style: normal;

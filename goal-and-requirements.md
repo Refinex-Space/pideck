@@ -76,6 +76,7 @@ What PiDeck does, at product level; the linked spec owns the detail.
   ([[submodule-server-workspaces]]).
 - **Workbench** — a splittable layout of files, diffs, documents, chats, and terminals with movable side
   and bottom tool panels, kept local to each window ([[submodule-web-shell-layout]]).
+- **Files** — contained file/folder management, searchable paths, explicit source editing with conflict checks and local draft recovery, and cursor-preserving file/selection references into chats ([file-workbench.md](file-workbench.md)).
 - **Chats** — concurrent `pi` sessions per workspace, each with its own model, pi-reported token/cost,
   steering and follow-ups mid-run, skill and prompt-template autocomplete, and history search
   ([[submodule-web-chat]], [[submodule-server-agent]]).

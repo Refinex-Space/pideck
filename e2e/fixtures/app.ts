@@ -504,3 +504,9 @@ export async function runInTerminal(page: Page, command: string): Promise<void> 
 	await page.keyboard.type(command);
 	await page.keyboard.press("Enter");
 }
+
+/** Closes a tab through its context menu — a chat's title chip has no close button of its own. */
+export async function closeTabViaMenu(page: Page, tab: Locator): Promise<void> {
+	await tab.click({ button: "right" });
+	await page.getByTestId("tab-menu-close").click();
+}

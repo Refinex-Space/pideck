@@ -302,13 +302,13 @@
 				"$ref": "body.reading"
 			},
 			"tableBody": {
-				"$ref": "ui.metadata"
+				"$ref": "body.reading"
 			},
 			"tableHeader": {
-				"$ref": "chat.h3"
+				"$ref": "title.dialog"
 			},
 			"tableInlineCode": {
-				"$ref": "code.textSmall"
+				"$ref": "code.text"
 			}
 		},
 		"doc": {

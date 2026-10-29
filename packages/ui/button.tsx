@@ -4,7 +4,13 @@ import type * as React from "react";
 import { IconTooltip } from "./tooltip";
 import { cn } from "./utils";
 
-export type ButtonVariant = "primary" | "soft-primary" | "outline" | "ghost" | "destructive";
+export type ButtonVariant =
+	| "primary"
+	| "soft-primary"
+	| "outline"
+	| "quiet"
+	| "ghost"
+	| "destructive";
 export type ButtonSize = "s" | "m" | "l";
 export type ButtonTone = "warning" | "danger";
 export type ButtonIcon = React.ElementType<{
@@ -28,6 +34,8 @@ const variantClasses = cva(
 					"border-primary-soft bg-primary-subtle text-primary hover:border-primary-muted hover:bg-control-soft-primary-bg-hovered data-[selected=true]:border-primary-muted data-[selected=true]:bg-control-soft-primary-bg-hovered button-disabled:border-control-disabled-border button-disabled:bg-control-disabled-bg button-disabled:text-control-disabled-text active:border-primary-muted active:bg-control-soft-primary-bg-hovered",
 				outline:
 					"border-control-border-default bg-control-bg text-text-default hover:bg-control-bg-hovered data-[selected=true]:bg-control-bg-selected button-disabled:border-control-disabled-border button-disabled:bg-control-disabled-bg button-disabled:text-control-disabled-text active:bg-control-bg-hovered",
+				quiet:
+					"border-border-muted bg-transparent text-text-muted hover:bg-control-bg-hovered hover:text-text-default data-[selected=true]:bg-control-bg-selected data-[selected=true]:text-text-default button-disabled:border-control-disabled-border button-disabled:text-control-disabled-text active:bg-control-bg-hovered active:text-text-default",
 				ghost: [
 					"border-transparent bg-transparent text-text-muted hover:bg-control-bg-hovered hover:text-text-default focus-visible:bg-control-bg-hovered focus-visible:text-text-default data-[selected=true]:bg-control-bg-selected data-[selected=true]:text-text-default button-disabled:text-control-disabled-text active:bg-control-bg-hovered active:text-text-default",
 					"[[data-row]_&]:hover:bg-container-elevated-bg [[data-row]_&]:focus-visible:bg-container-elevated-bg [[data-row]_&]:data-[selected=true]:bg-container-elevated-bg [[data-row]_&]:active:bg-container-elevated-bg",
@@ -291,7 +299,7 @@ export function IconButton({
 	ref,
 	...props
 }: IconButtonProps) {
-	return withTooltip(
+	const iconButton = (
 		<button
 			ref={ref}
 			type={type}
@@ -313,7 +321,11 @@ export function IconButton({
 			) : (
 				<Icon aria-hidden />
 			)}
-		</button>,
+		</button>
+	);
+	if (tooltip === null) return iconButton;
+	return withTooltip(
+		iconButton,
 		tooltip ?? label,
 		tooltipSide,
 		tooltipAlign,

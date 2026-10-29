@@ -13,9 +13,9 @@ tags: [live-refresh, public-surface-checked]
 The filesystem change notifier behind the UI's live refresh: one recursive watcher per watched
 workspace worktree (Bun's native `fs.watch(root, { recursive: true })` — no watcher dependency),
 coalescing events into a debounced **`workspace.fsChanged`** publish (`WorkspaceFsChangedPayload`:
-`{ workspaceId, paths, truncated, skillChange }`). The frame is an **invalidation nudge, not data** — clients
+`{ workspaceId, paths, truncated, skillChange }`). The frame is an **invalidation nudge, not file content** — clients
 re-read through the existing read methods (`fs.*` / `git.*` / `spec.graph`), so the reads stay the
-single source of truth and a duplicate/replayed frame is harmless (one extra refetch, never wrong
+single source of truth; explicit move/trash metadata only updates client path identity. A duplicate/replayed frame is harmless (one extra refetch, never wrong
 state). Chosen over per-path client-side tree patching (would make the client a second source of
 truth) and visible-panel polling (laggy, wasteful over Tailscale).
 
@@ -108,7 +108,14 @@ truth) and visible-panel polling (laggy, wasteful over Tailscale).
   while unwatched still records activity, while an unchanged HEAD is a no-op. It runs inside the registration's guarded
   region, and a throw there — from it or from anything after `entries.set` — tears the fresh entry down
   (`stopWatch`) rather than leaving a registered watcher whose readiness never settles.
-- **Public surface (barrel):** `ensureWatch`, `stopWatch`, `stopAllWatches`, `setWatchPublisher`,
+- **Public surface (barrel):** `notifyWorkspaceFiles`, `ensureWatch`, `stopWatch`, `stopAllWatches`, `setWatchPublisher`,
   `setRepoMetaPublisher`, `setWatchStartedPublisher`, `setSkillPathClassifier`.
 - **Allowed deps:** `persistence` (workspace lookup), `log`; `contracts` (payload type); Bun/Node.
 - **Forbidden:** `host`; sibling features; any pi package.
+
+## Explicit file mutations
+
+`notifyWorkspaceFiles(workspaceId, paths, mutation?)` is a host composition entry point for confirmed
+file operations. It uses the existing publisher and skill invalidation; optional move/trash metadata
+lets clients update path identity without inferring renames from watcher timing. Ordinary watcher
+notifications remain valid duplicates.

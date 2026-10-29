@@ -13,6 +13,7 @@ import { type ReactNode, useMemo } from "react";
 import { Markdown } from "../chat/Markdown";
 import { cssColorToHex, usePhoneViewport } from "../lib";
 import { SHIKI_FILE_LANGUAGES, shikiLanguageId } from "../lib/highlighter";
+import { FileDraftGuard } from "../panels/FileDraftGuard";
 import { openFileComparisonInTab, openFileInTab } from "../panels/openTabs";
 import { resourceBytesUrl } from "../panels/resourcePane";
 import { SendReviewButton } from "../panels/SendReviewButton";
@@ -66,6 +67,7 @@ export function AppResourceHost({ children }: { children: ReactNode }) {
 	const environment = useMemo<ResourceEnvironment>(() => ({ mobile }), [mobile]);
 	return (
 		<ResourceHostProvider value={HOST}>
+			<FileDraftGuard />
 			<ResourcePreferencesProvider value={preferences}>
 				<ResourceEnvironmentProvider value={environment}>{children}</ResourceEnvironmentProvider>
 			</ResourcePreferencesProvider>

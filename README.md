@@ -40,12 +40,18 @@ delivery controls stay with the active workspace. Back/Forward buttons follow lo
 and the primary navigation tools use Lucide icons. Existing layouts, the other built-in presets,
 high-contrast modes and custom themes remain available.
 The evidence, design decisions and cross-platform requirements live in [design-system.md](design-system.md).
-File-tree “add to conversation” actions remain future work.
+File and directory menus can insert references into the current chat draft without sending it.
 
 File and folder types use locally bundled
 [Material Icon Theme](https://github.com/material-extensions/vscode-material-icon-theme) artwork,
 including Office/PDF, languages, frameworks and common project directories. Unknown types retain
 neutral fallback icons.
+
+The file workbench adds path search and breadcrumbs, source wrap/find/select/comment controls,
+explicit text editing and hash-checked saves, and confirmed file/folder operations. Unsaved drafts
+survive tab switches and reloads within the current browser or native window session, subject to its
+storage quota; save before closing the window. Copy paths, reveal files or open an installed editor from the same menu. See
+[file-workbench.md](file-workbench.md) for behavior, limits and verification.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset=".github/readme-assets/pideck-studio-dark.png">

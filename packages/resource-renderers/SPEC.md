@@ -186,7 +186,7 @@ keeps it.
 - **Monaco runs its vendored DOMPurify.** `monaco-editor` sanitizes hovers and rendered markdown with its own
   copy under `esm/vs/base/browser/dompurify`, so only a Monaco upgrade changes the sanitizer that runs; the
   `dompurify` it declares is never imported. The vendored copy predates several DOMPurify advisories. The
-  exposure is accepted: this read-only reader has no language services, hover providers or decoration
+  exposure is accepted: the default preview has no language services, hover providers or decoration
   hover messages, so hover markdown is Monaco's own, and it calls DOMPurify with hooks and
   `RETURN_DOM_FRAGMENT`, never `IN_PLACE` or `SAFE_FOR_TEMPLATES`.
   Monaco 0.57 vendors 3.4.15. The root `overrides.dompurify` pin only keeps the declared copy on Mermaid's
@@ -598,9 +598,9 @@ content's own height.
   The React Compiler memoizes `MonacoEditor`'s options on width, bounded and path, and the editor calls
   `updateOptions` only when that object changes; the typography and spacing tokens the options read are
   static generated CSS (themes set only colours).
-- **The desktop Monaco surface is a reader, not a language workstation.** Its file-only options keep the
+- **The desktop Monaco surface supports explicit text editing without language services.** Its file-only options keep the
   configured wrapping, generated code typography, minimap/overview-ruler removal and 6px shadowless scrollbar,
-  and add read-only messaging, the path as its accessible label, an 8px top inset, three-character line-number
+  and add read-only messaging in preview mode, the path as its accessible label, an 8px top inset, three-character line-number
   gutter, full active-line paint, smooth scrolling, active bracket-pair + indentation guides, single-file
   occurrence highlighting, and ambiguous-Unicode suppression. Opaque `viewState` is restored only after its
   editor-state shape is validated and is saved on unmount, so tab switches round-trip scroll and folding.
@@ -621,9 +621,10 @@ content's own height.
   that mounts the view, with no loading state, then restores the view state and attaches review commenting
   (review attaches only at mount). Its layout cleanup saves the view state before it disposes the editor
   and the model, in that order. A path change on a live editor swaps the model in place, and the language
-  follows the path, because `RendererView` is keyed by implementation, not path. New text calls `setValue`
-  only when it differs from the text last applied: the editor is read-only, so the last applied text is
-  the model's text and reading it back (`getValue()`) would only cost a full copy. The model and options
+  follows the path, because `RendererView` is keyed by implementation, not path. New external text calls `setValue`
+  only when it differs both from the last applied text and the live model. Controlled typing echoes
+  therefore retain undo/redo history and IME state. Models preserve CRLF when present and use LF otherwise;
+  `getValue(..., true)` preserves the original UTF-8 BOM. The model and options
   effects skip their first run, because the mount just created the editor with exactly those inputs. The
   editor lives in a layout effect, so a re-suspend inside the view's Suspense boundary disposes it (and any
   open review composer); nothing re-suspends there today, because each `RendererView` has its own boundary
@@ -705,3 +706,12 @@ content's own height.
   70 ms at 4x. Click to highlighted is no later. Cost: create and first render now run in one task, so the
   longest task after the click grows at 4x CPU (cold open 120 to 145 ms, warm large open 0 to 55 ms). The
   `MonacoEditor` chunk shrinks by 12.1 kB (3.10 MB to 3.09 MB; 3.5 kB gzip).
+
+## Explicit source editing and selection commands
+
+`ResourceViewProps` accepts optional source-editor callbacks, a word-wrap override and an editor-controls
+callback. The code renderer remains read-only without those props. The host owns drafts, save requests,
+conflict checks and chat routing; Monaco owns its model, undo, selections, find and view state.
+A controlled keystroke echo must not call model.setValue and reset undo. Read-only review annotations are
+hidden while editing; selection-to-chat is a host callback and never sends a prompt. Small viewports retain
+the existing reader and use an accessible text-edit surface when explicit editing is requested.

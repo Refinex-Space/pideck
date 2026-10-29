@@ -56,7 +56,24 @@ export interface SurfaceReview {
 	onFocusHandled(): void;
 }
 
+export interface ResourceTextSelection {
+	text: string;
+	startLine: number;
+	endLine: number;
+}
+export interface ResourceEditorControls {
+	focus(): void;
+	find(): void;
+	selectAll(): void;
+	comment(): void;
+	selection(): ResourceTextSelection | null;
+}
 export interface ResourceViewProps {
+	editing?: { onChange(text: string): void; onSave(): void };
+	wordWrap?: boolean;
+	onEditorReady?(controls: ResourceEditorControls | null): void;
+	onSelectionChange?(selection: ResourceTextSelection | null): void;
+	onAddSelectionToChat?(selection: ResourceTextSelection): void;
 	resource: ResourceDescriptor;
 	content: ResourceContent;
 	review?: SurfaceReview;

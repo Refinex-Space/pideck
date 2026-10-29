@@ -74,6 +74,7 @@ import {
 	ancestorPaths,
 	defaultTerminalIndex,
 	defaultTerminalTitle,
+	fileMoveProjection,
 	isPreviewCompatibleTabKind,
 	type LayoutAttention,
 	layoutResourceIdentity,
@@ -81,6 +82,7 @@ import {
 	parseSkillInvocation,
 	randomId,
 	readLayoutNavigationClock,
+	remapFilePath,
 	shallowEqualArrays,
 	tupleKey,
 	userText,
@@ -99,6 +101,15 @@ import {
 	type ChatResourceSnapshots,
 	staleChatResources,
 } from "./chatResources";
+import {
+	type ComposerCursor,
+	type FileDraft,
+	type FileDrafts,
+	fileDraftKey,
+	insertAtCursor,
+	readFileDrafts,
+	readFileWordWrap,
+} from "./fileDrafts";
 import {
 	EMPTY_MCP_PROJECTION,
 	foldMcpList,
@@ -147,6 +158,7 @@ export interface FileTab {
 	name: string;
 	path: string;
 	content: string;
+	loadError?: string;
 	meta?: ResourceMeta;
 	rendererId?: string;
 	viewState?: unknown;
@@ -363,6 +375,14 @@ export type LayoutIntent =
 			navigation?: CenterNavigationStamp | null;
 			countNavigation?: boolean;
 	  }
+	| {
+			id: string;
+			kind: "move-files";
+			workspaceId: string;
+			from: string;
+			to: string;
+			preserved: string[];
+	  }
 	| { id: string; kind: "reveal-tool"; workspaceId: string; tool: LayoutToolId }
 	| { id: string; kind: "remove-session"; workspaceId: string; sessionId: string }
 	| {
@@ -475,6 +495,8 @@ export interface SessionRuntime {
 	stats: SessionStats | null;
 	commands: SlashCommandInfo[];
 	draft: string;
+	composerCursor?: ComposerCursor;
+	composerInsertion?: { id: string; start: number; end: number };
 	pendingExtUi: ExtUiDialogRequest | null;
 	extUiQueue: ExtUiDialogRequest[];
 	extUiStatus: Record<string, string>;
@@ -938,6 +960,27 @@ function withHostState(runtime: SessionRuntime, hostState: SessionState | null):
 export type ReviewFocusSurface = { kind: "inline" } | { kind: "diff"; scope: GitDiffScope };
 
 interface AppState {
+	filesSearchByWorkspace: Record<string, string>;
+	filesRevealRequest: { id: string; workspaceId: string; path: string } | null;
+	setFilesSearch: (workspaceId: string, query: string) => void;
+	showFilesPath: (workspaceId: string, path: string, kind: "file" | "dir") => void;
+	clearFilesReveal: (id: string) => void;
+	fileEditorFocus: { id: string; workspaceId: string; path: string } | null;
+	requestFileEditorFocus: (workspaceId: string, path: string) => void;
+	clearFileEditorFocus: (id: string) => void;
+	fileWordWrap: boolean;
+	setFileWordWrap: (value: boolean) => void;
+	fileDrafts: FileDrafts;
+	lastFocusedChatByWorkspace: Record<string, string>;
+	beginFileEdit: (workspaceId: string, path: string, content: string, hash: string) => void;
+	setFileDraftText: (workspaceId: string, path: string, text: string) => void;
+	discardFileDraft: (workspaceId: string, path: string) => void;
+	setFileDraftSaving: (workspaceId: string, path: string, saving: boolean, error?: string) => void;
+	finishFileDraftSave: (workspaceId: string, path: string, submitted: string, hash: string) => void;
+	rememberChatTarget: (workspaceId: string, sessionId: string) => void;
+	rememberComposerCursor: (workspaceId: string, sessionId: string, cursor: ComposerCursor) => void;
+	insertChatText: (workspaceId: string, sessionId: string, text: string) => void;
+	consumeChatInsertion: (sessionId: string, id: string) => void;
 	resourceSnapshots: ChatResourceSnapshots;
 	resourceRevision: number;
 	invalidateChatResources: (scope: ChatResourceScope) => void;
@@ -1234,6 +1277,7 @@ interface AppState {
 		content: string,
 		meta: ResourceMeta | undefined,
 		tick: number,
+		loadError?: string | null,
 	) => void;
 	updateDiffTabContent: (
 		workspaceId: string,
@@ -2271,6 +2315,40 @@ export const useAppStore = create<AppState>((set, get) => ({
 	terminalsByWorkspace: {},
 	activeTerminalByWorkspace: {},
 	sessions: {},
+	fileDrafts: readFileDrafts(),
+	filesSearchByWorkspace: {},
+	filesRevealRequest: null,
+	setFilesSearch: (workspaceId, query) =>
+		set((s) => ({ filesSearchByWorkspace: { ...s.filesSearchByWorkspace, [workspaceId]: query } })),
+	clearFilesReveal: (id) =>
+		set((s) => (s.filesRevealRequest?.id === id ? { filesRevealRequest: null } : {})),
+	showFilesPath: (workspaceId, path, kind) =>
+		set((s) => {
+			const paths = ancestorPaths(path);
+			if (kind === "dir" && path && path !== ".") paths.push(path);
+			return {
+				filesMode: "all",
+				filesSearchByWorkspace: { ...s.filesSearchByWorkspace, [workspaceId]: "" },
+				filesRevealRequest: { id: randomId("files-reveal"), workspaceId, path: path || "." },
+				...patchFilesTreeView(s, workspaceId, (view) => ({
+					...view,
+					expanded: withPathMembership(view.expanded, paths, true),
+				})),
+				layoutIntents: appendLayoutIntent(s.layoutIntents, {
+					kind: "reveal-tool",
+					workspaceId,
+					tool: "files",
+				}),
+			};
+		}),
+	fileEditorFocus: null,
+	requestFileEditorFocus: (workspaceId, path) =>
+		set({ fileEditorFocus: { id: randomId("file-focus"), workspaceId, path } }),
+	clearFileEditorFocus: (id) =>
+		set((s) => (s.fileEditorFocus?.id === id ? { fileEditorFocus: null } : {})),
+	fileWordWrap: readFileWordWrap(),
+	setFileWordWrap: (fileWordWrap) => set({ fileWordWrap }),
+	lastFocusedChatByWorkspace: {},
 	sessionStateByWorkspace: {},
 	sessionStateClock: 0,
 	sessionStateSnapshotInstalled: false,
@@ -3231,7 +3309,57 @@ export const useAppStore = create<AppState>((set, get) => ({
 			const prev = s.fsChangesByWorkspace[payload.workspaceId];
 			const tick = (prev?.tick ?? 0) + 1;
 			const skillChanged = payload.skillChange !== "none";
+			let moved: Partial<AppState> = {};
+			if (payload.mutation?.kind === "move") {
+				const { from, to } = payload.mutation;
+				const preserved = Object.values(s.fileDrafts)
+					.filter(
+						(draft) =>
+							draft.workspaceId === payload.workspaceId &&
+							(draft.saving || draft.text !== draft.baseContent),
+					)
+					.map((draft) => draft.path);
+				const tabs = s.tabsByWorkspace[payload.workspaceId] ?? [];
+				const projection = fileMoveProjection(
+					tabs.flatMap((tab) => (tab.kind === "file" ? [tab.path] : [])),
+					from,
+					to,
+					preserved,
+				);
+				const mapped = tabs.flatMap((tab): EditorTab[] => {
+					if (tab.kind !== "file") return [tab];
+					const path = projection.get(tab.path);
+					if (path === null) return [];
+					if (path === undefined) return [tab];
+					if (path !== tab.path) return [{ ...tab, path, name: path.split("/").at(-1) ?? path }];
+					return [tab];
+				});
+				moved = {
+					tabsByWorkspace: { ...s.tabsByWorkspace, [payload.workspaceId]: mapped },
+					fileDrafts: Object.fromEntries(
+						Object.entries(s.fileDrafts).filter(
+							([, draft]) =>
+								draft.workspaceId !== payload.workspaceId ||
+								preserved.includes(draft.path) ||
+								(remapFilePath(draft.path, from, to) === draft.path &&
+									projection.get(draft.path) !== null),
+						),
+					),
+					layoutIntents: appendLayoutIntent(s.layoutIntents, {
+						kind: "move-files",
+						workspaceId: payload.workspaceId,
+						from,
+						to,
+						preserved,
+					}),
+					...patchFilesTreeView(s, payload.workspaceId, (view) => ({
+						...view,
+						expanded: view.expanded.map((path) => remapFilePath(path, from, to)),
+					})),
+				};
+			}
 			return {
+				...moved,
 				fsChangesByWorkspace: {
 					...s.fsChangesByWorkspace,
 					[payload.workspaceId]: { tick, paths: payload.paths, truncated: payload.truncated },
@@ -3254,7 +3382,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 				skillsSyncedTickBySession: { ...s.skillsSyncedTickBySession, [sessionId]: synced },
 			};
 		}),
-	updateFileTabContent: (workspaceId, id, content, meta, tick) =>
+	updateFileTabContent: (workspaceId, id, content, meta, tick, loadError) =>
 		set((s) => {
 			if (s.removedWorkspaceIds[workspaceId]) return {};
 			const tabs = s.tabsByWorkspace[workspaceId] ?? [];
@@ -3262,16 +3390,18 @@ export const useAppStore = create<AppState>((set, get) => ({
 			return {
 				tabsByWorkspace: {
 					...s.tabsByWorkspace,
-					[workspaceId]: tabs.map((tab) =>
-						tab.id === id && tab.kind === "file"
-							? {
-									...tab,
-									content,
-									...(meta === undefined ? {} : { meta }),
-									loadedTick: tick,
-								}
-							: tab,
-					),
+					[workspaceId]: tabs.map((tab) => {
+						if (tab.id !== id || tab.kind !== "file" || (tab.loadedTick ?? 0) > tick) return tab;
+						const next = {
+							...tab,
+							content,
+							...(meta === undefined ? {} : { meta }),
+							loadedTick: tick,
+						};
+						if (loadError === null) delete next.loadError;
+						else if (loadError !== undefined) next.loadError = loadError;
+						return next;
+					}),
 				},
 			};
 		}),
@@ -4243,6 +4373,127 @@ export const useAppStore = create<AppState>((set, get) => ({
 	setStats: (sessionId, stats) => set((s) => withRuntime(s, sessionId, (rt) => ({ ...rt, stats }))),
 	setCommands: (sessionId, commands) =>
 		set((s) => withRuntime(s, sessionId, (rt) => ({ ...rt, commands }))),
+	beginFileEdit: (workspaceId, path, content, hash) =>
+		set((s) => {
+			const key = fileDraftKey(workspaceId, path);
+			if (s.fileDrafts[key]) return {};
+			return {
+				fileDrafts: {
+					...s.fileDrafts,
+					[key]: { workspaceId, path, baseContent: content, baseHash: hash, text: content },
+				},
+			};
+		}),
+	setFileDraftText: (workspaceId, path, text) =>
+		set((s) => {
+			const key = fileDraftKey(workspaceId, path);
+			const draft = s.fileDrafts[key];
+			if (!draft || draft.text === text) return {};
+			const tab = s.tabsByWorkspace[workspaceId]?.find(
+				(tab) => tab.kind === "file" && tab.path === path,
+			);
+			return {
+				fileDrafts: { ...s.fileDrafts, [key]: { ...draft, text } },
+				...(tab && s.previewTabByWorkspace[workspaceId] === tab.id
+					? {
+							layoutIntents: appendLayoutIntent(s.layoutIntents, {
+								kind: "select",
+								workspaceId,
+								tabId: tab.id,
+								keep: true,
+								focus: false,
+								countNavigation: false,
+							}),
+						}
+					: {}),
+			};
+		}),
+	discardFileDraft: (workspaceId, path) =>
+		set((s) => ({ fileDrafts: omitKey(s.fileDrafts, fileDraftKey(workspaceId, path)) })),
+	setFileDraftSaving: (workspaceId, path, saving, error) =>
+		set((s) => {
+			const key = fileDraftKey(workspaceId, path);
+			const draft = s.fileDrafts[key];
+			if (!draft) return {};
+			const next = { ...draft, saving };
+			delete next.error;
+			if (error) next.error = error;
+			return { fileDrafts: { ...s.fileDrafts, [key]: next } };
+		}),
+	finishFileDraftSave: (workspaceId, path, submitted, hash) =>
+		set((s) => {
+			const key = fileDraftKey(workspaceId, path);
+			const draft = s.fileDrafts[key];
+			if (!draft) return {};
+			const next: FileDraft = { ...draft, baseContent: submitted, baseHash: hash, saving: false };
+			delete next.error;
+			return { fileDrafts: { ...s.fileDrafts, [key]: next } };
+		}),
+	rememberChatTarget: (workspaceId, sessionId) =>
+		set((s) => {
+			if (
+				s.activeWorkspaceId !== workspaceId ||
+				!s.sessions[sessionId] ||
+				s.lastFocusedChatByWorkspace[workspaceId] === sessionId
+			)
+				return {};
+			return {
+				lastFocusedChatByWorkspace: { ...s.lastFocusedChatByWorkspace, [workspaceId]: sessionId },
+			};
+		}),
+	rememberComposerCursor: (workspaceId, sessionId, cursor) =>
+		set((s) => ({
+			...withRuntime(s, sessionId, (rt) => ({ ...rt, composerCursor: cursor })),
+			lastFocusedChatByWorkspace: { ...s.lastFocusedChatByWorkspace, [workspaceId]: sessionId },
+		})),
+	insertChatText: (workspaceId, sessionId, text) =>
+		set((s) => {
+			const rt = s.sessions[sessionId];
+			const tab = s.tabsByWorkspace[workspaceId]?.find(
+				(tab) => tab.kind === "chat" && tab.sessionId === sessionId,
+			);
+			if (!rt || !tab || s.removedWorkspaceIds[workspaceId]) return {};
+			const result = insertAtCursor(rt.draft, text, rt.composerCursor);
+			const activate = s.activeWorkspaceId === workspaceId;
+			return {
+				...withRuntime(s, sessionId, (rt) => ({
+					...rt,
+					draft: result.text,
+					composerCursor: { draft: result.text, start: result.caret, end: result.caret },
+					...(activate
+						? {
+								composerInsertion: {
+									id: randomId("composer-insert"),
+									start: result.caret,
+									end: result.caret,
+								},
+							}
+						: {}),
+				})),
+				...(activate
+					? {
+							layoutIntents: appendLayoutIntent(s.layoutIntents, {
+								kind: "select",
+								workspaceId,
+								tabId: tab.id,
+								keep: true,
+								focus: false,
+							}),
+							activeTabByWorkspace: { ...s.activeTabByWorkspace, [workspaceId]: tab.id },
+							navTickByWorkspace: bumpNav(s, workspaceId),
+						}
+					: {}),
+			};
+		}),
+	consumeChatInsertion: (sessionId, id) =>
+		set((s) =>
+			withRuntime(s, sessionId, (rt) => {
+				if (rt.composerInsertion?.id !== id) return rt;
+				const next = { ...rt };
+				delete next.composerInsertion;
+				return next;
+			}),
+		),
 	setChatDraft: (sessionId, draft) =>
 		set((s) => withRuntime(s, sessionId, (rt) => ({ ...rt, draft }))),
 	clearPendingExtUi: (sessionId, id) =>

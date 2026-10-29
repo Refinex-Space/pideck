@@ -1,13 +1,24 @@
-import { expect, type Page, test } from "@playwright/test";
-import { createWorkspaceViaDialog, goProjectHome, openFixtureProject } from "./fixtures/app";
+import { expect, type Locator, type Page, test } from "@playwright/test";
+import {
+	closeTabViaMenu,
+	createWorkspaceViaDialog,
+	goProjectHome,
+	openFixtureProject,
+} from "./fixtures/app";
 
-const chatTabs = (page: Page) => page.locator('[data-testid="editor-tab"][data-kind="chat"]');
+// The strip shows only the current chat; the sidebar's session rows are the open chats.
+const currentChat = (page: Page) => page.locator('[data-testid="editor-tab"][data-kind="chat"]');
+const chatTabs = (page: Page) =>
+	page.locator('[data-testid="workspace-session"][data-open="true"]');
+const rowFor = (page: Page, hash: string) =>
+	page.locator(`[data-testid="workspace-session"][data-session-id="${hash.split("/chats/")[1]}"]`);
+const switchToChat = (row: Locator) => row.locator("button").first().click();
 const currentHash = (page: Page) => page.evaluate(() => window.location.hash);
 
 async function openTwoChats(page: Page): Promise<{ chat1Hash: string; chat2Hash: string }> {
 	await openFixtureProject(page);
 	await createWorkspaceViaDialog(page);
-	await expect(chatTabs(page)).toHaveCount(1);
+	await expect(currentChat(page)).toHaveCount(1);
 	await expect.poll(() => currentHash(page)).toContain("/chats/");
 	const chat1Hash = await currentHash(page);
 
@@ -22,7 +33,7 @@ async function openTwoChats(page: Page): Promise<{ chat1Hash: string; chat2Hash:
 test("Back and Forward step through chat switches and scope moves", async ({ page }) => {
 	const { chat1Hash, chat2Hash } = await openTwoChats(page);
 
-	await chatTabs(page).first().getByRole("tab").click();
+	await switchToChat(chatTabs(page).first());
 	await expect(chatTabs(page).first()).toHaveAttribute("data-active", "true");
 	await expect.poll(() => currentHash(page)).toBe(chat1Hash);
 
@@ -55,13 +66,13 @@ test("Back returns to a deep-linked chat entry", async ({ page }) => {
 	await page.goto(`/${chat1Hash}`);
 	await expect(page.getByTestId("connection-status")).toHaveAttribute("data-status", "connected");
 	await expect.poll(() => currentHash(page)).toBe(chat1Hash);
-	await expect(chatTabs(page).first()).toHaveAttribute("data-active", "true");
+	await expect(rowFor(page, chat1Hash)).toHaveAttribute("data-active", "true");
 
-	await chatTabs(page).last().getByRole("tab").click();
+	await switchToChat(rowFor(page, chat2Hash));
 	await expect.poll(() => currentHash(page)).toBe(chat2Hash);
 	await page.goBack();
 	await expect.poll(() => currentHash(page)).toBe(chat1Hash);
-	await expect(chatTabs(page).first()).toHaveAttribute("data-active", "true");
+	await expect(rowFor(page, chat1Hash)).toHaveAttribute("data-active", "true");
 });
 
 test("Back reopens a just-closed local chat without a current-layout wire write", async ({
@@ -83,7 +94,7 @@ test("Back reopens a just-closed local chat without a current-layout wire write"
 
 	const { chat1Hash, chat2Hash } = await openTwoChats(page);
 	methods.length = 0;
-	await chatTabs(page).last().getByTestId("editor-tab-close").click();
+	await closeTabViaMenu(page, currentChat(page));
 	await expect(chatTabs(page)).toHaveCount(1);
 	await expect.poll(() => currentHash(page)).toBe(chat1Hash);
 	expect(methods).not.toContain("layout.replace");
@@ -97,7 +108,7 @@ test("Back reopens a just-closed local chat without a current-layout wire write"
 test("a closed chat's entry survives Back; a deleted chat's entry falls back", async ({ page }) => {
 	const { chat1Hash, chat2Hash } = await openTwoChats(page);
 
-	await chatTabs(page).last().getByTestId("editor-tab-close").click();
+	await closeTabViaMenu(page, currentChat(page));
 	await expect(chatTabs(page)).toHaveCount(1);
 	await expect.poll(() => currentHash(page)).toBe(chat1Hash);
 
@@ -106,7 +117,7 @@ test("a closed chat's entry survives Back; a deleted chat's entry falls back", a
 	await expect(chatTabs(page)).toHaveCount(2);
 	await expect(chatTabs(page).last()).toHaveAttribute("data-active", "true");
 
-	await chatTabs(page).last().getByTestId("editor-tab-close").click();
+	await closeTabViaMenu(page, currentChat(page));
 	await expect(chatTabs(page)).toHaveCount(1);
 	await expect.poll(() => currentHash(page)).toBe(chat1Hash);
 	await page.getByTestId("chat-history").first().click();
@@ -116,8 +127,8 @@ test("a closed chat's entry survives Back; a deleted chat's entry falls back", a
 
 	await page.goBack();
 	await expect.poll(() => currentHash(page)).toBe(chat1Hash);
-	await expect(chatTabs(page)).toHaveCount(1);
-	await expect(chatTabs(page).first()).toHaveAttribute("data-active", "true");
+	await expect(currentChat(page)).toHaveCount(1);
+	await expect(currentChat(page)).toHaveAttribute("data-active", "true");
 });
 
 test("toolbar history survives reload, truncates Forward after a new route and follows sidebar folding", async ({

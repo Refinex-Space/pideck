@@ -49,3 +49,10 @@ worktree in the host's file manager — the workspace row's "Open in" menu.
   `contracts` (the `EditorInfo` wire type).
 - **Forbidden:** `host`; sibling features (`workspaces` resolves `worktreePath` before calling in — this
   module never looks up a workspace itself).
+
+## File targets
+
+The fixed GUI candidates also include Zed (`zed`), Sublime Text (`subl`) and Cursor (`cursor`).
+`openEditor` accepts a contained file or directory target resolved by the host. The optional fourth
+`revealInFileManager` argument selects a file: macOS `open -R`, Windows Explorer `/select,`, and
+Linux opens its parent directory. Arguments remain an argv array; no shell interpolation occurs.

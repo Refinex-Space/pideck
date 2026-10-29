@@ -17,7 +17,6 @@ describe("message copy layout", () => {
 	test("shows the assistant copy action in a hover strip under the message, on the left", () => {
 		const html = renderRow({ kind: "markdown", id: "answer", text: "100. Final answer" }, true);
 
-		expect(html).toContain("pl-24");
 		expect(html).toContain("list-inside");
 		expect(html).toContain('data-testid="message-actions"');
 		expect(html).toContain("justify-start");

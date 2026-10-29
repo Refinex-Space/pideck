@@ -29,10 +29,15 @@ PiDeck 的应用签名、公证和自动更新服务尚未配置。
 Studio 布局把主画布留给会话，项目导航保持可见，文件、审查与终端随时可展开。
 中性明暗主题、系统界面字体、清晰代码排版、克制动效和可搜索的设置页，采用接近 Claude Desktop
 的视觉方向。已有布局、其他内置预设、高对比模式与自定义主题继续可用。
-依据、设计决策与跨平台要求见 [design-system.md](design-system.md)。文件树右键插入会话仍为后续工作。
+依据、设计决策与跨平台要求见 [design-system.md](design-system.md)。文件与目录菜单支持插入当前聊天草稿，不会自动发送。
 左侧导航保持连续，设置入口位于左下角 PiDeck 菜单；分支、远程与 PR 操作归入工作区详情。
 顶部返回/前进按钮使用真实导航历史，主要导航工具采用 Lucide 图标，默认工作区使用无装饰图标的文字行。
 文件与目录使用本地打包的 [Material Icon Theme](https://github.com/material-extensions/vscode-material-icon-theme) 图标，覆盖 Office/PDF、编程语言、框架和常见项目目录；未知类型保留中性默认图标。
+
+文件工作台支持路径搜索与面包屑、源码换行/查找/选择/评论、显式编辑及带内容校验的保存，
+并提供文件和目录的新建、重命名、移动与回收站确认。未保存草稿可跨标签保留，并在当前浏览器或原生窗口会话内
+恢复，受窗口存储容量限制；关闭窗口前请保存。菜单还提供路径复制、文件管理器定位与已安装编辑器入口。
+行为约束、限制和验证见 [file-workbench.md](file-workbench.md)。
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset=".github/readme-assets/pideck-studio-dark.png">

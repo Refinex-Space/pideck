@@ -119,6 +119,7 @@ export function attachReviewCommenting(
 		codeEditor.layoutContentWidget(iconWidget);
 	};
 	const commentOnSelection = () => {
+		if (!codeEditor.getOption(monaco.editor.EditorOption.readOnly)) return;
 		const selection = codeEditor.getSelection();
 		if (!selection || selection.isEmpty()) return;
 		const endLine =
@@ -141,7 +142,7 @@ export function attachReviewCommenting(
 		menuAction = codeEditor.addAction({
 			id: `thinkrail.review.commentSelection.${codeEditor.getId()}`,
 			label: next,
-			precondition: "editorHasSelection",
+			precondition: "editorHasSelection && editorReadonly",
 			contextMenuGroupId: "9_cutcopypaste",
 			contextMenuOrder: 2,
 			keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyM],
@@ -150,6 +151,10 @@ export function attachReviewCommenting(
 	};
 	setLabel(label);
 	const selectionListener = codeEditor.onDidChangeCursorSelection((event) => {
+		if (!codeEditor.getOption(monaco.editor.EditorOption.readOnly)) {
+			hideIcon();
+			return;
+		}
 		if (zones.isComposerOpen()) return;
 		const selection = event.selection;
 		if (selection.isEmpty()) {
@@ -162,10 +167,15 @@ export function attachReviewCommenting(
 		});
 	});
 
+	const configurationListener = codeEditor.onDidChangeConfiguration(() => {
+		if (!codeEditor.getOption(monaco.editor.EditorOption.readOnly)) hideIcon();
+	});
+
 	return {
 		setLabel,
 		dispose: () => {
 			selectionListener.dispose();
+			configurationListener.dispose();
 			menuAction?.dispose();
 			codeEditor.removeContentWidget(iconWidget);
 		},

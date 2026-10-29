@@ -99,7 +99,9 @@ not this module; the theme-aware highlighter remains app-local.
   **`tupleKey()`** length-prefixes independent strings, **`parseTupleKey()`** reads only its requested
   namespace, and **`layoutResourceIdentity()`** gives every frontend-local placement/cache alias one
   semantic resource key, so delimiters and stable noncanonical placement ids cannot split or alias identities.
-- **Public surface (barrel):** `cssColorToHex`, `isPhoneViewport`,
+- **Public surface (barrel):** `remapFilePath` (explicit file/directory moves with path-segment boundaries),
+  `fileMoveProjection` (shared cache/layout rename mapping that protects dirty paths and marks stale
+  destination duplicates for removal), `cssColorToHex`, `isPhoneViewport`,
   `usePhoneViewport`, `normalizePath`, `isAbsolutePath`, `fileName`, `projectRelativePath` (canonical worktree-relative POSIX identity;
   collapses in-root `.`/`..` aliases but preserves an attempted leading escape for host rejection; Windows
   drive-rooted containment compares path/root case-insensitively while preserving the candidate's casing),

@@ -142,7 +142,7 @@ test("the dialog lists local branches (no stray origin) and creates a worktree",
 	await expect(scope).toHaveAttribute("data-context", "workspace");
 	await expect(scope).toContainText("sample-project");
 	await expect(scope).toContainText("workspace-1");
-	await expect(scope).toContainText("from main");
+	await expect(scope).toContainText(/Based on\s*main/);
 
 	await expect(page.locator('[data-testid="editor-tab"][data-kind="chat"]')).toHaveCount(1);
 	await expect(page.getByTestId("chat-input")).toBeVisible();

@@ -710,6 +710,14 @@ export function selectWorkspaceById(
 	return null;
 }
 
+export function selectWorkspaceProject(
+	state: ActiveWorkspaceState & { projects: Project[] },
+	workspaceId: string,
+): Project | null {
+	const workspace = selectWorkspaceById(state, workspaceId);
+	return state.projects.find((project) => project.id === workspace?.projectId) ?? null;
+}
+
 export function selectActiveWorkspaceProjectId(state: ActiveWorkspaceState): string | null {
 	return selectActiveWorkspace(state)?.projectId ?? null;
 }
@@ -748,6 +756,23 @@ export function selectWorkspaceChatTab(
 	if (active?.kind === "chat") return active;
 	const fallback = tabs.findLast((t) => t.kind === "chat");
 	return fallback?.kind === "chat" ? fallback : null;
+}
+
+export function selectWorkspaceChatTarget(
+	state: Parameters<typeof selectWorkspaceChatTab>[0] & {
+		lastFocusedChatByWorkspace: Record<string, string>;
+	},
+	workspaceId: string,
+): string | null {
+	const active = selectActiveEditorTab(state, workspaceId);
+	if (active?.kind === "chat") return active.sessionId;
+	const preferred = state.lastFocusedChatByWorkspace[workspaceId];
+	const selected = state.tabsByWorkspace[workspaceId]?.find(
+		(tab) => tab.kind === "chat" && tab.sessionId === preferred,
+	);
+	return selected?.kind === "chat"
+		? selected.sessionId
+		: (selectWorkspaceChatTab(state, workspaceId)?.sessionId ?? null);
 }
 
 export function selectHistoryTarget(state: {
@@ -1136,4 +1161,40 @@ export function selectPickerModels(
 		(model) =>
 			!hidden.some((h) => sameModel(h, model)) || keep.some((kept) => sameModel(kept, model)),
 	);
+}
+
+export function selectHasUnsavedFiles(
+	state: {
+		fileDrafts: Record<
+			string,
+			{ workspaceId: string; path: string; text: string; baseContent: string; saving?: boolean }
+		>;
+	},
+	workspaceId: string,
+	path?: string,
+): boolean {
+	return Object.values(state.fileDrafts).some(
+		(draft) =>
+			draft.workspaceId === workspaceId &&
+			(!path || draft.path === path || draft.path.startsWith(`${path}/`)) &&
+			(draft.saving || draft.text !== draft.baseContent),
+	);
+}
+
+export function selectWorkspaceDraftPaths(
+	state: {
+		fileDrafts: Record<
+			string,
+			{ workspaceId: string; path: string; text: string; baseContent: string; saving?: boolean }
+		>;
+	},
+	workspaceId: string,
+): string[] {
+	return Object.values(state.fileDrafts)
+		.filter(
+			(draft) =>
+				draft.workspaceId === workspaceId && (draft.saving || draft.text !== draft.baseContent),
+		)
+		.map((draft) => draft.path)
+		.sort();
 }

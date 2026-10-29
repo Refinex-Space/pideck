@@ -23,6 +23,7 @@ import { type ParsedTemplate, templateToSlashCommand, useTemplateCommandPicker }
 import {
 	EMPTY_RUNTIME,
 	SettingsSection,
+	selectActiveEditorTab,
 	selectCanRenameChat,
 	selectCatalogModel,
 	selectCompactionTurnIds,
@@ -190,6 +191,27 @@ export default function ChatView({
 		[workspaceId, sessionId],
 	);
 	const composerRef = useRef<ComposerHandle>(null);
+	const isCurrentChat = useAppStore((state) => {
+		const tab = selectActiveEditorTab(state, workspaceId);
+		return tab?.kind === "chat" && tab.sessionId === sessionId;
+	});
+	useEffect(() => {
+		if (isCurrentChat) useAppStore.getState().rememberChatTarget(workspaceId, sessionId);
+	}, [isCurrentChat, sessionId, workspaceId]);
+	const composerInsertion = useAppStore((s) => s.sessions[sessionId]?.composerInsertion);
+	useEffect(() => {
+		if (!composerInsertion) return;
+		const frame = requestAnimationFrame(() => {
+			const state = useAppStore.getState();
+			if (
+				state.activeWorkspaceId === workspaceId &&
+				state.sessions[sessionId]?.composerInsertion?.id === composerInsertion.id
+			)
+				composerRef.current?.focusRange(composerInsertion.start, composerInsertion.end);
+			state.consumeChatInsertion(sessionId, composerInsertion.id);
+		});
+		return () => cancelAnimationFrame(frame);
+	}, [composerInsertion, sessionId, workspaceId]);
 	const transcriptRef = useRef<ChatTranscriptHandle>(null);
 	const resources = useChatResources(workspaceId, sessionId);
 	const freshResults = useFreshResults(
@@ -854,6 +876,11 @@ export default function ChatView({
 					ref={composerRef}
 					value={draft}
 					onChange={(v) => useAppStore.getState().setChatDraft(sessionId, v)}
+					onCursorChange={(draft, start, end) =>
+						useAppStore
+							.getState()
+							.rememberComposerCursor(workspaceId, sessionId, { draft, start, end })
+					}
 					isStreaming={isStreaming}
 					growthLimit={composerGrowthLimit}
 					commands={mergedCommands}

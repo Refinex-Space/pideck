@@ -134,7 +134,17 @@ function fileModelUri({ scope, path }: FileModelInput) {
 }
 
 function createFileModel(input: FileModelInput) {
-	return monaco.editor.createModel(input.text, languageForPath(input.path), fileModelUri(input));
+	const model = monaco.editor.createModel(
+		input.text,
+		languageForPath(input.path),
+		fileModelUri(input),
+	);
+	model.setEOL(
+		input.text.includes("\r\n")
+			? monaco.editor.EndOfLineSequence.CRLF
+			: monaco.editor.EndOfLineSequence.LF,
+	);
+	return model;
 }
 
 export function createFileEditor(
@@ -155,11 +165,15 @@ export function syncFileModel(
 ): void {
 	const current = codeEditor.getModel();
 	if (!current || current.uri.toString() !== fileModelUri(input).toString()) {
+		const previousView =
+			current?.getValue(undefined, true) === input.text ? codeEditor.saveViewState() : null;
 		codeEditor.setModel(createFileModel(input));
+		if (previousView) codeEditor.restoreViewState(previousView);
 		current?.dispose();
 		return;
 	}
-	if (input.text !== appliedText) current.setValue(input.text);
+	if (input.text !== appliedText && current.getValue(undefined, true) !== input.text)
+		current.setValue(input.text);
 }
 
 export function revealLineNow(codeEditor: editor.IStandaloneCodeEditor, line: number): void {

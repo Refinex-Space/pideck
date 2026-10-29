@@ -9,8 +9,7 @@ test("opens a file in a center Monaco tab, focuses on re-open, and closes", asyn
 
 	await createWorkspaceViaDialog(page);
 	const chatTab = page.locator('[data-testid="editor-tab"][data-kind="chat"]');
-	await chatTab.hover();
-	await chatTab.getByTestId("editor-tab-close").click();
+	await chatTab.getByRole("tab").press("Delete");
 	await expect(chatTab).toHaveCount(0);
 	await revealWorkbenchTool(page, "files");
 	const readme = page.getByTestId("file-node").filter({ hasText: "README.md" });

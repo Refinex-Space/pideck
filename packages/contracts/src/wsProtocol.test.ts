@@ -224,7 +224,7 @@ test("local language files and the locale setting are pinned to v89", () => {
 });
 
 test("tool responses replace the ask-only answer method at v93", () => {
-	expect(PROTOCOL_VERSION).toBe(93);
+	expect(PROTOCOL_VERSION).toBeGreaterThanOrEqual(TOOL_RESPONSE_PROTOCOL_VERSION);
 	expect(TOOL_RESPONSE_PROTOCOL_VERSION).toBe(93);
 	expect(WS_METHODS.sessionRespondToTool).toBe("session.respondToTool");
 	expect(WS_METHODS.sessionAnswerQuestion).toBe("session.answerQuestion");
@@ -482,4 +482,18 @@ describe("tool response guards", () => {
 			}),
 		).toBeNull();
 	});
+});
+
+test("interactive file management has one versioned protocol surface", () => {
+	expect(PROTOCOL_VERSION).toBeGreaterThanOrEqual(94);
+	for (const method of [
+		"fs.search",
+		"fs.create",
+		"fs.writeFile",
+		"fs.move",
+		"fs.trash",
+		"fs.openIn",
+		"fs.reveal",
+	] as const)
+		expect(Object.values(WS_METHODS)).toContain(method);
 });

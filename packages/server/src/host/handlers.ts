@@ -1,4 +1,4 @@
-import { mkdirSync } from "node:fs";
+import { mkdirSync, statSync } from "node:fs";
 import type {
 	Ack,
 	OpenBranchReview,
@@ -103,7 +103,17 @@ import { listAvailableEditors, openEditor, revealInFileManager } from "../editor
 import { hostEnvironmentStatus, updateHostEnvironment } from "../environment";
 import { listExtensionCatalog } from "../extensions";
 import { recordAcceptedMessage, respondToInterview } from "../feedback";
-import { readDir, readFile } from "../fs";
+import {
+	createWorkspaceEntry,
+	moveWorkspaceEntry,
+	readDir,
+	readFile,
+	resolveWorktreeFile,
+	saveWorkspaceFile,
+	searchFiles,
+	trashWorkspaceEntry,
+	workspaceRelativePath,
+} from "../fs";
 import {
 	commitsAheadOf,
 	countPushDivergence,
@@ -196,7 +206,7 @@ import {
 	updateTodo,
 } from "../todos";
 import { forgetWorkspaceTurns, listTurns } from "../turns";
-import { ensureWatch, stopWatch } from "../watch";
+import { ensureWatch, notifyWorkspaceFiles, stopWatch } from "../watch";
 import {
 	createWorkspace,
 	ensureWorkspaceScratchDir,
@@ -713,6 +723,52 @@ const handlers: WsHandlers = {
 	"fs.readFile": (p) => {
 		void ensureWatch(p.workspaceId);
 		return readFile(p.workspaceId, p.path);
+	},
+	"fs.search": (p) =>
+		searchFiles(
+			p.workspaceId,
+			p.query,
+			p.includeIgnored
+				? undefined
+				: (paths) => ignoredPaths(getWorkspace(p.workspaceId).worktreePath, paths),
+		),
+	"fs.create": (p) => {
+		const result = createWorkspaceEntry(p.workspaceId, p.path, p.kind);
+		notifyWorkspaceFiles(p.workspaceId, [result.path]);
+		return result;
+	},
+	"fs.writeFile": (p) => {
+		const result = saveWorkspaceFile(p.workspaceId, p.path, p.content, p.expectedHash);
+		notifyWorkspaceFiles(p.workspaceId, [
+			workspaceRelativePath(getWorkspace(p.workspaceId).worktreePath, p.path) ?? p.path,
+		]);
+		return result;
+	},
+	"fs.move": (p) => {
+		const from = workspaceRelativePath(getWorkspace(p.workspaceId).worktreePath, p.path);
+		const result = moveWorkspaceEntry(p.workspaceId, p.path, p.destination);
+		if (from)
+			notifyWorkspaceFiles(p.workspaceId, [from, result.path], {
+				kind: "move",
+				from,
+				to: result.path,
+			});
+		return result;
+	},
+	"fs.trash": async (p) => {
+		const path = workspaceRelativePath(getWorkspace(p.workspaceId).worktreePath, p.path);
+		await trashWorkspaceEntry(p.workspaceId, p.path);
+		if (path) notifyWorkspaceFiles(p.workspaceId, [path], { kind: "trash", path });
+		return { ok: true } as const;
+	},
+	"fs.openIn": (p) => {
+		openEditor(p.editor, resolveWorktreeFile(p.workspaceId, p.path));
+		return { ok: true } as const;
+	},
+	"fs.reveal": (p) => {
+		const path = resolveWorktreeFile(p.workspaceId, p.path);
+		revealInFileManager(path, undefined, undefined, !statSync(path).isDirectory());
+		return { ok: true } as const;
 	},
 	"spec.graph": (p) => {
 		void ensureWatch(p.workspaceId);

@@ -860,15 +860,15 @@ both message orders. *Rejected:* keeping the modal for non-MCP extensions — ev
   actually use rather than a stop the rail does not have.
   Rows are **two lines**: the name, then `provider · [kind glyph] what it draws on · price · context`. The list reads **Default
   row** (pre-session callers only, `defaultOption`: what the host would pick, checked while the caller
-  follows it) → **Pinned** → **Recent** (the host's list minus pinned models) → provider groups, folded behind one
-  "All models" row while a shortlist exists and expanded by search. Each provider group is collapsible: its
-  header is itself a cmdk row (`model-group-toggle`, `aria-expanded`, Enter toggles) carrying the match
-  count, and a picker opens with every group collapsed except the current model's (none when that model
-  is pinned); a search opens every matching group, each still collapsible for that search. The header
-  reads as a section header (emphasis-weight name, vendor glyph), each group after the first is set
-  off by a divider, and its rows are indented under the header and drop their own vendor glyph and
-  provider word (the header carries both) — a flat, unpadded list made headers and models hard to tell
-  apart. Pinned models are never repeated inside groups. Headers, counts and rows are matched by the pickers' own cmdk `filter`
+  follows it) → **Pinned** → **Recent** (the host's list minus pinned models) → **provider rows**.
+  In `ModelEffortPicker` a provider row (`model-group-toggle`, `aria-expanded` = its flyout is open) carries the vendor
+  glyph, auth summary, model count and a right chevron; hovering it, Enter, click or ArrowRight (empty query) opens a
+  **flyout** (`model-flyout`, a second popover anchored to the right of the picker, collision-flipped by Radix) listing
+  that provider's models; ArrowLeft returns to the search input, Escape closes the whole picker. Moving the highlight
+  to a non-provider row closes the flyout. A search replaces the rows with the flat, expanded, collapsible provider
+  groups (headers as cmdk rows, models indented, one divider between groups). `ModelSelector` keeps the inline
+  collapsible groups. Rows and groups sit on a 2px / 4px gap (`PICKER_LIST`) so highlights never touch. The effort
+  slider fills in a calm `primary-soft` tone and only ramps to warning for costly levels; its level labels never wrap. Pinned models are never repeated inside groups. Headers, counts and rows are matched by the pickers' own cmdk `filter`
   (`chat/pickerGroups.ts`, a port of cmdk's default scorer), so a header matches when any of its models
   does and its count equals the rows it reveals. With no query and no models the list reads "No models to
   show. Connect a provider, or show hidden models in Settings → Models → Visible models."; "No models
@@ -1216,7 +1216,7 @@ both message orders. *Rejected:* keeping the modal for non-MCP extensions — ev
   (`Composer`'s own `slotIdx`), else `"unfilled"`/`"filled"` per its own `filled` flag; everything else is
   `"plain"` — pure offsets/slices, no empty segment for zero-gap-adjacent slots, and the tests pin
   `segments.map(s => s.text).join("") === value` in every case. The backdrop's inner mirror div matches the
-  textarea's box model **exactly** (`px-12 py-8`, the same `tr-text-ui` typography class and
+  textarea's box model **exactly** (`px-12 py-12`, the same `tr-text-ui` typography class and
   `whitespace-pre-wrap break-words` — spelled out explicitly since a `<div>`, unlike a `<textarea>`,
   doesn't soft-wrap this way by default) so each `SlotSegment`'s tint span
   (`data-testid="slot-highlight"` + `data-slot-state`, `rounded-xs` — the text-run radius
@@ -1672,7 +1672,7 @@ Unbounded transcript horizontal scrolling remains available without pushing inpu
 menus, slot hints and attached images retain the same measured root; no query container is added, so
 half-chat growth still uses the chat container. The history overlay stays anchored to the full chat pane
 so its zoomed result/preview layout retains its existing reading space. Its textarea, invisible
-sizer and template backdrop retain identical `px-12 py-8 tr-text-ui` metrics;
+sizer and template backdrop retain identical `px-12 py-12 tr-text-ui` metrics;
 no input, IME, draft, selection, scrolling or submission lifecycle changes accompany the presentation.
 
 The chat toolbar uses Lucide `blocks` for Skills and `package-2` for Resources, without changing either action or its loading/stale state.
@@ -1695,3 +1695,8 @@ less* under the text on the left. Under every user message and final assistant a
 **hover strip** (`MessageActionBar`) shows the relative time (full date in a tooltip) and a Lucide copy
 button — time then copy on the right for the user, copy then time on the left for the assistant. The
 markdown row carries the assistant message's `timestamp` for this.
+
+File-reference insertion uses session-local cursor memory and a consume-once focus request. Composer
+updates the remembered range after programmatic focus, so a later reference preserves the insertion
+point across file-tab navigation. It never reuses insertText (which intentionally replaces a history
+recall draft), never submits a message, and never moves focus after a workspace switch.

@@ -8,6 +8,7 @@ export function useLiveTabContent<T>(
 		read: () => Promise<T>;
 		applyFresh: (fresh: T, tick: number) => void;
 		keepCurrent: (tick: number) => void;
+		onFailure?: (error: unknown, tick: number) => void;
 	},
 	reloadKey?: string,
 	loadedKey?: string,
@@ -26,7 +27,7 @@ export function useLiveTabContent<T>(
 		if (!change) return;
 		const loaded = tab.loadedTick ?? 0;
 		if (change.tick <= loaded) return;
-		const { read, applyFresh, keepCurrent } = opsRef.current;
+		const { read, applyFresh, keepCurrent, onFailure } = opsRef.current;
 		const paths = fsChangedPaths(change);
 		if (change.tick === loaded + 1 && paths !== null && !paths.includes(tab.path)) {
 			keepCurrent(change.tick);
@@ -38,8 +39,11 @@ export function useLiveTabContent<T>(
 			.then((fresh) => {
 				if (!cancelled && isCurrent()) applyFresh(fresh, change.tick);
 			})
-			.catch(() => {
-				if (!cancelled && isCurrent()) keepCurrent(change.tick);
+			.catch((error) => {
+				if (!cancelled && isCurrent()) {
+					if (onFailure) onFailure(error, change.tick);
+					else keepCurrent(change.tick);
+				}
 			});
 		return () => {
 			cancelled = true;
@@ -50,14 +54,16 @@ export function useLiveTabContent<T>(
 	useEffect(() => {
 		if (reloadKey === undefined || reloadKey === lastKey.current) return;
 		lastKey.current = reloadKey;
-		const { read, applyFresh } = opsRef.current;
+		const { read, applyFresh, onFailure } = opsRef.current;
 		let cancelled = false;
 		const isCurrent = sequencer.begin();
 		read()
 			.then((fresh) => {
 				if (!cancelled && isCurrent()) applyFresh(fresh, tab.loadedTick ?? 0);
 			})
-			.catch(() => {});
+			.catch((error) => {
+				if (!cancelled && isCurrent()) onFailure?.(error, tab.loadedTick ?? 0);
+			});
 		return () => {
 			cancelled = true;
 		};
@@ -66,7 +72,7 @@ export function useLiveTabContent<T>(
 	const reload = useCallback(() => {
 		if (!mountedRef.current) return;
 		const current = tabRef.current;
-		const { read, applyFresh } = opsRef.current;
+		const { read, applyFresh, onFailure } = opsRef.current;
 		const isCurrent = sequencer.begin();
 		void read()
 			.then((fresh) => {
@@ -74,7 +80,10 @@ export function useLiveTabContent<T>(
 					applyFresh(fresh, selectWorkspaceTick(useAppStore.getState(), current.workspaceId));
 				}
 			})
-			.catch(() => {});
+			.catch((error) => {
+				if (mountedRef.current && isCurrent())
+					onFailure?.(error, selectWorkspaceTick(useAppStore.getState(), current.workspaceId));
+			});
 	}, [sequencer]);
 
 	useEffect(() => {

@@ -281,11 +281,16 @@ export interface EditorInfo {
 
 export type WorkspaceSkillChange = "none" | "detected" | "unknown";
 
+export type WorkspaceFileMutation =
+	| { kind: "move"; from: string; to: string }
+	| { kind: "trash"; path: string };
+
 export interface WorkspaceFsChangedPayload {
 	workspaceId: string;
 	paths: string[];
 	truncated: boolean;
 	skillChange: WorkspaceSkillChange;
+	mutation?: WorkspaceFileMutation;
 }
 
 export type FileKind = "file" | "dir";

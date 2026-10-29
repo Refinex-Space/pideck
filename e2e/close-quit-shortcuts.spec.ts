@@ -1,6 +1,7 @@
 import { expect, type Page, test } from "@playwright/test";
 import type { NativeCommand, NativeQuitHint, NativeShortcutsBridge } from "@thinkrail/contracts";
 import {
+	closeTabViaMenu,
 	createWorkspaceViaDialog,
 	openAppFresh,
 	openFixtureProject,
@@ -76,8 +77,7 @@ function editorTabs(page: Page) {
 
 async function openTwoFileTabs(page: Page): Promise<void> {
 	const chatTab = page.locator('[data-testid="editor-tab"][data-kind="chat"]');
-	await chatTab.hover();
-	await chatTab.getByTestId("editor-tab-close").click();
+	await closeTabViaMenu(page, chatTab);
 	await expect(chatTab).toHaveCount(0);
 	await revealWorkbenchTool(page, "files");
 	await page.getByTestId("file-node").filter({ hasText: "README.md" }).dblclick();

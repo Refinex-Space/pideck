@@ -55,8 +55,8 @@ ordinary action in the app, the renderer package and extension web halves render
 `<button>` carrying a button skin is rejected by `apps/web/src/styles/buttonUsage.test.ts` unless that
 test's documented specialized list names it.
 
-- **Variants** (exactly five): `primary` (accent fill — the main action of a surface), `soft-primary`
-  (accent tint + accent text; also every former transparent "green ghost"), `outline` (neutral bordered),
+- **Variants** (exactly six): `primary` (accent fill — the main action of a surface), `soft-primary`
+  (accent tint + accent text; also every former transparent "green ghost"), `outline` (neutral bordered), `quiet` (transparent with a muted hairline border and muted text — secondary chips such as the turn-summary row),
   `ghost` (no surface, muted text, neutral hover fill — the default for `IconButton`), `destructive` (danger
   fill; confirms irreversible actions). A call site picks the variant that matches the action's existing
   look; there is no `soft-default` and no colour override at a call site. `tone` (`warning` | `danger`)

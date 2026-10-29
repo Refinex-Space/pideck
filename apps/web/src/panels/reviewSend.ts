@@ -3,7 +3,7 @@ import { t } from "@thinkrail/locales/react";
 import {
 	type CenterNavigationStamp,
 	layoutOpenOptionsForNavigation,
-	selectLastOpenChatSession,
+	selectWorkspaceChatTarget,
 	toast,
 	useAppStore,
 } from "../store";
@@ -33,7 +33,7 @@ async function showReviewChat(
 }
 
 function preferredChat(workspaceId: string, chatSessionId?: string): { sessionId?: string } {
-	const sessionId = chatSessionId ?? selectLastOpenChatSession(useAppStore.getState(), workspaceId);
+	const sessionId = chatSessionId ?? selectWorkspaceChatTarget(useAppStore.getState(), workspaceId);
 	return sessionId ? { sessionId } : {};
 }
 

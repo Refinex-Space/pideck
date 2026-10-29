@@ -20,6 +20,7 @@ export function ConfirmDialog({
 	cancelLabel,
 	destructive = false,
 	confirmTestId,
+	confirmDisabled = false,
 	onConfirm,
 	onClosedAutoFocus,
 }: {
@@ -31,6 +32,7 @@ export function ConfirmDialog({
 	cancelLabel?: string;
 	destructive?: boolean;
 	confirmTestId?: string;
+	confirmDisabled?: boolean;
 	onConfirm: () => void;
 	onClosedAutoFocus?: () => void;
 }) {
@@ -67,6 +69,7 @@ export function ConfirmDialog({
 					<Button
 						variant={destructive ? "destructive" : "primary"}
 						data-testid={confirmTestId}
+						disabled={confirmDisabled}
 						onClick={() => {
 							onConfirm();
 							onOpenChange(false);

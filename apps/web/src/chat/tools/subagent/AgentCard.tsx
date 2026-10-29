@@ -88,12 +88,12 @@ export function AgentCard({ toolCallId, args, result, status }: ToolRenderProps)
 						onClick={toggleReport}
 						className="flex items-center gap-4 self-start text-primary tr-text-metadata hover:underline"
 					>
+						{t("tools.agent.report")}
 						{reportOpen ? (
 							<ChevronDown className="size-16 shrink-0" />
 						) : (
 							<ChevronRight className="size-16 shrink-0" />
 						)}
-						{t("tools.agent.report")}
 					</button>
 					{reportOpen ? (
 						<div data-testid="agent-report">

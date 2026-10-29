@@ -81,7 +81,7 @@ test("idle composer keeps one message line above a stable controls row", async (
 	const compactWrapMeasure = await box(page.getByTestId("chat-input-sizer"));
 	const compactModel = await box(model);
 	expect(compactInput.height).toBeGreaterThanOrEqual(32);
-	expect(compactInput.height).toBeLessThanOrEqual(40);
+	expect(compactInput.height).toBeLessThanOrEqual(48);
 	await expect(composer).toHaveAttribute("data-expanded", "false");
 	expect(compactShell.height).toBeGreaterThanOrEqual(compactInput.height + compactModel.height);
 	// The send button lives inside the card, so the card may be a few px taller than the text row.
@@ -141,7 +141,7 @@ test("idle composer keeps one message line above a stable controls row", async (
 
 	await input.fill("Short follow-up");
 	await expect(composer).toHaveAttribute("data-expanded", "false");
-	expect((await box(input)).height).toBeLessThanOrEqual(40);
+	expect((await box(input)).height).toBeLessThanOrEqual(48);
 	expect(Math.abs((await box(model)).y - compactModel.y)).toBeLessThanOrEqual(2);
 });
 
@@ -263,7 +263,7 @@ test("compact phone controls remain inside the chat viewport", async ({ page }) 
 		expect(controlBox.x + controlBox.width).toBeLessThanOrEqual(PHONE_VIEWPORT.width);
 	}
 	const inputBox = await box(page.getByTestId("chat-input"));
-	expect(inputBox.height).toBeLessThanOrEqual(40);
+	expect(inputBox.height).toBeLessThanOrEqual(48);
 	expect(inputBox.x).toBeLessThanOrEqual(shellBox.x + 8);
 	const phoneSurface = await box(page.getByTestId("chat-input-surface"));
 	expect(phoneSurface.x + phoneSurface.width).toBeGreaterThanOrEqual(

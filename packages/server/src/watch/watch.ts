@@ -1,6 +1,7 @@
 import { type FSWatcher, readFileSync, statSync, watch } from "node:fs";
 import { isAbsolute, resolve } from "node:path";
 import type {
+	WorkspaceFileMutation,
 	WorkspaceFsChangedPayload,
 	WorkspaceSkillChange,
 	WorkspaceWatchReadyResult,
@@ -38,6 +39,26 @@ let isSkillPath: SkillPathClassifier | null = null;
 
 export function setWatchPublisher(publisher: WatchPublisher | null): void {
 	publish = publisher;
+}
+
+export function notifyWorkspaceFiles(
+	workspaceId: string,
+	paths: string[],
+	mutation?: WorkspaceFileMutation,
+): void {
+	deliver("fs", workspaceId, () =>
+		publish?.({
+			workspaceId,
+			paths,
+			truncated: false,
+			skillChange: isSkillPath
+				? paths.some((path) => isSkillPath?.(path))
+					? "detected"
+					: "none"
+				: "unknown",
+			...(mutation ? { mutation } : {}),
+		}),
+	);
 }
 
 export function setSkillPathClassifier(classifier: SkillPathClassifier | null): void {

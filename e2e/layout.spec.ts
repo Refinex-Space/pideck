@@ -2,6 +2,7 @@ import { realpathSync, rmSync } from "node:fs";
 import { expect, type Locator, type Page, test, type WebSocketRoute } from "@playwright/test";
 import {
 	applyWorkbenchPreset,
+	closeTabViaMenu,
 	createWorkspaceViaDialog,
 	defaultWorkspaceRow,
 	enterDefaultWorkspace,
@@ -164,7 +165,7 @@ test("workbench strips and feature toolbars keep one-row geometry with ARIA tabs
 		).toHaveCount(0);
 	}
 	await expect(page.getByTestId("tool-rail-files")).toHaveAccessibleName("Files");
-	await expect(centerStrip.getByTestId("editor-tab-close")).toHaveCount(1);
+	await expect(centerStrip.getByTestId("chat-title-menu")).toHaveCount(1);
 	await expect(bottomStrip.getByTestId("terminal-tab-close")).toHaveCount(1);
 
 	await revealWorkbenchTool(page, "changes");
@@ -1209,14 +1210,13 @@ test("frontend windows keep chat and file placement independent", async ({ page,
 	await expect(page.getByTestId("terminal-tab")).toHaveCount(1);
 	await expect(peerChat).toHaveCount(1);
 	await expect(chat).toHaveCount(1);
-	await peerChat.hover();
-	await peerChat.getByTestId("editor-tab-close").click();
+	await closeTabViaMenu(peer, peerChat);
 	await expect(peerChat).toHaveCount(0);
 	await expect(chat).toHaveCount(1);
 
 	const peerHistory = peer.getByTestId("chat-history").first();
 	await page.getByTestId("new-chat").first().click();
-	await expect(chat).toHaveCount(2);
+	await expect(page.locator('[data-testid="workspace-session"][data-open="true"]')).toHaveCount(2);
 	await expect(peerHistory).toBeVisible();
 	await peerHistory.press("Enter");
 	await expect(peer.getByTestId("closed-chat-item")).toHaveCount(2);

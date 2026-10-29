@@ -1051,3 +1051,9 @@ so an already-loaded old client clears retired markers after reconnect. No activ
 
 `web` (types + the runtime exports listed above) and `server` (same, + mapping `session.*` to `AgentSession` methods). The
 shell panels need `domain` + `wsProtocol`; the `pi` types + `PiEvent` are the wire for the agent session.
+
+## Interactive file workbench
+
+`FILE_WORKBENCH_PROTOCOL_VERSION` (v94) gates `fs.search/create/writeFile/move/trash/openIn/reveal`.
+Save requires the loaded hash; existing STALE_VIEW distinguishes conflicts. Explicit move/trash
+metadata optionally accompanies `workspace.fsChanged`; legacy clients ignore it and still refresh.

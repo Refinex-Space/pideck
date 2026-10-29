@@ -34,10 +34,10 @@ import {
 	CommandItem,
 	CommandList,
 } from "@thinkrail/ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "@thinkrail/ui/popover";
+import { Popover, PopoverAnchor, PopoverContent, PopoverTrigger } from "@thinkrail/ui/popover";
 import { IconTooltip } from "@thinkrail/ui/tooltip";
 import { cn } from "@thinkrail/ui/utils";
-import { type CSSProperties, forwardRef, useImperativeHandle, useMemo, useState } from "react";
+import { type CSSProperties, forwardRef, useImperativeHandle, useRef, useState } from "react";
 import { ModelEffortPill, TONE_TEXT } from "./ModelEffortLabel";
 import {
 	CENTRAL_KIND_TAG,
@@ -45,11 +45,9 @@ import {
 	costLabel,
 	describeAuth,
 	formatContext,
-	groupByProvider,
 	kindLabel,
 	LEVEL_HINT,
 	LEVEL_LABEL,
-	type LevelTone,
 	levelPosition,
 	levelTone,
 	trailingLevel,
@@ -58,9 +56,11 @@ import { ProviderGlyph } from "./ProviderGlyph";
 import {
 	GROUPED_ROW,
 	type GroupExpansion,
+	groupRowProvider,
 	groupRowValue,
 	initialGroupExpansion,
 	NO_MODELS_HINT,
+	PICKER_LIST,
 	type PickerGroup,
 	PROVIDER_GROUP,
 	pickerEmptyState,
@@ -136,18 +136,6 @@ function KindGlyph({ model, className }: { model: WireModel; className?: string 
 	}
 }
 
-const TONE_SEGMENT: Record<`${LevelTone}>${LevelTone}`, string> = {
-	"cool>cool": "bg-feedback-info",
-	"cool>accent": "bg-[linear-gradient(90deg,var(--feedback-info),var(--primary))]",
-	"cool>hot": "bg-[linear-gradient(90deg,var(--feedback-info),var(--feedback-warning))]",
-	"accent>cool": "bg-primary",
-	"accent>accent": "bg-primary",
-	"accent>hot": "bg-[linear-gradient(90deg,var(--primary),var(--feedback-warning))]",
-	"hot>cool": "bg-feedback-warning",
-	"hot>accent": "bg-feedback-warning",
-	"hot>hot": "bg-feedback-warning",
-};
-
 const LEVEL_GLYPH: Record<ThinkingLevel, RemixiconComponentType> = {
 	off: Zzz,
 	minimal: Leaf,
@@ -192,15 +180,7 @@ function EffortSlider({
 					className="pointer-events-none absolute inset-x-0 top-8 h-14 overflow-hidden rounded-full border border-control-border-default bg-control-bg"
 				>
 					<div className="absolute inset-0 flex transition-[clip-path] duration-500 ease-[cubic-bezier(0.34,1.3,0.64,1)] [clip-path:inset(0_calc(100%-var(--effort))_0_0_round_999px)] motion-reduce:transition-none">
-						{levels.map((next, i) => {
-							const from = levels[i - 1];
-							return from ? (
-								<span
-									key={next}
-									className={cn("flex-1", TONE_SEGMENT[`${levelTone(from)}>${levelTone(next)}`])}
-								/>
-							) : null;
-						})}
+						<span className="flex-1 bg-[linear-gradient(90deg,var(--feedback-info),oklch(from_var(--feedback-info)_l_c_calc(h+60)))]" />
 					</div>
 				</div>
 				<input
@@ -248,7 +228,7 @@ function EffortSlider({
 								aria-pressed={active}
 								onClick={() => onSelectLevel(candidate)}
 								className={cn(
-									"relative rounded-sm px-4 py-2 tr-text-metadata capitalize outline-none transition-colors focus-visible:ring-1 focus-visible:ring-focus-ring",
+									"relative shrink-0 whitespace-nowrap rounded-sm px-4 py-2 tr-text-metadata capitalize outline-none transition-colors focus-visible:ring-1 focus-visible:ring-focus-ring",
 									active ? "text-text-default" : "text-text-subtle hover:text-text-muted",
 								)}
 							>
@@ -323,7 +303,13 @@ export const ModelEffortPicker = forwardRef<ModelEffortPickerHandle, ModelEffort
 		const t = useT();
 		const [open, setOpen] = useState(false);
 		const [query, setQuery] = useState("");
-		const [showAll, setShowAll] = useState(false);
+		const [activeProvider, setActiveProvider] = useState<string | null>(null);
+		const contentRef = useRef<HTMLDivElement>(null);
+		const flyoutRef = useRef<HTMLDivElement>(null);
+		const anchorRef = useRef({
+			getBoundingClientRect: () => contentRef.current?.getBoundingClientRect() ?? new DOMRect(),
+		});
+		const highlightedProvider = useRef<string | null>(null);
 		const [expansion, setExpansion] = useState<GroupExpansion>(() =>
 			initialGroupExpansion(null, []),
 		);
@@ -340,12 +326,16 @@ export const ModelEffortPicker = forwardRef<ModelEffortPickerHandle, ModelEffort
 		const close = () => {
 			setOpen(false);
 			setQuery("");
-			setShowAll(false);
+			setActiveProvider(null);
 		};
 
-		const providers = useMemo(() => groupByProvider(t, models).map((g) => g.provider), [t, models]);
+		const focusFlyout = () => requestAnimationFrame(() => flyoutRef.current?.focus());
+		const openProvider = (provider: string) => {
+			setActiveProvider(provider);
+			focusFlyout();
+		};
+
 		const shortlist = preferences.favorites.length > 0 || preferences.recents.length > 0;
-		const folded = shortlist && !showAll && query.trim() === "";
 		const searching = query !== "";
 		const groups = pickerGroups(t, models, {
 			pinned: preferences.favorites,
@@ -373,7 +363,7 @@ export const ModelEffortPicker = forwardRef<ModelEffortPickerHandle, ModelEffort
 		const renderModel = (model: WireModel, section: string) => {
 			const favorite = preferences.isFavorite(model);
 			const isCurrent = !defaultOption?.active && sameModel(model, current);
-			const grouped = section === "all";
+			const grouped = section === "all" || section === "provider";
 			return (
 				<CommandItem
 					key={rowValue(section, model)}
@@ -386,7 +376,7 @@ export const ModelEffortPicker = forwardRef<ModelEffortPickerHandle, ModelEffort
 					onSelect={() => pickModel(model)}
 					className={cn(
 						"group/row items-start gap-8 py-4",
-						grouped && GROUPED_ROW,
+						section === "all" && GROUPED_ROW,
 						isCurrent && "bg-primary-subtle data-[selected=true]:bg-primary-subtle",
 					)}
 				>
@@ -450,6 +440,32 @@ export const ModelEffortPicker = forwardRef<ModelEffortPickerHandle, ModelEffort
 			</CommandItem>
 		);
 
+		const renderProviderRow = (group: PickerGroup) => (
+			<CommandItem
+				key={group.provider}
+				value={groupRowValue(group.provider)}
+				data-testid="model-group-toggle"
+				data-provider={group.provider}
+				aria-expanded={activeProvider === group.provider}
+				onPointerEnter={() => setActiveProvider(group.provider)}
+				onSelect={() => openProvider(group.provider)}
+				className="gap-8 py-8"
+			>
+				<ProviderGlyph provider={group.provider} className="text-text-muted" />
+				<span className="min-w-0 flex-1 truncate tr-text-emphasis">{group.provider}</span>
+				{group.auth ? (
+					<span className="min-w-0 truncate text-text-subtle tr-text-metadata">{group.auth}</span>
+				) : null}
+				{current?.provider === group.provider ? (
+					<span aria-hidden className="size-4 shrink-0 rounded-full bg-primary" />
+				) : null}
+				<span className="shrink-0 text-text-muted tr-text-metadata">{group.count}</span>
+				<ChevronRight className="size-14 shrink-0 text-text-muted" />
+			</CommandItem>
+		);
+
+		const flyoutGroup = searching ? undefined : groups.find((g) => g.provider === activeProvider);
+
 		const effortLevels = current?.thinkingLevels ?? [];
 		const isDefaultPair = current !== null && preferences.isDefault(current, level);
 		const resetLevel =
@@ -498,6 +514,7 @@ export const ModelEffortPicker = forwardRef<ModelEffortPickerHandle, ModelEffort
 					<ChevronDown className="size-14 shrink-0 text-text-muted" />
 				</PopoverTrigger>
 				<PopoverContent
+					ref={contentRef}
 					align="start"
 					container={container}
 					className="flex max-h-[var(--radix-popover-content-available-height)] w-[min(360px,calc(100vw-16px))] flex-col p-0"
@@ -505,13 +522,24 @@ export const ModelEffortPicker = forwardRef<ModelEffortPickerHandle, ModelEffort
 					<Command
 						className="min-h-0 flex-1 bg-transparent"
 						filter={pickerFilter(groups, groupRow)}
+						onValueChange={(value) => {
+							const provider = groupRowProvider(value);
+							highlightedProvider.current = provider;
+							setActiveProvider((open) => (open === null ? null : provider));
+						}}
+						onKeyDown={(event) => {
+							if (event.key === "ArrowRight" && !searching && highlightedProvider.current) {
+								event.preventDefault();
+								openProvider(highlightedProvider.current);
+							}
+						}}
 					>
 						<CommandInput
 							placeholder={t("chat.modelPicker.searchWithLevel")}
 							value={query}
 							onValueChange={setQuery}
 						/>
-						<CommandList className="max-h-340 min-h-0 flex-1">
+						<CommandList className={cn("max-h-340 min-h-0 flex-1", PICKER_LIST)}>
 							{emptyState === "no-match" ? (
 								<CommandEmpty>{t("chat.modelPicker.noMatch")}</CommandEmpty>
 							) : null}
@@ -564,33 +592,58 @@ export const ModelEffortPicker = forwardRef<ModelEffortPickerHandle, ModelEffort
 									{preferences.recents.map((m) => renderModel(m, "recent"))}
 								</CommandGroup>
 							) : null}
-							{folded ? (
-								<CommandGroup>
-									<CommandItem
-										value="all:models"
-										data-testid="model-show-all"
-										onSelect={() => setShowAll(true)}
-										className="items-start gap-8 py-4 text-text-muted"
-									>
-										<ChevronRight className="mt-2 size-16 shrink-0" />
-										<span className="flex min-w-0 flex-1 flex-col">
-											<span>{t("chat.modelPicker.allModels")}</span>
-											<span className="truncate tr-text-metadata">
-												{providers.join(" · ")} · {models.length}
-											</span>
-										</span>
-									</CommandItem>
-								</CommandGroup>
-							) : (
+							{searching ? (
 								groups.map((group) => (
 									<CommandGroup key={group.provider} className={PROVIDER_GROUP}>
 										{renderGroupHeader(group)}
 										{group.expanded ? group.models.map((m) => renderModel(m, "all")) : null}
 									</CommandGroup>
 								))
-							)}
+							) : groups.length > 0 ? (
+								<CommandGroup heading={shortlist ? t("chat.modelPicker.allModels") : undefined}>
+									{groups.map(renderProviderRow)}
+								</CommandGroup>
+							) : null}
 						</CommandList>
 					</Command>
+					<Popover
+						open={flyoutGroup !== undefined}
+						onOpenChange={(next) => {
+							if (!next) setActiveProvider(null);
+						}}
+					>
+						<PopoverAnchor virtualRef={anchorRef} />
+						<PopoverContent
+							data-testid="model-flyout"
+							side="right"
+							align="start"
+							sideOffset={4}
+							container={container}
+							onOpenAutoFocus={(event) => event.preventDefault()}
+							onCloseAutoFocus={(event) => event.preventDefault()}
+							onInteractOutside={(event) => event.preventDefault()}
+							onEscapeKeyDown={close}
+							className="flex max-h-[var(--radix-popover-content-available-height)] w-340 flex-col p-0"
+						>
+							<Command
+								ref={flyoutRef}
+								shouldFilter={false}
+								tabIndex={-1}
+								className="min-h-0 flex-1 bg-transparent outline-none"
+								onKeyDown={(event) => {
+									if (event.key !== "ArrowLeft") return;
+									event.preventDefault();
+									contentRef.current?.querySelector<HTMLInputElement>("[cmdk-input]")?.focus();
+								}}
+							>
+								<CommandList className={cn("max-h-340 min-h-0 flex-1", PICKER_LIST)}>
+									<CommandGroup>
+										{flyoutGroup?.models.map((m) => renderModel(m, "provider"))}
+									</CommandGroup>
+								</CommandList>
+							</Command>
+						</PopoverContent>
+					</Popover>
 					{current && effortLevels.length > 0 ? (
 						<EffortSlider
 							model={current}

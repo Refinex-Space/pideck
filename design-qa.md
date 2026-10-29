@@ -115,3 +115,14 @@ final result: targeted checks passed; full-suite follow-up has 3 pending cases; 
 - 38 项图标单测通过，完整 Web 单测 2,004 项通过。定向浏览器验证覆盖 Word/PDF、Java/XML、React/Vue、特殊配置文件、语义/普通目录、明暗主题、本地 SVG 加载、预览/固定标签以及 Changed 两种视图；原有紧凑目录链用例通过。Web 构建、类型检查、依赖/边界、Compiler census、spec surface、生成结果与定向 Biome 检查通过。
 - 执行了一次完整无智能体浏览器套件：666 项中 630 通过、36 未通过。图标和文件树用例通过；其中右侧首行标题的旧 32px 断言已改为与设计一致的 40px，并单独复验通过。其余 35 项未在本任务修复，分布在聊天/滚动、历史搜索、终端恢复、导航、连接恢复和 runner 等用例；例如消息精确文本断言包含了新增时间戳，终端恢复用例仍假设项目标题点击不会折叠导航。运行期间存在其他界面任务的并行改动，不能把全量结果记为通过或把所有失败都归因于本次图标。
 - 本地完整日志 `/tmp/pideck-file-icons-full-e2e.log`，失败用例清单 `/tmp/pideck-file-icons-full-failures.txt`。本轮未做 macOS/Windows 原生产物真机验收；Windows 真机验收保持待完成。
+
+## 文件工作台集成（2026-10-29）
+
+- 根据 ZCode 的文件树/PreviewPane/代码选区交互研究，复用 PiDeck 的现有 renderer、Monaco、review、布局和 trash；未新增运行时依赖。范围与使用约束见 [file-workbench.md](file-workbench.md)。
+- 实现路径搜索、文件/目录菜单与 CRUD、面包屑、源码显式编辑、换行/查找/选择、选区评论和聊天引用。删除需要确认且无永久删除兜底；保存采用 hash 冲突检测。未保存编辑按窗口 sessionStorage 恢复，容量失败可见，关闭窗口前必须保存。
+- 11 项新增工作台浏览器用例通过；最终相关复验共 40 项通过。既有文件预览、异步预览竞争、Material 图标和文件行宽通过；同批聊天窄屏行宽用例仍卡在设置菜单入口。
+- 全量无智能体套件执行一次，676 项中 624 通过、52 未通过；14 项原失败后续复验通过，剩余 38 项本轮未修复。不能把整仓标记为全绿。证据日志与未解决清单见文件工作台文档。
+- Web 单测 2,017、资源渲染器 212、宿主/协议定向 99 项通过；最后保存返回值及链接根搜索调整的 fs 单测 6 项复验通过。Web build、24 包 typecheck、依赖/边界/seams/spec surface/i18n 通过；lint 无错误，保留已有 HTML 体积警告。
+- 本次文件组件通过 React Compiler 检查，整仓仍被已有 LeftPeekPanel / useLeftPeek 两项 bailout 阻挡。未添加抑制或改写 census 基线。
+- 明暗截图来自隔离示例，保存在 `.github/readme-assets/pideck-files-light.png` 与 `pideck-files-dark.png`；目录菜单、源码评论与画布颜色已人工核对。
+- 本轮未做原生产物/系统回收站真机验收；Windows 真机仍待完成。未运行完整真实模型套件。未提交、推送或发布，未操作用户生产文件，其他任务的暂存内容保持原样。

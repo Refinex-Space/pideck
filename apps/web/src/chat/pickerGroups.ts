@@ -102,6 +102,10 @@ export function groupRowValue(provider: string): string {
 	return `${GROUP_ROW_PREFIX}${provider}`;
 }
 
+export function groupRowProvider(value: string | undefined): string | null {
+	return value?.startsWith(GROUP_ROW_PREFIX) ? value.slice(GROUP_ROW_PREFIX.length) : null;
+}
+
 export interface GroupExpansion {
 	expanded: ReadonlySet<string>;
 	collapsedWhileSearching: ReadonlySet<string>;
@@ -192,6 +196,10 @@ export const PROVIDER_GROUP =
 	"not-first:mt-4 not-first:border-border-muted not-first:border-t not-first:pt-4";
 
 export const GROUPED_ROW = "ml-24";
+
+/** Rows and groups sit on a small gap so adjacent highlights never touch. */
+export const PICKER_LIST =
+	"[&_[cmdk-group-items]]:flex [&_[cmdk-group-items]]:flex-col [&_[cmdk-group-items]]:gap-2 [&_[cmdk-group]:not(:first-child)]:mt-4";
 
 export const NO_MODELS_HINT = "chat.modelPicker.noModelsHint" satisfies MessageKey;
 

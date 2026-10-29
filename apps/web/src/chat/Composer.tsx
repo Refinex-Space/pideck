@@ -9,7 +9,7 @@ import { useT } from "@thinkrail/locales/react";
 import { IconButton } from "@thinkrail/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@thinkrail/ui/popover";
 import { cn } from "@thinkrail/ui/utils";
-import { ArrowUp, ChevronDown, History, Square } from "lucide-react";
+import { ArrowUp, ChevronDown, History } from "lucide-react";
 import {
 	forwardRef,
 	type KeyboardEvent,
@@ -20,6 +20,7 @@ import {
 	useRef,
 	useState,
 } from "react";
+import { RunningIcon } from "@/components/RunningIcon";
 import {
 	applyTemplateSlotEdit,
 	beginTemplateSlotSession,
@@ -55,8 +56,8 @@ export type SubmitBehavior = "send" | "steer" | "followUp" | "interrupt";
 export type ComposerSubmitDisposition = { accepted: true } | { accepted: false; reason: string };
 
 const COMPOSER_EDITOR_LIMIT_CLASS = {
-	compact: "max-h-[calc(6lh+var(--space-8)+var(--space-8))]",
-	roomy: "max-h-[calc(10lh+var(--space-8)+var(--space-8))]",
+	compact: "max-h-[calc(6lh+var(--space-12)+var(--space-12))]",
+	roomy: "max-h-[calc(10lh+var(--space-12)+var(--space-12))]",
 	"half-chat":
 		"max-h-[calc(50cqh-var(--space-16)-var(--space-16)-var(--space-4)-var(--space-4)-var(--space-4)-var(--space-4))]",
 } satisfies Record<ComposerGrowthLimit, string>;
@@ -128,6 +129,7 @@ function highlightTint(state: SlotHighlightState): string {
 interface ComposerProps {
 	value: string;
 	onChange: (value: string) => void;
+	onCursorChange?: (draft: string, start: number, end: number) => void;
 	isStreaming: boolean;
 	growthLimit: ComposerGrowthLimit;
 	commands: SlashCommandItem[];
@@ -162,6 +164,7 @@ export interface ComposerHandle {
 	insertTemplate: (parsed: ParsedTemplate) => void;
 	restoreAttachments: (attachments: ChatAttachment[]) => void;
 	openHistory: () => void;
+	focusRange: (start: number, end: number) => void;
 	refocus: () => void;
 }
 
@@ -169,6 +172,7 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 	{
 		value,
 		onChange,
+		onCursorChange,
 		isStreaming,
 		growthLimit,
 		commands,
@@ -343,6 +347,15 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 	};
 
 	useImperativeHandle(handleRef, () => ({
+		focusRange: (start, end) => {
+			setSlotSession(null);
+			const textarea = ref.current;
+			if (!textarea) return;
+			textarea.focus();
+			textarea.setSelectionRange(start, end);
+			setCaret(start);
+			onCursorChange?.(textarea.value, start, end);
+		},
 		insertText: (text: string) => replaceDraft(text),
 		insertAndSubmit: (text: string, behavior: SubmitBehavior) =>
 			canSubmit(text) ? submitText(text, behavior) : replaceDraft(text),
@@ -462,6 +475,7 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 		}
 	};
 
+	const showStop = isStreaming && !canSend;
 	const { onPaste, onDrop } = imagePasteDropHandlers(attachedImages);
 
 	return (
@@ -562,7 +576,7 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 									ref={editorSizerRef}
 									data-testid="chat-input-sizer"
 									aria-hidden
-									className="invisible w-full whitespace-pre-wrap break-words px-12 py-8 tr-text-ui"
+									className="invisible w-full whitespace-pre-wrap break-words px-12 py-12 tr-text-ui"
 								>
 									{`${value}\u200b`}
 								</div>
@@ -573,7 +587,7 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 										aria-hidden
 										className="pointer-events-none absolute inset-0 overflow-hidden rounded-sm"
 									>
-										<div className="w-full whitespace-pre-wrap break-words px-12 py-8 tr-text-ui">
+										<div className="w-full whitespace-pre-wrap break-words px-12 py-12 tr-text-ui">
 											{withOffsets(highlightSegments(value, slots, slotIdx)).map((seg) => (
 												<span
 													key={seg.start}
@@ -591,6 +605,20 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 									ref={ref}
 									data-testid="chat-input"
 									value={value}
+									onSelect={(e) =>
+										onCursorChange?.(
+											e.currentTarget.value,
+											e.currentTarget.selectionStart,
+											e.currentTarget.selectionEnd,
+										)
+									}
+									onFocus={(e) =>
+										onCursorChange?.(
+											e.currentTarget.value,
+											e.currentTarget.selectionStart,
+											e.currentTarget.selectionEnd,
+										)
+									}
 									onScroll={syncBackdropScroll}
 									onChange={(e) => {
 										const next = e.target.value;
@@ -620,33 +648,33 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 												: t("chat.composer.placeholder")
 									}
 									className={cn(
-										"absolute inset-0 size-full resize-none overflow-x-hidden overflow-y-auto rounded-sm bg-transparent px-12 py-8 tr-text-ui text-text-default outline-none placeholder:text-text-muted",
+										"absolute inset-0 size-full resize-none overflow-x-hidden overflow-y-auto rounded-sm bg-transparent px-12 py-12 tr-text-ui text-text-default outline-none placeholder:text-text-muted",
 										expanded ? "whitespace-pre-wrap" : "whitespace-nowrap",
 									)}
 								/>
 							</div>
-							<div className="flex shrink-0 items-center gap-4 self-end p-4">
-								{isStreaming ? (
-									<span className="relative flex shrink-0">
-										<span
-											aria-hidden
-											className="pointer-events-none absolute -inset-2 rounded-full border-2 border-transparent border-t-text-muted motion-safe:animate-spin motion-reduce:hidden"
-										/>
-										<IconButton
-											round
-											variant="primary"
-											size="l"
-											icon={Square}
-											data-testid="chat-abort"
-											label={t("chat.composer.stop")}
-											onClick={onAbort}
-											className="[&_svg]:fill-current"
-										/>
-									</span>
+							<div
+								className={cn(
+									"flex shrink-0 items-center gap-4 pr-8",
+									expanded ? "self-end pb-8" : "self-center",
+								)}
+							>
+								{/* One slot: Stop while the agent runs with nothing to send, Send otherwise. */}
+								{showStop ? (
+									<IconButton
+										variant="ghost"
+										size="m"
+										icon={RunningIcon}
+										data-testid="chat-abort"
+										label={t("chat.composer.stop")}
+										onClick={onAbort}
+										className="text-primary"
+									/>
 								) : null}
 								<div
 									data-testid="chat-send-pill"
 									data-armed={canSend}
+									hidden={showStop}
 									className="flex shrink-0 items-center gap-2"
 								>
 									<span
@@ -656,9 +684,8 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 										)}
 									>
 										<IconButton
-											round
 											variant="primary"
-											size="l"
+											size="m"
 											icon={ArrowUp}
 											data-testid="chat-send"
 											label={isStreaming ? t("chat.composer.steer") : t("chat.composer.send")}
@@ -670,7 +697,6 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 										<Popover open={sendMenuOpen} onOpenChange={setSendMenuOpen}>
 											<PopoverTrigger asChild>
 												<IconButton
-													round
 													size="m"
 													icon={ChevronDown}
 													data-testid="send-menu"

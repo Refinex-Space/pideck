@@ -364,3 +364,28 @@ export function isTextEntryTarget(target: EventTarget | null): boolean {
 			(typeof element.closest === "function" && element.closest(TEXT_ENTRY_ROOT_SELECTOR) !== null))
 	);
 }
+
+export function remapFilePath(path: string, from: string, to: string): string {
+	return path === from ? to : path.startsWith(`${from}/`) ? to + path.slice(from.length) : path;
+}
+
+export function fileMoveProjection(
+	paths: readonly string[],
+	from: string,
+	to: string,
+	preserved: readonly string[],
+) {
+	const blocked = new Set(preserved);
+	const projection = new Map<string, string | null>();
+	const replaced = new Set<string>();
+	for (const path of paths) {
+		const destination = remapFilePath(path, from, to);
+		const next = blocked.has(path) || blocked.has(destination) ? path : destination;
+		projection.set(path, next);
+		if (next !== path) replaced.add(next);
+	}
+	for (const [path, next] of projection) {
+		if (next === path && replaced.has(path) && !blocked.has(path)) projection.set(path, null);
+	}
+	return projection;
+}

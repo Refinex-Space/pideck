@@ -7,3 +7,10 @@ export {
 	resourceMeta,
 } from "./content";
 export * from "./files";
+export {
+	createWorkspaceEntry,
+	moveWorkspaceEntry,
+	saveWorkspaceFile,
+	searchFiles,
+	trashWorkspaceEntry,
+} from "./operations";

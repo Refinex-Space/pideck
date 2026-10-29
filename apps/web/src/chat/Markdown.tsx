@@ -6,7 +6,7 @@ import { useHighlightedCode } from "@/lib/highlightCode";
 import { createMarkdownSplitter } from "./markdownBlocks";
 
 const CHAT_PROSE =
-	"tr-prose-chat max-w-none break-words [&>*:first-child]:mt-0 [&>*:last-child]:mb-0 [&_a]:text-primary [&_a]:underline [&_li]:my-2 [&_ol]:my-8 [&_ol]:list-decimal [&_ol]:pl-16 [&_p]:my-8 [&_table]:border-collapse [&_td]:border [&_td]:border-border-muted [&_td]:px-8 [&_td]:py-4 [&_th]:border [&_th]:border-border-muted [&_th]:px-8 [&_th]:py-4 [&_th]:text-left [&_ul]:my-8 [&_ul]:list-disc [&_ul]:pl-16";
+	"tr-prose-chat max-w-none break-words [&>*:first-child]:mt-0 [&>*:last-child]:mb-0 [&_a]:text-primary [&_a]:underline [&_li]:my-2 [&_ol]:my-8 [&_ol]:list-decimal [&_ol]:pl-16 [&_p]:my-8 [&_table]:w-full [&_table]:border-collapse [&_td]:border-border-muted [&_td]:border-b [&_td]:px-12 [&_td]:py-8 [&_th]:border-border-muted [&_th]:border-b [&_th]:px-12 [&_th]:py-8 [&_th]:text-left [&_:is(td,th):not(:last-child)]:border-r [&_tbody_tr:last-child_td]:border-b-0 [&_ul]:my-8 [&_ul]:list-disc [&_ul]:pl-16";
 
 type ReactMarkdownProps = ComponentProps<typeof ReactMarkdown>;
 
@@ -86,7 +86,7 @@ const MarkdownBlock = memo(function MarkdownBlock({
 
 function Table({ children }: { children?: ReactNode }) {
 	return (
-		<div className="overflow-x-auto">
+		<div className="my-16 overflow-x-auto rounded-md border border-border-muted">
 			<table>{children}</table>
 		</div>
 	);

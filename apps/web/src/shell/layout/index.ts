@@ -1,6 +1,7 @@
 export { AuxiliaryPaneHeader, AuxiliaryPaneHideButton } from "./AuxiliaryPaneHeader";
 export { AuxiliaryRail, AuxiliaryRailToolButton } from "./AuxiliaryRail";
 export * from "./auxiliaryPresentation";
+export { moveLayoutFilePaths } from "./filePaths";
 export { type LeftPeek, LeftPeekPanel, useLeftPeek } from "./LeftPeek";
 export { readLayoutFocusIntent } from "./layoutFocus";
 export * from "./model";

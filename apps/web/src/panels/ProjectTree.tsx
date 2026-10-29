@@ -81,6 +81,7 @@ import {
 	settledShelfNoticed,
 } from "./settledShelfNotice";
 import { useOpenProject } from "./useOpenProject";
+import { useWorkspaceChats, WorkspaceSessions, workspaceListsChats } from "./WorkspaceSessions";
 import {
 	canRenameProject,
 	canRenameWorkspace,
@@ -764,6 +765,8 @@ function WorkspaceRow({
 	const t = useT();
 	const isDefault = isDefaultWorkspace(workspace);
 	const isExternal = isExternalWorkspace(workspace);
+	const chats = useWorkspaceChats(workspace.id);
+	const listsChats = workspaceListsChats(workspace, chats.length);
 	const isSettled = settled !== null;
 	const settleBlocked = isRunning || needsAttention;
 	const Icon = isExternal
@@ -856,168 +859,181 @@ function WorkspaceRow({
 	) : null;
 
 	return (
-		<li>
-			<fieldset
-				aria-label={displayName}
-				data-testid="workspace-item"
-				data-row
-				data-active={isActive}
-				data-kind={workspace.kind ?? "worktree"}
-				data-settled={settled?.kind}
-				data-attention={needsAttention || undefined}
-				data-running={isRunning || undefined}
-				onContextMenu={openMenuFromContext}
-				className={cn(
-					"group relative flex min-h-32 min-w-0 items-center gap-8 rounded-md border-0 py-4 pr-4 pl-8 transition-colors",
-					isActive || menuOpen ? "bg-control-bg-selected" : "hover:bg-control-bg-hovered",
-				)}
-			>
-				{editing ? (
-					<div className={identityClass}>
-						{identityIcon}
-						<span className="flex min-w-0 flex-1 items-center gap-8">
-							<input
-								ref={nameRef}
-								data-testid="workspace-name"
-								data-editing
-								type="text"
-								spellCheck={false}
-								aria-label={t("panels.projectTree.workspaceName")}
-								defaultValue={workspace.name}
-								{...renameInputProps}
-								className={`w-full min-w-0 truncate border-0 bg-transparent p-0 tr-text-ui outline-none ${isActive ? "text-text-default" : "text-text-muted"}`}
-							/>
-							{branchLabel}
-						</span>
-					</div>
-				) : (
-					<button type="button" onClick={onSelect} className={identityClass}>
-						{identityIcon}
-						<span className="flex min-w-0 flex-1 items-center gap-8">
-							<span
-								data-testid="workspace-name"
-								className={`truncate tr-text-ui ${isActive ? "text-text-default" : "text-text-muted"}`}
-							>
-								{displayName}
-							</span>
-							{branchLabel}
-						</span>
-					</button>
-				)}
-				{reasonChip}
-				{needsAttention ? <AttentionDot /> : null}
-				<span
+		<li
+			{...(listsChats
+				? {
+						"data-testid": "workspace-item",
+						"data-kind": workspace.kind ?? "worktree",
+						"data-active": isActive,
+						"data-attention": needsAttention || undefined,
+						"data-running": isRunning || undefined,
+					}
+				: {})}
+		>
+			{listsChats ? null : (
+				<fieldset
+					aria-label={displayName}
+					data-testid="workspace-item"
+					data-row
+					data-active={isActive}
+					data-kind={workspace.kind ?? "worktree"}
+					data-settled={settled?.kind}
+					data-attention={needsAttention || undefined}
+					data-running={isRunning || undefined}
+					onContextMenu={openMenuFromContext}
 					className={cn(
-						"flex shrink-0 items-center gap-4",
-						"[@media(hover:hover)]:absolute [@media(hover:hover)]:top-1/2 [@media(hover:hover)]:right-4 [@media(hover:hover)]:-translate-y-1/2 [@media(hover:hover)]:rounded-sm [@media(hover:hover)]:pl-4 [@media(hover:hover)]:group-hover:bg-control-bg-hovered",
-						(isActive || menuOpen) && "[@media(hover:hover)]:group-hover:bg-control-bg-selected",
-						menuOpen && "[@media(hover:hover)]:bg-control-bg-selected",
+						"group relative flex min-h-32 min-w-0 items-center gap-8 rounded-md border-0 py-4 pr-4 pl-8 transition-colors",
+						isActive || menuOpen ? "bg-control-bg-selected" : "hover:bg-control-bg-hovered",
 					)}
 				>
-					{hoverAction}
-					<DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
-						<DropdownMenuTrigger asChild>
-							<IconButton
-								icon={MoreVertical}
-								label={t("panels.projectTree.workspaceActions", { name: displayName })}
-								variant="ghost"
-								size="s"
-								data-testid="workspace-menu"
-								className={HOVER_CONTROL_CLASS}
-							/>
-						</DropdownMenuTrigger>
-						<DropdownMenuContent
-							align="end"
-							data-testid="workspace-actions"
-							onCloseAutoFocus={onMenuCloseAutoFocus}
-						>
-							{editors.length > 0 && (
-								<DropdownMenuSub>
-									<DropdownMenuSubTrigger data-testid="workspace-open-in">
-										<ExternalLink />
-										{t("panels.projectTree.openIn")}
-									</DropdownMenuSubTrigger>
-									<DropdownMenuSubContent>
-										{editors.map((editor) => (
-											<DropdownMenuItem
-												key={editor.id}
-												data-testid="workspace-open-in-editor"
-												onSelect={() => onOpenIn(editor)}
-											>
-												{editor.label}
-											</DropdownMenuItem>
-										))}
-									</DropdownMenuSubContent>
-								</DropdownMenuSub>
-							)}
-							{canRename ? (
-								<DropdownMenuItem data-testid="workspace-rename" onSelect={startRename}>
-									<Pencil />
-									{t("common.rename")}
-								</DropdownMenuItem>
-							) : null}
-							<DropdownMenuItem data-testid="workspace-copy-path" onSelect={onCopyPath}>
-								<Copy />
-								{t("panels.projectTree.copyPath")}
-							</DropdownMenuItem>
-							<DropdownMenuItem data-testid="workspace-reveal" onSelect={onReveal}>
-								<FolderOpen />
-								{t("panels.projectTree.reveal")}
-							</DropdownMenuItem>
-							{readAction !== null || canSettle ? <DropdownMenuSeparator /> : null}
-							{readAction === "markRead" ? (
-								<DropdownMenuItem data-testid="workspace-mark-read" onSelect={onMarkRead}>
-									<MailOpen />
-									{t("panels.projectTree.markRead")}
-								</DropdownMenuItem>
-							) : readAction === "markUnread" ? (
-								<DropdownMenuItem data-testid="workspace-mark-unread" onSelect={onMarkUnread}>
-									<MailUnread />
-									{t("panels.projectTree.markUnread")}
-								</DropdownMenuItem>
-							) : null}
-							{canSettle ? (
-								isSettled ? (
-									<DropdownMenuItem
-										data-testid="workspace-menu-keep-active"
-										onSelect={onKeepActive}
-									>
-										<ArrowGoBack />
-										{t("panels.projectTree.keepActive")}
+					{editing ? (
+						<div className={identityClass}>
+							{identityIcon}
+							<span className="flex min-w-0 flex-1 items-center gap-8">
+								<input
+									ref={nameRef}
+									data-testid="workspace-name"
+									data-editing
+									type="text"
+									spellCheck={false}
+									aria-label={t("panels.projectTree.workspaceName")}
+									defaultValue={workspace.name}
+									{...renameInputProps}
+									className={`w-full min-w-0 truncate border-0 bg-transparent p-0 tr-text-ui outline-none ${isActive ? "text-text-default" : "text-text-muted"}`}
+								/>
+								{branchLabel}
+							</span>
+						</div>
+					) : (
+						<button type="button" onClick={onSelect} className={identityClass}>
+							{identityIcon}
+							<span className="flex min-w-0 flex-1 items-center gap-8">
+								<span
+									data-testid="workspace-name"
+									className={`truncate tr-text-ui ${isActive ? "text-text-default" : "text-text-muted"}`}
+								>
+									{displayName}
+								</span>
+								{branchLabel}
+							</span>
+						</button>
+					)}
+					{reasonChip}
+					{needsAttention ? <AttentionDot /> : null}
+					<span
+						className={cn(
+							"flex shrink-0 items-center gap-4",
+							"[@media(hover:hover)]:absolute [@media(hover:hover)]:top-1/2 [@media(hover:hover)]:right-4 [@media(hover:hover)]:-translate-y-1/2 [@media(hover:hover)]:rounded-sm [@media(hover:hover)]:pl-4 [@media(hover:hover)]:group-hover:bg-control-bg-hovered",
+							(isActive || menuOpen) && "[@media(hover:hover)]:group-hover:bg-control-bg-selected",
+							menuOpen && "[@media(hover:hover)]:bg-control-bg-selected",
+						)}
+					>
+						{hoverAction}
+						<DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+							<DropdownMenuTrigger asChild>
+								<IconButton
+									icon={MoreVertical}
+									label={t("panels.projectTree.workspaceActions", { name: displayName })}
+									variant="ghost"
+									size="s"
+									data-testid="workspace-menu"
+									className={HOVER_CONTROL_CLASS}
+								/>
+							</DropdownMenuTrigger>
+							<DropdownMenuContent
+								align="end"
+								data-testid="workspace-actions"
+								onCloseAutoFocus={onMenuCloseAutoFocus}
+							>
+								{editors.length > 0 && (
+									<DropdownMenuSub>
+										<DropdownMenuSubTrigger data-testid="workspace-open-in">
+											<ExternalLink />
+											{t("panels.projectTree.openIn")}
+										</DropdownMenuSubTrigger>
+										<DropdownMenuSubContent>
+											{editors.map((editor) => (
+												<DropdownMenuItem
+													key={editor.id}
+													data-testid="workspace-open-in-editor"
+													onSelect={() => onOpenIn(editor)}
+												>
+													{editor.label}
+												</DropdownMenuItem>
+											))}
+										</DropdownMenuSubContent>
+									</DropdownMenuSub>
+								)}
+								{canRename ? (
+									<DropdownMenuItem data-testid="workspace-rename" onSelect={startRename}>
+										<Pencil />
+										{t("common.rename")}
 									</DropdownMenuItem>
-								) : (
-									<DropdownMenuItem
-										data-testid="workspace-menu-settle"
-										disabled={settleBlocked}
-										onSelect={onSettle}
-									>
-										<Check />
-										{t("panels.projectTree.settle")}
+								) : null}
+								<DropdownMenuItem data-testid="workspace-copy-path" onSelect={onCopyPath}>
+									<Copy />
+									{t("panels.projectTree.copyPath")}
+								</DropdownMenuItem>
+								<DropdownMenuItem data-testid="workspace-reveal" onSelect={onReveal}>
+									<FolderOpen />
+									{t("panels.projectTree.reveal")}
+								</DropdownMenuItem>
+								{readAction !== null || canSettle ? <DropdownMenuSeparator /> : null}
+								{readAction === "markRead" ? (
+									<DropdownMenuItem data-testid="workspace-mark-read" onSelect={onMarkRead}>
+										<MailOpen />
+										{t("panels.projectTree.markRead")}
 									</DropdownMenuItem>
-								)
-							) : null}
-							{!isDefault && (
-								<>
-									<DropdownMenuSeparator />
-									<DropdownMenuItem
-										data-testid="workspace-remove"
-										className="text-feedback-error focus:bg-feedback-error-subtle [&_svg]:text-feedback-error"
-										onSelect={(event) => {
-											event.preventDefault();
-											setConfirmOpen(true);
-										}}
-									>
-										<Trash2 />
-										{isExternal
-											? t("panels.projectTree.removeExternal")
-											: t("panels.projectTree.removeWorkspace")}
+								) : readAction === "markUnread" ? (
+									<DropdownMenuItem data-testid="workspace-mark-unread" onSelect={onMarkUnread}>
+										<MailUnread />
+										{t("panels.projectTree.markUnread")}
 									</DropdownMenuItem>
-								</>
-							)}
-						</DropdownMenuContent>
-					</DropdownMenu>
-				</span>
-			</fieldset>
+								) : null}
+								{canSettle ? (
+									isSettled ? (
+										<DropdownMenuItem
+											data-testid="workspace-menu-keep-active"
+											onSelect={onKeepActive}
+										>
+											<ArrowGoBack />
+											{t("panels.projectTree.keepActive")}
+										</DropdownMenuItem>
+									) : (
+										<DropdownMenuItem
+											data-testid="workspace-menu-settle"
+											disabled={settleBlocked}
+											onSelect={onSettle}
+										>
+											<Check />
+											{t("panels.projectTree.settle")}
+										</DropdownMenuItem>
+									)
+								) : null}
+								{!isDefault && (
+									<>
+										<DropdownMenuSeparator />
+										<DropdownMenuItem
+											data-testid="workspace-remove"
+											className="text-feedback-error focus:bg-feedback-error-subtle [&_svg]:text-feedback-error"
+											onSelect={(event) => {
+												event.preventDefault();
+												setConfirmOpen(true);
+											}}
+										>
+											<Trash2 />
+											{isExternal
+												? t("panels.projectTree.removeExternal")
+												: t("panels.projectTree.removeWorkspace")}
+										</DropdownMenuItem>
+									</>
+								)}
+							</DropdownMenuContent>
+						</DropdownMenu>
+					</span>
+				</fieldset>
+			)}
+			<WorkspaceSessions workspace={workspace} chats={chats} />
 
 			{!isDefault && (
 				<RemoveWorkspaceDialog

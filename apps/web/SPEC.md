@@ -391,3 +391,8 @@ themselves.
 
 The mobile single-view shell and PWA packaging (installable, offline shell) ride on this split without
 touching panels or store.
+
+Interactive file operations are specified in [file-workbench.md](../../file-workbench.md). `panels` owns
+the file operation UI, `store` owns editor drafts and composer insertion, and the shared renderers receive
+optional editing/selection callbacks. `shell/layout` also consumes the state-free `fileIcons` barrel;
+AppResourceHost mounts the file-draft persistence/unload guard without moving file contents into layouts.

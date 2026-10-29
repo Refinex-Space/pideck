@@ -216,11 +216,8 @@ function GroupDisclosure({
 				data-activity-node-toggle
 				aria-expanded={expanded}
 				onClick={toggle}
-				className="flex w-full cursor-pointer select-none items-center gap-4 rounded-sm px-4 py-2 text-left outline-none hover:bg-control-bg-hovered focus-visible:ring-1 focus-visible:ring-focus-ring"
+				className="-ml-4 flex w-fit max-w-full cursor-pointer select-none items-center gap-4 rounded-sm px-4 py-2 text-left outline-none hover:bg-control-bg-hovered focus-visible:ring-1 focus-visible:ring-focus-ring"
 			>
-				<ChevronRight
-					className={`size-16 shrink-0 transition-transform ${expanded ? "rotate-90" : ""}`}
-				/>
 				{live ? (
 					<Loader2 className="size-12 shrink-0 animate-spin motion-reduce:animate-none" />
 				) : (
@@ -243,6 +240,9 @@ function GroupDisclosure({
 				<span className="min-w-0 truncate" title={summary}>
 					{summary}
 				</span>
+				<ChevronRight
+					className={`size-16 shrink-0 transition-transform ${expanded ? "rotate-90" : ""}`}
+				/>
 			</button>
 			{expanded ? <div className="flex flex-col gap-px pl-12">{children}</div> : awaiting}
 		</div>
@@ -432,12 +432,12 @@ function StepHeader({
 			data-activity-node-toggle
 			aria-expanded={expanded}
 			onClick={onToggle}
-			className="flex w-full cursor-pointer select-none items-center gap-4 rounded-sm px-4 py-2 text-left outline-none hover:bg-control-bg-hovered focus-visible:ring-1 focus-visible:ring-focus-ring sm:py-2"
+			className="-ml-4 flex w-fit max-w-full cursor-pointer select-none items-center gap-4 rounded-sm px-4 py-2 text-left outline-none hover:bg-control-bg-hovered focus-visible:ring-1 focus-visible:ring-focus-ring sm:py-2"
 		>
 			{icon}
 			<span className="shrink-0 text-text-default">{name}</span>
 			{summary ? (
-				<span className="min-w-0 flex-1 truncate" title={summary}>
+				<span className="min-w-0 truncate" title={summary}>
 					{summary}
 				</span>
 			) : null}

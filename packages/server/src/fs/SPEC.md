@@ -2,7 +2,7 @@
 id: submodule-server-fs
 type: submodule-design
 status: active
-title: fs — worktree file reads
+title: fs — contained worktree file operations
 parent: module-server
 depends-on: [module-contracts]
 tags: [public-surface-checked]
@@ -55,10 +55,10 @@ bytes are** — the one byte-level classification every content read in the host
   `null` bytes as absence (`hash`/`byteLength` null, `text: true` — nothing to decode, and the empty
   string it pairs with is valid text).
 - **Public surface (barrel):** `readDir`, `readFile`, `resolveWorktreeFile`, `workspaceRelativePath`, `classifyBytes`,
-  `CONTENT_SNIFF_BYTES`, `mimeFromPath`, `hashBytes`, `decodeText`, `resourceMeta`.
-- **Allowed deps:** `persistence` (workspace lookup); `contracts` (`FileNode`, `ResourceMeta`); Node
-  `fs`/`path`/`crypto`.
-- **Forbidden:** `host`; sibling features.
+  `CONTENT_SNIFF_BYTES`, `mimeFromPath`, `hashBytes`, `decodeText`, `resourceMeta`,
+  `createWorkspaceEntry`, `saveWorkspaceFile`, `moveWorkspaceEntry`, `trashWorkspaceEntry`, `searchFiles`.
+- **Allowed deps:** `persistence` (workspace lookup); `trash` (recoverable deletion); `contracts` (`FileNode`, `ResourceMeta`); shared `CodedError`; Node `fs`/`path`/`crypto`.
+- **Forbidden:** `host`; other sibling features.
 
 ## Get right
 
@@ -69,3 +69,16 @@ bytes are** — the one byte-level classification every content read in the host
 - **Extension never beats the bytes.** A `.md` file whose content is a PNG reports `image/png`; the
   filename is consulted only when the bytes say nothing, so a mislabelled resource cannot talk a
   renderer into parsing it as text.
+
+## Interactive file workbench (v94)
+
+`operations.ts` adds UTF-8 text save with the loaded sha-256 (`STALE_VIEW` on conflict), exclusive create,
+non-overwriting rename/move, and confirmed-by-UI trash. Mutations reject the workspace root, `.git`,
+path escapes and symlinks. Save is an atomic sibling-temp replacement preserving permissions; size is
+bounded to 8 MiB. Save returns the submitted bytes and their hash, not a second disk read that could
+observe a later external edit. Trash uses the existing `trash` module, claiming the item before its asynchronous move
+and retaining recoverable data if trash/restore fails; there is no permanent-delete fallback.
+`searchFiles` performs bounded asynchronous name/path traversal (20,000 scanned entries, 200 results),
+never follows links, and accepts the host's git-ignore classifier rather than depending on `git`.
+The host composes editor launch/reveal after `resolveWorktreeFile` containment and publishes mutation
+metadata through `workspace.fsChanged`; clients can follow explicit moves without guessing watch events.

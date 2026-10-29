@@ -30,6 +30,7 @@ import {
 	type LayoutOperationResult,
 	type LayoutTabFocusRequest,
 	type LayoutTerminalTab,
+	moveLayoutFilePaths,
 	moveTabToGroup,
 	openCenterTab,
 	primaryCenterGroupId,
@@ -396,6 +397,16 @@ export function useLayoutIntentProcessing(
 				if (!isLayoutUnavailable(revealed)) result = revealed;
 				break;
 			}
+			case "move-files":
+				result = {
+					document: moveLayoutFilePaths(
+						document,
+						layoutIntent.from,
+						layoutIntent.to,
+						layoutIntent.preserved,
+					),
+				};
+				break;
 			case "remove-session":
 				result = { document: removeSessionLayoutTabs(document, layoutIntent.sessionId) };
 				break;

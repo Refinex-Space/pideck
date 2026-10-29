@@ -187,8 +187,8 @@ naming its own type. Two exist:
 | h6 | 12 / 500 | 12 / 600 |
 | inline code | 13 mono | 13 mono |
 | fenced code | 13 mono / 19px | 13 mono / 19px |
-| table body / header | 12 / 400 · 14 / 600 | 16 / 400 · 16 / 600 |
-| table cell inline code | **11 mono / 16px** (`code.textSmall`) | 13 mono (`code.text`) |
+| table body / header | 16 / 400 · 16 / 600 | 16 / 400 · 16 / 600 |
+| table cell inline code | 13 mono (`code.text`) | 13 mono (`code.text`) |
 | `strong` / `b` | weight 600 only | weight 600 only |
 
 Chat headings separate a stream of messages; document headings expose nested structure. Both share

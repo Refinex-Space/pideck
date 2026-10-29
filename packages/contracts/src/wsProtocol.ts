@@ -122,7 +122,8 @@ export type TemplateReadLocation =
 	| { projectId: string; workspaceId?: never }
 	| { workspaceId?: never; projectId?: never };
 
-export const PROTOCOL_VERSION = 93;
+export const PROTOCOL_VERSION = 94;
+export const FILE_WORKBENCH_PROTOCOL_VERSION = 94;
 export const TOOL_RESPONSE_PROTOCOL_VERSION = 93;
 export const USER_THEMES_PROTOCOL_VERSION = 92;
 export const HOST_ENVIRONMENT_PROTOCOL_VERSION = 91;
@@ -252,6 +253,13 @@ export const WS_METHODS = {
 	prReopen: "pr.reopen",
 	fsReadDir: "fs.readDir",
 	fsReadFile: "fs.readFile",
+	fsSearch: "fs.search",
+	fsCreate: "fs.create",
+	fsWriteFile: "fs.writeFile",
+	fsMove: "fs.move",
+	fsTrash: "fs.trash",
+	fsOpenIn: "fs.openIn",
+	fsReveal: "fs.reveal",
 	specGraph: "spec.graph",
 	todoList: "todo.list",
 	todoAdd: "todo.add",
@@ -726,6 +734,25 @@ export interface WsMethodMap {
 		params: { workspaceId: string; path: string };
 		result: { content: string; meta: ResourceMeta };
 	};
+	"fs.search": {
+		params: { workspaceId: string; query: string; includeIgnored?: boolean };
+		result: { entries: FileNode[]; truncated: boolean };
+	};
+	"fs.create": {
+		params: { workspaceId: string; path: string; kind: "file" | "dir" };
+		result: { path: string };
+	};
+	"fs.writeFile": {
+		params: { workspaceId: string; path: string; content: string; expectedHash: string };
+		result: { content: string; meta: ResourceMeta };
+	};
+	"fs.move": {
+		params: { workspaceId: string; path: string; destination: string };
+		result: { path: string };
+	};
+	"fs.trash": { params: { workspaceId: string; path: string }; result: Ack };
+	"fs.openIn": { params: { workspaceId: string; path: string; editor: string }; result: Ack };
+	"fs.reveal": { params: { workspaceId: string; path: string }; result: Ack };
 	"spec.graph": { params: { workspaceId: string }; result: SpecGraphSnapshot };
 	"todo.list": {
 		params: { workspaceId: string; sessionId: string; opened?: "page" | "rail" };

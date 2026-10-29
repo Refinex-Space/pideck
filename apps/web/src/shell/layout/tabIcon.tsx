@@ -1,8 +1,6 @@
 import {
 	RiDiscussFill,
 	RiDiscussLine,
-	RiFileFill,
-	RiFileLine,
 	RiGitPullRequestFill,
 	RiGitPullRequestLine,
 	RiLayout2Fill,
@@ -12,12 +10,13 @@ import {
 import { BookOpen, Folder, PanelLeft, PanelRight, SquareCheckBig, Terminal } from "lucide-react";
 import type { ReactNode } from "react";
 import { CustomIcon } from "../../components/CustomIcon";
+import { FileTypeIcon } from "../../fileIcons";
 import type { LayoutTab } from "./types";
 
 export function tabIcon(tab: LayoutTab, active = false, cls = "size-14 shrink-0"): ReactNode {
 	switch (tab.kind) {
 		case "file":
-			return active ? <RiFileFill className={cls} /> : <RiFileLine className={cls} />;
+			return <FileTypeIcon path={tab.path} className={cls} />;
 		case "diff":
 			return active ? (
 				<RiGitPullRequestFill className={cls} />

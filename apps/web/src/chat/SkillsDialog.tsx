@@ -104,8 +104,10 @@ export function SkillsDialog({
 	}, [workspaceId, projectId]);
 
 	useEffect(() => {
-		if (!open) return;
-		setEntries(null);
+		if (!open) {
+			setEntries(null);
+			return;
+		}
 		void refresh();
 	}, [open, refresh]);
 
@@ -244,23 +246,25 @@ export function SkillsDialog({
 						{t("chat.skills.title")}
 					</DialogTitle>
 					{workspace ? (
-						<IconTooltip
-							label={
-								workspace.streaming ? t("chat.skills.reloadBusy") : t("chat.skills.reloadHint")
-							}
-							wrapTrigger
-						>
-							<Button
-								size="m"
-								variant="outline"
-								iconLeft={RefreshCw}
-								data-testid="skills-reload"
-								disabled={busy || workspace.streaming}
-								onClick={() => void reload()}
+						<span className="mr-12 flex">
+							<IconTooltip
+								label={
+									workspace.streaming ? t("chat.skills.reloadBusy") : t("chat.skills.reloadHint")
+								}
+								wrapTrigger
 							>
-								{t("chat.skills.reload")}
-							</Button>
-						</IconTooltip>
+								<Button
+									size="m"
+									variant="outline"
+									iconLeft={RefreshCw}
+									data-testid="skills-reload"
+									disabled={busy || workspace.streaming}
+									onClick={() => void reload()}
+								>
+									{t("chat.skills.reload")}
+								</Button>
+							</IconTooltip>
+						</span>
 					) : null}
 				</div>
 
@@ -314,7 +318,7 @@ export function SkillsDialog({
 					</div>
 				) : null}
 
-				<div className="max-h-[60vh] overflow-y-auto border-border-default border-t pb-8">
+				<div className="max-h-[60vh] min-h-[min(60vh,420px)] overflow-y-auto border-border-default border-t pb-8">
 					{entries === null ? (
 						<LoadingRegion rows={4} className="px-16 py-12" />
 					) : entries.length === 0 ? (

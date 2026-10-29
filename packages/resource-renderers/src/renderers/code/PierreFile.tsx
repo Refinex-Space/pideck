@@ -207,6 +207,23 @@ function PierreFileSurface({
 }
 
 export default function PierreFile(props: ResourceViewProps) {
+	if (props.editing)
+		return (
+			<textarea
+				aria-label={props.resource.path}
+				data-testid="file-mobile-editor"
+				value={props.content.kind === "text" ? props.content.text : ""}
+				onChange={(event) => props.editing?.onChange(event.currentTarget.value)}
+				onKeyDown={(event) => {
+					if ((event.metaKey || event.ctrlKey) && event.key === "s") {
+						event.preventDefault();
+						props.editing?.onSave();
+					}
+				}}
+				wrap={props.wordWrap === false ? "off" : "soft"}
+				className="h-full w-full resize-none bg-container-workspace-bg p-12 tr-code-document text-text-default outline-none"
+			/>
+		);
 	return (
 		<PierreProvider>
 			<PierreFileSurface {...props} />

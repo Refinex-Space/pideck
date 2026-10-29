@@ -88,3 +88,15 @@ describe("revealInFileManager", () => {
 		expect(() => revealInFileManager("/tmp/wt", throwingSpawn, "linux")).toThrow(/linux/);
 	});
 });
+
+test("file reveal uses platform-native selection and never interpolates a shell command", () => {
+	spawnCalls.length = 0;
+	revealInFileManager("/tmp/space name;$(nothing).ts", recordingSpawn, "darwin", true);
+	revealInFileManager("C:\\work\\a b.ts", recordingSpawn, "win32", true);
+	revealInFileManager("/tmp/work/a.ts", recordingSpawn, "linux", true);
+	expect(spawnCalls).toEqual([
+		["open", "-R", "/tmp/space name;$(nothing).ts"],
+		["explorer", "/select,", "C:\\work\\a b.ts"],
+		["xdg-open", "/tmp/work"],
+	]);
+});

@@ -26,3 +26,7 @@ transition commits. This transient DOM-focus metadata preserves the keyboard ind
 pane disappears; it does not alter attention arbitration, the focus-loss guard, or persisted layout state.
 
 Bottom show/toggle uses the same consume-once transition as left/right, including eligible singleton restoration before offering the process-free terminal creation surface and non-bottom focus recovery on hide. Hiding a side or the bottom is recovery only: its focus request moves DOM focus to the center group's selected tab only when focus was lost (it sat inside the hidden region or on an element no longer rendered), while attention updates as before. Focus elsewhere, such as a chat draft or a questionnaire option, stays put; a stolen focus had cancelled a questionnaire's attention claim and made `e2e/ask-user-question.spec.ts` flaky. Showing a region never calls terminal creation; only an explicit New terminal action does. An all-folded region restores a suitable last-focused group on the first toggle. The resulting document and attention are committed together, not through separate observable writes. Singleton-tool actions mutate the one frame; resource opens/moves among existing groups mutate only the named workspace view.
+
+Explicit host file-move metadata becomes a `move-files` intent. The controller applies the layout
+module's pure path projection, retaining selection identities and repairing removed duplicate placements.
+It neither reads files nor mutates filesystem state.

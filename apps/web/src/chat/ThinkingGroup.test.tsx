@@ -17,13 +17,14 @@ const tool = (id: string, toolName: string) => ({
 afterEach(() => applyLocale("en", {}));
 
 describe("ThinkingGroup", () => {
-	for (const { live, streaming, ongoing } of [
-		{ live: true, streaming: true, ongoing: true },
-		{ live: false, streaming: false, ongoing: false },
-		{ live: false, streaming: true, ongoing: false },
-		{ live: true, streaming: false, ongoing: false },
+	// The ongoing "思考中…" belongs to the single stream footer; the row itself always names the category.
+	for (const { live, streaming } of [
+		{ live: true, streaming: true },
+		{ live: false, streaming: false },
+		{ live: false, streaming: true },
+		{ live: true, streaming: false },
 	])
-		test(`Chinese label reflects actual thinking: live=${live}, streaming=${streaming}`, () => {
+		test(`Chinese label stays the neutral category: live=${live}, streaming=${streaming}`, () => {
 			applyLocale("zh-CN", {});
 			const markup = renderToStaticMarkup(
 				<ThinkingGroup
@@ -40,11 +41,9 @@ describe("ThinkingGroup", () => {
 				/>,
 			);
 			expect(markup).toContain('data-activity-node-label="思考过程"');
-			if (ongoing) expect(markup).toContain(">思考中…</span>");
-			else {
-				expect(markup).toContain(">思考过程</span>");
-				expect(markup).not.toContain("思考中");
-			}
+			expect(markup).toContain(">思考过程</span>");
+			expect(markup).not.toContain("思考中");
+			expect(markup).not.toContain("animate-spin");
 			expect(markup).not.toContain("思考完成");
 		});
 

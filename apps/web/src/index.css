@@ -247,6 +247,38 @@
 	-webkit-app-region: var(--window-chrome-drag-region, no-drag);
 	app-region: var(--window-chrome-drag-region, no-drag);
 }
+/* Live status text: a soft highlight sweeps across the muted label. */
+@keyframes text-shimmer {
+	from {
+		background-position: 100% 0;
+	}
+	to {
+		background-position: -100% 0;
+	}
+}
+@utility live-shimmer {
+	background-image: linear-gradient(
+		90deg,
+		var(--text-muted) 0%,
+		var(--text-muted) 40%,
+		var(--text-default) 50%,
+		var(--text-muted) 60%,
+		var(--text-muted) 100%
+	);
+	background-size: 250% 100%;
+	background-clip: text;
+	-webkit-background-clip: text;
+	color: transparent;
+	-webkit-text-fill-color: transparent;
+	@media (prefers-reduced-motion: no-preference) {
+		animation: text-shimmer 2.4s linear infinite;
+	}
+	@media (prefers-reduced-motion: reduce) {
+		background-image: none;
+		color: var(--text-muted);
+		-webkit-text-fill-color: currentColor;
+	}
+}
 @utility window-no-drag {
 	-webkit-app-region: no-drag;
 	app-region: no-drag;

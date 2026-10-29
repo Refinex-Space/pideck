@@ -1,5 +1,4 @@
 import {
-	RiCheckLine as Check,
 	RiArrowRightSLine as ChevronRight,
 	RiLoader4Line as Loader2,
 	RiCloseLine as X,
@@ -9,8 +8,14 @@ import { cn } from "@thinkrail/ui/utils";
 import { ToolPromptSlot } from "./ExtUiPrompt";
 import { useFold } from "./foldState";
 import { ToolRendererBody } from "./ToolRendererBody";
+import { toolIcon } from "./toolIcons";
 import { getToolSummary, resolveProminence } from "./toolRegistry";
 import type { ToolResultState } from "./types";
+
+function ToolKindIcon({ toolName }: { toolName: string }) {
+	const Icon = toolIcon(toolName);
+	return <Icon aria-hidden className="size-12 shrink-0 text-text-muted" />;
+}
 
 export function ToolCard({
 	toolCallId,
@@ -71,7 +76,7 @@ export function ToolCard({
 				) : isError ? (
 					<X className="size-12 shrink-0 text-feedback-error" />
 				) : (
-					<Check className="size-12 shrink-0 text-feedback-success" />
+					<ToolKindIcon toolName={toolName} />
 				)}
 				<span className="shrink-0 text-text-default">{toolName}</span>
 				{summary ? (

@@ -1642,8 +1642,14 @@ label from the pure `streamStatus` deriver — `working` → `thinking` → `run
 trailing turn is a running compaction) — not a per-turn cursor — so it can't
 duplicate and it fills the post-send gap. Outside the streaming window (a manual compact, or the
 pre-prompt compaction pi runs inside `prompt()` before `agent_start`) the footer is absent by design —
-the running `CompactionNotice` row itself carries the spinner, so the beat is never dead air. The trailing Activity fold's live ticker is a *status* line (spinner,
-like a running card header), not a second loader. `data-testid="stream-indicator"` + `data-phase` make
+the running `CompactionNotice` row itself carries the spinner, so the beat is never dead air. Rows never repeat that liveness: a live Activity or Thinking header keeps its static kind icon and
+the neutral `Thinking` / step-summary text (its ticker names the running tool and target, and falls back to the
+settled summary while the current step is a thought), so the footer's shimmering phase label is the only "it is
+working" cue and the two lines never say the same thing. Inside an expanded group a running step keeps its own spinner; a
+settled step shows a quiet per-tool line icon (`toolIcons.ts`: read/write/edit/terminal/search/web/agent/MCP,
+wrench fallback) instead of a success tick, and only an errored step turns red — the convention of Claude's and
+ChatGPT's desktop transcripts and of ZCode's tool rows. The footer label uses the `live-shimmer` utility
+(`index.css`: a highlight sweeping across the muted text, still muted text under `prefers-reduced-motion`). `data-testid="stream-indicator"` + `data-phase` make
 the lifecycle assertable.
 
 ## Get right

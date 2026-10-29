@@ -1,6 +1,5 @@
 import {
 	RiBrainLine as Brain,
-	RiCheckLine as Check,
 	RiArrowRightSLine as ChevronRight,
 	RiStackLine as Layers,
 	RiLoader4Line as Loader2,
@@ -16,6 +15,7 @@ import { PendingExtUiContext, ToolPromptSlot } from "./ExtUiPrompt";
 import { useFold } from "./foldState";
 import type { ActivityStep, RoutineToolStep, ThinkingStep } from "./rows";
 import { ToolRendererBody } from "./ToolRendererBody";
+import { toolIcon } from "./toolIcons";
 import { getToolSummary } from "./toolRegistry";
 
 export function ActivityGroup({
@@ -49,7 +49,9 @@ export function ActivityGroup({
 		);
 
 	const settledSummary = summarizeSteps(t, steps);
-	const summary = live ? liveActivityTicker(t, steps, workspaceRoot) : settledSummary;
+	const summary = live
+		? (liveActivityTicker(t, steps, workspaceRoot) ?? settledSummary)
+		: settledSummary;
 	const breadcrumb = splitSummary(settledSummary);
 	return (
 		<GroupDisclosure
@@ -117,9 +119,7 @@ export function ThinkingGroup({
 	const t = useT();
 	const summary =
 		tools.length > 0
-			? live
-				? liveActivityTicker(t, tools, workspaceRoot)
-				: summarizeSteps(t, tools)
+			? ((live ? liveActivityTicker(t, tools, workspaceRoot) : null) ?? summarizeSteps(t, tools))
 			: t("chat.activity.chars", { chars: formatChars(thought.text.length) });
 	return (
 		<GroupDisclosure
@@ -130,7 +130,7 @@ export function ThinkingGroup({
 			live={live}
 			stepCount={tools.length}
 			icon={<Brain className="size-12 shrink-0" />}
-			label={t(live && thought.streaming ? "chat.activity.thinkingLive" : "chat.activity.thinking")}
+			label={t("chat.activity.thinking")}
 			headline={extractThinkingHeading(thought.text)}
 			breadcrumbLabel={t("chat.activity.thinking")}
 			breadcrumbMeta={summary}
@@ -218,11 +218,7 @@ function GroupDisclosure({
 				onClick={toggle}
 				className="-ml-4 flex w-fit max-w-full cursor-pointer select-none items-center gap-4 rounded-sm px-4 py-2 text-left outline-none hover:bg-control-bg-hovered focus-visible:ring-1 focus-visible:ring-focus-ring"
 			>
-				{live ? (
-					<Loader2 className="size-12 shrink-0 animate-spin motion-reduce:animate-none" />
-				) : (
-					icon
-				)}
+				{icon}
 				{label ? (
 					<span className={cn("shrink-0 text-text-default", !expanded && headline && "sr-only")}>
 						{label}
@@ -326,11 +322,9 @@ function liveActivityTicker(
 	t: Translator,
 	steps: ActivityStep[],
 	workspaceRoot: string | undefined,
-): string {
-	const flatSteps = flattenActivitySteps(steps);
-	const current = flatSteps[flatSteps.length - 1];
-	if (!current) return t("chat.activity.working");
-	if (current.kind === "thinking") return t("chat.activity.thinkingLive");
+): string | null {
+	const current = flattenActivitySteps(steps).at(-1);
+	if (!current || current.kind === "thinking") return null;
 	const summary = getToolSummary(t, current.toolName, toolRenderProps(current, workspaceRoot));
 	return summary ? `${current.toolName} · ${summary}` : `${current.toolName}…`;
 }
@@ -393,7 +387,7 @@ function RoutineToolRow({
 					) : status === "error" ? (
 						<X className="size-12 shrink-0 text-feedback-error" />
 					) : (
-						<Check className="size-12 shrink-0 text-feedback-success" />
+						<StepIcon toolName={step.toolName} />
 					)
 				}
 				name={step.toolName}
@@ -407,6 +401,11 @@ function RoutineToolRow({
 			<ToolPromptSlot toolCallId={step.toolCallId} className="my-4 ml-16" />
 		</div>
 	);
+}
+
+function StepIcon({ toolName }: { toolName: string }) {
+	const Icon = toolIcon(toolName);
+	return <Icon aria-hidden className="size-12 shrink-0" />;
 }
 
 function StepHeader({

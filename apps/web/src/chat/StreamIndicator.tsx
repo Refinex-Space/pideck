@@ -59,7 +59,7 @@ export function StreamIndicator({ status }: { status: StreamStatus }) {
 			<span aria-hidden="true" className="flex shrink-0">
 				<RunningIcon className="size-16 text-primary" />
 			</span>
-			<span className="min-w-0 truncate">{phaseLabel(t, status)}</span>
+			<span className="min-w-0 truncate live-shimmer">{phaseLabel(t, status)}</span>
 		</div>
 	);
 }

@@ -2,8 +2,8 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, type Locator, type Page, test } from "@playwright/test";
 import {
+	activateDefaultWorkspace,
 	applyWorkbenchPreset,
-	defaultWorkspaceRow,
 	enterDefaultWorkspace,
 	openAppSettings,
 	openFixtureProject,
@@ -763,7 +763,7 @@ test("bottom visibility and alignment stay local to each window and survive its 
 	await peer.goto("/");
 	await expect(peer.getByTestId("connection-status")).toHaveAttribute("data-status", "connected");
 	await revealFirstProjectWorkspaces(peer);
-	await defaultWorkspaceRow(peer).getByRole("button").first().click();
+	await activateDefaultWorkspace(peer);
 	await applyWorkbenchPreset(peer, "Balanced");
 	await expect(peer.getByTestId("bottom-panel")).toBeVisible();
 

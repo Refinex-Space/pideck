@@ -1,4 +1,3 @@
-import { RiGitBranchLine as GitBranch, RiChatNewLine as MessageSquarePlus } from "@remixicon/react";
 import type { MessageKey } from "@thinkrail/locales";
 import { t, useT } from "@thinkrail/locales/react";
 import { Button } from "@thinkrail/ui/button";
@@ -90,6 +89,7 @@ import {
 import { syncLegacySelectionFromAttention, useLegacySelectionAdapter } from "./legacySelection";
 import { useTerminalPlacementReconciliation } from "./terminalReconciliation";
 import { useIdleEditorPreload } from "./useIdleEditorPreload";
+import { WorkspaceReady } from "./WorkspaceReady";
 
 function PlanSummaryAutoDraft({
 	workspaceId,
@@ -744,64 +744,23 @@ export function WorkspaceWorkbench({
 		[reviewDraftCount, reviewFlagByPath, t, workspaceId],
 	);
 
+	const readyKind = isDefault ? "default" : isExternal ? "external" : "worktree";
+	const readyTitle = !workspace
+		? ""
+		: isDefault
+			? (contextProject?.name ?? workspaceName(t, workspace))
+			: workspace.name;
 	const renderEmptyCenter = useCallback(
 		(groupId: string): ReactNode => (
-			<div
-				data-testid="workspace-ready"
-				className="flex h-full flex-col items-center justify-center gap-4 px-16 text-center"
-			>
-				<span className="tr-text-eyebrow text-text-muted">
-					{isDefault
-						? t("shell.workbench.ready.defaultEyebrow")
-						: isExternal
-							? t("shell.workbench.ready.externalEyebrow")
-							: t("shell.workbench.ready.worktreeEyebrow")}
-				</span>
-				{workspace ? (
-					<>
-						<h2 className="max-w-full truncate tr-title-entity text-text-default">
-							{isDefault ? (contextProject?.name ?? workspaceName(t, workspace)) : workspace.name}
-						</h2>
-						<p className="flex max-w-full items-center gap-4 tr-text-metadata text-text-muted">
-							<GitBranch className="size-14 shrink-0" />
-							{isDefault || isExternal ? (
-								<span className="truncate">
-									{t("shell.workbench.ready.onBranch", { branch: workspace.branch })}
-								</span>
-							) : (
-								<>
-									<span className="truncate">{workspace.branch}</span>
-									<span className="shrink-0 text-text-muted">
-										{t("shell.workbench.ready.fromBase", { base: workspace.baseBranch })}
-									</span>
-								</>
-							)}
-						</p>
-					</>
-				) : null}
-				<p className="mt-4 tr-text-ui text-text-muted">
-					{isDefault
-						? t("shell.workbench.ready.defaultDescription")
-						: t("shell.workbench.ready.worktreeDescription")}
-				</p>
-				<Button
-					variant="outline"
-					size="m"
-					iconLeft={MessageSquarePlus}
-					loading={chatStarting}
-					data-testid="start-chat"
-					data-starting={chatStarting || undefined}
-					disabled={chatStarting}
-					onClick={() => startChat(groupId)}
-					className="mt-4"
-				>
-					{chatStarting
-						? t("shell.workbench.ready.startingChat")
-						: t("shell.workbench.ready.newChat")}
-				</Button>
-			</div>
+			<WorkspaceReady
+				kind={readyKind}
+				workspace={workspace ?? null}
+				title={readyTitle}
+				starting={chatStarting}
+				onStart={() => startChat(groupId)}
+			/>
 		),
-		[chatStarting, contextProject, isDefault, isExternal, startChat, t, workspace],
+		[chatStarting, readyKind, readyTitle, startChat, workspace],
 	);
 
 	if (!rendered) {

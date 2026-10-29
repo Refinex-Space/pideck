@@ -2,6 +2,7 @@ import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
 import { expect, type Locator, type Page, test } from "@playwright/test";
 import {
+	activateDefaultWorkspace,
 	createWorkspaceViaDialog,
 	defaultWorkspaceRow,
 	openAppFresh,
@@ -552,7 +553,7 @@ test("project names toggle their rows while keeping home navigation and independ
 	await expect(name).toHaveAttribute("aria-expanded", "false");
 	await page.keyboard.press("Escape");
 	await icon.click();
-	await defaultWorkspaceRow(page).getByRole("button").first().click();
+	await activateDefaultWorkspace(page);
 	await expect(page.getByTestId("center-tabs")).toBeVisible();
 	await name.click();
 	await expect(page.getByTestId("welcome")).toBeVisible();

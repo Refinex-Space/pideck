@@ -861,6 +861,8 @@ function WorkspaceRow({
 		/>
 	) : null;
 
+	if (isDefault && chats.length === 0) return null;
+
 	return (
 		<li
 			{...(listsChats

@@ -1,8 +1,8 @@
 import { expect, type Locator, type Page, test } from "@playwright/test";
 import {
+	activateDefaultWorkspace,
 	applyWorkbenchPreset,
 	createWorkspaceViaDialog,
-	defaultWorkspaceRow,
 	enterDefaultWorkspace,
 	openFixtureProject,
 	openWorkspaceChat,
@@ -375,7 +375,7 @@ test("a workspace switch cancels a singleton drag even though its frame placemen
 	await openDefaultWorkbench(page);
 	const other = await createWorkspaceViaDialog(page);
 	await waitTerminalReady(page);
-	await defaultWorkspaceRow(page).getByRole("button").first().click();
+	await activateDefaultWorkspace(page);
 	await waitTerminalReady(page);
 	await startDrag(page, page.getByTestId("tool-rail-files"));
 	const target = page.locator('[data-drop-label="Create bottom group to the right"]');
@@ -391,7 +391,7 @@ test("a workspace switch cancels a singleton drag even though its frame placemen
 	await expect(page.getByTestId("bottom-group")).toHaveCount(1);
 	await expect(page.getByTestId("right-layout-rail").getByTestId("tool-rail-files")).toBeVisible();
 	await expect(page.getByTestId("toast")).toContainText("Your drag was canceled");
-	await defaultWorkspaceRow(page).getByRole("button").first().click();
+	await activateDefaultWorkspace(page);
 	await expect(page.getByTestId("bottom-group")).toHaveCount(1);
 	await expect(page.getByTestId("right-layout-rail").getByTestId("tool-rail-files")).toBeVisible();
 });

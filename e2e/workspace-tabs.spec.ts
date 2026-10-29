@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import {
+	activateDefaultWorkspace,
 	createWorkspaceViaDialog,
 	defaultWorkspaceRow,
 	openFixtureProject,
@@ -69,7 +70,7 @@ test("the selected side tool follows workspace switches", async ({ page }) => {
 	await worktreeRow(page, "workspace-2").getByRole("button").first().click();
 	await expect(page.getByTestId("scope-name")).toHaveText("workspace-2");
 	await expect(projects).toHaveAttribute("aria-pressed", "true");
-	await defaultWorkspaceRow(page).getByRole("button").first().click();
+	await activateDefaultWorkspace(page);
 	await expect(defaultWorkspaceRow(page)).toHaveAttribute("data-active", "true");
 	await expect(projects).toHaveAttribute("aria-pressed", "true");
 
@@ -130,7 +131,7 @@ test("switching workspaces re-targets the mounted workbench instead of remountin
 		),
 	).toBe(0);
 
-	await defaultWorkspaceRow(page).getByRole("button").first().click();
+	await activateDefaultWorkspace(page);
 	await expect(defaultWorkspaceRow(page)).toHaveAttribute("data-active", "true");
 	for (const id of ["workspace-workbench", "center-tabs", "left-nav"]) {
 		await expect(page.getByTestId(id)).toHaveAttribute("data-switch-probe", "before");

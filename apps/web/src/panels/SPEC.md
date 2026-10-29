@@ -1011,7 +1011,9 @@ a project picker, the prompt hero, and the reused
   When a center group has no resource tab, the workbench asks panels for the empty surface as a persistent
   creation/orientation receipt rather than a generic placeholder: **“Workspace ready”**, the display name,
   `branch · from baseBranch`, and **“Files, chats, changes, and terminals are scoped to this workspace,”**
-  followed by the existing **New chat** action. For the **Default workspace** the receipt tells the truth
+  followed by the existing **New chat** action. The surface is laid out like Project Home: the eyebrow, a
+  hero-size name, one branch line, and a single left-aligned card (icon, **New chat**, the description as its
+  subtitle) in a 560px column, rather than a stack of small centered lines (`shell/WorkspaceReady.tsx`). For the **Default workspace** the receipt tells the truth
   instead of promising isolation: **“Default workspace”**, the project name, `on <branch>`, and “Chats,
   changes, and terminals run directly in your project folder.” An **external workspace** reads
   **“Existing worktree”** with `on <branch>` for the same reason — ThinkRail did not cut it, so there is no
@@ -2198,7 +2200,7 @@ own section. The kebab menu (`plan-menu`, a
 - Streaming invariant (when chat lands): `text_delta`/`thinking_delta` **APPEND**;
   `tool_execution_update.partialResult` **REPLACE**.
 
-Project expansion uses Lucide folder-open/folder-closed, with aria-expanded on the existing toggle. Default workspace rows have no decorative leading icon or reserved icon column; running/attention status remains visible. Other workspace kinds retain their existing branch/external-worktree markers.
+Project expansion uses Lucide folder-open/folder-closed, with aria-expanded on the existing toggle. Default workspace rows have no decorative leading icon or reserved icon column; running/attention status remains visible. A Default workspace with no chats renders no row at all — the project folder only appears through its chats, and a new one is started with the sidebar's New action or from its empty surface. Other workspace kinds retain their existing branch/external-worktree markers.
 
 ## File explorer icon identity
 

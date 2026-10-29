@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import {
+	activateDefaultWorkspace,
 	createWorkspaceViaDialog,
 	defaultWorkspaceRow,
 	enterDefaultWorkspace,
@@ -87,7 +88,7 @@ test("the Default workspace is non-removable and unique; project home stays reac
 	await expect(page.getByTestId("welcome")).toBeVisible();
 	await expect(defaultWorkspaceRow(page)).toHaveCount(1);
 
-	await defaultWorkspaceRow(page).getByRole("button").first().click();
+	await activateDefaultWorkspace(page);
 	await expect(page.getByTestId("center-tabs")).toBeVisible();
 	await expect(defaultWorkspaceRow(page)).toHaveAttribute("data-active", "true");
 	await goProjectHome(page);

@@ -3,9 +3,9 @@ import { join } from "node:path";
 import { expect, test, type WebSocketRoute } from "@playwright/test";
 import { TodoStore } from "pi-todos/core";
 import {
+	activateDefaultWorkspace,
 	closedSessionRows,
 	closeTabViaMenu,
-	defaultWorkspaceRow,
 	enterDefaultWorkspace,
 	openFixtureProject,
 	openPersistedChat,
@@ -369,7 +369,7 @@ test("trashing a chat converges to a second client", async ({ page, context }) =
 	await page2.goto("/");
 	await expect(page2.getByTestId("connection-status")).toHaveAttribute("data-status", "connected");
 	await revealFirstProjectWorkspaces(page2);
-	await defaultWorkspaceRow(page2).click();
+	await activateDefaultWorkspace(page2);
 	await expect(page2.getByText("shared doomed transcript")).toBeVisible();
 
 	const chatTab = page.locator('[data-testid="editor-tab"][data-kind="chat"]');
@@ -409,7 +409,7 @@ test("a client that misses chat deletion while offline reconciles it after recon
 	await page2.goto("/");
 	await expect(page2.getByTestId("connection-status")).toHaveAttribute("data-status", "connected");
 	await revealFirstProjectWorkspaces(page2);
-	await defaultWorkspaceRow(page2).click();
+	await activateDefaultWorkspace(page2);
 	await expect(page2.getByText("offline doomed transcript")).toBeVisible();
 
 	offline = true;

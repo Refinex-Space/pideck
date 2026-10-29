@@ -241,13 +241,17 @@ export async function openFixtureProject(page: Page): Promise<void> {
 	await page.getByTestId("menu-open-project").click();
 	await expect(page.getByTestId("project-item").first()).toBeVisible();
 	await expect(page.getByTestId("welcome")).toBeVisible();
-	await expect(defaultWorkspaceRow(page)).toBeVisible();
 }
 
 export async function enterDefaultWorkspace(page: Page): Promise<void> {
 	await page.getByTestId("welcome-action").filter({ hasText: "Work in project folder" }).click();
-	await expect(defaultWorkspaceRow(page)).toHaveAttribute("data-active", "true");
 	await expect(page.getByTestId("center-tabs")).toBeVisible();
+}
+
+/** The Default row only exists while the project folder holds chats, so reach it the way a user does: through Project Home. */
+export async function activateDefaultWorkspace(page: Page): Promise<void> {
+	await goProjectHome(page);
+	await enterDefaultWorkspace(page);
 }
 
 export async function applyWorkbenchPreset(page: Page, name: string): Promise<void> {

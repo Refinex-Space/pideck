@@ -1,11 +1,4 @@
-import {
-	RiArrowDownSLine,
-	RiCircleFill,
-	RiGlobalLine,
-	RiPaletteLine,
-	RiSettings3Line,
-} from "@remixicon/react";
-import { LOCALES_PROTOCOL_VERSION } from "@thinkrail/contracts";
+import { RiArrowDownSLine, RiCircleFill, RiSettings3Line } from "@remixicon/react";
 import { useT } from "@thinkrail/locales/react";
 import {
 	DropdownMenuContent,
@@ -16,7 +9,8 @@ import {
 import { cn } from "@thinkrail/ui/utils";
 import { type ReactNode, useState } from "react";
 import { PRODUCT_NAME } from "../constants/branding";
-import { SettingsSection, useAppStore } from "../store";
+import { useAppStore } from "../store";
+import { AppearanceQuickMenu, LanguageQuickMenu } from "./ApplicationMenuQuickSettings";
 import { BrandLogo } from "./BrandLogo";
 import { readSettingsShortcutLabel } from "./useAppShortcuts";
 
@@ -90,7 +84,6 @@ export function ApplicationMenu({
 export function ApplicationMenuItems() {
 	const t = useT();
 	const status = useAppStore((state) => state.status);
-	const protocolVersion = useAppStore((state) => state.protocolVersion);
 	const [shortcut] = useState(readSettingsShortcutLabel);
 	const statusLabel = t(CONNECTION_LABEL[status]);
 	return (
@@ -119,20 +112,8 @@ export function ApplicationMenuItems() {
 					<span className="ml-auto text-text-subtle tr-text-metadata">{shortcut}</span>
 				) : null}
 			</DropdownMenuItem>
-			<DropdownMenuItem
-				onSelect={() => useAppStore.getState().openSettings(SettingsSection.Appearance)}
-			>
-				<RiPaletteLine />
-				{t("settings.nav.appearance")}
-			</DropdownMenuItem>
-			{protocolVersion !== null && protocolVersion >= LOCALES_PROTOCOL_VERSION ? (
-				<DropdownMenuItem
-					onSelect={() => useAppStore.getState().openSettings(SettingsSection.Language)}
-				>
-					<RiGlobalLine />
-					{t("settings.nav.language")}
-				</DropdownMenuItem>
-			) : null}
+			<AppearanceQuickMenu />
+			<LanguageQuickMenu />
 		</DropdownMenuContent>
 	);
 }

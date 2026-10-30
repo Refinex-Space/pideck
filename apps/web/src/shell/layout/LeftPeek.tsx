@@ -139,10 +139,10 @@ export function LeftPeekPanel({
 			data-testid="left-peek"
 			{...zoneProps}
 			// The invisible strip on the right edge keeps a drifting pointer from closing the panel.
-			className="absolute inset-y-0 left-0 z-40 flex w-288 max-w-[90%] flex-col rounded-r-lg border-border-default border-r bg-container-sidebar-bg shadow-[var(--shadow-lg)] after:absolute after:inset-y-0 after:-right-12 after:w-12 after:content-[''] motion-safe:animate-reveal"
+			className="absolute inset-y-0 left-0 z-40 flex w-288 max-w-[90%] flex-col border-border-muted border-r bg-container-sidebar-bg after:absolute after:inset-y-0 after:-right-12 after:w-12 after:content-[''] motion-safe:animate-reveal"
 		>
 			<div aria-hidden="true" className="h-topbar-row shrink-0" />
-			<div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-r-lg">{children}</div>
+			<div className="flex min-h-0 flex-1 flex-col overflow-hidden">{children}</div>
 		</aside>
 	);
 }

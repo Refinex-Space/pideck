@@ -101,7 +101,10 @@ export const AuxiliaryRailToolButton = forwardRef<
 					{...railEntryButtonProps(active, entry.tool)}
 					{...control}
 					onClick={onActivate}
-					className={RAIL_ENTRY_BUTTON_CLASS}
+					className={cn(
+						RAIL_ENTRY_BUTTON_CLASS,
+						entry.tool === "projects" && "hover:outline-none hover:ring-0",
+					)}
 				>
 					{tabIcon(tab, active, RAIL_ICON)}
 				</button>

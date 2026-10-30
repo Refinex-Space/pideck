@@ -139,7 +139,9 @@ export function AuxiliaryRail({
 	const boundary = (paneIndex: number): ReactNode => {
 		const zone = renderBoundary?.(paneIndex);
 		return zone ? (
-			<div className={cn("relative shrink-0", horizontal ? "h-32 w-0" : "h-0 w-32")}>{zone}</div>
+			<div className={cn("relative shrink-0", horizontal ? "-mx-4 h-32 w-0" : "-my-4 h-0 w-32")}>
+				{zone}
+			</div>
 		) : null;
 	};
 	return (
@@ -191,10 +193,7 @@ export function AuxiliaryRail({
 						<hr
 							aria-orientation={horizontal ? "vertical" : "horizontal"}
 							data-testid="rail-separator"
-							className={cn(
-								"shrink-0 border-0 bg-transparent",
-								horizontal ? "mx-2 h-20 w-px" : "my-2 h-px w-20",
-							)}
+							className="hidden"
 						/>
 					) : null}
 					{cluster.entries.map((entry) => (

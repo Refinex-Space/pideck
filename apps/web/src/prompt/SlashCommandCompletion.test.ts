@@ -2,11 +2,10 @@ import { describe, expect, it } from "bun:test";
 import type { SlashCommandInfo } from "@thinkrail/contracts";
 import {
 	matchSlashCommands,
-	selectedSlashCommandValue,
 	slashCommandCatalogOrEmpty,
-	slashCommandQuery,
 	slashCompletionKeyAction,
 } from "./SlashCommandCompletion";
+import { detectPromptTrigger } from "./triggers";
 
 function command(name: string): SlashCommandInfo {
 	return {
@@ -22,18 +21,42 @@ function command(name: string): SlashCommandInfo {
 	};
 }
 
+function slash(text: string) {
+	return detectPromptTrigger(text, text.length);
+}
+
 describe("slash command matching", () => {
-	it("matches a leading whitespace-free query case-insensitively and caps at eight", () => {
-		const commands = Array.from({ length: 10 }, (_, index) => command(`Skill-${index}`));
-		expect(matchSlashCommands("/skill-", commands).map((item) => item.name)).toEqual(
-			commands.slice(0, 8).map((item) => item.name),
+	it("matches case-insensitively and caps the list", () => {
+		const commands = Array.from({ length: 30 }, (_, index) => command(`Skill-${index}`));
+		expect(matchSlashCommands(slash("/skill-"), commands)).toHaveLength(20);
+		expect(matchSlashCommands(slash("/SKILL-1"), commands).map((item) => item.name)).toContain(
+			"Skill-1",
 		);
-		expect(slashCommandQuery("hello /skill")).toBeNull();
-		expect(matchSlashCommands("/skill arg", commands)).toEqual([]);
+		expect(matchSlashCommands(null, commands)).toEqual([]);
+		expect(matchSlashCommands(slash("@file"), commands)).toEqual([]);
 	});
 
-	it("uses one insertion format for every caller", () => {
-		expect(selectedSlashCommandValue(command("skill:review"))).toBe("/skill:review ");
+	it("ranks a name prefix, then the part after the colon, then a substring", () => {
+		const names = ["x-review", "skill:review", "review-all"].map(command);
+		expect(matchSlashCommands(slash("/review"), names).map((item) => item.name)).toEqual([
+			"review-all",
+			"skill:review",
+			"x-review",
+		]);
+	});
+
+	it("groups by source and offers only skills away from the draft start", () => {
+		const mixed: SlashCommandInfo[] = [
+			{ ...command("dag"), source: "extension" },
+			{ ...command("skill:doc"), source: "skill" },
+		];
+		expect(matchSlashCommands(slash("/"), mixed).map((item) => item.name)).toEqual([
+			"skill:doc",
+			"dag",
+		]);
+		expect(matchSlashCommands(slash("write /"), mixed).map((item) => item.name)).toEqual([
+			"skill:doc",
+		]);
 	});
 
 	it("degrades an empty or failed optional catalog to no matches", async () => {

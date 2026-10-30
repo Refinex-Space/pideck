@@ -187,7 +187,7 @@ test("a project's committed skills are gated behind trust, then autocomplete", a
 	await expect(dialog.getByTestId("ws-trust-notice")).toBeHidden();
 	await prompt.fill("/e2e");
 	await expect(portable).toBeVisible();
-	await expect(portable).toContainText("skill/project");
+	await expect(portable).toContainText("Project");
 
 	await prompt.press("Escape");
 	await expect(dialog.getByTestId("slash-menu")).toBeHidden();
@@ -254,14 +254,14 @@ Prepare $1 and verify \${2:-tests}.
 		await prompt.fill("/review");
 		const globalTemplate = dialog.getByTestId("slash-command").filter({ hasText: "/review" });
 		await expect(globalTemplate).toBeVisible();
-		await expect(globalTemplate).toContainText("prompt/user");
+		await expect(globalTemplate).toContainText("Personal");
 
 		await prompt.fill("/workspace-k");
 		const projectTemplate = dialog
 			.getByTestId("slash-command")
 			.filter({ hasText: "/workspace-kickoff" });
 		await expect(projectTemplate).toBeVisible();
-		await expect(projectTemplate).toContainText("prompt/project");
+		await expect(projectTemplate).toContainText("Project");
 		await projectTemplate.click();
 
 		await expect(prompt).toHaveValue("Prepare ⟨topic⟩ and verify tests.");

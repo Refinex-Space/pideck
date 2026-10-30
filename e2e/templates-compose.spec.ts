@@ -159,7 +159,7 @@ test.describe("prompt templates in the composer", () => {
 		await expectPromptSent(page, "Rename Widget and update every Widget reference.");
 	});
 
-	test("the highlight backdrop tints each gap and tracks the active slot as Tab steps through", async ({
+	test("the prompt mirror tints each gap and tracks the active slot as Tab steps through", async ({
 		page,
 	}) => {
 		await openWorkspaceChat(page);
@@ -169,8 +169,7 @@ test.describe("prompt templates in the composer", () => {
 		await page.locator('[data-testid="slash-command"][data-source="prompt"]').first().click();
 		await expect(input).toHaveValue(/^Rename ⟨name⟩ and update every ⟨name⟩ reference\.\s*$/);
 
-		const backdrop = page.getByTestId("slot-backdrop");
-		await expect(backdrop).toBeVisible();
+		await expect(page.getByTestId("prompt-mirror")).toBeVisible();
 		const highlights = page.getByTestId("slot-highlight");
 		await expect(highlights).toHaveCount(2);
 		await expect(highlights.nth(0)).toHaveAttribute("data-slot-state", "active");
@@ -182,10 +181,10 @@ test.describe("prompt templates in the composer", () => {
 		await expect(highlights.nth(1)).toHaveAttribute("data-slot-state", "active");
 
 		await page.getByTestId("chat-send").click();
-		await expect(backdrop).not.toBeVisible();
+		await expect(highlights).toHaveCount(0);
 	});
 
-	test("the slot backdrop shares dynamic textarea geometry and capped scrolling", async ({
+	test("the prompt mirror shares dynamic textarea geometry and capped scrolling", async ({
 		page,
 	}) => {
 		await openWorkspaceChat(page);
@@ -197,10 +196,10 @@ test.describe("prompt templates in the composer", () => {
 		await page.keyboard.insertText("Widget ".repeat(300));
 		await expect(page.getByTestId("chat-composer")).toHaveAttribute("data-expanded", "true");
 
-		const backdrop = page.getByTestId("slot-backdrop");
+		const backdrop = page.getByTestId("prompt-mirror");
 		const geometry = await input.evaluate((element) => {
-			const overlay = document.querySelector<HTMLElement>('[data-testid="slot-backdrop"]');
-			if (!overlay) throw new Error("slot backdrop missing");
+			const overlay = document.querySelector<HTMLElement>('[data-testid="prompt-mirror"]');
+			if (!overlay) throw new Error("prompt mirror missing");
 			const inputRect = element.getBoundingClientRect();
 			const backdropRect = overlay.getBoundingClientRect();
 			return {

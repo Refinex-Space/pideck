@@ -40,6 +40,7 @@ import { FileChip } from "./FileChip";
 import { useFold, useSelection } from "./foldState";
 import { Markdown } from "./Markdown";
 import { MessageActionBar } from "./MessageActionBar";
+import { PromptText } from "./PromptText";
 import { ReviewPackageComments } from "./ReviewPackageComments";
 import { parseReviewPackage, reviewFixCommentsToItems, reviewPackageLabel } from "./reviewPackage";
 import { type ChatRow, LARGE_USER_MESSAGE, type TurnDividerData } from "./rows";
@@ -83,6 +84,8 @@ function ChatTurnViewImpl({
 					message={row.message}
 					attachmentNames={row.attachmentNames}
 					agentResponded={agentResponded}
+					workspaceRoot={workspaceRoot}
+					onOpenFile={onOpenFile}
 				/>
 			);
 		case "system":
@@ -312,11 +315,15 @@ function UserTurn({
 	message,
 	attachmentNames,
 	agentResponded,
+	workspaceRoot,
+	onOpenFile,
 }: {
 	id: string;
 	message: UserMessage;
 	attachmentNames?: string[] | undefined;
 	agentResponded: boolean;
+	workspaceRoot?: string | undefined;
+	onOpenFile?: ((path: string) => void) | undefined;
 }) {
 	const t = useT();
 	const text = userText(message.content);
@@ -333,7 +340,11 @@ function UserTurn({
 					<SkillInvocationCard foldId={`${id}:skill`} invocation={skill} />
 					{skill.userMessage ? (
 						<div data-testid="skill-user-request" className={USER_BUBBLE}>
-							{skill.userMessage}
+							<PromptText
+								text={skill.userMessage}
+								workspaceRoot={workspaceRoot}
+								onOpenFile={onOpenFile}
+							/>
 						</div>
 					) : null}
 				</div>
@@ -375,6 +386,8 @@ function UserTurn({
 			attachments={attachments}
 			agentResponded={agentResponded}
 			timestamp={message.timestamp}
+			workspaceRoot={workspaceRoot}
+			onOpenFile={onOpenFile}
 		/>
 	);
 }
@@ -385,12 +398,16 @@ function PlainUserTurn({
 	attachments,
 	agentResponded,
 	timestamp,
+	workspaceRoot,
+	onOpenFile,
 }: {
 	id: string;
 	text: string;
 	attachments: ReturnType<typeof userAttachments>;
 	agentResponded: boolean;
 	timestamp?: number | undefined;
+	workspaceRoot?: string | undefined;
+	onOpenFile?: ((path: string) => void) | undefined;
 }) {
 	const t = useT();
 	const large = text.length > LARGE_USER_MESSAGE;
@@ -417,7 +434,7 @@ function PlainUserTurn({
 								!collapsed && large && "max-h-[60vh] overflow-y-auto overscroll-contain",
 							)}
 						>
-							{text}
+							<PromptText text={text} workspaceRoot={workspaceRoot} onOpenFile={onOpenFile} />
 						</div>
 						{large ? (
 							<button

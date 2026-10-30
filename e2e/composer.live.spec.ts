@@ -90,7 +90,7 @@ test("model picker plus file and portable-skill completion use the live session 
 		.getByTestId("slash-command")
 		.filter({ hasText: "/skill:e2e-portable" });
 	await expect(portableSkill).toBeVisible();
-	await expect(portableSkill).toContainText("skill/project");
+	await expect(portableSkill).toContainText("Project");
 	await input.press("Tab");
 	await expect(input).toHaveValue("/skill:e2e-portable ");
 	await input.evaluate(

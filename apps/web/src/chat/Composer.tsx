@@ -1,8 +1,4 @@
-import {
-	RiFileLine as FileIcon,
-	RiFolderLine as FolderIcon,
-	RiSparkling2Line as Sparkles,
-} from "@remixicon/react";
+import { RiSparkling2Line as Sparkles } from "@remixicon/react";
 import type { ComposerGrowthLimit, ThinkingLevel, WireModel } from "@thinkrail/contracts";
 import type { MessageKey } from "@thinkrail/locales";
 import { useT } from "@thinkrail/locales/react";
@@ -15,6 +11,7 @@ import {
 	type KeyboardEvent,
 	useCallback,
 	useEffect,
+	useId,
 	useImperativeHandle,
 	useLayoutEffect,
 	useRef,
@@ -22,24 +19,34 @@ import {
 } from "react";
 import { RunningIcon } from "@/components/RunningIcon";
 import {
+	applyPromptCompletion,
 	applyTemplateSlotEdit,
 	beginTemplateSlotSession,
+	CompletionMenu,
+	detectPromptTrigger,
 	finalizeTemplateSlotSession,
 	highlightSegments,
+	hoistSkillReference,
 	isPromptKeyEventComposing,
+	optionId,
 	type ParsedTemplate,
+	PromptField,
+	type PromptTokenHit,
+	promptSegments,
 	type SlashCommandItem,
-	SlashCommandMenu,
-	type SlotHighlightState,
-	type SlotSegment,
-	selectedSlashCommandValue,
-	slashCommandQuery,
+	scanPromptTokens,
 	stepTemplateSlotSession,
 	TemplateSlotHint,
 	type TemplateSlotSessionState,
+	useCompletion,
 	usePendingSelection,
 	useSlashCommandCompletion,
 } from "@/prompt";
+import {
+	type MentionCandidate,
+	mentionCompletionItems,
+	slashCompletionItems,
+} from "./completionItems";
 import { FileChip } from "./FileChip";
 import {
 	ModelEffortPicker,
@@ -47,8 +54,10 @@ import {
 	type ModelSelection,
 } from "./ModelEffortPicker";
 import { isModelCommand, parseModelCommand } from "./nativeCommands";
+import { PromptTokenCard } from "./PromptTokenCard";
 import { imagePasteDropHandlers, PromptImageStrip, usePromptImages } from "./promptImages";
 import type { ChatAttachment } from "./types";
+import type { MentionSource } from "./useMentionSource";
 import type { ModelPreferences } from "./useModelPreferences";
 
 export type SubmitBehavior = "send" | "steer" | "followUp" | "interrupt";
@@ -92,40 +101,6 @@ const STREAMING_SEND_MODES = [
 	testid: string;
 }[];
 
-export interface MentionCandidate {
-	path: string;
-	name: string;
-	kind: "file" | "dir";
-}
-
-function activeToken(value: string, caret: number): { token: string; start: number } {
-	const match = /(\S+)$/.exec(value.slice(0, caret));
-	if (!match) return { token: "", start: caret };
-	return { token: match[0], start: caret - match[0].length };
-}
-
-function withOffsets(segments: SlotSegment[]): (SlotSegment & { start: number })[] {
-	let offset = 0;
-	return segments.map((seg) => {
-		const start = offset;
-		offset += seg.text.length;
-		return { ...seg, start };
-	});
-}
-
-function highlightTint(state: SlotHighlightState): string {
-	switch (state) {
-		case "unfilled":
-			return "rounded-xs bg-primary-soft";
-		case "active":
-			return "rounded-xs bg-primary-muted";
-		case "filled":
-			return "rounded-xs bg-primary-subtle";
-		case "plain":
-			return "";
-	}
-}
-
 interface ComposerProps {
 	value: string;
 	onChange: (value: string) => void;
@@ -134,7 +109,7 @@ interface ComposerProps {
 	growthLimit: ComposerGrowthLimit;
 	commands: SlashCommandItem[];
 	templatePending: boolean;
-	mentionCandidates: MentionCandidate[];
+	mention: MentionSource;
 	recentPrompts: string[];
 	models: WireModel[];
 	modelsRefreshing: boolean;
@@ -154,6 +129,7 @@ interface ComposerProps {
 	onAbort: () => void;
 	onHistoryOpen?: () => void;
 	onPickTemplate?: (name: string) => void;
+	onOpenFile?: ((path: string) => void) | undefined;
 	onManageTemplates?: () => void;
 	templatesEmpty?: boolean;
 }
@@ -177,7 +153,7 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 		growthLimit,
 		commands,
 		templatePending,
-		mentionCandidates,
+		mention,
 		recentPrompts,
 		models,
 		modelsRefreshing,
@@ -193,6 +169,7 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 		onAbort,
 		onHistoryOpen,
 		onPickTemplate,
+		onOpenFile,
 		onManageTemplates,
 		templatesEmpty,
 	},
@@ -209,31 +186,15 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 	useEffect(() => {
 		if (images.length === 0) setSubmitError(null);
 	}, [images.length]);
-	const [mentionActiveIndex, setMentionActiveIndex] = useState(0);
-	const [mentionDismissed, setMentionDismissed] = useState(false);
 	const [sendMenuOpen, setSendMenuOpen] = useState(false);
+	const [tokenHit, setTokenHit] = useState<PromptTokenHit | null>(null);
 	const recallIdxRef = useRef<number | null>(null);
 	const [slotSession, setSlotSession] = useState<TemplateSlotSessionState | null>(null);
 	const slots = slotSession?.slots ?? null;
 	const slotIdx = slotSession?.activeIndex ?? 0;
-	const backdropRef = useRef<HTMLDivElement | null>(null);
 	const editorSizerRef = useRef<HTMLDivElement | null>(null);
 	const [draftNeedsExpansion, setDraftNeedsExpansion] = useState(false);
 	const expanded = isStreaming || draftNeedsExpansion;
-	const syncBackdropScroll = useCallback(() => {
-		const backdrop = backdropRef.current;
-		const textarea = ref.current;
-		if (!backdrop || !textarea) return;
-		backdrop.scrollLeft = textarea.scrollLeft;
-		backdrop.scrollTop = textarea.scrollTop;
-	}, []);
-	const attachBackdrop = useCallback(
-		(el: HTMLDivElement | null) => {
-			backdropRef.current = el;
-			syncBackdropScroll();
-		},
-		[syncBackdropScroll],
-	);
 	const measureDraftExpansion = useCallback(() => {
 		const sizer = editorSizerRef.current;
 		if (!sizer) return;
@@ -254,22 +215,13 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 		return () => observer.disconnect();
 	}, [measureDraftExpansion]);
 
-	useLayoutEffect(() => {
-		syncBackdropScroll();
-	});
-
-	const { token, start } = activeToken(value, caret);
-	const mentionQuery = token.startsWith("@") ? token.slice(1) : null;
-	const slashQuery = slashCommandQuery(value);
+	const trigger = detectPromptTrigger(value, caret);
+	const mentionTrigger = trigger?.kind === "mention" ? trigger : null;
+	const mentionQuery = mentionTrigger?.query ?? null;
+	const slashActive = trigger?.kind === "slash";
 
 	useEffect(() => onMentionQuery(mentionQuery), [mentionQuery, onMentionQuery]);
-	useEffect(() => onSlashActive(slashQuery !== null), [slashQuery, onSlashActive]);
-	useEffect(() => {
-		setMentionActiveIndex(0);
-		setMentionDismissed(false);
-	}, [mentionQuery]);
-
-	const mentionOpen = !mentionDismissed && mentionQuery !== null && mentionCandidates.length > 0;
+	useEffect(() => onSlashActive(slashActive), [slashActive, onSlashActive]);
 
 	const focusSelection = usePendingSelection(ref, setCaret);
 
@@ -295,7 +247,7 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 
 	const submitText = (raw: string, behavior: SubmitBehavior) => {
 		if (!canSubmit(raw)) return;
-		const text = raw.trim();
+		const text = hoistSkillReference(raw.trim(), commands);
 		const modelQuery = parseModelCommand(text);
 		if (modelQuery !== null) {
 			openModelPicker(modelQuery);
@@ -318,30 +270,41 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 	};
 
 	const pickMention = (c: MentionCandidate) => {
-		const before = value.slice(0, start);
-		const after = value.slice(caret);
+		if (!mentionTrigger) return;
 		const insert = c.kind === "dir" ? `@${c.path}/` : `@${c.path}`;
-		const suffix = c.kind === "dir" ? "" : " ";
-		replaceDraft(
-			`${before}${insert}${suffix}${after}`,
-			before.length + insert.length + suffix.length,
-		);
+		const next = applyPromptCompletion(value, mentionTrigger, insert, c.kind !== "dir");
+		replaceDraft(next.value, next.caret);
 	};
 
+	const mentionItemsRaw = mentionTrigger ? mention.candidates : [];
+	const mentionCompletion = useCompletion({
+		items: mentionItemsRaw,
+		signal: JSON.stringify([
+			mentionTrigger?.start ?? null,
+			mentionQuery,
+			mentionItemsRaw.map((candidate) => candidate.path),
+		]),
+		onSelect: pickMention,
+	});
+
 	const slashCompletion = useSlashCommandCompletion({
-		value,
+		trigger,
 		commands,
 		onSelect: (command) => {
 			if (isModelCommand(command)) openModelPicker("");
 			else if (command.source === "prompt" && onPickTemplate) onPickTemplate(command.name);
-			else replaceDraft(selectedSlashCommandValue(command));
+			else if (trigger?.kind === "slash") {
+				const next = applyPromptCompletion(value, trigger, `/${command.name}`, true);
+				replaceDraft(next.value, next.caret);
+			}
 		},
 	});
 
+	const mentionOpen = mentionCompletion.open;
 	const menuOpen = mentionOpen || slashCompletion.open;
 
 	const openHistory = () => {
-		setMentionDismissed(true);
+		mentionCompletion.dismiss();
 		slashCompletion.dismiss();
 		onHistoryOpen?.();
 	};
@@ -407,30 +370,7 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 				return;
 			}
 		}
-		if (mentionOpen) {
-			const menuLen = mentionCandidates.length;
-			if (e.key === "ArrowDown") {
-				e.preventDefault();
-				setMentionActiveIndex((i) => (i + 1) % menuLen);
-				return;
-			}
-			if (e.key === "ArrowUp") {
-				e.preventDefault();
-				setMentionActiveIndex((i) => (i - 1 + menuLen) % menuLen);
-				return;
-			}
-			if (e.key === "Escape") {
-				e.preventDefault();
-				setMentionDismissed(true);
-				return;
-			}
-			if (e.key === "Enter" || e.key === "Tab") {
-				e.preventDefault();
-				const candidate = mentionCandidates[mentionActiveIndex];
-				if (candidate) pickMention(candidate);
-				return;
-			}
-		}
+		if (mentionCompletion.handleKeyDown(e)) return;
 		if (slashCompletion.handleKeyDown(e)) return;
 		const recallAt = recallIdxRef.current;
 		if (e.key === "ArrowUp" && (value === "" || recallAt !== null) && recentPrompts.length > 0) {
@@ -475,6 +415,16 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 		}
 	};
 
+	const menuId = useId();
+	const tokens = scanPromptTokens(value, { commands, hasPath: mention.hasPath });
+	const segments = promptSegments(
+		value,
+		tokens,
+		slots ? highlightSegments(value, slots, slotIdx) : undefined,
+	);
+	const mentionItems = mentionCompletionItems(mention.candidates);
+	const slashItems = slashCompletionItems(t, slashCompletion.matches);
+
 	const showStop = isStreaming && !canSend;
 	const { onPaste, onDrop } = imagePasteDropHandlers(attachedImages);
 
@@ -486,32 +436,43 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 			className="relative mx-auto flex w-full max-w-[var(--chat-transcript-width)] shrink-0 flex-col bg-container-workspace-bg"
 		>
 			{mentionOpen ? (
-				<div
-					data-testid="mention-menu"
-					className="absolute bottom-full left-12 mb-4 max-h-[40vh] w-[min(28rem,90%)] overflow-y-auto rounded-md border border-border-default bg-container-elevated-bg p-4 shadow-[var(--shadow-md)]"
-				>
-					{mentionCandidates.map((candidate, index) => (
-						<button
-							key={candidate.path}
-							type="button"
-							data-testid="mention-item"
-							onClick={() => pickMention(candidate)}
-							className={`flex w-full items-center gap-8 rounded-sm px-8 py-4 text-left tr-text-ui ${index === mentionActiveIndex ? "bg-control-bg-selected text-text-default" : "text-text-muted"}`}
-						>
-							{candidate.kind === "dir" ? (
-								<FolderIcon className="size-14 shrink-0" />
-							) : (
-								<FileIcon className="size-14 shrink-0" />
-							)}
-							<span className="truncate">{candidate.path}</span>
-						</button>
-					))}
-				</div>
+				<CompletionMenu
+					testId="mention-menu"
+					itemTestId="mention-item"
+					listboxId={menuId}
+					label={t("prompt.completion.label.mention")}
+					items={mentionItems}
+					activeIndex={mentionCompletion.activeIndex}
+					onActivate={mentionCompletion.setActiveIndex}
+					onSelect={(index) => {
+						const candidate = mention.candidates[index];
+						if (candidate) pickMention(candidate);
+					}}
+					className="absolute bottom-full left-12 mb-4"
+					footer={
+						mention.truncated ? (
+							<span
+								data-testid="mention-truncated"
+								className="shrink-0 border-border-default border-t px-12 py-4 text-text-muted tr-text-metadata"
+							>
+								{t("prompt.completion.truncated")}
+							</span>
+						) : null
+					}
+				/>
 			) : slashCompletion.open ? (
-				<SlashCommandMenu
-					commands={slashCompletion.matches}
+				<CompletionMenu
+					testId="slash-menu"
+					itemTestId="slash-command"
+					listboxId={menuId}
+					label={t("prompt.completion.label.slash")}
+					items={slashItems}
 					activeIndex={slashCompletion.activeIndex}
-					onSelect={slashCompletion.pick}
+					onActivate={slashCompletion.setActiveIndex}
+					onSelect={(index) => {
+						const command = slashCompletion.matches[index];
+						if (command) slashCompletion.pick(command);
+					}}
 					className="absolute bottom-full left-12 mb-4"
 					footer={
 						templatesEmpty && onManageTemplates ? (
@@ -522,7 +483,7 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 									replaceDraft("");
 									onManageTemplates();
 								}}
-								className="flex w-full items-center gap-8 rounded-sm border-border-default border-t px-8 py-4 text-left text-text-muted tr-text-metadata hover:bg-control-bg-hovered hover:text-text-default"
+								className="flex w-full shrink-0 items-center gap-8 border-border-default border-t px-12 py-8 text-left text-text-muted tr-text-metadata hover:bg-control-bg-hovered hover:text-text-default"
 							>
 								<Sparkles className="size-12 shrink-0" />
 								<span className="truncate">{t("chat.composer.noTemplates")}</span>
@@ -531,6 +492,8 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 					}
 				/>
 			) : null}
+
+			<PromptTokenCard hit={menuOpen ? null : tokenHit} />
 
 			{slots && !menuOpen ? (
 				<TemplateSlotHint
@@ -571,7 +534,73 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 								COMPOSER_EDITOR_LIMIT_CLASS[growthLimit],
 							)}
 						>
-							<div className="relative min-h-0 min-w-0 flex-1 self-stretch overflow-hidden">
+							<PromptField
+								ref={ref}
+								data-testid="chat-input"
+								value={value}
+								segments={segments}
+								onTokenHover={setTokenHit}
+								onTokenActivate={(token) => {
+									if (token.kind === "mention" && token.path && onOpenFile) onOpenFile(token.path);
+								}}
+								fieldClassName="px-12 py-12 tr-text-ui"
+								wrapperClassName="relative min-h-0 min-w-0 flex-1 self-stretch overflow-hidden"
+								textareaClassName={cn(
+									"absolute inset-0 size-full rounded-sm",
+									expanded ? "whitespace-pre-wrap" : "whitespace-nowrap",
+								)}
+								onSelect={(e) =>
+									onCursorChange?.(
+										e.currentTarget.value,
+										e.currentTarget.selectionStart,
+										e.currentTarget.selectionEnd,
+									)
+								}
+								onFocus={(e) =>
+									onCursorChange?.(
+										e.currentTarget.value,
+										e.currentTarget.selectionStart,
+										e.currentTarget.selectionEnd,
+									)
+								}
+								onChange={(e) => {
+									const next = e.target.value;
+									const nextCaret = e.target.selectionStart;
+									setSubmitError(null);
+									const recalled = recallIdxRef.current;
+									if (recalled !== null && next !== recentPrompts[recalled]) {
+										recallIdxRef.current = null;
+									}
+									if (slotSession) {
+										setSlotSession(applyTemplateSlotEdit(value, next, nextCaret, slotSession));
+									}
+									onChange(next);
+									setCaret(nextCaret);
+								}}
+								onKeyUp={(e) => setCaret(e.currentTarget.selectionStart)}
+								onClick={(e) => setCaret(e.currentTarget.selectionStart)}
+								onKeyDown={onKeyDown}
+								onPaste={onPaste}
+								onDrop={onDrop}
+								rows={1}
+								aria-autocomplete="list"
+								aria-controls={menuOpen ? menuId : undefined}
+								aria-activedescendant={
+									menuOpen
+										? optionId(
+												menuId,
+												mentionOpen ? mentionCompletion.activeIndex : slashCompletion.activeIndex,
+											)
+										: undefined
+								}
+								placeholder={
+									isStreaming
+										? t("chat.composer.placeholderStreaming")
+										: expanded
+											? t("chat.composer.placeholderExpanded")
+											: t("chat.composer.placeholder")
+								}
+							>
 								<div
 									ref={editorSizerRef}
 									data-testid="chat-input-sizer"
@@ -580,79 +609,7 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 								>
 									{`${value}\u200b`}
 								</div>
-								{slots ? (
-									<div
-										ref={attachBackdrop}
-										data-testid="slot-backdrop"
-										aria-hidden
-										className="pointer-events-none absolute inset-0 overflow-hidden rounded-sm"
-									>
-										<div className="w-full whitespace-pre-wrap break-words px-12 py-12 tr-text-ui">
-											{withOffsets(highlightSegments(value, slots, slotIdx)).map((seg) => (
-												<span
-													key={seg.start}
-													data-testid={seg.state === "plain" ? undefined : "slot-highlight"}
-													data-slot-state={seg.state === "plain" ? undefined : seg.state}
-													className={`text-transparent ${highlightTint(seg.state)}`}
-												>
-													{seg.text}
-												</span>
-											))}
-										</div>
-									</div>
-								) : null}
-								<textarea
-									ref={ref}
-									data-testid="chat-input"
-									value={value}
-									onSelect={(e) =>
-										onCursorChange?.(
-											e.currentTarget.value,
-											e.currentTarget.selectionStart,
-											e.currentTarget.selectionEnd,
-										)
-									}
-									onFocus={(e) =>
-										onCursorChange?.(
-											e.currentTarget.value,
-											e.currentTarget.selectionStart,
-											e.currentTarget.selectionEnd,
-										)
-									}
-									onScroll={syncBackdropScroll}
-									onChange={(e) => {
-										const next = e.target.value;
-										const nextCaret = e.target.selectionStart;
-										setSubmitError(null);
-										const recalled = recallIdxRef.current;
-										if (recalled !== null && next !== recentPrompts[recalled]) {
-											recallIdxRef.current = null;
-										}
-										if (slotSession) {
-											setSlotSession(applyTemplateSlotEdit(value, next, nextCaret, slotSession));
-										}
-										onChange(next);
-										setCaret(nextCaret);
-									}}
-									onKeyUp={(e) => setCaret(e.currentTarget.selectionStart)}
-									onClick={(e) => setCaret(e.currentTarget.selectionStart)}
-									onKeyDown={onKeyDown}
-									onPaste={onPaste}
-									onDrop={onDrop}
-									rows={1}
-									placeholder={
-										isStreaming
-											? t("chat.composer.placeholderStreaming")
-											: expanded
-												? t("chat.composer.placeholderExpanded")
-												: t("chat.composer.placeholder")
-									}
-									className={cn(
-										"absolute inset-0 size-full resize-none overflow-x-hidden overflow-y-auto rounded-sm bg-transparent px-12 py-12 tr-text-ui text-text-default outline-none placeholder:text-text-muted",
-										expanded ? "whitespace-pre-wrap" : "whitespace-nowrap",
-									)}
-								/>
-							</div>
+							</PromptField>
 							<div
 								className={cn(
 									"flex shrink-0 items-center gap-4 pr-8",

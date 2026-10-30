@@ -563,3 +563,10 @@
 [data-navigation-expanded="true"] .workspace-chrome-inset {
 	width: 0;
 }
+
+/* A prompt field's textarea text is transparent (its mirror layer draws the glyphs), so its selection stays
+   translucent: an opaque theme selection (the high-contrast themes) would cover the mirror's text. */
+textarea[data-prompt-field]:not([data-composing])::selection {
+	background: var(--feedback-info-muted);
+	color: transparent;
+}

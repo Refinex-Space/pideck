@@ -785,9 +785,12 @@ both message orders. *Rejected:* keeping the modal for non-MCP extensions — ev
   passive one lets Chromium apply the scroll before the wheel event reaches the hook, so the movement arrives
   without reader intent and neither detach nor exact-edge rearm fires. Scrolling stays responsive because a
   streaming delta re-renders only the rows whose content changed, keeping the main thread free.
-- **Composer & chrome** — `Composer` (prompt field + send/steer/followUp/abort, `@`-mentions (`mentionLookup` splits the typed
-  query into the folder `fs.readDir` lists and the name prefix, reading a typed `\` as a separator), `/`
-  commands + template **slot sessions** (Tab-through placeholders — see the Template slots bullet
+- **Composer & chrome** — `Composer` (prompt field + send/steer/followUp/abort, `@`-mentions (`useMentionSource`/`mentionSearch.ts`: a bare name
+  searches the whole workspace through `fs.search`, ranked name match first then the shallower path; a bare `@` or a
+  typed separator browses that folder through `fs.readDir`, reading `\` as a separator; a truncated search says so
+  in the menu footer; the same read also resolves which drafted `@path`s exist, from per-folder listings cached for
+  10s), `/` commands anywhere a token starts (a leading one offers built-in, skill, extension and template; a
+  mid-text one offers skills, and `hoistSkillReference` moves the first to the front on send) + template **slot sessions** (Tab-through placeholders — see the Template slots bullet
   below), image paste/drop — routed through **`imageAttachment.ts`**: `fileToAttachedImage` decodes in
   the browser and downscales anything over a **1568px long edge** (`fitWithin`; Claude's standard-tier
   edge — an oversized image in history 400s every later turn once the provider's >20-image 2000px cap
@@ -1203,32 +1206,26 @@ both message orders. *Rejected:* keeping the modal for non-MCP extensions — ev
   while a session is active (and the menu is not, so the two absolutely-positioned overlays never share
   the same anchor rect), a small pill above the textarea — `slot {slotIdx+1}/{n} · ⇥ next · esc done`
   (`data-testid="slot-hint"`) — clickable, tap steps to the next slot (same mirroring rule as `Tab`), the
-  mobile path with no keyboard needed. **Highlight backdrop**: while a session is active, the composer's
-  gaps are visually tinted in the message field itself — a native `<textarea>` can't style text ranges
-  inside it, so `Composer` renders a **highlight-backdrop** (a styled mirror layer positioned behind a
-  now-`bg-transparent` textarea; the input background moves up to the wrapping container instead, clipped
-  to the same `rounded-xl` so the 14px composer outline stays consistent inside and outside a session). That wrapper
-  owns the input fill and an inset ring, which keeps the three text layers on the same box geometry;
-  `focus-within:ring-control-border-active` is the input's sole focus indicator rather than a
-  second accent ring on the textarea. The pure `highlightSegments(value, slots, activeIdx)`
-  (from the shared `prompt` module) breaks `value` into ordered
-  plain/unfilled/filled/active runs — a slot range is `"active"` when its `slots` index is `activeIdx`
-  (`Composer`'s own `slotIdx`), else `"unfilled"`/`"filled"` per its own `filled` flag; everything else is
-  `"plain"` — pure offsets/slices, no empty segment for zero-gap-adjacent slots, and the tests pin
-  `segments.map(s => s.text).join("") === value` in every case. The backdrop's inner mirror div matches the
-  textarea's box model **exactly** (`px-12 py-12`, the same `tr-text-ui` typography class and
-  `whitespace-pre-wrap break-words` — spelled out explicitly since a `<div>`, unlike a `<textarea>`,
-  doesn't soft-wrap this way by default) so each `SlotSegment`'s tint span
-  (`data-testid="slot-highlight"` + `data-slot-state`, `rounded-xs` — the text-run radius
-  tier — with `bg-primary-soft`/`-muted`/`-subtle` for
-  unfilled/active/filled, no tint for plain, every span `text-transparent` so only the real textarea text
-  above shows through) lands exactly under its own characters. **Scroll sync**: the textarea's `onScroll`
-  copies its `scrollLeft`/`scrollTop` onto the backdrop's outer `overflow-hidden` layer **imperatively**
-  (a ref — no state, no inline `style`: a programmatic scroll offset needs no styling at all, so the
-  repo's token-utilities-only invariant holds with zero exceptions; an earlier version tracked the
-  offsets in state and applied a `translate(...)` inline style, which both violated the invariant and
-  re-rendered the composer on every scrolled frame). The backdrop's **ref callback** seeds the offsets at
-  mount, so a session starting in an already-scrolled composer never paints even one frame misaligned.
+  mobile path with no keyboard needed. **Prompt mirror**: the composer's text is drawn by `PromptField`'s mirror layer (see
+  [prompt/SPEC.md](../prompt/SPEC.md)), a styled twin positioned behind a now-`bg-transparent`, text-transparent
+  textarea; the input background lives on the wrapping container, clipped to the same `rounded-xl` so the 14px
+  composer outline stays consistent. The mirror colours recognised tokens (`/skill:x`, `/command`, `@path` in
+  `feedback-info` over `feedback-info-subtle`, `data-testid="prompt-token"`) and, while a slot session is active,
+  tints each gap: `highlightSegments(value, slots, activeIdx)` (from the shared `prompt` module) breaks `value`
+  into ordered plain/unfilled/filled/active runs and `promptSegments` splits them again at token boundaries, with
+  tests pinning `segments.map(s => s.text).join("") === value`. The mirror's inner div matches the textarea's box
+  model **exactly** (`px-12 py-12`, the same `tr-text-ui` class, `whitespace-pre-wrap break-words` spelled out since a
+  `<div>` doesn't soft-wrap that way by default, and a width reduced by the textarea's classic-scrollbar width), each
+  slot span (`data-testid="slot-highlight"` + `data-slot-state`, `rounded-xs`, `bg-primary-soft`/`-muted`/`-subtle` for
+  unfilled/active/filled) lands under its own characters. **Scroll sync**: the textarea's `onScroll` copies its
+  `scrollLeft`/`scrollTop` onto the mirror imperatively (a ref, no state, no inline `style`); a layout effect
+  re-seeds the offsets every commit so a draft restored into an already-scrolled composer never paints misaligned.
+  **Input method**: during composition the textarea draws its own text and the mirror hides (`invisible`), because
+  Chromium paints an opaque composition highlight that would cover the mirror's glyphs. **Hover card**: a token under
+  the pointer (hit-tested against the mirror spans) opens `PromptTokenCard` after 300ms, a non-focus-taking popover
+  with the command's description and source, or a file's path and the Cmd/Ctrl-click hint; Cmd/Ctrl+click on a
+  mention opens the file through `onOpenFile`. **Sent prompts** colour the same tokens (`PromptText`: any
+  `/skill:name`, and an `@word` that looks like a path, opening in the workbench when it is a workspace file).
 - **Native `/name`** — the browser-native command catalog gains
   `/name <title>` beside `/compact`, labelled `Pi/built-in` and reserved over an exact-name extension or
   prompt-template collision to match pi's own command. The parser reserves both bare `/name` and

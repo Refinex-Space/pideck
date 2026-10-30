@@ -43,10 +43,8 @@ import {
 	Composer,
 	type ComposerHandle,
 	type ComposerSubmitDisposition,
-	type MentionCandidate,
 	type SubmitBehavior,
 } from "./Composer";
-import { mentionLookup } from "./fileTargets";
 import { HistoryOverlay } from "./HistoryOverlay";
 import { parseModelRef, RunModelLabel } from "./ModelEffortLabel";
 import type { ModelSelection } from "./ModelEffortPicker";
@@ -70,6 +68,7 @@ import { SubagentTranscriptDialog, SubagentTranscriptPane } from "./SubagentTran
 import { TemplateEditorDialog } from "./TemplateEditorDialog";
 import { useChatResources, useCommandLog } from "./useChatResources";
 import { inspectedResult, resultTargetKey, useFreshResults } from "./useFreshResults";
+import { useMentionSource } from "./useMentionSource";
 import { useModelCatalog } from "./useModelCatalog";
 import { useModelPreferences } from "./useModelPreferences";
 import { useSessionStats } from "./useSessionStats";
@@ -171,7 +170,6 @@ export default function ChatView({
 	});
 
 	const [mentionQuery, setMentionQuery] = useState<string | null>(null);
-	const [mentionCandidates, setMentionCandidates] = useState<MentionCandidate[]>([]);
 	const [slashActive, setSlashActive] = useState(false);
 	const [templates, setTemplates] = useState<TemplateInfo[]>([]);
 	const [templatesEmpty, setTemplatesEmpty] = useState(false);
@@ -413,34 +411,7 @@ export default function ChatView({
 		[canRenameChat, commands, t, templates],
 	);
 
-	useEffect(() => {
-		if (mentionQuery === null) {
-			setMentionCandidates([]);
-			return;
-		}
-		const { dir, prefix } = mentionLookup(mentionQuery);
-		let cancelled = false;
-		const timer = setTimeout(() => {
-			getTransport()
-				.request("fs.readDir", { workspaceId, path: dir })
-				.then((nodes) => {
-					if (cancelled) return;
-					setMentionCandidates(
-						nodes
-							.filter((n) => n.name.toLowerCase().startsWith(prefix))
-							.slice(0, 12)
-							.map((n) => ({ path: n.path, name: n.name, kind: n.kind })),
-					);
-				})
-				.catch(() => {
-					if (!cancelled) setMentionCandidates([]);
-				});
-		}, 120);
-		return () => {
-			cancelled = true;
-			clearTimeout(timer);
-		};
-	}, [mentionQuery, workspaceId]);
+	const mention = useMentionSource(workspaceId, draft, mentionQuery);
 
 	const onMentionQuery = useCallback((q: string | null) => setMentionQuery(q), []);
 
@@ -885,7 +856,7 @@ export default function ChatView({
 					growthLimit={composerGrowthLimit}
 					commands={mergedCommands}
 					templatePending={templatePending}
-					mentionCandidates={mentionCandidates}
+					mention={mention}
 					recentPrompts={recentPrompts}
 					models={models}
 					modelsRefreshing={modelsRefreshing}
@@ -901,6 +872,7 @@ export default function ChatView({
 					onAbort={onAbort}
 					onHistoryOpen={onHistoryOpen}
 					onPickTemplate={onPickTemplate}
+					onOpenFile={onOpenFile}
 					onManageTemplates={onManageTemplates}
 					templatesEmpty={templatesEmpty}
 				/>

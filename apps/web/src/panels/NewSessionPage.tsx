@@ -26,10 +26,11 @@ import {
 	DropdownMenuTrigger,
 } from "@thinkrail/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@thinkrail/ui/popover";
-import { Textarea } from "@thinkrail/ui/textarea";
 import { Box, ChevronDown, GitBranch, House, Sparkles, TriangleAlert } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { mentionCompletionItems, slashCompletionItems } from "@/chat/completionItems";
 import { type DefaultPairOption, ModelEffortPicker } from "@/chat/ModelEffortPicker";
+import { PromptTokenCard } from "@/chat/PromptTokenCard";
 import {
 	deriveProjectTrustNotice,
 	type ProjectTrustNotice,
@@ -45,28 +46,38 @@ import {
 } from "@/chat/promptImages";
 import { SkillsButton } from "@/chat/SkillsButton";
 import { SkillsDialog } from "@/chat/SkillsDialog";
+import { useMentionSource } from "@/chat/useMentionSource";
 import { useModelCatalog } from "@/chat/useModelCatalog";
 import { useModelPreferences } from "@/chat/useModelPreferences";
 import { useProjectTrustSummary } from "@/chat/useProjectTrustSummary";
 import {
+	applyPromptCompletion,
 	applyTemplateSlotEdit,
 	beginTemplateSlotSession,
+	CompletionMenu,
+	detectPromptTrigger,
 	finalizeTemplateSlotSession,
+	highlightSegments,
+	hoistSkillReference,
 	isPromptKeyEventComposing,
+	optionId,
 	type ParsedTemplate,
-	SlashCommandMenu,
-	selectedSlashCommandValue,
+	PromptField,
+	type PromptTokenHit,
+	promptSegments,
+	scanPromptTokens,
 	slashCommandCatalogOrEmpty,
-	slashCommandQuery,
 	stepTemplateSlotSession,
 	TemplateSlotHint,
 	type TemplateSlotSessionState,
 	templateToSlashCommand,
+	useCompletion,
 	usePendingSelection,
 	useSlashCommandCompletion,
 	useTemplateCommandPicker,
 } from "@/prompt";
 import {
+	isDefaultWorkspace,
 	type NewSessionDraft,
 	selectCatalogModel,
 	selectPickerModels,
@@ -118,6 +129,8 @@ export function NewSessionPage({
 	const [target, setTarget] = useState<WorkspaceTarget>(draft.target);
 	const [baseRef, setBaseRef] = useState<string>("");
 	const [prompt, setPrompt] = useState(draft.prompt);
+	const [caret, setCaret] = useState(draft.prompt.length);
+	const [tokenHit, setTokenHit] = useState<PromptTokenHit | null>(null);
 	const [skillCommands, setSkillCommands] = useState<SlashCommandInfo[]>([]);
 	const [templates, setTemplates] = useState<TemplateInfo[]>([]);
 	const [slotSession, setSlotSession] = useState<TemplateSlotSessionState | null>(null);
@@ -172,20 +185,54 @@ export function NewSessionPage({
 		load: loadTemplate,
 		onApply: applyTemplate,
 	});
+	const commands = useMemo(
+		() => [...skillCommands, ...templates.map(templateToSlashCommand)],
+		[skillCommands, templates],
+	);
+	const trigger = detectPromptTrigger(prompt, caret);
+	const mentionTrigger = trigger?.kind === "mention" ? trigger : null;
+	const slashActive = trigger?.kind === "slash";
+	const mentionWorkspaceId = useAppStore(
+		(state) => state.workspaces[selectedProjectId]?.find(isDefaultWorkspace)?.id ?? null,
+	);
+	const mention = useMentionSource(mentionWorkspaceId, prompt, mentionTrigger?.query ?? null);
+	const mentionCandidates = mentionTrigger ? mention.candidates : [];
+	const mentionCompletion = useCompletion({
+		items: mentionCandidates,
+		signal: JSON.stringify([
+			mentionTrigger?.start ?? null,
+			mentionTrigger?.query ?? null,
+			mentionCandidates.map((candidate) => candidate.path),
+		]),
+		onSelect: (candidate) => {
+			if (!mentionTrigger) return;
+			const insert = candidate.kind === "dir" ? `@${candidate.path}/` : `@${candidate.path}`;
+			const next = applyPromptCompletion(prompt, mentionTrigger, insert, candidate.kind !== "dir");
+			updatePromptDraft(next.value, null);
+			focusPromptSelection(next.caret);
+		},
+	});
 	const slashCompletion = useSlashCommandCompletion({
-		value: prompt,
-		commands: [...skillCommands, ...templates.map(templateToSlashCommand)],
+		trigger,
+		commands,
 		onSelect: (command) => {
 			if (command.source === "prompt") {
 				void pickTemplate(command.name);
 				return;
 			}
-			const next = selectedSlashCommandValue(command);
-			updatePromptDraft(next, null);
-			focusPromptSelection(next.length);
+			if (trigger?.kind !== "slash") return;
+			const next = applyPromptCompletion(prompt, trigger, `/${command.name}`, true);
+			updatePromptDraft(next.value, null);
+			focusPromptSelection(next.caret);
 		},
 	});
-	const slashActive = slashCommandQuery(prompt) !== null;
+	const menuId = useId();
+	const menuOpen = mentionCompletion.open || slashCompletion.open;
+	const segments = promptSegments(
+		prompt,
+		scanPromptTokens(prompt, { commands, hasPath: mention.hasPath }),
+		slotSession ? highlightSegments(prompt, slotSession.slots, slotSession.activeIndex) : undefined,
+	);
 
 	const stepPromptSlot = (direction: 1 | -1) => {
 		if (!slotSession) return;
@@ -209,6 +256,20 @@ export function NewSessionPage({
 		).then((commands) => {
 			if (!cancelled) setSkillCommands(commands);
 		});
+		return () => {
+			cancelled = true;
+		};
+	}, [selectedProjectId]);
+
+	useEffect(() => {
+		if (useAppStore.getState().workspaces[selectedProjectId]) return;
+		let cancelled = false;
+		getTransport()
+			.request("workspace.list", { projectId: selectedProjectId })
+			.then((rows) => {
+				if (!cancelled) useAppStore.getState().setWorkspaces(selectedProjectId, rows);
+			})
+			.catch(() => {});
 		return () => {
 			cancelled = true;
 		};
@@ -356,7 +417,10 @@ export function NewSessionPage({
 	const create = async () => {
 		if (!submitEnabled) return;
 		setCreating(true);
-		const text = finalizeTemplateSlotSession(prompt, slotSession).trim();
+		const text = hoistSkillReference(
+			finalizeTemplateSlotSession(prompt, slotSession).trim(),
+			commands,
+		);
 		const attachments = attachedImages.images.map(({ name, content }) => ({ name, content }));
 		let workspace: Workspace;
 		if (target === "default") {
@@ -510,12 +574,17 @@ export function NewSessionPage({
 						testId="ws-prompt-images"
 						className={PROMPT_IMAGE_CHIPS_PADDING.dialog}
 					/>
-					<Textarea
+					<PromptField
 						ref={promptRef}
 						autoFocus
 						data-testid="ws-prompt"
 						value={prompt}
+						segments={segments}
+						onTokenHover={setTokenHit}
 						disabled={creating}
+						fieldClassName="px-16 pt-16 pb-8 tr-text-ui"
+						wrapperClassName="relative"
+						textareaClassName="block min-h-[136px] w-full rounded-none"
 						{...imagePasteDropHandlers(attachedImages)}
 						onChange={(e) => {
 							const next = e.target.value;
@@ -523,14 +592,28 @@ export function NewSessionPage({
 								? applyTemplateSlotEdit(prompt, next, e.target.selectionStart, slotSession)
 								: null;
 							updatePromptDraft(next, nextSlotSession);
+							setCaret(e.target.selectionStart);
 						}}
+						onKeyUp={(e) => setCaret(e.currentTarget.selectionStart)}
+						onClick={(e) => setCaret(e.currentTarget.selectionStart)}
 						placeholder={t("panels.newWorkspace.promptPlaceholder")}
 						spellCheck={false}
 						rows={5}
-						className="min-h-[136px] rounded-none border-0 bg-transparent px-16 pt-16 focus-visible:border-0"
+						aria-autocomplete="list"
+						aria-controls={menuOpen ? menuId : undefined}
+						aria-activedescendant={
+							menuOpen
+								? optionId(
+										menuId,
+										mentionCompletion.open
+											? mentionCompletion.activeIndex
+											: slashCompletion.activeIndex,
+									)
+								: undefined
+						}
 						onKeyDown={(e) => {
 							if (isPromptKeyEventComposing(e.nativeEvent)) return;
-							if (slotSession && !slashCompletion.open) {
+							if (slotSession && !menuOpen) {
 								if (e.key === "Tab") {
 									e.preventDefault();
 									e.stopPropagation();
@@ -544,6 +627,7 @@ export function NewSessionPage({
 									return;
 								}
 							}
+							if (mentionCompletion.handleKeyDown(e)) return;
 							if (slashCompletion.handleKeyDown(e)) return;
 
 							if (e.key === "Enter" && !e.shiftKey) {
@@ -552,11 +636,35 @@ export function NewSessionPage({
 							}
 						}}
 					/>
-					{slashCompletion.open ? (
-						<SlashCommandMenu
-							commands={slashCompletion.matches}
+					<PromptTokenCard hit={menuOpen ? null : tokenHit} />
+					{mentionCompletion.open ? (
+						<CompletionMenu
+							testId="mention-menu"
+							itemTestId="mention-item"
+							listboxId={menuId}
+							label={t("prompt.completion.label.mention")}
+							items={mentionCompletionItems(mentionCandidates)}
+							activeIndex={mentionCompletion.activeIndex}
+							onActivate={mentionCompletion.setActiveIndex}
+							onSelect={(index) => {
+								const candidate = mentionCandidates[index];
+								if (candidate) mentionCompletion.pick(candidate);
+							}}
+							className="absolute top-full left-8 z-50 mt-4"
+						/>
+					) : slashCompletion.open ? (
+						<CompletionMenu
+							testId="slash-menu"
+							itemTestId="slash-command"
+							listboxId={menuId}
+							label={t("prompt.completion.label.slash")}
+							items={slashCompletionItems(t, slashCompletion.matches)}
 							activeIndex={slashCompletion.activeIndex}
-							onSelect={slashCompletion.pick}
+							onActivate={slashCompletion.setActiveIndex}
+							onSelect={(index) => {
+								const command = slashCompletion.matches[index];
+								if (command) slashCompletion.pick(command);
+							}}
 							className="absolute top-full left-8 z-50 mt-4"
 						/>
 					) : slotSession ? (

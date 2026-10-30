@@ -2,13 +2,20 @@ import type { SlashCommandInfo, TemplateInfo } from "@thinkrail/contracts";
 import { useT } from "@thinkrail/locales/react";
 import { Button } from "@thinkrail/ui/button";
 import { cn } from "@thinkrail/ui/utils";
-import { type ReactNode, useState } from "react";
+import { useState } from "react";
+import type { PromptTrigger } from "./triggers";
 
 export type SlashCommandItem = Omit<SlashCommandInfo, "source"> & {
 	source: SlashCommandInfo["source"] | "builtin";
 };
 
-const MAX_MATCHES = 8;
+const MAX_MATCHES = 20;
+const GROUP_ORDER: readonly SlashCommandItem["source"][] = [
+	"builtin",
+	"skill",
+	"extension",
+	"prompt",
+];
 const IME_SENTINEL_KEYCODE = 229;
 
 export function isPromptKeyEventComposing(event: {
@@ -28,24 +35,34 @@ export async function slashCommandCatalogOrEmpty(
 	}
 }
 
-export function slashCommandQuery(value: string): string | null {
-	return value.startsWith("/") && !/\s/.test(value) ? value.slice(1) : null;
+function matchRank(name: string, query: string): number {
+	const lower = name.toLowerCase();
+	if (lower.startsWith(query)) return 0;
+	if (lower.slice(lower.indexOf(":") + 1).startsWith(query)) return 1;
+	return lower.includes(query) ? 2 : 3;
 }
 
+/**
+ * The commands a `/` token can pick, grouped by source and best match first inside a group. Pi only runs a
+ * command opening the draft, so a mid-text token offers skills alone.
+ */
 export function matchSlashCommands<T extends SlashCommandItem>(
-	value: string,
+	trigger: PromptTrigger | null,
 	commands: readonly T[],
 ): T[] {
-	const query = slashCommandQuery(value);
-	if (query === null) return [];
-	const normalized = query.toLowerCase();
+	if (trigger?.kind !== "slash") return [];
+	const query = trigger.query.toLowerCase();
 	return commands
-		.filter((command) => command.name.toLowerCase().includes(normalized))
-		.slice(0, MAX_MATCHES);
-}
-
-export function selectedSlashCommandValue(command: SlashCommandItem): string {
-	return `/${command.name} `;
+		.filter((command) => trigger.leading || command.source === "skill")
+		.map((command) => ({ command, rank: matchRank(command.name, query) }))
+		.filter(({ rank }) => rank < 3)
+		.sort(
+			(a, b) =>
+				GROUP_ORDER.indexOf(a.command.source) - GROUP_ORDER.indexOf(b.command.source) ||
+				a.rank - b.rank,
+		)
+		.slice(0, MAX_MATCHES)
+		.map(({ command }) => command);
 }
 
 export function templateToSlashCommand(template: TemplateInfo): SlashCommandInfo {
@@ -90,53 +107,78 @@ interface CompletionKeyEvent {
 	stopPropagation: () => void;
 }
 
-export function useSlashCommandCompletion<T extends SlashCommandItem>({
-	value,
-	commands,
+/**
+ * The keyboard and selection state behind one completion popup. `items` is empty while no trigger is active;
+ * `signal` changes whenever the menu should start over (a new query, a new candidate list), which re-arms a
+ * dismissed menu and returns the highlight to the first row.
+ */
+export function useCompletion<T>({
+	items,
+	signal,
 	onSelect,
 }: {
-	value: string;
-	commands: readonly T[];
-	onSelect: (command: T) => void;
+	items: readonly T[];
+	signal: string;
+	onSelect: (item: T) => void;
 }) {
 	const [activeIndex, setActiveIndex] = useState(0);
 	const [dismissed, setDismissed] = useState(false);
-	const query = slashCommandQuery(value);
-	const matches = matchSlashCommands(value, commands);
 
-	const resetSignal = JSON.stringify([query, commands.map((command) => command.name)]);
-	const [lastResetSignal, setLastResetSignal] = useState(resetSignal);
-	if (lastResetSignal !== resetSignal) {
-		setLastResetSignal(resetSignal);
+	const [lastSignal, setLastSignal] = useState(signal);
+	if (lastSignal !== signal) {
+		setLastSignal(signal);
 		setActiveIndex(0);
 		setDismissed(false);
 	}
 
-	const open = !dismissed && query !== null && matches.length > 0;
-	const visibleActiveIndex = Math.min(activeIndex, Math.max(0, matches.length - 1));
+	const open = !dismissed && items.length > 0;
+	const visibleActiveIndex = Math.min(activeIndex, Math.max(0, items.length - 1));
 
 	const dismiss = () => setDismissed(true);
 
-	const pick = (command: T) => {
-		onSelect(command);
+	const pick = (item: T) => {
+		onSelect(item);
 		dismiss();
 	};
 
 	const handleKeyDown = (event: CompletionKeyEvent): boolean => {
-		const action = slashCompletionKeyAction(event.key, open, visibleActiveIndex, matches.length);
+		const action = slashCompletionKeyAction(event.key, open, visibleActiveIndex, items.length);
 		if (action.type === "none") return false;
 		event.preventDefault();
 		event.stopPropagation();
 		if (action.type === "move") setActiveIndex(action.index);
 		if (action.type === "dismiss") dismiss();
 		if (action.type === "select") {
-			const command = matches[action.index];
-			if (command) pick(command);
+			const item = items[action.index];
+			if (item !== undefined) pick(item);
 		}
 		return true;
 	};
 
-	return { activeIndex: visibleActiveIndex, dismiss, handleKeyDown, matches, open, pick };
+	return { activeIndex: visibleActiveIndex, setActiveIndex, dismiss, handleKeyDown, open, pick };
+}
+
+export function useSlashCommandCompletion<T extends SlashCommandItem>({
+	trigger,
+	commands,
+	onSelect,
+}: {
+	trigger: PromptTrigger | null;
+	commands: readonly T[];
+	onSelect: (command: T) => void;
+}) {
+	const slash = trigger?.kind === "slash" ? trigger : null;
+	const matches = matchSlashCommands(slash, commands);
+	const completion = useCompletion({
+		items: matches,
+		signal: JSON.stringify([
+			slash?.query ?? null,
+			slash?.start ?? null,
+			matches.map((m) => m.name),
+		]),
+		onSelect,
+	});
+	return { ...completion, matches };
 }
 
 export function TemplateSlotHint({
@@ -161,55 +203,5 @@ export function TemplateSlotHint({
 		>
 			{t("prompt.slotHint.label", { index: activeIndex + 1, count })}
 		</Button>
-	);
-}
-
-export function SlashCommandMenu<T extends SlashCommandItem>({
-	commands,
-	activeIndex,
-	onSelect,
-	className,
-	footer,
-}: {
-	commands: readonly T[];
-	activeIndex: number;
-	onSelect: (command: T) => void;
-	className?: string;
-	footer?: ReactNode;
-}) {
-	const t = useT();
-	return (
-		<div
-			data-testid="slash-menu"
-			className={cn(
-				"max-h-[40vh] w-[min(28rem,90%)] overflow-y-auto rounded-md border border-border-default bg-container-elevated-bg p-4 shadow-[var(--shadow-md)]",
-				className,
-			)}
-		>
-			{commands.map((command, index) => (
-				<button
-					key={`${command.source}:${command.sourceInfo.path}:${command.name}`}
-					type="button"
-					data-testid="slash-command"
-					data-source={command.source}
-					onClick={() => onSelect(command)}
-					className={cn(
-						"flex w-full items-center gap-8 rounded-sm px-8 py-4 text-left tr-text-ui",
-						index === activeIndex ? "bg-control-bg-selected text-text-default" : "text-text-muted",
-					)}
-				>
-					<span className="tr-code-text text-text-default">/{command.name}</span>
-					{command.description ? (
-						<span className="truncate tr-text-metadata">{command.description}</span>
-					) : null}
-					<span className="ml-auto shrink-0 text-text-muted tr-text-metadata">
-						{command.source === "builtin"
-							? t("prompt.slashMenu.builtinSource")
-							: `${command.source}/${command.sourceInfo.scope}`}
-					</span>
-				</button>
-			))}
-			{footer}
-		</div>
 	);
 }

@@ -289,7 +289,7 @@ export const TabStrip = memo(function TabStrip({
 				"relative flex shrink-0 items-stretch data-[drop-hint]:ring-1 data-[drop-hint]:ring-inset data-[drop-hint]:ring-primary-soft data-[drop-active]:bg-primary-subtle data-[drop-active]:ring-2 data-[drop-active]:ring-inset data-[drop-active]:ring-primary",
 				location.area === "center"
 					? "window-drag h-topbar-row select-none gap-4 border-border-muted border-b bg-container-content-bg px-8"
-					: "h-panel-header-row border-border-default border-b bg-container-workspace-bg",
+					: "h-panel-header-row border-border-muted border-b bg-container-workspace-bg",
 			)}
 		>
 			{leading}
@@ -781,7 +781,7 @@ export const WorkbenchTab = memo(function WorkbenchTab({
 									)
 								: location.area === "center"
 									? "window-no-drag relative flex h-32 min-w-96 max-w-192 shrink-0 items-center self-center rounded-sm text-text-muted ring-focus-ring ring-inset hover:bg-control-bg-hovered has-[[role=tab]:focus-visible:not([data-layout-focus-intent=restore])]:ring-1 has-[[role=tab][data-layout-focus-intent=keyboard]:focus]:ring-1 data-[active=true]:bg-control-bg-selected data-[active=true]:text-text-default"
-									: "relative flex min-w-96 max-w-192 shrink-0 items-center border-border-default border-r text-text-muted ring-focus-ring ring-inset after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:z-10 after:h-[2px] after:rounded-full after:content-[''] has-[[role=tab]:focus-visible:not([data-layout-focus-intent=restore])]:ring-1 has-[[role=tab][data-layout-focus-intent=keyboard]:focus]:ring-1 data-[active=true]:bg-control-bg-selected data-[active=true]:text-text-default data-[active=true]:after:bg-primary",
+									: "relative flex min-w-96 max-w-192 shrink-0 items-center border-border-muted border-r text-text-muted ring-focus-ring ring-inset after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:z-10 after:h-[2px] after:rounded-full after:content-[''] has-[[role=tab]:focus-visible:not([data-layout-focus-intent=restore])]:ring-1 has-[[role=tab][data-layout-focus-intent=keyboard]:focus]:ring-1 data-[active=true]:bg-control-bg-selected data-[active=true]:text-text-default data-[active=true]:after:bg-primary",
 					)}
 				>
 					<div

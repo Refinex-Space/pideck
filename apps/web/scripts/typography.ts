@@ -128,7 +128,7 @@ export function proseRootClassName(t: Typography, system: string): string {
 	return `${t.metadata.classPrefix}-prose-${kebab(system)}`;
 }
 
-export const PROSE_STRONG_WEIGHT = "semibold";
+export const PROSE_STRONG_WEIGHT = "medium";
 
 export const PROSE_SELECTORS: Record<string, string> = {
 	body: "",

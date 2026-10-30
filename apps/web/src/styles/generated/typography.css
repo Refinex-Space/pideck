@@ -48,7 +48,7 @@
 	--tr-line-height-code: 1.4615384615384615;
 	--tr-line-height-relaxed: 1.4615384615384615;
 	--tr-line-height-default: 1.4166666666666667;
-	--tr-line-height-reading: 1.5;
+	--tr-line-height-reading: 1.6;
 
 	/* Code row height (px) — font size × line height, rounded to a whole pixel */
 	--tr-code-row-height: 19px;
@@ -237,7 +237,7 @@
 }
 .tr-text-reading {
 	font-family: var(--tr-font-family-interface);
-	font-size: var(--tr-font-size-s16);
+	font-size: var(--tr-font-size-s15);
 	font-weight: var(--tr-font-weight-regular);
 	line-height: 24px;
 	letter-spacing: var(--tr-letter-spacing-normal);
@@ -284,7 +284,7 @@
 /* Prose system 'chat' — the markdown typography for that surface. */
 .tr-prose-chat {
 	font-family: var(--tr-font-family-interface);
-	font-size: var(--tr-font-size-s16);
+	font-size: var(--tr-font-size-s15);
 	font-weight: var(--tr-font-weight-regular);
 	line-height: 24px;
 	letter-spacing: var(--tr-letter-spacing-normal);
@@ -293,9 +293,9 @@
 }
 .tr-prose-chat h1 {
 	font-family: var(--tr-font-family-interface);
-	font-size: var(--tr-font-size-s20);
-	font-weight: var(--tr-font-weight-semibold);
-	line-height: 25px;
+	font-size: var(--tr-font-size-s18);
+	font-weight: var(--tr-font-weight-medium);
+	line-height: 23px;
 	letter-spacing: var(--tr-letter-spacing-normal);
 	text-transform: none;
 	font-style: normal;
@@ -303,7 +303,7 @@
 .tr-prose-chat h2 {
 	font-family: var(--tr-font-family-interface);
 	font-size: var(--tr-font-size-s16);
-	font-weight: var(--tr-font-weight-semibold);
+	font-weight: var(--tr-font-weight-medium);
 	line-height: 20px;
 	letter-spacing: var(--tr-letter-spacing-normal);
 	text-transform: none;
@@ -311,9 +311,9 @@
 }
 .tr-prose-chat h3 {
 	font-family: var(--tr-font-family-interface);
-	font-size: var(--tr-font-size-s14);
-	font-weight: var(--tr-font-weight-semibold);
-	line-height: 20px;
+	font-size: var(--tr-font-size-s15);
+	font-weight: var(--tr-font-weight-medium);
+	line-height: 24px;
 	letter-spacing: var(--tr-letter-spacing-normal);
 	text-transform: none;
 	font-style: normal;
@@ -365,7 +365,7 @@
 }
 .tr-prose-chat blockquote {
 	font-family: var(--tr-font-family-interface);
-	font-size: var(--tr-font-size-s16);
+	font-size: var(--tr-font-size-s15);
 	font-weight: var(--tr-font-weight-regular);
 	line-height: 24px;
 	letter-spacing: var(--tr-letter-spacing-normal);
@@ -374,7 +374,7 @@
 }
 .tr-prose-chat :is(ul, ol, li) {
 	font-family: var(--tr-font-family-interface);
-	font-size: var(--tr-font-size-s16);
+	font-size: var(--tr-font-size-s15);
 	font-weight: var(--tr-font-weight-regular);
 	line-height: 24px;
 	letter-spacing: var(--tr-letter-spacing-normal);
@@ -383,7 +383,7 @@
 }
 .tr-prose-chat :is(table, td) {
 	font-family: var(--tr-font-family-interface);
-	font-size: var(--tr-font-size-s16);
+	font-size: var(--tr-font-size-s15);
 	font-weight: var(--tr-font-weight-regular);
 	line-height: 24px;
 	letter-spacing: var(--tr-letter-spacing-normal);
@@ -392,8 +392,8 @@
 }
 .tr-prose-chat th {
 	font-family: var(--tr-font-family-interface);
-	font-size: var(--tr-font-size-s16);
-	font-weight: var(--tr-font-weight-semibold);
+	font-size: var(--tr-font-size-s14);
+	font-weight: var(--tr-font-weight-medium);
 	line-height: 20px;
 	letter-spacing: var(--tr-letter-spacing-normal);
 	text-transform: none;
@@ -410,13 +410,13 @@
 }
 /* Bold: weight only — every other property inherits from the parent element. */
 .tr-prose-chat :is(strong, b) {
-	font-weight: var(--tr-font-weight-semibold);
+	font-weight: var(--tr-font-weight-medium);
 }
 
 /* Prose system 'doc' — the markdown typography for that surface. */
 .tr-prose-doc {
 	font-family: var(--tr-font-family-interface);
-	font-size: var(--tr-font-size-s16);
+	font-size: var(--tr-font-size-s15);
 	font-weight: var(--tr-font-weight-regular);
 	line-height: 24px;
 	letter-spacing: var(--tr-letter-spacing-normal);
@@ -497,7 +497,7 @@
 }
 .tr-prose-doc blockquote {
 	font-family: var(--tr-font-family-interface);
-	font-size: var(--tr-font-size-s16);
+	font-size: var(--tr-font-size-s15);
 	font-weight: var(--tr-font-weight-regular);
 	line-height: 24px;
 	letter-spacing: var(--tr-letter-spacing-normal);
@@ -506,7 +506,7 @@
 }
 .tr-prose-doc :is(ul, ol, li) {
 	font-family: var(--tr-font-family-interface);
-	font-size: var(--tr-font-size-s16);
+	font-size: var(--tr-font-size-s15);
 	font-weight: var(--tr-font-weight-regular);
 	line-height: 24px;
 	letter-spacing: var(--tr-letter-spacing-normal);
@@ -515,7 +515,7 @@
 }
 .tr-prose-doc :is(table, td) {
 	font-family: var(--tr-font-family-interface);
-	font-size: var(--tr-font-size-s16);
+	font-size: var(--tr-font-size-s15);
 	font-weight: var(--tr-font-weight-regular);
 	line-height: 24px;
 	letter-spacing: var(--tr-letter-spacing-normal);
@@ -542,6 +542,6 @@
 }
 /* Bold: weight only — every other property inherits from the parent element. */
 .tr-prose-doc :is(strong, b) {
-	font-weight: var(--tr-font-weight-semibold);
+	font-weight: var(--tr-font-weight-medium);
 }
 }

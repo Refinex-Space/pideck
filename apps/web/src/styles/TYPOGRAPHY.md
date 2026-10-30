@@ -51,7 +51,7 @@ both markdown surfaces, the `<body>` base).
 | `lineHeights` | ratios describe the intended rhythm; semantic declarations and `codeRow` are pre-rounded to whole pixels by the generator |
 | `letterSpacings` | `normal` · `widest` 0.1em for one-time-code input |
 
-The PiDeck design system owns the direction: interface 14/20px, reading 16/24px, code 13/19px and metadata
+The PiDeck design system owns the direction: interface 14/20px, reading 15/24px, code 13/19px and metadata
 12/17px. System sans keeps Latin and CJK text legible on Web, macOS and Windows without redistributing
 proprietary fonts. The brand heading uses the same family at 32/40px rather than a separate display face.
 The preserved upstream website has its own font contract and does not determine application typography.
@@ -94,7 +94,7 @@ entry per markdown surface, mostly aliases into these roles. References remain d
 values are never duplicated.
 
 One prose rule is deliberately *not* a semantic style: `<strong>` / `<b>` gets **weight only**
-(`--tr-font-weight-semibold`), emitted by the generator into each prose system. A complete style there
+(`--tr-font-weight-medium`), emitted by the generator into each prose system. A complete style there
 would override the size and line-height of whatever element the bold text sits inside.
 
 The JSON holds **no** CSS selectors, class strings, component paths, usage lists, rationale or audit
@@ -178,26 +178,26 @@ naming its own type. Two exist:
 | | `chat` (`.tr-prose-chat`) | `doc` (`.tr-prose-doc`) |
 |---|---|---|
 | mounted by | `chat/Markdown.tsx` | `resource-renderers/support/MarkdownPreview.tsx` |
-| body, blockquote, lists | 16 / 400 / 24px | 16 / 400 / 24px |
-| h1 | 20 / 600 | **24 / 600** |
-| h2 | 16 / 600 | **22 / 600** |
-| h3 | 14 / 600 | **20 / 600** |
+| body, blockquote, lists | 15 / 400 / 24px | 15 / 400 / 24px |
+| h1 | 18 / 500 | **24 / 600** |
+| h2 | 16 / 500 | **22 / 600** |
+| h3 | 15 / 500 | **20 / 600** |
 | h4 | 12 / 500 | **18 / 600** |
 | h5 | 12 / 500 | 16 / 600 |
 | h6 | 12 / 500 | 12 / 600 |
 | inline code | 13 mono | 13 mono |
 | fenced code | 13 mono / 19px | 13 mono / 19px |
-| table body / header | 16 / 400 · 16 / 600 | 16 / 400 · 16 / 600 |
+| table body / header | 15 / 400 · 14 / 500 | 15 / 400 · 16 / 600 |
 | table cell inline code | 13 mono (`code.text`) | 13 mono (`code.text`) |
-| `strong` / `b` | weight 600 only | weight 600 only |
+| `strong` / `b` | weight 500 only | weight 500 only |
 
 Chat headings separate a stream of messages; document headings expose nested structure. Both share
 comfortable reading text, while document h1–h4 stay larger than the body and the h1→h6 ladder never
 inverts. The validator keeps these requirements. Neither surface forces uppercase decoration.
-`chat.h1` and `doc.h3` reference `heading.md`; body copy references `body.reading`. Only two of the
-28 prose entries define independent styles; every other prose role names a canonical definition.
+`doc.h3` references `heading.md`; body copy references `body.reading`; chat h1–h3 are their own medium-weight
+styles. Only four of the 28 prose entries define independent styles; every other prose role names a canonical definition.
 
-`strong` / `b` gets **weight 600 only** in both systems — family, size, line-height, tracking, transform
+`strong` / `b` gets **weight 500 only** in both systems — family, size, line-height, tracking, transform
 and colour inherit from the enclosing element, so bold in a heading keeps the heading's size and bold in
 a cell keeps the table's.
 
@@ -236,8 +236,8 @@ those are proportional. Validation enforces this: a monospace family on a non-co
 ## Weight policy
 
 - **400** — ordinary UI, reading, entity, metadata, status, code and brand-heading text.
-- **500** — action and button labels, section/compact titles, restrained labels and chat h4–h6.
-- **600** — dialog/card titles, heading roles, chat h1–h3, document headings, table headers and prose strong.
+- **500** — action and button labels, section/compact titles, restrained labels, chat h1–h6, chat table headers and prose strong (CJK at 600 reads heavy in long answers).
+- **600** — dialog/card titles, heading roles, document headings and document table headers.
 
 Disabled control colors come from `control-disabled-bg` / `control-disabled-text`; disabled non-control
 text uses `text-disabled`. Typography does not encode disabled state, and controls do not use opacity to

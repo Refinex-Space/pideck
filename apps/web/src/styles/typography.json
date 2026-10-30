@@ -68,7 +68,7 @@
 		"code": 1.4615384615384615,
 		"relaxed": 1.4615384615384615,
 		"default": 1.4166666666666667,
-		"reading": 1.5
+		"reading": 1.6
 	},
 	"letterSpacings": {
 		"normal": "normal",
@@ -213,7 +213,7 @@
 		"body": {
 			"reading": {
 				"fontFamily": "interface",
-				"fontSize": "s16",
+				"fontSize": "s15",
 				"fontWeight": "regular",
 				"lineHeight": "reading",
 				"letterSpacing": "normal",
@@ -266,16 +266,28 @@
 				"$ref": "body.reading"
 			},
 			"h1": {
-				"$ref": "heading.md"
+				"fontFamily": "interface",
+				"fontSize": "s18",
+				"fontWeight": "medium",
+				"lineHeight": "compact",
+				"letterSpacing": "normal",
+				"textTransform": "none",
+				"fontStyle": "normal"
 			},
 			"h2": {
-				"$ref": "title.dialog"
+				"fontFamily": "interface",
+				"fontSize": "s16",
+				"fontWeight": "medium",
+				"lineHeight": "compact",
+				"letterSpacing": "normal",
+				"textTransform": "none",
+				"fontStyle": "normal"
 			},
 			"h3": {
 				"fontFamily": "interface",
-				"fontSize": "s14",
-				"fontWeight": "semibold",
-				"lineHeight": "ui",
+				"fontSize": "s15",
+				"fontWeight": "medium",
+				"lineHeight": "reading",
 				"letterSpacing": "normal",
 				"textTransform": "none",
 				"fontStyle": "normal"
@@ -305,7 +317,7 @@
 				"$ref": "body.reading"
 			},
 			"tableHeader": {
-				"$ref": "title.dialog"
+				"$ref": "title.section"
 			},
 			"tableInlineCode": {
 				"$ref": "code.text"

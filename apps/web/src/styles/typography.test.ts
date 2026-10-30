@@ -44,11 +44,11 @@ describe("typography source", () => {
 		}
 	});
 
-	it("holds 18 canonical definitions and 33 aliases (51 styles)", () => {
+	it("holds 20 canonical definitions and 31 aliases (51 styles)", () => {
 		const styles = allStyles(typography);
 		expect(styles).toHaveLength(51);
-		expect(styles.filter((s) => !s.ref)).toHaveLength(18);
-		expect(styles.filter((s) => s.ref)).toHaveLength(33);
+		expect(styles.filter((s) => !s.ref)).toHaveLength(20);
+		expect(styles.filter((s) => s.ref)).toHaveLength(31);
 		expect(styles.filter((s) => s.prose)).toHaveLength(28);
 	});
 
@@ -74,7 +74,7 @@ describe("typography source", () => {
 			code: 19 / 13,
 			relaxed: 19 / 13,
 			default: 17 / 12,
-			reading: 1.5,
+			reading: 1.6,
 		});
 		expect(typography.fontWeights).toEqual({
 			regular: 400,
@@ -178,16 +178,16 @@ describe("prose systems", () => {
 	});
 
 	it("keeps chat reading comfortable with a restrained heading hierarchy", () => {
-		expect(px("chat.body")).toBe(16);
-		expect(px("chat.h1")).toBe(20);
+		expect(px("chat.body")).toBe(15);
+		expect(px("chat.h1")).toBe(18);
 		expect(px("chat.h2")).toBe(16);
-		expect(px("chat.h3")).toBe(14);
+		expect(px("chat.h3")).toBe(15);
 		expect(px("chat.codeBlock")).toBe(13);
 	});
 
 	it("gives the document scale headings larger than its body text", () => {
 		const body = px("doc.body") as number;
-		expect(body).toBe(16);
+		expect(body).toBe(15);
 		expect(["h1", "h2", "h3", "h4"].map((h) => px(`doc.${h}`))).toEqual([24, 22, 20, 18]);
 		for (const h of ["h1", "h2", "h3", "h4"])
 			expect(px(`doc.${h}`), `doc.${h} > body`).toBeGreaterThan(body);
@@ -204,8 +204,7 @@ describe("prose systems", () => {
 	});
 
 	it("shares its canonical definitions across both surfaces", () => {
-		expect(resolveStyle(typography, "chat.h1")).toEqual(resolveStyle(typography, "doc.h3"));
-		expect(rawStyle(typography, "chat.h1")).toEqual({ $ref: "heading.md" });
+		expect(rawStyle(typography, "chat.tableHeader")).toEqual({ $ref: "title.section" });
 		expect(rawStyle(typography, "doc.h3")).toEqual({ $ref: "heading.md" });
 		for (const id of ["chat.body", "doc.body", "chat.blockquote", "doc.list"])
 			expect(resolveStyle(typography, id), id).toEqual(resolveStyle(typography, "body.reading"));
@@ -416,7 +415,7 @@ describe("generated CSS", () => {
 				.split(";")
 				.map((d) => d.trim())
 				.filter(Boolean);
-			expect(declarations, system).toEqual(["font-weight: var(--tr-font-weight-semibold)"]);
+			expect(declarations, system).toEqual(["font-weight: var(--tr-font-weight-medium)"]);
 			expect(typography.proseSystems[system]).not.toHaveProperty("strong");
 		}
 		expect(PROSE_SELECTORS).not.toHaveProperty("strong");

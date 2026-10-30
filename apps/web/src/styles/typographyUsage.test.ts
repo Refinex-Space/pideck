@@ -174,16 +174,16 @@ describe("markdown prose systems", () => {
 
 	it("defines the chat hierarchy only in the JSON", () => {
 		const expected = {
-			h1: { fontSize: "s20", fontWeight: "semibold" },
-			h2: { fontSize: "s16", fontWeight: "semibold" },
-			h3: { fontSize: "s14", fontWeight: "semibold" },
+			h1: { fontSize: "s18", fontWeight: "medium" },
+			h2: { fontSize: "s16", fontWeight: "medium" },
+			h3: { fontSize: "s15", fontWeight: "medium" },
 			h4: { fontSize: "s12", fontWeight: "medium" },
 			h5: { fontSize: "s12", fontWeight: "medium" },
 			h6: { fontSize: "s12", fontWeight: "medium", textTransform: "none" },
 			inlineCode: { fontFamily: "code", fontSize: "s13" },
 			codeBlock: { fontFamily: "code", fontSize: "s13" },
-			tableBody: { fontSize: "s16", fontWeight: "regular" },
-			tableHeader: { fontSize: "s16", fontWeight: "semibold" },
+			tableBody: { fontSize: "s15", fontWeight: "regular" },
+			tableHeader: { fontSize: "s14", fontWeight: "medium" },
 		};
 		for (const [name, shape] of Object.entries(expected))
 			expect(resolveStyle(typography, `chat.${name}`), `chat.${name}`).toMatchObject(shape);
@@ -192,7 +192,7 @@ describe("markdown prose systems", () => {
 	it("gives the document surface headings larger than its body text", () => {
 		const px = (id: string) => typography.fontSizes[resolveStyle(typography, id).fontSize];
 		const body = px("doc.body") as number;
-		expect(body).toBe(16);
+		expect(body).toBe(15);
 		expect(px("doc.h1")).toBe(24);
 		expect(px("doc.h2")).toBe(22);
 		expect(px("doc.h3")).toBe(20);

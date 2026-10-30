@@ -1652,7 +1652,7 @@ the lifecycle assertable.
 
 ## PiDeck presentation
 
-Reading text uses the shared 16/24px role and code uses 13/19px. The pre-measurement row estimator
+Reading text uses the shared 15/24px role and code uses 13/19px. The pre-measurement row estimator
 uses those same line heights; it remains a conservative fallback, never a substitute for actual
 virtualizer measurements. User bubbles use the theme-owned neutral palette with primary text, 16px
 horizontal and 12px vertical padding. Only the existing first-row editor surface carries the 14px radius,

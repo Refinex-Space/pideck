@@ -288,7 +288,7 @@ export const TabStrip = memo(function TabStrip({
 			className={cn(
 				"relative flex shrink-0 items-stretch data-[drop-hint]:ring-1 data-[drop-hint]:ring-inset data-[drop-hint]:ring-primary-soft data-[drop-active]:bg-primary-subtle data-[drop-active]:ring-2 data-[drop-active]:ring-inset data-[drop-active]:ring-primary",
 				location.area === "center"
-					? "window-drag h-topbar-row select-none gap-4 bg-container-content-bg px-8"
+					? "window-drag h-topbar-row select-none gap-4 border-border-muted border-b bg-container-content-bg px-8"
 					: "h-panel-header-row border-border-default border-b bg-container-workspace-bg",
 			)}
 		>

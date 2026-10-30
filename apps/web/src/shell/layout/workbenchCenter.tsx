@@ -139,7 +139,7 @@ export const CenterGroupView = memo(function CenterGroupView({
 				{topbarTrailing ? (
 					<div
 						data-testid="topbar"
-						className="window-drag relative flex h-topbar-row min-w-0 shrink-0 flex-col border-border-muted border-b"
+						className="window-drag relative flex h-topbar-row min-w-0 shrink-0 flex-col"
 					>
 						{tabStrip}
 					</div>

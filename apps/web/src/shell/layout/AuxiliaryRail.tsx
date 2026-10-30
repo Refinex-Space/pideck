@@ -192,7 +192,7 @@ export function AuxiliaryRail({
 							aria-orientation={horizontal ? "vertical" : "horizontal"}
 							data-testid="rail-separator"
 							className={cn(
-								"shrink-0 border-0 bg-border-muted",
+								"shrink-0 border-0 bg-transparent",
 								horizontal ? "mx-2 h-20 w-px" : "my-2 h-px w-20",
 							)}
 						/>

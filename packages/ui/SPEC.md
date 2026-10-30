@@ -153,7 +153,8 @@ moved here from the app when the resource renderers became a package, because bo
   lifetimes stay in the app (`panels/Toaster` composes the primitives).
 - Resizable handles paint a 1 px line at their leading edge; the pointer hit area extends only into the
   following panel (fine-pointer margin 1 px), so the preceding panel's trailing-edge scrollbar stays
-  usable. There is no grip variant.
+  usable. There is no grip variant. Hover and drag recolor the line with `feedback-info` (blue), not
+  `primary`, which is near-black in the light themes.
 - Primitives use only the host's token utilities, never shadcn's default oklch palette.
 
 Code highlighting is deliberately absent: `CodeBlock` and shiki depend on the app's theme registration

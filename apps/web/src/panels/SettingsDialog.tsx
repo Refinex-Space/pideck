@@ -11,6 +11,7 @@ import { ExtensionsSettings } from "./ExtensionsSettings";
 import { FeedbackSettings } from "./FeedbackSettings";
 import { GithubSettings } from "./GithubSettings";
 import { LanguageSettings } from "./LanguageSettings";
+import { LspSettings } from "./LspSettings";
 import { McpSettings } from "./McpSettings";
 import { ModelsSettings } from "./ModelsSettings";
 import { NetworkSettings } from "./NetworkSettings";
@@ -153,6 +154,8 @@ export function SettingsDialog({ updateSettings }: { updateSettings?: ReactNode 
 							<ProvidersSettings />
 						) : selectedSection === SettingsSection.Mcp ? (
 							<McpSettings />
+						) : selectedSection === SettingsSection.Lsp ? (
+							<LspSettings />
 						) : selectedSection === SettingsSection.Skills ? (
 							<SkillsSettings />
 						) : selectedSection === SettingsSection.Templates ? (

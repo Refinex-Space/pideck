@@ -29,6 +29,7 @@ import {
 import { type BundledTrashHelpers, setBundledTrashHelpers } from "../trash";
 import { browserExtension } from "./browserTool";
 import { oversizedImageGuard } from "./imageGuard";
+import { lspExtension } from "./lspTool";
 import { requestReviewExtension } from "./requestReviewTool";
 import { reviewToolExtension } from "./reviewTool";
 import { decideSkill, type SkillAdmissionContext } from "./skillAdmission";
@@ -241,6 +242,7 @@ export async function buildResourceLoader(
 		requestReviewExtension,
 		setTitleExtension,
 		browserExtension,
+		lspExtension,
 		oversizedImageGuard,
 		...extraFactories,
 	];

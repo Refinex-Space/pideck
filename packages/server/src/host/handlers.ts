@@ -132,6 +132,7 @@ import { githubAuthStatus, githubRefresh } from "../github";
 import { clampLimit, getHistoryIndex } from "../history";
 import { localesDir, readLocalLocales } from "../locales";
 import { logger } from "../log";
+import { lspManager, lspOverview, restartLsp, updateLspConfig } from "../lsp";
 import { diagnoseNetwork, networkProxyStatus, updateNetworkProxy } from "../network";
 import {
 	deleteRemoteBranch,
@@ -237,6 +238,7 @@ import { nudgeBaseRefWorkspaces } from "./fsNudge";
 import { buildHistoryScope } from "./historyScope";
 import { provisionInitialTerminal } from "./initialTerminal";
 import { dropLogin, recordLoginStart } from "./loginAnalytics";
+import { workspaceLsp } from "./lspHost";
 import {
 	mcpAdd,
 	mcpApprove,
@@ -645,6 +647,7 @@ const handlers: WsHandlers = {
 			forgetWorkspaceChanges(ws.id);
 			forgetWorkspaceTurns(ws.id);
 			stopWatch(ws.id);
+			void lspManager.dispose(ws.worktreePath);
 			closeWorkspaceTerminals(ws.id);
 			void archiveTeardown(ws);
 		}
@@ -1148,6 +1151,17 @@ const handlers: WsHandlers = {
 	"session.activityList": () => [],
 	"session.getMessages": (p) => {
 		return getSessionMessages(p.sessionId, p.workspaceId, getWorkspace(p.workspaceId).worktreePath);
+	},
+	"lsp.get": (params) =>
+		lspOverview(params.workspaceId ? workspaceLsp(getWorkspace(params.workspaceId)) : undefined),
+	"lsp.update": (params) =>
+		updateLspConfig(
+			params.config,
+			params.workspaceId ? workspaceLsp(getWorkspace(params.workspaceId)) : undefined,
+		),
+	"lsp.restart": async (params) => {
+		await restartLsp(getWorkspace(params.workspaceId).worktreePath, params.serverId);
+		return { ok: true } as const;
 	},
 	"mcp.list": (params) => mcpList(params),
 	"mcp.add": (params) => mcpAdd(params),

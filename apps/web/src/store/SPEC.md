@@ -92,6 +92,16 @@ identity. **`fileActivityPreferences`** (`enabled`, `follow`, `expand`, `reads`,
 a read outranks a search outranks a listing, running outranks settled), the directories with a lit path below
 them, the directories to open, and the newest path to follow.
 
+## Language servers
+
+**`lspByWorkspace`** holds the last `LspWorkspaceStatus` the host reported per workspace (`enabled`, `trusted`,
+`servers`). `applyLspStatus` writes the `lsp.status` push (and the seeding `lsp.get` read) and ignores it on a
+host older than `LSP_PROTOCOL_VERSION` (`selectSupportsLsp`), while disconnected, or for a removed workspace; the
+slice is cleared when the host's protocol turns out to predate it and when a workspace is removed. It keeps no
+timers and no config: the settings page holds its own overview, since the config is host-wide and not needed
+elsewhere. The channel is non-replayable, like `mcp.status`: a status that arrived before a reconnect is
+re-read, not replayed.
+
 ## Boundary
 
 - **Owns:** `appStore.ts` — connection/projects/workspaces state + setters. Connection state has two

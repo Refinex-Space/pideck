@@ -37,12 +37,14 @@ test("normalizing keeps the saved order, drops strangers and appends new blocks"
 		order: ["changes", "bogus", "environment", "changes"],
 		collapsed: ["context", "context", "nope"],
 	});
-	expect(layout.order).toEqual(["changes", "environment", "context", "tasks", "connectors"]);
+	expect(layout.order).toEqual(["changes", "environment", "context", "tasks", "connectors", "lsp"]);
 	expect(layout.collapsed).toEqual(["context"]);
 });
 
 test("a saved layout round-trips", () => {
-	const layout = { order: ["changes", "environment", "context", "tasks", "connectors"] as const };
+	const layout = {
+		order: ["changes", "environment", "context", "tasks", "connectors", "lsp"] as const,
+	};
 	const raw = serializeStatusBlocks({ order: layout.order, collapsed: ["tasks"], open: true });
 	expect(parseStatusBlocks(raw)).toEqual({
 		order: layout.order,
@@ -57,6 +59,7 @@ test("moving a block lands it at the requested index and clamps to the list", ()
 		"tasks",
 		"environment",
 		"connectors",
+		"lsp",
 		"changes",
 	]);
 	expect(moveStatusBlock(STATUS_BLOCK_IDS, "changes", -4)[0]).toBe("changes");

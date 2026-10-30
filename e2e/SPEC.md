@@ -514,6 +514,16 @@ staged `.ts` PI runtime and physical resources. Real Central acceptance remains 
 isolated: the dedicated `@agent` suite stages the opaque artifact, validates the exact model, and proves a
 real turn rather than accepting another provider or a fake agent.
 
+## Language servers
+
+`lsp.spec.ts` covers the Language servers settings page against the real host (off by default, the switches,
+idle minutes, a built-in server turned off, a custom one added and removed, persistence across a reload, the add
+form's refusals) and the status block twice: against the real host, where turning the master switch on reaches
+the open dock as a push and the fixture project, not being trusted, shows the "wait until trusted" sentence; and
+against `lsp.status` frames pushed down the intercepted app wire (every server state, errors and warnings,
+the install hint, the restart request). No language server ever runs in the suite — the engine's behaviour is
+covered by the server's unit tests against a fake server — and each test puts the host's saved settings back.
+
 ## Interactive file workbench
 
 `file-activity.spec.ts` drives the Files tree's agent activity with Pi events pushed down the intercepted app wire (reads, edits, a failed edit, a grep's matches, a subagent's tool, shell reads, the activity list, the preferences, follow-scrolling and open-Files-on-start) over a nested fixture folder it creates and removes, so no real model runs.

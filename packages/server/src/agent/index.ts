@@ -24,6 +24,7 @@ export {
 	registerBundledRuntime,
 	setDisabledExtensionsResolver,
 } from "./extensions";
+export { setLspToolHost } from "./lspTool";
 export {
 	effectiveMcpServerConfig,
 	mcpEntryFingerprint,

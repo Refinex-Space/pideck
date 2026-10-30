@@ -1071,6 +1071,19 @@ closed diagnostic outcomes. Reads redact proxy userinfo and expose only password
 carry a replacement password or null to clear; it never enters AppConfig or broadcasts. Diagnostics use
 a closed provider selector, not an arbitrary URL. Older clients retain all existing methods.
 
+## Language servers (v97)
+
+`LSP_PROTOCOL_VERSION` (v97) gates `lsp.get`, `lsp.update`, `lsp.restart` and the `lsp.status` push. `lsp.ts`
+defines `LspConfig` (`enabled`, `diagnostics`, `tool`, `idleMinutes` within `LSP_IDLE_MINUTES`, `servers`),
+`LspServerOverride`, `LspCatalogEntry` (with the host-detected `available` and an install hint),
+`LspServerStatus` (`starting|ready|error|missing`, counts of errors and warnings), `LspWorkspaceStatus`,
+`LspOverview` and `LspConfigUpdate`, where a `servers` entry replaces that server's override and `null` removes
+it. `lsp.get` and `lsp.update` take an optional `workspaceId`, which only selects whose server status comes back;
+the config is host-wide. `lsp.status` carries one workspace's `LspWorkspaceStatus` whenever its servers change,
+when the master switch or a server table entry changes (every workspace) and when its project's trust changes.
+Updates are validated whole by the host and refused with a readable message. An older host has none of these and
+the UI hides the settings page and says so in the status block.
+
 ## Native browser contract
 
 `nativeBrowser` adds type-only BrowserPageState, BrowserSelection, BrowserViewport, BrowserPickerLabels,

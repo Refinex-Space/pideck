@@ -99,6 +99,15 @@ configuration, OS-store proxy credentials and credential-free diagnostics. Pi ke
 model ownership. This is a host customization, validated by policy/parser tests, local Pi transport probes,
 browser e2e and native packaging; macOS/Linux native verification remains distinct from Windows fixtures.
 
+## 语言服务（LSP）定制
+
+参考 OpenCode 已移除的 LSP 引擎（提交 `44b6938b2a^`）：按文件首次触达惰性启动、就近项目根、推送诊断带短防抖、
+编辑结果只回灌错误。PiDeck 的版本更小、更保守：默认关闭；只使用本机已有的服务器、绝不自动安装；仅在 Pi 已信任的
+项目里启动（项目的 `node_modules/.bin` 是仓库选择的代码）；配置归宿主所有（`lsp.json`），项目不能改写；
+JSON-RPC 成帧手写，不新增依赖。改动集中于 `packages/server/src/lsp`、`agent/lspTool.ts`、`host/lspHost.ts`、
+协议 v97 的 `lsp.*`、状态面板 Language servers 块与设置页。ZCode 没有对应设计。
+移除条件：Pi 或上游提供官方 LSP 工具与诊断反馈。验证：服务端对假服务器的单测与集成测试、`e2e/lsp.spec.ts`。
+
 ## 侧边浏览器定制
 
 参考 ZCode `3c5b227649371507ddc4eb46ac5133afe6db1cab` 的浏览器界面、guest 生命周期和元素选取。

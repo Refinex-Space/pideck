@@ -698,6 +698,19 @@ Standalone `createServer` also awaits the idempotent initializer before Central/
 The `network.*` handlers delegate through the network barrel. Settings reads and diagnostics never
 broadcast secrets; a save requests restart instead of mutating active transports. See [[submodule-server-network]].
 
+## Language servers
+
+`lsp.get`, `lsp.update` and `lsp.restart` delegate to the `lsp` module's overview/update/restart (a restart
+names a workspace and optionally one server). `host/lspHost.ts` is the host's side of that module: it decides a
+workspace's trust (`admissionContextFor(project).piResourceTrusted`, the same grant the agent's extensions see),
+builds `lsp.status` payloads and wires publication — a manager change maps its directory back to the
+workspaces that live there (real paths compared), a settings change republishes every workspace, and a
+project update (trust granted or revoked) republishes that project's. `server.ts` creates the publisher
+beside the other publishers, subscribes a client to `lsp.status` only when its protocol is at least
+`LSP_PROTOCOL_VERSION`, installs `setLspToolHost` with the browser host, and on shutdown stops publishing and
+disposes every server; `workspace.remove` disposes that workspace's servers. No method here starts a server:
+that happens only when the agent touches a file.
+
 ## Native browser composition
 
 `CreateServerOptions.browser` and `BootHostOptions.browser` accept the contracts BrowserEngine. Host

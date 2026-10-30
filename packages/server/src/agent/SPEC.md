@@ -1400,3 +1400,29 @@ Provider-facing locator schemas inline the top-level object and give recursive r
 type. GLM-5.3 produced JSON-encoded strings for a ref-only locator in the native live acceptance; runtime
 validation correctly refused them. Keep recursive validation, native-input guidance and both recording IDs
 in the help contract; do not accept arbitrary strings or substitute DOM mutation for input.
+
+## Language servers
+
+`lspTool.ts` is a shared extension factory like `browserTool`: `setLspToolHost(lspManager)` supplies the host's
+[[submodule-server-lsp]] manager before sessions load, and without it the factory registers nothing. Child
+agents receive it as they receive the other shared factories; the host is the one process that owns the servers,
+so they share them.
+
+- **The `lsp` tool** (`goToDefinition`, `findReferences`, `goToImplementation`, `hover`, `documentSymbol`,
+  `workspaceSymbol`, `prepareCallHierarchy`, `incomingCalls`, `outgoingCalls`) takes a file and a 1-based
+  line and column; `workspaceSymbol` takes a `query` and, to start a server when none is running yet, a file.
+  It is **declared only while `enabled && tool`** at the time the chat's extensions load, so a chat opened
+  before the switch was turned on gains it in the next chat; at call time the switches and the project's trust
+  (`ctx.isProjectTrusted()`, which Pi sets from the project's resource trust) are checked again and a refusal
+  names the setting. Results are plain text lines (`path:line:column`, `Kind name (path:l:c)`, hover markup),
+  never raw LSP JSON, and "No results" / "No language server serves X" are answers, not errors.
+- **The post-edit check** is a `tool_result` handler for `edit` and `write` (the file's `path` from the call's
+  input, resolved against `ctx.cwd`). When `enabled && diagnostics`, the project is trusted and a server serves
+  the file, it tells the server the new text, waits for its verdict (at most 20 s in all, including a cold
+  start) and appends `LSP errors detected in this file, please fix:` plus a `<diagnostics file="…">` block with
+  the file's errors, ≤ 20. A clean file, an unserved file, a failed edit or a slow server leaves the result
+  untouched. The handler reads the switches on every edit, so turning the check off or on reaches open chats.
+- Edits made by other means (a shell command, an extension tool) are not checked; the server learns of them on
+  the next touch of that file.
+- `lspTool.test.ts` runs both paths against the fake server in `lsp/fixtures` with a mocked extension API, for
+  registration, every operation, refusals and the check's switches.

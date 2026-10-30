@@ -4,6 +4,7 @@ import type {
 	ExtUiRequest,
 	HostUpdateNotice,
 	LoginPush,
+	LspStatusPayload,
 	McpStatusPayload,
 	Project,
 	ReviewChangedPayload,
@@ -321,6 +322,10 @@ export function initTransport(): WsTransport {
 
 	transport.subscribe(WS_CHANNELS.mcpStatus, (data) => {
 		useAppStore.getState().applyMcpStatus(data as McpStatusPayload);
+	});
+
+	transport.subscribe(WS_CHANNELS.lspStatus, (data) => {
+		useAppStore.getState().applyLspStatus(data as LspStatusPayload);
 	});
 
 	transport.subscribe(WS_CHANNELS.providerChanged, () => {

@@ -223,11 +223,12 @@ A column of hairline blocks beside the chat, opened by the **Status Toggle**; it
 |---|---|---|---|
 | Status Toggle | `shell/locationBar/LocationBar.tsx` (`StatusToggle`) | `open-status-panel` (`aria-pressed`, `data-signal`) | Icon left of the terminal entry; opens the dock; corner dot = attention / working |
 | Status Dock | `panels/StatusDock.tsx` → `StatusDock` | `status-dock` (`status-dock-layout`) | Wraps a chat or the empty center; the chat narrows when it opens, overlays below 40rem |
-| Status Panel | `panels/StatusPanel.tsx` → `StatusPanel` | `status-panel` | The five blocks in the user's order; live-region announcements of moves |
-| Status Block | `panels/StatusBlockFrame.tsx` → `StatusBlockFrame` | `status-block-<id>` (`-toggle-`, `-handle-`, `-body-`) | One hairline block: fold toggle title + drag grip; ids `environment`, `context`, `tasks`, `connectors`, `changes` |
+| Status Panel | `panels/StatusPanel.tsx` → `StatusPanel` | `status-panel` | The six blocks in the user's order; live-region announcements of moves |
+| Status Block | `panels/StatusBlockFrame.tsx` → `StatusBlockFrame` | `status-block-<id>` (`-toggle-`, `-handle-`, `-body-`) | One hairline block: fold toggle title + drag grip; ids `environment`, `context`, `tasks`, `connectors`, `lsp`, `changes` |
 | Context Block | `panels/StatusContextBlock.tsx` | `status-context` (`status-context-used` / `-window` / `-<counter>`, `status-skills-stale`) | Engine-reported usage, bar and counters; stale-skills Reload |
 | Tasks Block | `panels/StatusTasksBlock.tsx` | `resources-roster` | The Resources Roster for this chat |
 | Connectors Block | `panels/StatusConnectorsBlock.tsx` | `status-connectors`, `status-connectors-manage` | MCP Connector Rows + the Manage footer row |
+| Language Servers Block | `panels/StatusLspBlock.tsx` → `StatusLspBlock` (`LspStatusView`) | `status-lsp` (`status-lsp-off` / `-untrusted` / `-idle`, `status-lsp-server` rows with `status-lsp-verdict` and `status-lsp-restart`, `status-lsp-manage`) | The workspace's language servers: state dot, root, errors or warnings, Restart / Check again |
 | Changes Block | `panels/StatusChangesBlock.tsx` | `status-changes-count`, `status-changes-review` | Files changed, `+/−`, Review changes |
 
 ## Resources
@@ -493,6 +494,7 @@ Connection Status and the **Status Dock** beside the chat (usage, tasks, connect
 | Canonical name | Implementation | Responsibility |
 |---|---|---|
 | Providers | `panels/ProvidersSettings.tsx` → `ProvidersSettings` | In-app provider auth (+ `panels/JetBrainsAiCard.tsx` → `JetBrainsAiCard`) |
+| Language servers | `panels/LspSettings.tsx` → `LspSettings` (`LspSettingsForm`) | Host-wide switches (`lsp-enabled`, `lsp-diagnostics`, `lsp-tool`, `lsp-idle`), Built-in servers (`lsp-builtin-<id>`, `lsp-server-<id>`), Custom servers (`lsp-custom-<id>`, `lsp-add-form`) |
 | MCP servers | `panels/McpSettings.tsx` → `McpSettings` (+ `panels/McpServerDialogs.tsx`) | The active workspace's MCP servers (`mcp-server-row`, `mcp-add-dialog` with `mcp-add-tab-presets` / `-form` / `-json` and `mcp-add-scope`, `mcp-approve-dialog`) |
 | GitHub | `panels/GithubSettings.tsx` → `GithubSettings` | Local GitHub connection status |
 | Appearance | `panels/AppearanceSettings.tsx` → `AppearanceSettings` | Theme picker |

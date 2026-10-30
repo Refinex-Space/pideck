@@ -55,3 +55,10 @@ preserved as extensions. Historical `layouts/` files remain untouched and inert.
 throws on unreadable/corrupt input so the network module can fail closed. `saveNetworkProxyRecord(value)`
 atomically replaces that file with mode 0600. The record contains validated config and an opaque OS
 credential-store id; passwords stay outside JSON. Parsing and secret lifecycle belong to network.
+
+## Language server settings
+
+`loadLspRecord()` returns the raw `lsp.json` record, or undefined when it is absent or unreadable (the lsp module
+then falls back to its defaults: language servers off). `saveLspRecord(value)` atomically replaces the file.
+The record holds the `LspConfig` the user chose, holds no secrets and is never project-scoped; validation and
+normalization belong to [[submodule-server-lsp]].

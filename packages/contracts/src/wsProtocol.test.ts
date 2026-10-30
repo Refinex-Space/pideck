@@ -28,6 +28,7 @@ import {
 	isToolResponsePending,
 	JBCENTRAL_QUOTA_PROTOCOL_VERSION,
 	LOCALES_PROTOCOL_VERSION,
+	LSP_PROTOCOL_VERSION,
 	MCP_PROTOCOL_VERSION,
 	MCP_TOOL_GRANTS_PROTOCOL_VERSION,
 	MODEL_PICKER_PROTOCOL_VERSION,
@@ -243,6 +244,15 @@ test("user theme files are pinned to v92", () => {
 test("subagent file activity rides the Pi event channel from v96", () => {
 	expect(AGENT_ACTIVITY_PROTOCOL_VERSION).toBe(96);
 	expect(PROTOCOL_VERSION).toBeGreaterThanOrEqual(AGENT_ACTIVITY_PROTOCOL_VERSION);
+});
+
+test("language servers are pinned to v97 with their own methods and push channel", () => {
+	expect(LSP_PROTOCOL_VERSION).toBe(97);
+	expect(PROTOCOL_VERSION).toBeGreaterThanOrEqual(LSP_PROTOCOL_VERSION);
+	expect(WS_METHODS.lspGet).toBe("lsp.get");
+	expect(WS_METHODS.lspUpdate).toBe("lsp.update");
+	expect(WS_METHODS.lspRestart).toBe("lsp.restart");
+	expect(WS_CHANNELS.lspStatus).toBe("lsp.status");
 });
 
 test("private network settings are pinned to v95", () => {

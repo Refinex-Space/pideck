@@ -1,0 +1,68 @@
+import { basename, extname } from "node:path";
+
+const BY_EXTENSION: Readonly<Record<string, string>> = {
+	".ts": "typescript",
+	".mts": "typescript",
+	".cts": "typescript",
+	".tsx": "typescriptreact",
+	".js": "javascript",
+	".mjs": "javascript",
+	".cjs": "javascript",
+	".jsx": "javascriptreact",
+	".json": "json",
+	".jsonc": "jsonc",
+	".css": "css",
+	".scss": "scss",
+	".less": "less",
+	".html": "html",
+	".htm": "html",
+	".md": "markdown",
+	".yaml": "yaml",
+	".yml": "yaml",
+	".py": "python",
+	".pyi": "python",
+	".go": "go",
+	".rs": "rust",
+	".c": "c",
+	".h": "c",
+	".cc": "cpp",
+	".cpp": "cpp",
+	".cxx": "cpp",
+	".hpp": "cpp",
+	".hh": "cpp",
+	".m": "objective-c",
+	".mm": "objective-cpp",
+	".java": "java",
+	".kt": "kotlin",
+	".kts": "kotlin",
+	".swift": "swift",
+	".rb": "ruby",
+	".rake": "ruby",
+	".gemspec": "ruby",
+	".php": "php",
+	".lua": "lua",
+	".sh": "shellscript",
+	".bash": "shellscript",
+	".zsh": "shellscript",
+	".zig": "zig",
+	".zon": "zig",
+	".dart": "dart",
+	".cs": "csharp",
+	".ex": "elixir",
+	".exs": "elixir",
+	".vue": "vue",
+	".svelte": "svelte",
+	".astro": "astro",
+	".sql": "sql",
+	".toml": "toml",
+	".xml": "xml",
+	".tf": "terraform",
+};
+
+/** The LSP language id for a file, falling back to the extension without its dot. */
+export function languageIdFor(path: string): string {
+	const extension = extname(path).toLowerCase();
+	if (extension === "")
+		return basename(path).toLowerCase() === "dockerfile" ? "dockerfile" : "plaintext";
+	return BY_EXTENSION[extension] ?? extension.slice(1);
+}

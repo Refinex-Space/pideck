@@ -449,6 +449,18 @@ export function saveNetworkProxyRecord(value: unknown): void {
 	writeJsonAtomic("network-proxy.json", value, 0o600);
 }
 
+export function loadLspRecord(): unknown {
+	try {
+		return JSON.parse(readFileSync(join(dataDir(), "lsp.json"), "utf8"));
+	} catch {
+		return undefined;
+	}
+}
+
+export function saveLspRecord(value: unknown): void {
+	writeJsonAtomic("lsp.json", value);
+}
+
 export function ensureInstallation(): InstallationRecord {
 	return ensureInstallationIn(dataDir());
 }

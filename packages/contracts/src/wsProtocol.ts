@@ -70,6 +70,7 @@ import type {
 	Workspace,
 } from "./domain";
 import { isDelegationRunDetails } from "./domain";
+import type { LspConfigUpdate, LspOverview } from "./lsp";
 import type { NetworkDiagnostic, NetworkProxyStatus, NetworkProxyUpdate } from "./network";
 import type {
 	ExtUiResponse,
@@ -123,7 +124,8 @@ export type TemplateReadLocation =
 	| { projectId: string; workspaceId?: never }
 	| { workspaceId?: never; projectId?: never };
 
-export const PROTOCOL_VERSION = 96;
+export const PROTOCOL_VERSION = 97;
+export const LSP_PROTOCOL_VERSION = 97;
 export const AGENT_ACTIVITY_PROTOCOL_VERSION = 96;
 export const NETWORK_PROXY_PROTOCOL_VERSION = 95;
 export const FILE_WORKBENCH_PROTOCOL_VERSION = 94;
@@ -347,6 +349,9 @@ export const WS_METHODS = {
 	networkGet: "network.get",
 	networkUpdate: "network.update",
 	networkDiagnose: "network.diagnose",
+	lspGet: "lsp.get",
+	lspUpdate: "lsp.update",
+	lspRestart: "lsp.restart",
 	environmentUpdate: "environment.update",
 	feedbackRespond: "feedback.respond",
 	clientReportError: "client.reportError",
@@ -406,6 +411,7 @@ export const WS_CHANNELS = {
 	reviewFailed: "review.failed",
 	turnChanged: "turn.changed",
 	mcpStatus: "mcp.status",
+	lspStatus: "lsp.status",
 	localesChanged: "locales.changed",
 	themesChanged: "themes.changed",
 } as const;
@@ -972,6 +978,9 @@ export interface WsMethodMap {
 	"host.update": { params: Record<string, never>; result: Ack };
 	"settings.update": { params: { config: AppConfigUpdate }; result: AppConfig };
 	"environment.get": { params: Record<string, never>; result: HostEnvironmentStatus };
+	"lsp.get": { params: { workspaceId?: string }; result: LspOverview };
+	"lsp.update": { params: { config: LspConfigUpdate; workspaceId?: string }; result: LspOverview };
+	"lsp.restart": { params: { workspaceId: string; serverId?: string }; result: Ack };
 	"network.get": { params: { refresh?: boolean }; result: NetworkProxyStatus };
 	"network.update": { params: NetworkProxyUpdate; result: NetworkProxyStatus };
 	"network.diagnose": { params: { provider: "openai" | "anthropic" }; result: NetworkDiagnostic[] };

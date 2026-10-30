@@ -7,6 +7,7 @@ import {
 	firstPromptOfTexts,
 	type GitDiffScope,
 	isSessionWorking,
+	LSP_PROTOCOL_VERSION,
 	MCP_PROTOCOL_VERSION,
 	type McpServerResourceSummary,
 	MODEL_PICKER_PROTOCOL_VERSION,
@@ -111,6 +112,10 @@ export function selectCanRenameChat(state: ProtocolState): boolean {
 
 export function selectSupportsProjectTrust(state: ProtocolState): boolean {
 	return state.protocolVersion !== null && state.protocolVersion >= PROJECT_TRUST_PROTOCOL_VERSION;
+}
+
+export function selectSupportsLsp(state: ProtocolState): boolean {
+	return state.protocolVersion !== null && state.protocolVersion >= LSP_PROTOCOL_VERSION;
 }
 
 export function selectSupportsMcp(state: ProtocolState): boolean {

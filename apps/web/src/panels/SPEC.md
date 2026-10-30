@@ -2286,6 +2286,24 @@ File rows share one hover/selection surface including the trailing action button
 between siblings and before expanded children. FileEntryActions uses the owned ContextMenu at the
 pointer; its more button invokes the same menu at its own bounds. File-pane toolbar hints open below.
 
+## Language server settings
+
+`LspSettings` is **Settings › Language servers** (Agent group, after MCP servers; available from protocol 97).
+Unlike the chat's client-local preferences these are host-wide, so the page reads `lsp.get` and writes
+`lsp.update`, replacing its overview with each reply; the controls wait for the reply (`busy`). `LspSettingsForm`
+is the props-only body. It shows: an information notice that PiDeck never installs servers and uses only those
+on `PATH` or in a project's `node_modules`, only in trusted projects; the master switch, the post-edit check, the
+`lsp` tool (both disabled while the master switch is off; the tool applies to new chats) and the idle minutes
+(a number input that commits on blur or Enter when it is a whole number within `LSP_IDLE_MINUTES`); **Built-in
+servers**, one row per catalog entry with its extensions, whether the host found the binary — or the install
+hint — and a switch that writes `{ disabled: true }` or removes the override; **Custom servers**, one row per
+server the catalog does not know, with Remove, and an add form (name, command, extensions). The form validates
+what it can in the user's language (name pattern, a name already in use, a missing command or extension) and
+shows the host's refusal, which is English and specific (for example an extension that is too long), beside the
+form rather than at the top. Extensions are given with or without the dot and the command is split on spaces.
+Tests: `LspSettings.test.tsx`; `e2e/lsp.spec.ts` covers persistence across a reload, the add form's refusals
+and restores the defaults afterwards.
+
 ## Network and proxy settings
 
 `NetworkSettings` is available from protocol 95 in the System group. It uses private `network.*` replies,
@@ -2312,8 +2330,8 @@ left of the terminal entry where the workspace-details control used to sit
 (warning) or background work in flight (working) for the focused chat, so closing the dock never hides
 either.
 
-`StatusPanel` renders five blocks in a persisted order — **Environment, Context, Background tasks,
-Connectors, Changes** — each a `StatusBlockFrame`: a fold toggle titled by the block (the body stays
+`StatusPanel` renders six blocks in a persisted order — **Environment, Context, Background tasks,
+Connectors, Language servers, Changes** — each a `StatusBlockFrame`: a fold toggle titled by the block (the body stays
 mounted while folded, so a pending confirmation or draft survives) and a grip that appears on hover or
 focus. Reordering is pointer drag (`useStatusReorder`: the grip's pointer capture moves the dragged block
 with `--status-drag-y` and its neighbours step aside by `--status-shift`; only the final order reaches React
@@ -2345,6 +2363,19 @@ What each block reads, and what it deliberately does not claim:
   a full-width footer action whose icon sits in the rows' icon column and which tints on hover — into
   Settings → MCP servers. While the block is open it keeps the workspace's MCP status watch alive.
   (Claude Desktop's "Connectors" block is MCP servers, not subagents.)
+- **Language servers** is the workspace's language servers (`StatusLspBlock`; `LspStatusView` is its props-only
+  body). It reads `lspByWorkspace` through `useLspStatus(workspaceId)`, which seeds the store with one `lsp.get`
+  when the dock opens and after each reconnect (the host pushes only changes; a push that lands while the read
+  is in flight wins). One sentence stands in for the rows when there is nothing to list: **off** (the master
+  switch), **untrusted** (the project has not been trusted, so nothing starts), **idle** (on, trusted, nothing
+  started yet — servers start when the agent touches a file), or, before the first read, nothing but the
+  footer; a host older than `LSP_PROTOCOL_VERSION` says it does not support language servers. Rows follow the
+  connector row: a `Braces` glyph with a state dot (starting is the working dot, ready success, missing
+  warning, failed error), the server's name, its root when that is not the workspace, and at the right edge the
+  findings of a ready server — errors first, else warnings, else "Ready" — or the state. A failed or missing
+  server adds its message (the install hint, or the stderr tail) under the row and a **Restart** / **Check
+  again** button that sends `lsp.restart`; the row then disappears until a file is touched again, which the
+  idle sentence explains. A **Manage** footer opens Settings → Language servers.
 - **Changes** reads `useGitStatus` — the same cached read the Files panel uses, for the scope the Changes tab
   has selected — and summarizes files and `+added −removed`; *Review changes* opens that scope's Changes tab.
   There is no commit action because the host has no commit request.
@@ -2352,6 +2383,7 @@ What each block reads, and what it deliberately does not claim:
 While the dock is open the composer's task strip steps aside (the roster shows the same rows).
 
 Tests: `statusBlocks.test.ts` and `statusModel.test.ts` cover the order model, persistence and the pure
-derivations; `e2e/status-dock.spec.ts` covers placement, the slide, fold, drag and keyboard reorder, reload
+derivations, `StatusLspBlock.test.tsx` the block's states, `e2e/lsp.spec.ts` the block against the real host
+(off, then untrusted after the switch) and against pushed status frames (every state, the restart request); `e2e/status-dock.spec.ts` covers placement, the slide, fold, drag and keyboard reorder, reload
 persistence and the chat-less dock, and `e2e/chat-resources.spec.ts` the roster, the detail dialog and the
 connector rows' geometry.

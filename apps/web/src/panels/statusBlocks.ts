@@ -9,6 +9,7 @@ export const STATUS_BLOCK_IDS = [
 	"context",
 	"tasks",
 	"connectors",
+	"lsp",
 	"changes",
 ] as const;
 export type StatusBlockId = (typeof STATUS_BLOCK_IDS)[number];

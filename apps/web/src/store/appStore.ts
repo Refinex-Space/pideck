@@ -9,6 +9,8 @@ import type {
 	LocalLocalesSnapshot,
 	LoginFrame,
 	LoginPush,
+	LspStatusPayload,
+	LspWorkspaceStatus,
 	McpListResult,
 	McpStatusSnapshot,
 	PiEvent,
@@ -140,6 +142,7 @@ import {
 	selectFilesTreeView,
 	selectLayoutIdentityPlacement,
 	selectLayoutResourcePlacement,
+	selectSupportsLsp,
 	selectSupportsMcp,
 	selectWorkspaceById,
 	selectWorkspaceNavTick,
@@ -421,6 +424,7 @@ export const SettingsSection = {
 	Providers: "providers",
 	Models: "models",
 	Mcp: "mcp",
+	Lsp: "lsp",
 	Skills: "skills",
 	Github: "github",
 	Appearance: "appearance",
@@ -1003,6 +1007,8 @@ interface AppState {
 	noteFsActivity: (payload: WorkspaceFsChangedPayload) => void;
 	pruneAgentActivity: (workspaceId: string, now: number) => void;
 	clearAgentActivityRecent: (workspaceId: string) => void;
+	lspByWorkspace: Record<string, LspWorkspaceStatus>;
+	applyLspStatus: (payload: LspStatusPayload) => void;
 	mcpByWorkspace: Record<string, McpWorkspaceProjection>;
 	mcpRevision: number;
 	installMcpList: (read: McpRead, result: McpListResult) => void;
@@ -2470,6 +2476,18 @@ export const useAppStore = create<AppState>((set, get) => ({
 				? { agentActivityByWorkspace: { ...s.agentActivityByWorkspace, [workspaceId]: cleared } }
 				: {};
 		}),
+	lspByWorkspace: {},
+	applyLspStatus: (payload) =>
+		set((state) => {
+			if (
+				!selectSupportsLsp(state) ||
+				state.status !== "connected" ||
+				state.removedWorkspaceIds[payload.workspaceId]
+			)
+				return {};
+			const { workspaceId, ...status } = payload;
+			return { lspByWorkspace: { ...state.lspByWorkspace, [workspaceId]: status } };
+		}),
 	mcpByWorkspace: {},
 	mcpRevision: 0,
 	installMcpList: (read, result) =>
@@ -2625,6 +2643,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 					? staleChatResources(state.resourceSnapshots)
 					: {},
 				mcpByWorkspace: selectSupportsMcp({ protocolVersion }) ? state.mcpByWorkspace : {},
+				lspByWorkspace: selectSupportsLsp({ protocolVersion }) ? state.lspByWorkspace : {},
 				projects: openProjects,
 				recentProjects: sortProjects(recentProjects),
 				hostPlatform: hostPlatform ?? null,
@@ -2727,6 +2746,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 				turnsByWorkspace: omitKey(state.turnsByWorkspace, workspaceId),
 				resourceSnapshots: omitKey(state.resourceSnapshots, workspaceId),
 				mcpByWorkspace: omitKey(state.mcpByWorkspace, workspaceId),
+				lspByWorkspace: omitKey(state.lspByWorkspace, workspaceId),
 				agentActivityByWorkspace: omitKey(state.agentActivityByWorkspace, workspaceId),
 				activeLogin:
 					state.activeLogin?.target?.workspaceId === workspaceId ? null : state.activeLogin,

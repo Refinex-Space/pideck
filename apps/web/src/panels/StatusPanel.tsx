@@ -5,6 +5,7 @@ import { StatusBlockFrame } from "./StatusBlockFrame";
 import { StatusChangesBlock } from "./StatusChangesBlock";
 import { StatusConnectorsBlock } from "./StatusConnectorsBlock";
 import { StatusContextBlock } from "./StatusContextBlock";
+import { StatusLspBlock } from "./StatusLspBlock";
 import { StatusTasksBlock } from "./StatusTasksBlock";
 import { dragShift, type StatusBlockId, useStatusBlocks } from "./statusBlocks";
 import { useStatusReorder } from "./useStatusReorder";
@@ -14,6 +15,7 @@ const BLOCK_TITLE: Record<StatusBlockId, MessageKey> = {
 	context: "status.block.context",
 	tasks: "status.block.tasks",
 	connectors: "status.block.connectors",
+	lsp: "status.block.lsp",
 	changes: "status.block.changes",
 };
 
@@ -53,6 +55,7 @@ export function StatusPanel({
 		context: <StatusContextBlock workspaceId={workspaceId} sessionId={sessionId} />,
 		tasks: <StatusTasksBlock />,
 		connectors: <StatusConnectorsBlock workspaceId={workspaceId} />,
+		lsp: <StatusLspBlock workspaceId={workspaceId} />,
 		changes: <StatusChangesBlock workspaceId={workspaceId} />,
 	};
 

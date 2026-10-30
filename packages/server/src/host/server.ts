@@ -15,6 +15,7 @@ import type {
 import {
 	FEEDBACK_INTERVIEW_PROTOCOL_VERSION,
 	LOCALES_PROTOCOL_VERSION,
+	LSP_PROTOCOL_VERSION,
 	MCP_PROTOCOL_VERSION,
 	PROTOCOL_VERSION,
 	USER_THEMES_PROTOCOL_VERSION,
@@ -41,6 +42,7 @@ import {
 	setBrowserToolHost,
 	setDisabledExtensionsResolver,
 	setExtUiPublisher,
+	setLspToolHost,
 	setMcpLoginPublisher,
 	setMcpPolicyResolver,
 	setMcpStatusPublisher,
@@ -82,6 +84,7 @@ import { BrowserService } from "../browser";
 import { redeliverInterview, releaseInterview, setFeedbackPublisher } from "../feedback";
 import { watchLocalLocales } from "../locales";
 import { logger, observeLoggedErrors } from "../log";
+import { lspManager } from "../lsp";
 import { initializeNetworkProxy } from "../network";
 import { loadWorkspaces } from "../persistence";
 import {
@@ -127,6 +130,7 @@ import { setFsNudgePublisher } from "./fsNudge";
 import { handleRequest, requestMethodDiagnostic } from "./handlers";
 import { provisionInitialTerminal } from "./initialTerminal";
 import { trackLoginOutcome } from "./loginAnalytics";
+import { publishLspStatus } from "./lspHost";
 import {
 	additionalCapture,
 	applyAdditionalAnalyticsSettings,
@@ -354,6 +358,7 @@ export async function createServer(options: CreateServerOptions = {}): Promise<R
 				ws.subscribe(WS_CHANNELS.reviewFailed);
 				ws.subscribe(WS_CHANNELS.turnChanged);
 				if (ws.data.protocolVersion >= MCP_PROTOCOL_VERSION) ws.subscribe(WS_CHANNELS.mcpStatus);
+				if (ws.data.protocolVersion >= LSP_PROTOCOL_VERSION) ws.subscribe(WS_CHANNELS.lspStatus);
 				if (ws.data.protocolVersion >= LOCALES_PROTOCOL_VERSION)
 					ws.subscribe(WS_CHANNELS.localesChanged);
 				if (ws.data.protocolVersion >= USER_THEMES_PROTOCOL_VERSION)
@@ -625,7 +630,15 @@ export async function createServer(options: CreateServerOptions = {}): Promise<R
 
 	setDisabledExtensionsResolver(() => new Set(getConfig().disabledExtensions));
 
+	const lspStatus = publishLspStatus(loadWorkspaces, (payload) =>
+		server.publish(
+			WS_CHANNELS.lspStatus,
+			JSON.stringify({ channel: WS_CHANNELS.lspStatus, data: payload }),
+		),
+	);
+
 	setProjectPublisher((project) => {
+		lspStatus.forProject(project.id);
 		const capture = additionalCapture();
 		if (capture) {
 			try {
@@ -737,6 +750,7 @@ export async function createServer(options: CreateServerOptions = {}): Promise<R
 			)
 		: null;
 	setBrowserToolHost(browser);
+	setLspToolHost(lspManager);
 	reconcilePendingReviewsOnBoot();
 
 	setSettingsPublisher((config, appliedUpdate) => {
@@ -922,6 +936,8 @@ export async function createServer(options: CreateServerOptions = {}): Promise<R
 		stopUserMcpWatch();
 		stopLocalesWatch();
 		stopThemesWatch();
+		lspStatus.stop();
+		void lspManager.disposeAll();
 		disposeAllSessions();
 		for (const timer of reapTimers.values()) clearTimeout(timer);
 		reapTimers.clear();

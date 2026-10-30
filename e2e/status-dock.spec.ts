@@ -1,7 +1,7 @@
 import { expect, type Locator, type Page, test } from "@playwright/test";
 import { enterDefaultWorkspace, openFixtureProject, openWorkspaceChat } from "./fixtures/app";
 
-const BLOCK_IDS = ["environment", "context", "tasks", "connectors", "changes"];
+const BLOCK_IDS = ["environment", "context", "tasks", "connectors", "lsp", "changes"];
 
 async function blockOrder(page: Page): Promise<string[]> {
 	return page
@@ -83,7 +83,7 @@ test("blocks fold, reorder by keyboard and by drag, and keep that across a reloa
 	await page.keyboard.press("Alt+ArrowUp");
 	await expect
 		.poll(() => blockOrder(page))
-		.toEqual(["environment", "context", "tasks", "changes", "connectors"]);
+		.toEqual(["environment", "context", "tasks", "connectors", "changes", "lsp"]);
 	await expect(handle).toBeFocused();
 
 	// Dragging the Context grip down until the block's centre passes Tasks lands it after Tasks.
@@ -100,7 +100,7 @@ test("blocks fold, reorder by keyboard and by drag, and keep that across a reloa
 	await page.mouse.up();
 	await expect
 		.poll(() => blockOrder(page))
-		.toEqual(["environment", "tasks", "context", "changes", "connectors"]);
+		.toEqual(["environment", "tasks", "context", "connectors", "changes", "lsp"]);
 
 	await page.reload();
 	await expect(page.getByTestId("status-panel")).toBeVisible();
@@ -108,8 +108,9 @@ test("blocks fold, reorder by keyboard and by drag, and keep that across a reloa
 		"environment",
 		"tasks",
 		"context",
-		"changes",
 		"connectors",
+		"changes",
+		"lsp",
 	]);
 	await expect(page.getByTestId("status-block-body-context")).toBeHidden();
 	await expect(page.getByTestId("open-status-panel")).toHaveAttribute("aria-pressed", "true");

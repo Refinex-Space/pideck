@@ -27,6 +27,10 @@ it is not a PiDeck release. Signing, notarization and a PiDeck automatic-update 
   work. Repository instructions alone do not enforce runtime authorization.
 - **Connect tools through MCP.** Configure servers and review the host's permission prompts. PiDeck
   retains the upstream engine, extension boundaries and tool behavior.
+- **Give the agent code intelligence.** Optional, off by default: the host can run the language servers
+  already installed on your machine (TypeScript, Java, Python, Go, Rust and more, or your own) in projects you
+  have trusted, so the agent can follow definitions and references and sees a file's errors right after
+  editing it. PiDeck never installs servers; see Settings → Language servers and the Status panel.
 - **Choose your environment.** Use the native desktop shell or the same UI in a browser, with English,
   Japanese, Simplified Chinese and Spanish interface catalogs and themes.
 

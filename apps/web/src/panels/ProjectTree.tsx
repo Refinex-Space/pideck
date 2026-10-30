@@ -7,7 +7,6 @@ import {
 	RiExternalLinkLine as ExternalLink,
 	RiFolderOpenLine as FolderOpen,
 	RiGitBranchLine as GitBranch,
-	RiHome2Line as House,
 	RiLoader4Line as Loader2,
 	RiMailOpenLine as MailOpen,
 	RiMailUnreadLine as MailUnread,
@@ -44,6 +43,7 @@ import { LoadingRegion } from "@thinkrail/ui/skeleton";
 import { cn } from "@thinkrail/ui/utils";
 import { FolderOpen as ExpandedFolder, FolderClosed } from "lucide-react";
 import { type MouseEvent, type ReactNode, useCallback, useEffect, useRef, useState } from "react";
+import { getStablePreferenceAdapter } from "@/clientPreferences";
 import { AttentionDot } from "@/components/AttentionDot";
 import { RunningIcon } from "@/components/RunningIcon";
 import { copyText, platformShortcutLabel } from "@/lib";
@@ -56,6 +56,7 @@ import {
 	type SettledReason,
 	selectActiveWorkspaceProjectId,
 	selectAutoSettledCounts,
+	selectContextProject,
 	selectProjectIsRunning,
 	selectProjectNeedsAttention,
 	selectWorkspaceIsRunning,
@@ -74,6 +75,7 @@ import { errorText, getTransport } from "../transport";
 import { AddProjectMenu } from "./AddProjectMenu";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { ExistingWorktreeDialog } from "./ExistingWorktreeDialog";
+import { type NewSessionTarget, preferredSessionTarget } from "./newSessionTarget";
 import { RemoveWorkspaceDialog } from "./RemoveWorkspaceDialog";
 import {
 	announceSettledShelf,
@@ -100,7 +102,25 @@ import {
 } from "./workspaceActions";
 
 const NAVIGATION_ACTION_CLASS =
-	"flex h-32 w-full items-center gap-8 rounded-md px-8 text-left tr-text-ui text-text-default outline-none hover:bg-control-bg-hovered focus-visible:outline-1 focus-visible:outline-focus-ring";
+	"group/nav flex h-32 w-full items-center gap-8 rounded-md px-8 text-left tr-text-ui text-text-default outline-none hover:bg-control-bg-hovered focus-visible:outline-1 focus-visible:outline-focus-ring";
+
+/** A navigation row's shortcut hint: out of sight at rest, shown while the row is hovered or focused. */
+const NAVIGATION_SHORTCUT_CLASS =
+	"shrink-0 tr-text-metadata text-text-subtle opacity-0 transition-opacity group-focus-visible/nav:opacity-100 group-hover/nav:opacity-100 motion-reduce:transition-none";
+
+/**
+ * The chord worth advertising for New session: the desktop app receives ⌘N, while a browser tab never
+ * does (the browser keeps it for a new window), so there the alias is the one that works.
+ */
+function newSessionShortcutLabel(): string {
+	return getStablePreferenceAdapter()
+		? platformShortcutLabel("N")
+		: platformShortcutLabel("N", { alt: true });
+}
+
+/** The Projects heading's controls: out of sight at rest on hover devices, like a row's own actions. */
+const SECTION_CONTROL_CLASS =
+	"shrink-0 opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover/section:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100";
 
 const HOVER_CONTROL_CLASS =
 	"shrink-0 opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100";
@@ -254,7 +274,18 @@ export function ProjectTree() {
 			});
 	};
 
-	const startNewSession = (projectId: string, target: "worktree" | "default") => {
+	const collapseAllProjects = () => {
+		const store = useAppStore.getState();
+		for (const projectId of Object.keys(store.expandedProjectIds))
+			store.toggleProjectExpanded(projectId);
+	};
+
+	const expandAllProjects = () => {
+		const store = useAppStore.getState();
+		for (const project of store.projects) store.expandProject(project.id);
+	};
+
+	const startNewSession = (projectId: string, target: NewSessionTarget) => {
 		useAppStore.getState().openNewSession({ projectId, target, prompt: "" });
 	};
 
@@ -263,6 +294,28 @@ export function ProjectTree() {
 		setExistingDialogProjectId(projectId);
 	};
 
+	const contextProject = useAppStore(selectContextProject);
+	const newSessionAvailable = contextProject !== null;
+	const newSessionRow = (
+		<button
+			type="button"
+			data-testid="new-session"
+			className={NAVIGATION_ACTION_CLASS}
+			{...(contextProject
+				? {
+						onClick: () =>
+							startNewSession(contextProject.id, preferredSessionTarget(contextProject.id)),
+					}
+				: {})}
+		>
+			<Plus className="size-16 shrink-0" />
+			<span className="min-w-0 flex-1 truncate">{t("panels.projectTree.newSession")}</span>
+			{newSessionAvailable ? (
+				<kbd className={NAVIGATION_SHORTCUT_CLASS}>{newSessionShortcutLabel()}</kbd>
+			) : null}
+		</button>
+	);
+
 	return (
 		<nav
 			aria-label={t("panels.projectTree.title")}
@@ -270,24 +323,19 @@ export function ProjectTree() {
 			className="flex flex-col gap-16"
 		>
 			<header className="flex flex-col gap-2">
-				<AddProjectMenu
-					align="start"
-					recentProjects={recentProjects}
-					onOpen={() => void pickAndOpen()}
-					onEnterHostPath={enterHostPath}
-					onOpenRecent={(p) => void openProject(p)}
-				>
-					<button
-						type="button"
-						ref={addProjectButtonRef}
-						aria-label={t("panels.projectTree.addProject")}
-						data-testid="add-project-menu"
-						className={NAVIGATION_ACTION_CLASS}
+				{newSessionAvailable ? (
+					newSessionRow
+				) : (
+					<AddProjectMenu
+						align="start"
+						recentProjects={recentProjects}
+						onOpen={() => void pickAndOpen()}
+						onEnterHostPath={enterHostPath}
+						onOpenRecent={(p) => void openProject(p)}
 					>
-						<Plus className="size-16 shrink-0" />
-						{t("panels.projectTree.addProject")}
-					</button>
-				</AddProjectMenu>
+						{newSessionRow}
+					</AddProjectMenu>
+				)}
 				<button
 					type="button"
 					className={NAVIGATION_ACTION_CLASS}
@@ -296,91 +344,146 @@ export function ProjectTree() {
 				>
 					<RiSearchLine className="size-16 shrink-0" />
 					<span className="min-w-0 flex-1 truncate">{t("shell.sessionSwitcher.title")}</span>
-					<kbd className="shrink-0 tr-text-metadata text-text-subtle">
-						{platformShortcutLabel("K")}
-					</kbd>
+					<kbd className={NAVIGATION_SHORTCUT_CLASS}>{platformShortcutLabel("K")}</kbd>
 				</button>
 			</header>
 
-			<ul className="flex flex-col gap-2">
-				{projects.map((project) => {
-					const isExpanded = expandedProjectIds[project.id] === true;
-					const list = workspaces[project.id];
-					const stateProjection = { sessionStateByWorkspace };
-					return (
-						<li key={project.id} className={isExpanded ? "pb-12 last:pb-0" : undefined}>
-							<ProjectRow
-								project={project}
-								isSelected={selectedProjectId === project.id}
-								isExpanded={isExpanded}
-								needsAttention={
-									!isExpanded && selectProjectNeedsAttention(stateProjection, project.id)
-								}
-								isRunning={!isExpanded && selectProjectIsRunning(stateProjection, project.id)}
-								workspaceCount={(list ?? []).filter((w) => !isDefaultWorkspace(w)).length}
-								onToggle={() => toggleExpand(project.id)}
-								onSelect={() => void selectProject(project.id, true)}
-								canRename={canRenameProject(protocolVersion)}
-								onRename={(name) => renameProject(project, name)}
-								onClose={() => closeProject(project)}
-								onNewSession={(target) => startNewSession(project.id, target)}
-								onOpenExistingWorktree={() => openExistingWorktreeDialog(project.id)}
-								onRegisterNameButton={(element) => registerProjectNameButton(project.id, element)}
-								onRestoreFocus={() => focusProjectNameOrAdd(project.id)}
-							/>
-							{isExpanded && list === undefined && (
-								<LoadingRegion rows={2} className="py-4 pr-8 pl-16" />
-							)}
-							{isExpanded && list !== undefined && (
-								<SettledPartition
-									enabled={supportsSettling}
-									projectId={project.id}
-									partition={selectWorkspacePartition(partitionState, project.id, now)}
-									shelfExpanded={settledShelfExpanded[project.id] === true}
-									shelfShown={settledShelfShown[project.id] ?? SETTLED_SHELF_PAGE}
-									renderRow={(ws, settled) => (
-										<WorkspaceRow
-											key={ws.id}
-											workspace={ws}
-											settled={settled}
-											now={now}
-											isActive={activeWorkspaceId === ws.id}
-											needsAttention={selectWorkspaceNeedsAttention(stateProjection, ws.id)}
-											isRunning={selectWorkspaceIsRunning(stateProjection, ws.id)}
-											canRename={canRenameWorkspace(protocolVersion, ws)}
-											canSettle={canSettleWorkspace(protocolVersion, ws)}
-											readAction={
-												supportsWorkspaceReadState(protocolVersion)
-													? selectWorkspaceReadAction(stateProjection, ws.id)
-													: null
-											}
-											editors={editors}
-											onSelect={() => selectWorkspace(ws)}
-											onOpenIn={(editor) => openWorkspaceIn(ws, editor)}
-											onCopyPath={() => void copyText(ws.worktreePath)}
-											onReveal={() => revealWorkspace(ws)}
-											onRename={(name) => renameWorkspace(ws, name)}
-											onSettle={() => settleWorkspace(ws.id)}
-											onKeepActive={() => unsettleWorkspace(ws.id)}
-											onMarkRead={() => markWorkspaceRead(ws.id)}
-											onMarkUnread={() => markWorkspaceUnread(ws.id)}
-										/>
-									)}
+			<div className="flex flex-col gap-2">
+				<div
+					data-testid="projects-heading"
+					className="group/section flex min-h-24 items-center gap-4 pr-4 pl-8"
+				>
+					<h2 className="min-w-0 flex-1 truncate tr-text-ui text-text-subtle">
+						{t("panels.projectTree.title")}
+					</h2>
+					{projects.length > 0 ? (
+						<DropdownMenu>
+							<DropdownMenuTrigger asChild>
+								<IconButton
+									icon={MoreVertical}
+									label={t("panels.projectTree.projectsMenu")}
+									variant="ghost"
+									size="s"
+									data-testid="projects-menu"
+									className={SECTION_CONTROL_CLASS}
 								/>
-							)}
-							{isExpanded && (worktreeCreations[project.id] ?? 0) > 0 && (
-								<div
-									data-testid="worktree-creating-row"
-									className="flex items-center gap-8 py-4 pr-8 pl-16 tr-text-ui text-text-muted"
+							</DropdownMenuTrigger>
+							<DropdownMenuContent align="start" data-testid="projects-actions">
+								<DropdownMenuItem
+									data-testid="projects-collapse-all"
+									disabled={projects.every((project) => expandedProjectIds[project.id] !== true)}
+									onSelect={() => collapseAllProjects()}
 								>
-									<Loader2 className="size-16 shrink-0 animate-spin motion-reduce:animate-none" />
-									{t("panels.projectTree.creatingWorktree")}
-								</div>
-							)}
-						</li>
-					);
-				})}
-			</ul>
+									<span>{t("panels.projectTree.collapseAll")}</span>
+								</DropdownMenuItem>
+								<DropdownMenuItem
+									data-testid="projects-expand-all"
+									disabled={projects.every((project) => expandedProjectIds[project.id] === true)}
+									onSelect={() => expandAllProjects()}
+								>
+									<span>{t("panels.projectTree.expandAll")}</span>
+								</DropdownMenuItem>
+							</DropdownMenuContent>
+						</DropdownMenu>
+					) : null}
+					<AddProjectMenu
+						align="start"
+						recentProjects={recentProjects}
+						onOpen={() => void pickAndOpen()}
+						onEnterHostPath={enterHostPath}
+						onOpenRecent={(p) => void openProject(p)}
+					>
+						<IconButton
+							icon={Plus}
+							ref={addProjectButtonRef}
+							label={t("panels.projectTree.addProject")}
+							variant="ghost"
+							size="s"
+							data-testid="add-project-menu"
+							className={projects.length > 0 ? SECTION_CONTROL_CLASS : "shrink-0"}
+						/>
+					</AddProjectMenu>
+				</div>
+				<ul className="flex flex-col gap-2">
+					{projects.map((project) => {
+						const isExpanded = expandedProjectIds[project.id] === true;
+						const list = workspaces[project.id];
+						const stateProjection = { sessionStateByWorkspace };
+						return (
+							<li key={project.id} className={isExpanded ? "pb-12 last:pb-0" : undefined}>
+								<ProjectRow
+									project={project}
+									isSelected={selectedProjectId === project.id}
+									isExpanded={isExpanded}
+									needsAttention={
+										!isExpanded && selectProjectNeedsAttention(stateProjection, project.id)
+									}
+									isRunning={!isExpanded && selectProjectIsRunning(stateProjection, project.id)}
+									workspaceCount={(list ?? []).filter((w) => !isDefaultWorkspace(w)).length}
+									onToggle={() => toggleExpand(project.id)}
+									onSelect={() => void selectProject(project.id, true)}
+									canRename={canRenameProject(protocolVersion)}
+									onRename={(name) => renameProject(project, name)}
+									onClose={() => closeProject(project)}
+									onNewSession={(target) => startNewSession(project.id, target)}
+									onOpenExistingWorktree={() => openExistingWorktreeDialog(project.id)}
+									onRegisterNameButton={(element) => registerProjectNameButton(project.id, element)}
+									onRestoreFocus={() => focusProjectNameOrAdd(project.id)}
+								/>
+								{isExpanded && list === undefined && (
+									<LoadingRegion rows={2} className="py-4 pr-8 pl-16" />
+								)}
+								{isExpanded && list !== undefined && (
+									<SettledPartition
+										enabled={supportsSettling}
+										projectId={project.id}
+										partition={selectWorkspacePartition(partitionState, project.id, now)}
+										shelfExpanded={settledShelfExpanded[project.id] === true}
+										shelfShown={settledShelfShown[project.id] ?? SETTLED_SHELF_PAGE}
+										renderRow={(ws, settled) => (
+											<WorkspaceRow
+												key={ws.id}
+												workspace={ws}
+												settled={settled}
+												now={now}
+												isActive={activeWorkspaceId === ws.id}
+												needsAttention={selectWorkspaceNeedsAttention(stateProjection, ws.id)}
+												isRunning={selectWorkspaceIsRunning(stateProjection, ws.id)}
+												canRename={canRenameWorkspace(protocolVersion, ws)}
+												canSettle={canSettleWorkspace(protocolVersion, ws)}
+												readAction={
+													supportsWorkspaceReadState(protocolVersion)
+														? selectWorkspaceReadAction(stateProjection, ws.id)
+														: null
+												}
+												editors={editors}
+												onSelect={() => selectWorkspace(ws)}
+												onOpenIn={(editor) => openWorkspaceIn(ws, editor)}
+												onCopyPath={() => void copyText(ws.worktreePath)}
+												onReveal={() => revealWorkspace(ws)}
+												onRename={(name) => renameWorkspace(ws, name)}
+												onSettle={() => settleWorkspace(ws.id)}
+												onKeepActive={() => unsettleWorkspace(ws.id)}
+												onMarkRead={() => markWorkspaceRead(ws.id)}
+												onMarkUnread={() => markWorkspaceUnread(ws.id)}
+											/>
+										)}
+									/>
+								)}
+								{isExpanded && (worktreeCreations[project.id] ?? 0) > 0 && (
+									<div
+										data-testid="worktree-creating-row"
+										className="flex items-center gap-8 py-4 pr-8 pl-16 tr-text-ui text-text-muted"
+									>
+										<Loader2 className="size-16 shrink-0 animate-spin motion-reduce:animate-none" />
+										{t("panels.projectTree.creatingWorktree")}
+									</div>
+								)}
+							</li>
+						);
+					})}
+				</ul>
+			</div>
 
 			{existingDialogProjectId !== null ? (
 				<ExistingWorktreeDialog
@@ -508,7 +611,7 @@ function ProjectRow({
 	canRename: boolean;
 	onRename: (name: string) => void;
 	onClose: () => void;
-	onNewSession: (target: "worktree" | "default") => void;
+	onNewSession: (target: NewSessionTarget) => void;
 	onOpenExistingWorktree: () => void;
 	onRegisterNameButton: (element: HTMLButtonElement | null) => void;
 	onRestoreFocus: () => void;
@@ -604,34 +707,15 @@ function ProjectRow({
 					{workspaceCount}
 				</span>
 			)}
-			<DropdownMenu>
-				<DropdownMenuTrigger asChild>
-					<IconButton
-						icon={Plus}
-						label={createWorkspaceLabel}
-						variant="ghost"
-						size="s"
-						className={HOVER_CONTROL_CLASS}
-						data-testid="add-workspace"
-					/>
-				</DropdownMenuTrigger>
-				<DropdownMenuContent align="start" data-testid="new-session-menu">
-					<DropdownMenuItem
-						data-testid="new-session-isolated"
-						onSelect={() => onNewSession("worktree")}
-					>
-						<GitBranch />
-						{t("panels.newWorkspace.targetIsolated")}
-					</DropdownMenuItem>
-					<DropdownMenuItem
-						data-testid="new-session-default"
-						onSelect={() => onNewSession("default")}
-					>
-						<House />
-						{t("panels.newWorkspace.targetDefault")}
-					</DropdownMenuItem>
-				</DropdownMenuContent>
-			</DropdownMenu>
+			<IconButton
+				icon={Plus}
+				label={createWorkspaceLabel}
+				variant="ghost"
+				size="s"
+				className={HOVER_CONTROL_CLASS}
+				data-testid="add-workspace"
+				onClick={() => onNewSession(preferredSessionTarget(project.id))}
+			/>
 		</div>
 	);
 	return (

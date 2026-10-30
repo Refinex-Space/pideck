@@ -21,8 +21,12 @@ links target `refinex/dev`; `0.0.0-dev` is not a release tag. Released versions 
 ## PiDeck welcome and navigation presentation
 
 Welcome uses a restrained heading and a bounded vertical list of actionable rows. Existing project,
-worktree, setup-skill, recent-project, host-path and trust flows remain unchanged. The Projects pane has one heading; its body begins with a visible “Add project” ghost action backed
-by the existing AddProjectMenu, including recent and host-path entries. Project/workspace rows
+worktree, setup-skill, recent-project, host-path and trust flows remain unchanged. The sidebar header is two quiet rows: **New session** (`Mod+N`) and **Search** (`Mod+K`), each with
+its chord shown only on hover or keyboard focus. Below them a **Projects** heading carries the list's own
+controls, revealed on hover or keyboard focus (always shown while no project is open): a **⋯** menu (*Collapse all* /
+*Expand all projects*, each disabled when it would change nothing) and a **+** that opens the existing AddProjectMenu
+(open project, host path, GitHub when available, recents). With no project to start in, the New session row opens that
+same menu instead. There is no project ordering control: the host owns project order. Project/workspace rows
 use neutral selection colours; their attention, running, settled and destructive states retain their semantics.
 
 
@@ -56,7 +60,7 @@ treatment.
   **always-visible chevron** + folder/name + a collapsed-only plain workspace count + an **always-visible Create
   workspace `+` in a fixed right-edge column**. That `+` is the **same control as the Projects-header Add
   project `+`** — both are `IconButton` ghost `s`, so they render identically and their glyphs
-  line up on one vertical axis (both sit at the row's `pr-xs` right edge). The Create workspace `+` carries a
+  line up on one vertical axis (both sit at the row's `pr-xs` right edge). The `+` carries a
   tooltip and accessible name naming the shell's `Mod+N` chord and its `Mod+Alt+N` browser alias through `lib`'s
   `platformShortcutLabel` (see `submodule-web-shell` global chords); the context-menu item stays plain.
   Long names truncate before the count/action; there is deliberately **no visible Close or overflow icon**.
@@ -74,12 +78,13 @@ treatment.
   the project and activates the attached row without starting a chat. Close
   opens a centered, neutral `ConfirmDialog` titled **“Close {name}?”**, description **“Removes this project
   from the open projects list. Its repository, workspaces, chats, and running activity are kept. Reopen it
-  from Add project → Recents.”**, Cancel initially focused, and **Close project**; Cancel, backdrop, and
+  from Open project → Recents.”**, Cancel initially focused, and **Close project**; Cancel, backdrop, and
   Escape dismiss. Confirm fires `project.close` and waits for the full `project.updated` push—no optimistic
   removal; success is the
   row disappearing with no toast, while rejection keeps it and raises an error toast. Menu/dialog dismissal
   restores the source project-name focus; successful close focuses the fallback project name or the Projects
-  view's Add project control. `ProjectTree` also owns the per-project `+` menu that opens `NewSessionPage` **and** each
+  view's Projects-heading **+**. `ProjectTree` also owns the per-project `+` — one click straight into `NewSessionPage`
+with the target remembered for that project — **and** each
   workspace row's hover-revealed **kebab menu** (`MoreVertical`, controlled `DropdownMenu`) — right-clicking
   anywhere on the row opens that exact menu at the kebab without selecting/activating the workspace, while
   the kebab remains the touch and keyboard-focus path. Its actions are a `DropdownMenuSub` **"Open in"**
@@ -437,16 +442,19 @@ between the regular groups and the plugin cards, so the groups read as separate 
 button in the chat or on the New Workspace page any more.
 
 **`NewSessionPage`** (`panels/NewSessionPage.tsx`) is the start-working surface. It is a page in the
-Project Home main panel, **not a dialog**: a project's `+` opens a two-item menu (*Isolated workspace* /
-*Project folder*), and the choice calls the store's `openNewSession`, which leaves the active workspace
+Project Home main panel, **not a dialog**: the sidebar *New session* row, a project's `+` and `Mod+N` call the store's
+`openNewSession` with the project's remembered target (`newSessionTarget.ts`: per project, first time worktree, kept in the
+window-local preference store), which leaves the active workspace
 (`activeWorkspaceId: null`) and records the draft (`newSessionDraft`: project, target, seed prompt, note,
 the workspace to return to, and a `key` that resets the form). `WelcomePanel` renders the page in place of
 its cards while a draft exists. Cancel/`Esc` (`cancelNewSession`) returns to the workspace that was open;
 creating, or any workspace activation, simply clears the draft; picking a project in the tree clears it
-too. The composer card holds the prompt and the model pill with Cancel/Create; below it a pill row
-carries **a target control** (a dropdown with the two modes, so the choice can still be changed), the
-project picker, the base-branch picker (isolated only) and Skills. The legacy description of that
-control follows: **a target control** chooses **where** the work runs, and the header is
+too. A greeting (*What do you want to work on in {project}?*) leads the page. The composer card holds only the prompt and
+the model pill with Cancel/Create. A chip row **below the card, outside it** carries the project picker (whose footer
+offers Open project, host path and recents), a **segmented target control** (*Current branch · {branch}* /
+*New worktree*, the `raised` `SegmentedControl` variant: a recessed track with the selected option lifted as an
+elevated, hairline-bordered chip) and, in worktree mode only, the base-branch picker. Choosing or creating remembers
+the target for that project. Skills stay in Settings. The legacy description of the target follows: **the target control** chooses **where** the work runs, and the header is
 **mode-aware** so it always names the operation truthfully: **Isolated workspace** → title **“Create
 workspace”**, description **“A separate checkout on its own new branch. Files, chats, changes, and
 terminals stay scoped to it.”**; **Project folder** → title **“Work in project folder”**, description
@@ -559,7 +567,9 @@ a project picker, the prompt hero, and the reused
   siblings); `SettingsGroup` is a titled block of `SettingsRow`s — label, optional description, one
   control, wrapping the control below the label at narrow widths; `SegmentedControl` is a native-radio
   group with `value: T | null` (`null` selects nothing, for a host value no option names) and per-option
-  disabled; `SettingsNotice` is the one inline neutral/info/success/warning/error notice. Free-text
+  disabled, in a `flat` (selected option tinted) or `raised` (recessed track — the sidebar surface, a gray
+  step in light themes — with the selected option a `control-bg` chip, bordered and carrying the small shadow, so it
+  reads as lifted in both appearances) variant; `SettingsNotice` is the one inline neutral/info/success/warning/error notice. Free-text
   settings share one **auto-save input pattern**: Enter or blur saves a valid, changed value once (no
   Save/Apply button); an invalid draft stays visible with `aria-invalid` and a visible range message and is
   never sent; Escape reverts to the authoritative value; the input carries `data-settings-draft-input`;

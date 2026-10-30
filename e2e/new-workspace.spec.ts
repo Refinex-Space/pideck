@@ -73,7 +73,11 @@ test("the dialog lists local branches (no stray origin) and creates a worktree",
 
 	await expect(dialog.getByRole("heading", { name: "Create workspace" })).toBeVisible();
 	await expect(dialog.getByTestId("ws-prompt-note")).toHaveCount(0);
-	await expect(dialog.getByTestId("ws-target")).toHaveText("Isolated workspace");
+	await expect(dialog.getByTestId("ws-target-worktree")).toHaveAttribute("data-active", "true");
+	await expect(dialog.getByTestId("ws-target-default")).toContainText("Current branch · main");
+	await expect(dialog.getByTestId("ws-greeting")).toHaveText(
+		"What do you want to work on in sample-project?",
+	);
 
 	await chooseNewSessionTarget(page, "default");
 	await expect(dialog.getByRole("heading", { name: "Work in project folder" })).toBeVisible();

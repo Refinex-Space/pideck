@@ -42,7 +42,7 @@ test("Studio starts with a bounded navigation width and reapplies it only on exp
 			Math.abs((await navigationWidth(page.locator("#project-home-projects"), rail)) - 288),
 		)
 		.toBeLessThan(2);
-	await expect(page.getByTestId("add-project-menu")).toHaveText("Add project");
+	await expect(page.getByTestId("add-project-menu")).toHaveAccessibleName("Open project");
 	await createWorkspaceViaDialog(page);
 	const pane = page.getByTestId("left-stack");
 	await expect

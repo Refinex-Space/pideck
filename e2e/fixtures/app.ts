@@ -237,14 +237,16 @@ async function disposeLiveSessions(page: Page): Promise<void> {
 	}
 }
 
-/** The project's + opens a type menu; picking an entry opens the new-session page in the main panel. */
+/** The project's + opens the new-session page in the main panel; `target` then picks where it runs. */
 export async function openNewSessionPage(
 	page: Page,
 	target: "isolated" | "default" = "isolated",
 ): Promise<void> {
 	await page.getByTestId("add-workspace").first().click();
-	await page.getByTestId(`new-session-${target}`).click();
 	await expect(page.getByTestId("new-workspace-page")).toBeVisible();
+	await page
+		.getByTestId(target === "isolated" ? "ws-target-worktree" : "ws-target-default")
+		.click();
 }
 
 /** A fresh chat in the active workspace: its location menu for a worktree, the project's + for the project folder. */
@@ -279,12 +281,11 @@ export async function startNewChat(page: Page): Promise<void> {
 		.toBe(true);
 }
 
-/** Switches the target pill on an open new-session page. */
+/** Switches the "where to run" control on an open new-session page. */
 export async function chooseNewSessionTarget(
 	page: Page,
 	target: "worktree" | "default",
 ): Promise<void> {
-	await page.getByTestId("ws-target").click();
 	await page.getByTestId(`ws-target-${target}`).click();
 }
 

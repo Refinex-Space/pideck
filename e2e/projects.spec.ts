@@ -470,7 +470,7 @@ test("project context actions stay compact and close/reopen is lossless across c
 	await expect(confirm).toHaveAttribute("role", "alertdialog");
 	await expect(confirm).toContainText("Close second-project?");
 	await expect(confirm).toContainText(
-		"Removes this project from the open projects list. Its repository, workspaces, chats, and running activity are kept. Reopen it from Add project → Recents.",
+		"Removes this project from the open projects list. Its repository, workspaces, chats, and running activity are kept. Reopen it from Open project → Recents.",
 	);
 	const cancel = confirm.getByRole("button", { name: "Cancel" });
 	await expect(cancel).toBeFocused();
@@ -546,7 +546,6 @@ test("project names toggle their rows while keeping home navigation and independ
 	await name.press("Space");
 	await expect(icon).toHaveAttribute("aria-expanded", "false");
 	await row.getByTestId("add-workspace").click();
-	await page.getByTestId("new-session-isolated").click();
 	await expect(page.getByTestId("new-workspace-page")).toBeVisible();
 	await expect(name).toHaveAttribute("aria-expanded", "false");
 	await page.keyboard.press("Escape");

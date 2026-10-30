@@ -4,6 +4,7 @@ import { getNavigationHistory, goBack, goForward } from "../navigation";
 import { NotificationPermissionPrompt, useAttentionNotifications } from "../notifications";
 import { AnalyticsConsentDialog } from "../panels/AnalyticsConsentDialog";
 import { InterviewPromptDialog } from "../panels/InterviewPromptDialog";
+import { preferredSessionTarget } from "../panels/newSessionTarget";
 import { SettingsDialog } from "../panels/SettingsDialog";
 import { Toaster } from "../panels/Toaster";
 import { useBranchStatus } from "../panels/useBranchStatus";
@@ -64,7 +65,9 @@ export function Shell() {
 	const updates = useUpdates(supportsHostUpdateRun(protocolVersion) ? runHostUpdate : null);
 	const windowControls = useNativeWindowControls();
 	const startNewWorkspace = (projectId: string) =>
-		useAppStore.getState().openNewSession({ projectId, target: "worktree", prompt: "" });
+		useAppStore
+			.getState()
+			.openNewSession({ projectId, target: preferredSessionTarget(projectId), prompt: "" });
 	const sessionSwitcherOpen = useAppStore((s) => s.sessionSwitcherOpen);
 
 	const homeProjects = useCollapsibleRegion<HTMLDivElement>(PROJECT_HOME_PROJECTS_REGION_ID);

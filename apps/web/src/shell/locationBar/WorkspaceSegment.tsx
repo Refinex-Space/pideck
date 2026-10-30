@@ -87,7 +87,7 @@ export function WorkspaceSegment({
 	onNewWorkspace,
 }: {
 	project: Project;
-	workspace: Workspace | null;
+	workspace: Workspace;
 	activeSettled: boolean;
 	now: number;
 	onNewWorkspace: () => void;
@@ -102,18 +102,15 @@ export function WorkspaceSegment({
 	const settleIdleDays = useAppStore((s) => s.settleIdleDays);
 	const activeBlocked = useAppStore(
 		(s) =>
-			workspace !== null &&
-			(selectWorkspaceIsRunning(s, workspace.id) || selectWorkspaceNeedsAttention(s, workspace.id)),
+			selectWorkspaceIsRunning(s, workspace.id) || selectWorkspaceNeedsAttention(s, workspace.id),
 	);
-	const canSettle = workspace !== null && canSettleWorkspace(protocolVersion, workspace);
+	const canSettle = canSettleWorkspace(protocolVersion, workspace);
 	const readAction = useAppStore((s) =>
-		workspace !== null && supportsWorkspaceReadState(protocolVersion)
-			? selectWorkspaceReadAction(s, workspace.id)
-			: null,
+		supportsWorkspaceReadState(protocolVersion) ? selectWorkspaceReadAction(s, workspace.id) : null,
 	);
 	const editors = useEditors();
 	const [removing, setRemoving] = useState<Workspace | null>(null);
-	const workspaceId = workspace?.id ?? null;
+	const workspaceId = workspace.id;
 	useEffect(() => {
 		setRemoving((current) => (current && current.id !== workspaceId ? null : current));
 	}, [workspaceId]);
@@ -123,10 +120,10 @@ export function WorkspaceSegment({
 		void loadProjectWorkspaces(project.id).catch(() => {});
 	}, [menuOpen, project.id, siblings]);
 
-	const canRename = workspace !== null && canRenameWorkspace(protocolVersion, workspace);
-	const isDefault = workspace !== null && isDefaultWorkspace(workspace);
-	const isExternal = workspace !== null && isExternalWorkspace(workspace);
-	const name = workspace ? workspaceName(t, workspace) : t("shell.location.project.home");
+	const canRename = canRenameWorkspace(protocolVersion, workspace);
+	const isDefault = isDefaultWorkspace(workspace);
+	const isExternal = isExternalWorkspace(workspace);
+	const name = workspaceName(t, workspace);
 	const {
 		editing,
 		nameRef,
@@ -141,22 +138,22 @@ export function WorkspaceSegment({
 			workspaces: { [project.id]: siblings },
 			workspaceSettlingSupported,
 			sessionStateByWorkspace: sessionStateByWorkspace ?? {},
-			activeWorkspaceId: workspace?.id ?? null,
+			activeWorkspaceId: workspace.id,
 			activeWorkspaceLiveLatch,
 			settleIdleDays,
 		};
 		const split = selectWorkspacePartition(projection, project.id, now, "recent");
 		return {
 			now,
-			live: split.live.filter((candidate) => candidate.id !== workspace?.id),
-			settled: split.settled.filter((row) => row.workspace.id !== workspace?.id),
+			live: split.live.filter((candidate) => candidate.id !== workspace.id),
+			settled: split.settled.filter((row) => row.workspace.id !== workspace.id),
 		};
 	}, [
 		menuOpen,
 		siblings,
 		sessionStateByWorkspace,
 		project.id,
-		workspace?.id,
+		workspace.id,
 		activeWorkspaceLiveLatch,
 		settleIdleDays,
 		workspaceSettlingSupported,
@@ -176,7 +173,7 @@ export function WorkspaceSegment({
 			testid="scope-workspace-segment"
 			className="min-w-64 max-w-[460px] pl-0 sm:pl-8"
 		>
-			{editing && workspace ? (
+			{editing ? (
 				<input
 					ref={nameRef}
 					data-testid="scope-name"
@@ -205,109 +202,105 @@ export function WorkspaceSegment({
 						data-testid="scope-workspace-menu"
 						onCloseAutoFocus={onMenuCloseAutoFocus}
 					>
-						{workspace ? (
-							<>
-								<DropdownMenuLabel className="truncate">
-									{workspaceName(t, workspace)}
-								</DropdownMenuLabel>
-								<DropdownMenuItem
-									data-testid="scope-workspace-new-chat"
-									onSelect={() => void startChatInTab(workspace.id)}
-								>
-									<MessageSquarePlus />
-									{t("shell.location.workspace.newChat")}
-								</DropdownMenuItem>
-								{editors.length > 0 ? (
-									<DropdownMenuSub>
-										<DropdownMenuSubTrigger data-testid="scope-workspace-open-in">
-											<ExternalLink />
-											{t("shell.location.workspace.openIn")}
-										</DropdownMenuSubTrigger>
-										<DropdownMenuSubContent>
-											{editors.map((editor) => (
-												<DropdownMenuItem
-													key={editor.id}
-													data-testid="scope-workspace-open-in-editor"
-													onSelect={() => openWorkspaceIn(workspace, editor)}
-												>
-													{editor.label}
-												</DropdownMenuItem>
-											))}
-										</DropdownMenuSubContent>
-									</DropdownMenuSub>
-								) : null}
-								{canRename ? (
-									<DropdownMenuItem data-testid="scope-workspace-rename" onSelect={startRename}>
-										<Pencil />
-										{t("common.rename")}
-									</DropdownMenuItem>
-								) : null}
-								<DropdownMenuItem
-									data-testid="scope-workspace-copy-path"
-									onSelect={() => void copyText(workspace.worktreePath)}
-								>
-									<Copy />
-									{t("shell.location.workspace.copyPath")}
-								</DropdownMenuItem>
-								<DropdownMenuItem
-									data-testid="scope-workspace-reveal"
-									onSelect={() => revealWorkspace(workspace)}
-								>
-									<FolderOpen />
-									{t("shell.location.workspace.reveal")}
-								</DropdownMenuItem>
-								{readAction === "markRead" ? (
-									<DropdownMenuItem
-										data-testid="scope-workspace-mark-read"
-										onSelect={() => markWorkspaceRead(workspace.id)}
-									>
-										<MailOpen />
-										{t("shell.location.workspace.markRead")}
-									</DropdownMenuItem>
-								) : readAction === "markUnread" ? (
-									<DropdownMenuItem
-										data-testid="scope-workspace-mark-unread"
-										onSelect={() => markWorkspaceUnread(workspace.id)}
-									>
-										<MailUnread />
-										{t("shell.location.workspace.markUnread")}
-									</DropdownMenuItem>
-								) : null}
-								{canSettle ? (
-									activeSettled ? (
+						<DropdownMenuLabel className="truncate">
+							{workspaceName(t, workspace)}
+						</DropdownMenuLabel>
+						<DropdownMenuItem
+							data-testid="scope-workspace-new-chat"
+							onSelect={() => void startChatInTab(workspace.id)}
+						>
+							<MessageSquarePlus />
+							{t("shell.location.workspace.newChat")}
+						</DropdownMenuItem>
+						{editors.length > 0 ? (
+							<DropdownMenuSub>
+								<DropdownMenuSubTrigger data-testid="scope-workspace-open-in">
+									<ExternalLink />
+									{t("shell.location.workspace.openIn")}
+								</DropdownMenuSubTrigger>
+								<DropdownMenuSubContent>
+									{editors.map((editor) => (
 										<DropdownMenuItem
-											data-testid="scope-workspace-keep-active"
-											onSelect={() => unsettleWorkspace(workspace.id)}
+											key={editor.id}
+											data-testid="scope-workspace-open-in-editor"
+											onSelect={() => openWorkspaceIn(workspace, editor)}
 										>
-											<ArrowGoBack />
-											{t("shell.location.workspace.keepActive")}
+											{editor.label}
 										</DropdownMenuItem>
-									) : (
-										<DropdownMenuItem
-											data-testid="scope-workspace-settle"
-											disabled={activeBlocked}
-											onSelect={() => settleWorkspace(workspace.id)}
-										>
-											<Check />
-											{t("shell.location.workspace.settle")}
-										</DropdownMenuItem>
-									)
-								) : null}
-								{isDefault ? null : (
-									<DropdownMenuItem
-										data-testid="scope-workspace-remove"
-										className="text-feedback-error focus:bg-feedback-error-subtle [&_svg]:text-feedback-error"
-										onSelect={() => setRemoving(workspace)}
-									>
-										<Trash2 />
-										{isExternal
-											? t("shell.location.workspace.removeExternal")
-											: t("shell.location.workspace.remove")}
-									</DropdownMenuItem>
-								)}
-								<DropdownMenuSeparator />
-							</>
+									))}
+								</DropdownMenuSubContent>
+							</DropdownMenuSub>
 						) : null}
+						{canRename ? (
+							<DropdownMenuItem data-testid="scope-workspace-rename" onSelect={startRename}>
+								<Pencil />
+								{t("common.rename")}
+							</DropdownMenuItem>
+						) : null}
+						<DropdownMenuItem
+							data-testid="scope-workspace-copy-path"
+							onSelect={() => void copyText(workspace.worktreePath)}
+						>
+							<Copy />
+							{t("shell.location.workspace.copyPath")}
+						</DropdownMenuItem>
+						<DropdownMenuItem
+							data-testid="scope-workspace-reveal"
+							onSelect={() => revealWorkspace(workspace)}
+						>
+							<FolderOpen />
+							{t("shell.location.workspace.reveal")}
+						</DropdownMenuItem>
+						{readAction === "markRead" ? (
+							<DropdownMenuItem
+								data-testid="scope-workspace-mark-read"
+								onSelect={() => markWorkspaceRead(workspace.id)}
+							>
+								<MailOpen />
+								{t("shell.location.workspace.markRead")}
+							</DropdownMenuItem>
+						) : readAction === "markUnread" ? (
+							<DropdownMenuItem
+								data-testid="scope-workspace-mark-unread"
+								onSelect={() => markWorkspaceUnread(workspace.id)}
+							>
+								<MailUnread />
+								{t("shell.location.workspace.markUnread")}
+							</DropdownMenuItem>
+						) : null}
+						{canSettle ? (
+							activeSettled ? (
+								<DropdownMenuItem
+									data-testid="scope-workspace-keep-active"
+									onSelect={() => unsettleWorkspace(workspace.id)}
+								>
+									<ArrowGoBack />
+									{t("shell.location.workspace.keepActive")}
+								</DropdownMenuItem>
+							) : (
+								<DropdownMenuItem
+									data-testid="scope-workspace-settle"
+									disabled={activeBlocked}
+									onSelect={() => settleWorkspace(workspace.id)}
+								>
+									<Check />
+									{t("shell.location.workspace.settle")}
+								</DropdownMenuItem>
+							)
+						) : null}
+						{isDefault ? null : (
+							<DropdownMenuItem
+								data-testid="scope-workspace-remove"
+								className="text-feedback-error focus:bg-feedback-error-subtle [&_svg]:text-feedback-error"
+								onSelect={() => setRemoving(workspace)}
+							>
+								<Trash2 />
+								{isExternal
+									? t("shell.location.workspace.removeExternal")
+									: t("shell.location.workspace.remove")}
+							</DropdownMenuItem>
+						)}
+						<DropdownMenuSeparator />
 						<DropdownMenuLabel>{t("shell.location.workspace.switchTo")}</DropdownMenuLabel>
 						{partition === null ? (
 							<DropdownMenuItem disabled>{t("common.loading")}</DropdownMenuItem>

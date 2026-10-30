@@ -13,8 +13,9 @@ tags: [ui, topbar, public-surface-checked]
 The workspace switcher remains in the main canvas's 40px window-control row. In a workspace it is
 followed by one **Status toggle** (`open-status-panel`, a `LayoutList` icon, `aria-pressed`, selected fill
 while open) that opens and closes the status dock beside the chat ([[submodule-web-panels]], *Status dock*).
-It sits where the workspace-details control did, immediately left of the terminal entry, and is absent at
-Project Home, which keeps its workspace switcher and uses the sidebar for project selection.
+It sits where the workspace-details control did, immediately left of the terminal entry. Project Home draws
+neither the toggle nor a workspace pill: the sidebar selects projects and workspaces, and the project folder
+(Default) is reached from the Welcome fork or its chats.
 
 The project, branch, remote and review controls are no longer a popover: `LocationDetails` — the same
 hairline `DetailRow`s — renders inside the dock's Environment block. The shell builds it from the one
@@ -114,8 +115,8 @@ Repeated category captions stay screen-reader text; base branch and settled stat
   edit — pending offline commit included — rather than letting a later welcome rename the newly active
   workspace. The Remove confirmation follows the same rule: it renders from the workspace snapshotted when
   Remove was chosen and dismisses itself if the active workspace changes underneath it (browser Back, a
-  remote removal fallback), so confirming can never delete a workspace other than the one it names. At
-  Project home the pill reads "Project home" and offers only the switcher and creation.
+  remote removal fallback), so confirming can never delete a workspace other than the one it names. The segment
+  always has a workspace: Project home renders no pill.
 - **Branch · from base** opens the git card, moving focus onto the card itself (not its first button, which
   would pop the copy tooltip) so one Tab reaches the actions: branch (copy → success toast), *Based on* (hidden for
   user-owned workspaces, whose caption is plain "Branch"), *Compare to* (the Changes panel's `BranchPicker`

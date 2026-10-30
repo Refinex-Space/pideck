@@ -59,7 +59,7 @@ Children (left → right):
 | Logo | `<BrandLogo />` (the supplied full vector artwork) | `brand-logo` | The theme-aware ThinkRail brand mark |
 | Scope Context | inline block in `Shell.tsx` | `scope-context` | Persistent location breadcrumb; two lines when a workspace is active |
 | — Scope Project | inline `<span>` | `scope-project` | Owning project name |
-| — Scope Name | inline `<span>` | `scope-name` | Active workspace display name, or `"Project home"` |
+| — Scope Name | inline `<span>` | `scope-name` | Active worktree or external workspace display name (absent at Project home and in the project folder) |
 | — Scope Branch | inline `<span>` | `scope-branch` | Git branch of the active workspace |
 | — Scope Base | inline `<span>` | `scope-base` | `· from <baseBranch>` (hidden for the Default workspace) |
 | Connection Status | inline `<span>` | `connection-status` (`data-status`) | Connected / Connecting… / Disconnected pill with a color dot |
@@ -92,12 +92,15 @@ Children:
 
 | Canonical name | Implementation | `data-testid` | Responsibility |
 |---|---|---|---|
-| Add-Project Button / Menu | `panels/AddProjectMenu.tsx` → `AddProjectMenu` (the rail "+") | `add-project-menu` | Open project / Open GitHub (soon) / Recents dropdown |
+| New-Session Row | header row in `ProjectTree` | `new-session` | Starts a session for the context project (`Mod+N`, hover-only hint); with no project it opens the Add-Project Menu |
+| Projects Heading | header row above the project list in `ProjectTree` | `projects-heading` | "Projects" label; hover-revealed Projects Menu and Add-Project Button |
+| — Projects Menu | "⋯" on the heading | `projects-menu` | Collapse all / Expand all projects (`projects-collapse-all` / `projects-expand-all`) |
+| Add-Project Button / Menu | `panels/AddProjectMenu.tsx` → `AddProjectMenu` (the "+" on the Projects heading) | `add-project-menu` | Open project / Open GitHub (soon) / Recents dropdown |
 | Project Row | inline row in `ProjectTree` | `project-item` | A project (git repo); clicking selects it (project home) |
 | — Project Expander | chevron control | `project-expand` | Expands/collapses the project's workspace list |
 | — Project Name | inline `<button>` | `project-name` | Selects the project (project home) |
 | — Workspace Count | inline `<span>` | `project-workspace-count` | Collapsed-row count of the project's worktree workspaces |
-| — Add-Workspace Button | inline "+" | `add-workspace` | Opens the New Workspace Dialog |
+| — Add-Workspace Button | inline "+" | `add-workspace` | One click opens the New Session Page with the project's remembered target |
 | — Project Actions Menu | Context Menu on the row | `project-actions` | Create workspace (`project-menu-create-workspace`) / Open existing worktree (`project-menu-open-existing-worktree`) / Rename (`project-menu-rename` → inline `project-name-input`) / Close project (`project-menu-close`) |
 | Workspace Row | inline row in `ProjectTree` | `workspace-item` | A workspace (git worktree); two-line: name + branch |
 | — Workspace Name | inline `<span>` | `workspace-name` | Display name |
@@ -524,7 +527,7 @@ App-level dialog/popover instances built on those primitives:
 
 | Canonical name | Implementation | Built on | Responsibility |
 |---|---|---|---|
-| New Session Page | `panels/NewSessionPage.tsx` → `NewSessionPage` | Main-panel page (Project Home) | Start-working surface (mode fork: isolated worktree / project folder) |
+| New Session Page | `panels/NewSessionPage.tsx` → `NewSessionPage` | Main-panel page (Project Home) | Start-working surface: greeting, composer with project picker, segmented target (`ws-target`: current branch / new worktree) and base-branch picker |
 | Confirm Dialog | `panels/ConfirmDialog.tsx` → `ConfirmDialog` | Dialog | Modal yes/no with no stable anchor (init a repo, close project, remove workspace) |
 | Notice Dialog | `panels/NoticeDialog.tsx` → `NoticeDialog` | Dialog | Single-button info modal for failures |
 | Confirm Popover | `panels/ConfirmPopover.tsx` → `ConfirmPopover` | Popover | Anchored yes/no from a dedicated action control (template delete) |

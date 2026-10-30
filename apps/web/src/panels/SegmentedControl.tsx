@@ -15,6 +15,9 @@ export interface SegmentedControlProps<T extends string> {
 	onSelect: (value: T) => void;
 	disabled?: boolean;
 	testId?: string;
+	className?: string;
+	/** `raised` seats the selected option as a lifted chip in a recessed track; `flat` only tints it. */
+	variant?: "flat" | "raised";
 }
 
 export function SegmentedControl<T extends string>({
@@ -25,13 +28,22 @@ export function SegmentedControl<T extends string>({
 	onSelect,
 	disabled = false,
 	testId,
+	className,
+	variant = "flat",
 }: SegmentedControlProps<T>) {
+	const raised = variant === "raised";
 	return (
 		<div
 			role="radiogroup"
 			aria-label={label}
 			data-testid={testId}
-			className="inline-flex h-32 overflow-hidden rounded-sm bg-control-bg"
+			className={cn(
+				"inline-flex h-32",
+				raised
+					? "items-center gap-2 rounded-md border border-control-border-default bg-container-sidebar-bg p-2 [[data-theme-appearance=light]_&]:bg-control-bg-selected"
+					: "overflow-hidden rounded-sm bg-control-bg",
+				className,
+			)}
 		>
 			{options.map((option) => {
 				const selected = value !== null && option.id === value;
@@ -57,10 +69,16 @@ export function SegmentedControl<T extends string>({
 						/>
 						<span
 							className={cn(
-								"flex h-32 items-center px-12 tr-text-ui transition-colors",
+								"flex items-center px-12 tr-text-ui transition-colors",
+								raised ? "h-28 rounded-sm border" : "h-32",
 								selected
-									? "rounded-sm bg-control-bg-selected text-text-default"
-									: "text-text-muted hover:text-text-default",
+									? cn(
+											"text-text-default",
+											raised
+												? "border-control-border-default bg-control-bg shadow-[var(--shadow-sm)]"
+												: "rounded-sm bg-control-bg-selected",
+										)
+									: cn("text-text-muted hover:text-text-default", raised && "border-transparent"),
 								"peer-focus-visible:ring-1 peer-focus-visible:ring-inset peer-focus-visible:ring-focus-ring",
 								"peer-disabled:text-control-disabled-text peer-disabled:hover:text-control-disabled-text",
 							)}

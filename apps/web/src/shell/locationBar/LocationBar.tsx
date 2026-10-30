@@ -144,7 +144,7 @@ export function LocationBar(props: LocationProps) {
 				props.placement === "tabs" ? "shrink-0 gap-4" : "flex-1 gap-8",
 			)}
 		>
-			{props.workspace && isDefaultWorkspace(props.workspace) ? null : (
+			{props.workspace && !isDefaultWorkspace(props.workspace) ? (
 				<WorkspaceSegment
 					project={props.project}
 					workspace={props.workspace}
@@ -152,7 +152,7 @@ export function LocationBar(props: LocationProps) {
 					now={now}
 					onNewWorkspace={props.onNewWorkspace}
 				/>
-			)}
+			) : null}
 			{props.workspace ? <StatusToggle workspaceId={props.workspace.id} /> : null}
 		</div>
 	);

@@ -10,7 +10,7 @@ test.describe("new workspace keyboard shortcut", () => {
 		const dialog = page.getByTestId("new-workspace-page");
 		await expect(page.getByTestId("add-workspace").first()).toHaveAttribute(
 			"aria-label",
-			/^Create workspace \(.*N.*\)$/,
+			/^New session in this project \(.*N.*\)$/,
 		);
 
 		await page.getByTestId("welcome-title").click();

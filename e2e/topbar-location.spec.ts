@@ -113,15 +113,12 @@ test("the location segments name the active workspace and switch through their m
 	await projectMenu.getByTestId("scope-project-home").click();
 	await expect(page.getByTestId("welcome")).toBeVisible();
 	await expect(scope).toHaveAttribute("data-context", "project-home");
-	await expect(page.getByTestId("scope-name")).toHaveText("Project home");
+	await expect(page.getByTestId("scope-workspace")).toHaveCount(0);
+	await expect(page.getByTestId("scope-name")).toHaveCount(0);
 	await expect(page.getByTestId("scope-branch-segment")).toHaveCount(0);
 
-	// The workspace pill still switches from Project home.
-	await page.getByTestId("scope-workspace").click();
-	await workspaceMenu
-		.getByTestId("scope-workspace-option")
-		.filter({ hasText: "Image region fix" })
-		.click();
+	// Project home has no pill: a workspace is reached from the sidebar.
+	await page.getByTestId("workspace-name").filter({ hasText: "Image region fix" }).click();
 	await expect(scope).toHaveAttribute("data-context", "workspace");
 	await expect(page.getByTestId("scope-name")).toHaveText("Image region fix");
 

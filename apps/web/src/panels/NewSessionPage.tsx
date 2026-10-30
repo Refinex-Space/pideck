@@ -17,16 +17,10 @@ import {
 	CommandInput,
 	CommandItem,
 	CommandList,
+	CommandSeparator,
 } from "@thinkrail/ui/command";
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuRadioGroup,
-	DropdownMenuRadioItem,
-	DropdownMenuTrigger,
-} from "@thinkrail/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@thinkrail/ui/popover";
-import { Box, ChevronDown, GitBranch, House, Sparkles, TriangleAlert } from "lucide-react";
+import { Box, ChevronDown, FolderOpen, PencilLine, Sparkles, TriangleAlert } from "lucide-react";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { mentionCompletionItems, slashCompletionItems } from "@/chat/completionItems";
 import { type DefaultPairOption, ModelEffortPicker } from "@/chat/ModelEffortPicker";
@@ -86,8 +80,11 @@ import { createSessionWithSkillBaseline, errorText, getTransport } from "@/trans
 import { BranchPicker } from "./BranchPicker";
 import { useBranchList } from "./branches";
 import { enterDefaultWorkspace } from "./defaultWorkspace";
+import { type NewSessionTarget, rememberSessionTarget } from "./newSessionTarget";
+import { SegmentedControl } from "./SegmentedControl";
+import { useOpenProject } from "./useOpenProject";
 
-type WorkspaceTarget = "worktree" | "default";
+type WorkspaceTarget = NewSessionTarget;
 
 export function reconcileModel(
 	models: readonly WireModel[],
@@ -121,10 +118,18 @@ export function NewSessionPage({
 }) {
 	const t = useT();
 	const projects = useAppStore((s) => s.projects);
+	const recentProjects = useAppStore((s) => s.recentProjects);
 	const protocolVersion = useAppStore((s) => s.protocolVersion);
 
 	const [selectedProjectId, setSelectedProjectId] = useState(draft.projectId);
 	const [target, setTarget] = useState<WorkspaceTarget>(draft.target);
+	const chooseTarget = (next: WorkspaceTarget) => {
+		setTarget(next);
+		rememberSessionTarget(selectedProjectId, next);
+	};
+	const { openProject, pickAndOpen, enterHostPath, dialogs } = useOpenProject((opened) => {
+		setSelectedProjectId(opened.id);
+	});
 	const [baseRef, setBaseRef] = useState<string>("");
 	const [prompt, setPrompt] = useState(draft.prompt);
 	const [caret, setCaret] = useState(draft.prompt.length);
@@ -414,6 +419,7 @@ export function NewSessionPage({
 	const create = async () => {
 		if (!submitEnabled) return;
 		setCreating(true);
+		rememberSessionTarget(selectedProjectId, target);
 		const text = hoistSkillReference(
 			finalizeTemplateSlotSession(prompt, slotSession).trim(),
 			commands,
@@ -506,6 +512,9 @@ export function NewSessionPage({
 	};
 
 	const selectedProject = projects.find((p) => p.id === selectedProjectId);
+	const currentBranch = useAppStore(
+		(s) => s.workspaces[selectedProjectId]?.find(isDefaultWorkspace)?.branch ?? null,
+	);
 	const trustNotice = deriveProjectTrustNotice(selectedProject, trustSummary);
 	const trustEnables = trustNotice.kind === "untrusted" ? trustEnablesText(t, trustNotice) : null;
 	const isolated = target === "worktree";
@@ -555,6 +564,12 @@ export function NewSessionPage({
 						</div>
 					</div>
 				) : null}
+
+				<p data-testid="ws-greeting" className="text-center tr-title-section text-text-default">
+					{t("panels.newWorkspace.greeting", {
+						project: selectedProject?.name ?? t("panels.newWorkspace.projectFallback"),
+					})}
+				</p>
 
 				<div className="relative flex flex-col rounded-xl border border-control-border-default bg-control-bg focus-within:border-control-border-active">
 					{draft.note ? (
@@ -731,14 +746,39 @@ export function NewSessionPage({
 						</Button>
 					</div>
 				</div>
-
-				<div className="flex flex-wrap items-center gap-8">
-					<TargetPicker target={target} onSelect={setTarget} />
+				<div data-testid="ws-where" className="flex flex-wrap items-center gap-8">
 					<ProjectPicker
 						projects={projects}
+						recentProjects={recentProjects}
 						current={selectedProject?.name ?? t("panels.newWorkspace.projectFallback")}
 						container={null}
 						onSelect={setSelectedProjectId}
+						onOpenProject={() => void pickAndOpen()}
+						onEnterHostPath={enterHostPath}
+						onOpenRecent={(path) => void openProject(path)}
+					/>
+					<SegmentedControl
+						name="ws-target"
+						label={t("panels.newWorkspace.targetLabel")}
+						testId="ws-target"
+						variant="raised"
+						className="shrink-0"
+						value={target}
+						onSelect={chooseTarget}
+						options={[
+							{
+								id: "default",
+								label: currentBranch
+									? t("panels.newWorkspace.targetCurrentBranch", { branch: currentBranch })
+									: t("panels.newWorkspace.targetCurrentBranchBare"),
+								testId: "ws-target-default",
+							},
+							{
+								id: "worktree",
+								label: t("panels.newWorkspace.targetNewWorktree"),
+								testId: "ws-target-worktree",
+							},
+						]}
 					/>
 					{isolated ? (
 						<BranchPicker
@@ -755,62 +795,36 @@ export function NewSessionPage({
 					) : null}
 				</div>
 			</div>
+			{dialogs}
 		</form>
-	);
-}
-
-function TargetPicker({
-	target,
-	onSelect,
-}: {
-	target: WorkspaceTarget;
-	onSelect: (target: WorkspaceTarget) => void;
-}) {
-	const t = useT();
-	const Icon = target === "worktree" ? GitBranch : House;
-	return (
-		<DropdownMenu>
-			<DropdownMenuTrigger data-testid="ws-target" className={`${PILL} max-w-[220px]`}>
-				<Icon className="size-16 shrink-0 text-text-muted" />
-				<span className="truncate">
-					{target === "worktree"
-						? t("panels.newWorkspace.targetIsolated")
-						: t("panels.newWorkspace.targetDefault")}
-				</span>
-				<ChevronDown className="size-16 shrink-0 text-text-muted" />
-			</DropdownMenuTrigger>
-			<DropdownMenuContent align="start">
-				<DropdownMenuRadioGroup
-					value={target}
-					onValueChange={(value) => onSelect(value as WorkspaceTarget)}
-				>
-					<DropdownMenuRadioItem value="worktree" data-testid="ws-target-worktree">
-						<GitBranch />
-						{t("panels.newWorkspace.targetIsolated")}
-					</DropdownMenuRadioItem>
-					<DropdownMenuRadioItem value="default" data-testid="ws-target-default">
-						<House />
-						{t("panels.newWorkspace.targetDefault")}
-					</DropdownMenuRadioItem>
-				</DropdownMenuRadioGroup>
-			</DropdownMenuContent>
-		</DropdownMenu>
 	);
 }
 
 function ProjectPicker({
 	projects,
+	recentProjects,
 	current,
 	container,
 	onSelect,
+	onOpenProject,
+	onEnterHostPath,
+	onOpenRecent,
 }: {
 	projects: { id: string; name: string }[];
+	recentProjects: { id: string; path: string }[];
 	current: string;
 	container: HTMLElement | null;
 	onSelect: (projectId: string) => void;
+	onOpenProject: () => void;
+	onEnterHostPath: () => void;
+	onOpenRecent: (path: string) => void;
 }) {
 	const t = useT();
 	const [open, setOpen] = useState(false);
+	const afterClose = (action: () => void) => () => {
+		setOpen(false);
+		action();
+	};
 	return (
 		<Popover open={open} onOpenChange={setOpen}>
 			<PopoverTrigger
@@ -845,6 +859,44 @@ function ProjectPicker({
 								</CommandItem>
 							))}
 						</CommandGroup>
+						<CommandSeparator alwaysRender />
+						<CommandGroup forceMount>
+							<CommandItem
+								forceMount
+								value="open-project"
+								data-testid="ws-project-open"
+								onSelect={afterClose(onOpenProject)}
+							>
+								<FolderOpen className="size-14 shrink-0 text-text-muted" />
+								<span className="truncate">{t("panels.addProject.open")}</span>
+							</CommandItem>
+							<CommandItem
+								forceMount
+								value="enter-host-path"
+								data-testid="ws-project-host-path"
+								onSelect={afterClose(onEnterHostPath)}
+							>
+								<PencilLine className="size-14 shrink-0 text-text-muted" />
+								<span className="truncate">{t("panels.addProject.enterHostPath")}</span>
+							</CommandItem>
+						</CommandGroup>
+						{recentProjects.length > 0 ? (
+							<CommandGroup forceMount heading={t("panels.addProject.recents")}>
+								{recentProjects.map((project) => (
+									<CommandItem
+										key={project.id}
+										forceMount
+										value={`recent:${project.path}`}
+										title={project.path}
+										data-testid="ws-project-recent"
+										onSelect={afterClose(() => onOpenRecent(project.path))}
+									>
+										<FolderOpen className="size-14 shrink-0 text-text-muted" />
+										<span className="truncate">{project.path}</span>
+									</CommandItem>
+								))}
+							</CommandGroup>
+						) : null}
 					</CommandList>
 				</Command>
 			</PopoverContent>

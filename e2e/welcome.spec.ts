@@ -194,8 +194,8 @@ test("a project with specs offers Start building over Set up, beside the project
 	await expect(page.getByTestId("welcome-title")).toHaveText("sample-project");
 	const scope = page.getByTestId("scope-context");
 	await expect(scope).toHaveAttribute("data-context", "project-home");
-	// The sidebar names the project; the location pill only says where you are.
-	await expect(scope).toContainText("Project home");
+	// The sidebar names the project; Project Home draws no location pill.
+	await expect(page.getByTestId("scope-workspace")).toHaveCount(0);
 	await expect(page.getByTestId("welcome-cta")).toContainText("Start building");
 	await expect(page.getByTestId("welcome-action")).toHaveCount(1);
 	await expect(
@@ -224,7 +224,7 @@ test("a project without specs suggests setting it up", async ({ page }) => {
 		await expect(dialog).toBeVisible();
 		await expect(dialog.getByTestId("ws-prompt")).toHaveValue("/skill:setting-up-a-project ");
 		await expect(dialog.getByTestId("slash-menu")).toHaveCount(0);
-		await expect(dialog.getByTestId("ws-target")).toHaveText("Isolated workspace");
+		await expect(dialog.getByTestId("ws-target-worktree")).toHaveAttribute("data-active", "true");
 		await expect(dialog.getByRole("heading", { name: "Create workspace" })).toBeVisible();
 		await expect(dialog.getByTestId("ws-branch-picker")).toBeVisible();
 		await expect(dialog.getByTestId("ws-prompt-note")).toContainText("setting-up-a-project skill");

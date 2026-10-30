@@ -258,6 +258,24 @@ describe("frontend-local layout state", () => {
 		expect(restored.bottom.visible).toBe(true);
 	});
 
+	test("a frame saved with a non-default bottom alignment hydrates as the default, which can no longer be changed", async () => {
+		const local = new MemoryStorage();
+		const session = new MemoryStorage();
+		session.setItem("thinkrail:layout-surface-id", "saved-aligned");
+		setLayoutStateStorageForTests({ local, session }, endpoint);
+		await ensureWorkspaceLayoutState("workspace");
+		const key = localLayoutStorageKey(endpoint, "saved-aligned");
+		const saved = JSON.parse(local.getItem(key) ?? "null");
+		saved.frame.bottom.alignment = "full";
+		local.setItem(key, JSON.stringify(saved));
+		resetLayoutStateForTests();
+		resetStore();
+		setLayoutStateStorageForTests({ local, session }, endpoint);
+		const restored = await ensureWorkspaceLayoutState("workspace");
+		expect(restored.bottom.alignment).toBe("center");
+		expect(useAppStore.getState().workbenchFrame?.bottom.alignment).toBe("center");
+	});
+
 	test("viewport sizing runs once and an explicit Studio apply alone resizes a saved frame", async () => {
 		const local = new MemoryStorage();
 		const session = new MemoryStorage();

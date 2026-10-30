@@ -1,22 +1,25 @@
-import { RiInformationLine } from "@remixicon/react";
 import type { OpenBranchReview, Project, Workspace } from "@thinkrail/contracts";
 import { useT } from "@thinkrail/locales/react";
-import { buttonVariants } from "@thinkrail/ui/button";
-import { IconTooltip } from "@thinkrail/ui/tooltip";
+import { IconButton } from "@thinkrail/ui/button";
 import { cn } from "@thinkrail/ui/utils";
-import { useEffect, useRef, useState } from "react";
+import { LayoutList } from "lucide-react";
 import { useNow } from "../../components/useNow";
 import type { BranchFacts } from "../../panels/branchStatusState";
+import { useStatusBlocks } from "../../panels/statusBlocks";
 import { resolveBranchReview } from "../../panels/useBranchStatus";
-import { isDefaultWorkspace, useAppStore } from "../../store";
+import {
+	isDefaultWorkspace,
+	selectChatResourceGroups,
+	selectChatResourceProjection,
+	selectRailPlanSessionId,
+	useAppStore,
+} from "../../store";
 import { BranchSegment } from "./BranchSegment";
 import { ProjectSegment } from "./ProjectSegment";
 import { ShipStrip } from "./ShipSegments";
 import { useActiveWorkspaceSettled, WorkspaceSegment } from "./WorkspaceSegment";
 
 type LocationProps = {
-	/** The details card is open (drives lazy data in its sections). */
-	active?: boolean;
 	placement?: "header" | "tabs";
 	project: Project;
 	workspace: Workspace | null;
@@ -27,6 +30,15 @@ type LocationProps = {
 	onNewWorkspace: () => void;
 };
 
+export type LocationDetailsProps = Pick<
+	LocationProps,
+	"project" | "workspace" | "review" | "branchStatus" | "noteOpenReview" | "refreshBranchStatus"
+> & {
+	/** The details are on screen (drives lazy data in their sections). */
+	active?: boolean;
+};
+
+/** The project / branch / remote / review rows; the Status tool's Environment block renders them. */
 export function LocationDetails({
 	project,
 	workspace,
@@ -35,7 +47,7 @@ export function LocationDetails({
 	noteOpenReview,
 	refreshBranchStatus,
 	active,
-}: LocationProps) {
+}: LocationDetailsProps) {
 	const workspaceSettlingSupported = useAppStore((state) => state.workspaceSettlingSupported);
 	const now = useNow();
 	const settled = useActiveWorkspaceSettled(workspace, now);
@@ -72,65 +84,57 @@ export function LocationDetails({
 	);
 }
 
-export function LocationBar(props: LocationProps) {
+/** Opens and closes the status dock beside the chat; it sits where the workspace details control used to. */
+function StatusToggle({ workspaceId }: { workspaceId: string }) {
 	const t = useT();
+	const { layout, toggleOpen } = useStatusBlocks();
+	const sessionId = useAppStore((state) => selectRailPlanSessionId(state, workspaceId));
+	const snapshot = useAppStore((state) =>
+		sessionId ? selectChatResourceProjection(state, { workspaceId, sessionId })?.snapshot : null,
+	);
+	const { mcpAttentionCount, activeCount } = selectChatResourceGroups(snapshot);
+	const signal =
+		mcpAttentionCount > 0
+			? ({
+					kind: "attention",
+					text: t("status.signal.attention", { count: mcpAttentionCount }),
+				} as const)
+			: activeCount > 0
+				? ({ kind: "working", text: t("status.signal.working", { count: activeCount }) } as const)
+				: null;
+	return (
+		<span className="relative inline-flex shrink-0">
+			<IconButton
+				icon={LayoutList}
+				label={t("status.panel.label")}
+				tooltip={signal ? `${t("status.panel.label")} · ${signal.text}` : t("status.panel.label")}
+				tooltipSide="bottom"
+				selected={layout.open}
+				aria-pressed={layout.open}
+				aria-controls="status-dock"
+				data-testid="open-status-panel"
+				data-signal={signal?.kind}
+				className="window-no-drag"
+				onClick={toggleOpen}
+			/>
+			{signal ? (
+				<span
+					aria-hidden="true"
+					className={cn(
+						"pointer-events-none absolute top-2 right-2 size-6 rounded-full ring-2 ring-container-content-bg",
+						signal.kind === "attention"
+							? "bg-feedback-warning"
+							: "bg-primary motion-safe:animate-working",
+					)}
+				/>
+			) : null}
+		</span>
+	);
+}
+
+export function LocationBar(props: LocationProps) {
 	const now = useNow();
 	const settled = useActiveWorkspaceSettled(props.workspace, now);
-	const details = useRef<HTMLDetailsElement>(null);
-	const [open, setOpen] = useState(false);
-	const panelRef = useRef<HTMLElement>(null);
-	const hasWorkspace = props.workspace !== null;
-	useEffect(() => {
-		const root = details.current;
-		const panel = panelRef.current;
-		if (!root || !panel) return;
-		const position = () => {
-			if (!root.open) {
-				delete panel.dataset.positioned;
-				return;
-			}
-			const trigger = root.getBoundingClientRect();
-			const gap = Number.parseFloat(getComputedStyle(panel).getPropertyValue("--space-8"));
-			const width = panel.getBoundingClientRect().width;
-			const left = Math.max(gap, Math.min(trigger.left, window.innerWidth - width - gap));
-			const top = Math.min(trigger.bottom + gap, window.innerHeight - gap);
-			panel.style.setProperty("--workspace-details-left", `${left}px`);
-			panel.style.setProperty("--workspace-details-top", `${top}px`);
-			panel.style.setProperty(
-				"--workspace-details-max-height",
-				`${Math.max(0, window.innerHeight - top - gap)}px`,
-			);
-			panel.dataset.positioned = "true";
-		};
-		const resize = new ResizeObserver(position);
-		resize.observe(panel);
-		if (root.previousElementSibling) resize.observe(root.previousElementSibling);
-		for (let ancestor: HTMLElement | null = root; ancestor; ancestor = ancestor.parentElement)
-			resize.observe(ancestor);
-		const track = () => setOpen(root.open);
-		root.addEventListener("toggle", position);
-		root.addEventListener("toggle", track);
-		window.addEventListener("resize", position);
-		window.addEventListener("scroll", position, true);
-		position();
-		const dismiss = (event: PointerEvent) => {
-			const panel = details.current;
-			const target = event.target;
-			if (!panel?.open || !(target instanceof Element) || panel.contains(target)) return;
-			if (target.closest('[role="dialog"], [role="menu"], [data-radix-popper-content-wrapper]'))
-				return;
-			panel.open = false;
-		};
-		document.addEventListener("pointerdown", dismiss);
-		return () => {
-			document.removeEventListener("pointerdown", dismiss);
-			root.removeEventListener("toggle", position);
-			root.removeEventListener("toggle", track);
-			window.removeEventListener("resize", position);
-			window.removeEventListener("scroll", position, true);
-			resize.disconnect();
-		};
-	}, [hasWorkspace]);
 	return (
 		<div
 			data-testid="scope-context"
@@ -149,36 +153,7 @@ export function LocationBar(props: LocationProps) {
 					onNewWorkspace={props.onNewWorkspace}
 				/>
 			)}
-			{hasWorkspace ? (
-				<details
-					ref={details}
-					className="group/environment shrink-0"
-					onKeyDown={(event) => {
-						if (event.key !== "Escape" || event.defaultPrevented || !event.currentTarget.open)
-							return;
-						event.preventDefault();
-						event.currentTarget.open = false;
-						event.currentTarget.querySelector("summary")?.focus();
-					}}
-				>
-					<IconTooltip label={t("shell.workspaceDetails")}>
-						<summary
-							aria-label={t("shell.workspaceDetails")}
-							data-testid="open-workspace-details"
-							className={`${buttonVariants({ variant: "ghost", size: "m", shape: "icon" })} list-none cursor-pointer [&::-webkit-details-marker]:hidden group-open/environment:bg-control-bg-selected`}
-						>
-							<RiInformationLine className="size-16" />
-						</summary>
-					</IconTooltip>
-					<section
-						ref={panelRef}
-						aria-label={t("shell.workspaceDetails")}
-						className="window-no-drag invisible fixed top-[var(--workspace-details-top)] left-[var(--workspace-details-left)] z-40 max-h-[var(--workspace-details-max-height)] w-384 max-w-[calc(100vw-2*var(--space-8))] overflow-y-auto rounded-lg border border-border-default bg-container-elevated-bg text-text-default shadow-[var(--shadow-md)] data-[positioned=true]:visible"
-					>
-						<LocationDetails {...props} active={open} />
-					</section>
-				</details>
-			) : null}
+			{props.workspace ? <StatusToggle workspaceId={props.workspace.id} /> : null}
 		</div>
 	);
 }

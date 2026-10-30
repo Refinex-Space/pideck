@@ -69,21 +69,25 @@ test("navigation aligns labels and keeps the application menu at the foot of its
 	await expect(page.getByTestId("open-settings")).toBeVisible();
 });
 
-test("workspace details support keyboard disclosure and preserve existing controls", async ({
+test("the status dock opens from the keyboard and keeps the workspace controls", async ({
 	page,
 }) => {
 	await openFixtureProject(page);
 	await enterDefaultWorkspace(page);
-	const toggle = page.getByTestId("open-workspace-details");
+	const toggle = page.getByTestId("open-status-panel");
+	await expect(toggle).toHaveAttribute("aria-pressed", "false");
 	await expect(page.getByTestId("workspace-details")).toBeHidden();
 	await toggle.focus();
 	await page.keyboard.press("Enter");
+	await expect(toggle).toHaveAttribute("aria-pressed", "true");
 	await expect(page.getByTestId("workspace-details")).toBeVisible();
 	await expect(page.getByTestId("scope-project-name")).toHaveText("sample-project");
 	await expect(page.getByTestId("scope-branch")).toHaveText("main");
-	await page.keyboard.press("Tab");
+	await page.getByTestId("scope-project").focus();
 	await expect(page.getByTestId("scope-project")).toBeFocused();
-	await page.keyboard.press("Escape");
+	await toggle.focus();
+	await page.keyboard.press("Enter");
+	await expect(toggle).toHaveAttribute("aria-pressed", "false");
 	await expect(page.getByTestId("workspace-details")).toBeHidden();
 	await expect(toggle).toBeFocused();
 });

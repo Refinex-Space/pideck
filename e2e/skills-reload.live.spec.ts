@@ -4,11 +4,12 @@ import { expect, test } from "@playwright/test";
 import {
 	createWorkspaceViaDialog,
 	openFixtureProject,
+	openStatusDock,
 	revealWorkbenchTool,
 	startNewChat,
 } from "./fixtures/app";
 
-test("skills badge: ignores capped build churn, flags a skill change, and clears per chat", {
+test("skills notice: ignores capped build churn, flags a skill change, and clears per chat", {
 	tag: "@agent",
 }, async ({ page }) => {
 	test.setTimeout(120_000);
@@ -17,13 +18,13 @@ test("skills badge: ignores capped build churn, flags a skill change, and clears
 	const worktree = workspace.worktreePath;
 
 	await expect(page.locator('[data-testid="editor-tab"][data-kind="chat"]')).toHaveCount(1);
-	const skillsBtn = page.getByTestId("open-skills");
-	await expect(skillsBtn).toBeVisible();
+	const panel = await openStatusDock(page);
+	const stale = panel.getByTestId("status-skills-stale");
 
 	await revealWorkbenchTool(page, "files");
 	await expect(page.getByTestId("file-node").filter({ hasText: "README.md" })).toBeVisible();
 	await page.waitForTimeout(1200);
-	await expect(skillsBtn).not.toHaveAttribute("data-stale", "true");
+	await expect(stale).toHaveCount(0);
 
 	const generated = join(worktree, "generated-build");
 	mkdirSync(generated, { recursive: true });
@@ -33,26 +34,21 @@ test("skills badge: ignores capped build churn, flags a skill change, and clears
 	await expect(page.getByTestId("file-node").filter({ hasText: "generated-build" })).toBeVisible({
 		timeout: 15_000,
 	});
-	await expect(skillsBtn).not.toHaveAttribute("data-stale", "true");
+	await expect(stale).toHaveCount(0);
 
 	mkdirSync(join(worktree, ".claude", "skills", "demo"), { recursive: true });
 	writeFileSync(
 		join(worktree, ".claude", "skills", "demo", "SKILL.md"),
 		"---\nname: demo\ndescription: e2e demo skill\n---\n\nDemo skill written mid-session by the e2e suite.\n",
 	);
-	await expect(skillsBtn).toHaveAttribute("data-stale", "true", { timeout: 15_000 });
+	await expect(stale).toBeVisible({ timeout: 15_000 });
 
-	await skillsBtn.click();
-	await expect(page.getByTestId("skills-stale")).toBeVisible();
-	await page.getByTestId("skills-reload").click();
-	await expect(page.getByTestId("skills-stale")).toBeHidden({ timeout: 15_000 });
-	await page.keyboard.press("Escape");
-	await expect(skillsBtn).not.toHaveAttribute("data-stale", "true");
+	await stale.getByTestId("status-skills-reload").click();
+	await expect(stale).toHaveCount(0, { timeout: 15_000 });
 
 	await startNewChat(page);
 	await expect(page.locator('[data-testid="editor-tab"][data-kind="chat"]')).toHaveCount(2);
-	await expect(page.getByTestId("open-skills")).toBeVisible();
-	await expect(page.getByTestId("open-skills")).not.toHaveAttribute("data-stale", "true");
+	await expect(page.getByTestId("status-skills-stale")).toHaveCount(0);
 
 	await page
 		.locator('[data-testid="editor-tab"][data-kind="chat"]')
@@ -60,6 +56,5 @@ test("skills badge: ignores capped build churn, flags a skill change, and clears
 		.locator("button")
 		.first()
 		.click();
-	await expect(page.getByTestId("open-skills")).toBeVisible();
-	await expect(page.getByTestId("open-skills")).not.toHaveAttribute("data-stale", "true");
+	await expect(page.getByTestId("status-skills-stale")).toHaveCount(0);
 });

@@ -73,10 +73,10 @@ test("background run: collapsed result row arrives live, with report + Resources
 	await expect(completion.getByTestId("background-result-body")).toContainText("CHARLIE-MARKER");
 
 	await completion.getByTestId("background-result-open").click();
-	const inspector = page.getByTestId("resources-inspector");
-	await expect(inspector).toBeVisible();
+	const detail = page.getByTestId("resources-detail");
+	await expect(detail).toBeVisible();
 	await expect(
-		inspector
+		detail
 			.getByTestId("subagent-transcript")
 			.locator('[data-testid="chat-message"][data-role="assistant"]')
 			.last(),

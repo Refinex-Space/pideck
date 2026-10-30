@@ -1,11 +1,18 @@
-import { RiPlugLine } from "@remixicon/react";
+import { RiMore2Fill, RiPlugLine } from "@remixicon/react";
 import type { McpServerResourceSummary } from "@thinkrail/contracts";
 import type { MessageKey } from "@thinkrail/locales";
 import { useT } from "@thinkrail/locales/react";
-import { Button } from "@thinkrail/ui/button";
+import { Button, IconButton } from "@thinkrail/ui/button";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuLabel,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from "@thinkrail/ui/dropdown-menu";
 import { cn } from "@thinkrail/ui/utils";
-import { useId } from "react";
-import { type McpStateTone, mcpStateTone, mcpStatusLabel } from "@/lib";
+import { type McpStateTone, mcpStateLabel, mcpStateTone, mcpToolCountLabel } from "@/lib";
 import type { ResourceActions } from "./resourceRow";
 
 type McpRowActionId = "disable" | "enable" | "reconnect" | "settings";
@@ -42,7 +49,7 @@ function stateActions(state: McpServerResourceSummary["state"]): McpRowAction[] 
 }
 
 const STATE_TEXT: Record<McpStateTone, string> = {
-	success: "text-feedback-success",
+	success: "text-text-subtle",
 	working: "text-primary",
 	warning: "text-feedback-warning",
 	error: "text-feedback-error",
@@ -63,84 +70,137 @@ function mcpActionKey(name: string): string {
 	return `mcp:${name}`;
 }
 
+/** The first action that is not "disable" sits on the row; the rest, usually Disable, go in the menu. */
+function splitActions(actions: McpRowAction[]): {
+	inline: McpRowAction | null;
+	menu: McpRowAction[];
+} {
+	const inline = actions.find((action) => action.id !== DISABLE.id) ?? null;
+	return { inline, menu: actions.filter((action) => action !== inline) };
+}
+
 function McpRow({
 	server,
 	authoritative,
 	actions,
-	describedBy,
 	onAction,
 }: {
 	server: McpServerResourceSummary;
 	authoritative: boolean;
 	actions: ResourceActions;
-	describedBy: string;
 	onAction: (id: McpRowActionId) => void;
 }) {
 	const t = useT();
 	const tone = mcpStateTone(server.state, server.toolCount);
 	const action = actions[mcpActionKey(server.name)];
+	const { inline, menu } = splitActions(mcpRowActions(server));
+	const disabled = !authoritative || !!action?.pending;
+	const connection =
+		server.transport === "http" ? t("mcp.transport.http") : t("resources.mcp.stdioOnHost");
+	const showTools = server.state === "connected" && server.toolCount !== undefined;
+	// "Enable in this chat" already says the server is off here, so its state text only serves readers.
+	const stateImplied = server.state === "disabled-in-chat" && inline !== null;
 	return (
 		<li
 			data-testid="resource-mcp"
 			data-name={server.name}
 			data-state={server.state}
-			className="grid min-h-32 min-w-0 grid-cols-[auto_minmax(0,1fr)] items-start gap-8 rounded-sm px-8 py-4 hover:bg-control-bg-hovered"
+			className="flex min-w-0 flex-col"
 		>
-			<span className="relative mt-2 inline-flex size-16 shrink-0 items-center justify-center">
-				<RiPlugLine className="size-14 text-text-muted" />
+			<div
+				className="flex min-h-32 min-w-0 items-center gap-8"
+				title={`${server.name} · ${connection}`}
+			>
+				<span className="relative inline-flex size-16 shrink-0 items-center justify-center">
+					<RiPlugLine aria-hidden="true" className="size-14 text-text-muted" />
+					<span
+						aria-hidden="true"
+						className={cn(
+							"-right-2 -bottom-2 absolute size-6 rounded-full ring-2 ring-container-workspace-bg",
+							STATE_DOT[tone],
+						)}
+					/>
+				</span>
+				<span className="min-w-0 flex-1 truncate tr-text-ui text-text-default">{server.name}</span>
 				<span
-					aria-hidden
+					data-testid="resource-mcp-state"
 					className={cn(
-						"-right-2 -bottom-2 absolute size-6 rounded-full ring-2 ring-container-elevated-bg",
-						STATE_DOT[tone],
+						"shrink-0 whitespace-nowrap tr-text-metadata",
+						STATE_TEXT[tone],
+						stateImplied && "sr-only",
 					)}
-				/>
-			</span>
-			<span className="flex min-w-0 flex-col gap-2">
-				<span className="flex min-w-0 items-baseline gap-8">
-					<span
-						className="min-w-0 flex-1 truncate tr-title-compact text-text-default"
-						title={server.name}
-					>
-						{server.name}
-					</span>
-					<span
-						data-testid="resource-mcp-state"
-						className={cn("whitespace-nowrap tr-text-metadata", STATE_TEXT[tone])}
-					>
-						{mcpStatusLabel(t, server.state, server.toolCount)}
-					</span>
+				>
+					{showTools ? (
+						<>
+							<span className="sr-only">{mcpStateLabel(t, server.state)} · </span>
+							{mcpToolCountLabel(t, server.toolCount ?? 0)}
+						</>
+					) : (
+						mcpStateLabel(t, server.state)
+					)}
 				</span>
-				<span className="flex min-w-0 flex-wrap items-center gap-x-8 gap-y-2 text-text-muted tr-text-metadata">
-					<span>
-						{server.transport === "http" ? t("mcp.transport.http") : t("resources.mcp.stdioOnHost")}
-						{server.state === "pending-reload" ? ` · ${t("resources.mcp.pendingReload")}` : ""}
-					</span>
-					{mcpRowActions(server).map((item) => (
-						<Button
-							key={item.id}
-							variant="soft-primary"
-							size="s"
-							data-testid={`resource-mcp-${item.id}`}
-							aria-describedby={item.id === "disable" ? describedBy : undefined}
-							disabled={!authoritative || !!action?.pending}
-							onClick={() => onAction(item.id)}
-						>
-							{t(item.label)}
-						</Button>
-					))}
-				</span>
-				{action?.error ? (
-					<span role="alert" className="break-words text-feedback-error tr-text-metadata">
-						{action.error}
-					</span>
+				{inline ? (
+					<Button
+						variant="quiet"
+						size="s"
+						data-testid={`resource-mcp-${inline.id}`}
+						disabled={disabled}
+						onClick={() => onAction(inline.id)}
+					>
+						{t(inline.label)}
+					</Button>
 				) : null}
-			</span>
+				{menu.length > 0 ? (
+					<DropdownMenu>
+						<DropdownMenuTrigger asChild>
+							<IconButton
+								icon={RiMore2Fill}
+								size="s"
+								label={t("resources.mcp.more")}
+								data-testid="resource-mcp-menu"
+								disabled={disabled}
+							/>
+						</DropdownMenuTrigger>
+						<DropdownMenuContent align="end">
+							{menu.map((item) => (
+								<DropdownMenuItem
+									key={item.id}
+									data-testid={`resource-mcp-${item.id}`}
+									onSelect={() => onAction(item.id)}
+								>
+									{t(item.label)}
+								</DropdownMenuItem>
+							))}
+							{menu.some((item) => item.id === "disable") ? (
+								<>
+									<DropdownMenuSeparator />
+									<DropdownMenuLabel className="max-w-[16rem] whitespace-normal font-normal text-text-subtle">
+										{t("resources.mcp.disableHint")}
+									</DropdownMenuLabel>
+								</>
+							) : null}
+						</DropdownMenuContent>
+					</DropdownMenu>
+				) : (
+					<span aria-hidden="true" className="size-20 shrink-0" />
+				)}
+			</div>
+			{server.state === "pending-reload" ? (
+				<span className="pb-2 pl-24 text-text-subtle tr-text-metadata">
+					{t("resources.mcp.pendingReload")}
+				</span>
+			) : null}
+			{action?.error ? (
+				<span role="alert" className="break-words pb-2 pl-24 text-feedback-error tr-text-metadata">
+					{action.error}
+				</span>
+			) : null}
 		</li>
 	);
 }
 
-export function McpServerSection({
+/** The MCP servers of one chat as single-line rows: state, a primary action only when one is needed, the rest in a menu. */
+export function McpConnectorList({
 	servers,
 	authoritative,
 	actions,
@@ -148,59 +208,29 @@ export function McpServerSection({
 	onReconnect,
 	onOpenSettings,
 }: {
-	servers: McpServerResourceSummary[];
+	servers: readonly McpServerResourceSummary[];
 	authoritative: boolean;
 	actions: ResourceActions;
 	onSetEnabled: (name: string, enabled: boolean) => void;
 	onReconnect: (name: string) => void;
 	onOpenSettings: () => void;
 }) {
-	const t = useT();
-	const hintId = useId();
+	if (servers.length === 0) return null;
 	return (
-		<section
-			data-testid="resources-mcp"
-			aria-label={t("resources.mcp.title")}
-			className="flex flex-col gap-2"
-		>
-			<div className="flex items-baseline gap-4 px-8 pt-8 pb-2 text-text-subtle">
-				<h3 className="tr-text-eyebrow">{t("resources.mcp.title")}</h3>
-				<span className="tr-text-metadata">· {servers.length}</span>
-				<span className="flex-1" />
-				<Button
-					variant="soft-primary"
-					size="s"
-					data-testid="resources-mcp-settings"
-					onClick={onOpenSettings}
-				>
-					{t("resources.mcp.settings")}
-				</Button>
-			</div>
-			{servers.length === 0 ? (
-				<p className="px-8 py-4 text-text-subtle tr-text-metadata">{t("resources.mcp.empty")}</p>
-			) : (
-				<>
-					<ul className="flex flex-col gap-2">
-						{servers.map((server) => (
-							<McpRow
-								key={server.name}
-								server={server}
-								authoritative={authoritative}
-								actions={actions}
-								describedBy={hintId}
-								onAction={(id) => {
-									if (id === "settings") onOpenSettings();
-									else if (id === "reconnect") onReconnect(server.name);
-									else onSetEnabled(server.name, id === "enable");
-								}}
-							/>
-						))}
-					</ul>
-					<p id={hintId} className="px-8 text-text-subtle tr-text-metadata">
-						{t("resources.mcp.disableHint")}
-					</p>
-				</>
-			)}
-		</section>
+		<ul data-testid="resources-mcp" className="flex flex-col">
+			{servers.map((server) => (
+				<McpRow
+					key={server.name}
+					server={server}
+					authoritative={authoritative}
+					actions={actions}
+					onAction={(id) => {
+						if (id === "settings") onOpenSettings();
+						else if (id === "reconnect") onReconnect(server.name);
+						else onSetEnabled(server.name, id === "enable");
+					}}
+				/>
+			))}
+		</ul>
 	);
 }

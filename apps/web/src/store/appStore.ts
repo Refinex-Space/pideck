@@ -412,6 +412,7 @@ export const SettingsSection = {
 	Providers: "providers",
 	Models: "models",
 	Mcp: "mcp",
+	Skills: "skills",
 	Github: "github",
 	Appearance: "appearance",
 	Language: "language",

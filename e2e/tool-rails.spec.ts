@@ -206,12 +206,17 @@ test("a terminal pane's selected session survives a fold, a reload, and independ
 async function railClusters(page: Page, rail: string): Promise<string[][]> {
 	return page.getByTestId(rail).evaluate((root) => {
 		const clusters: string[][] = [[]];
+		let previousUnplaced = false;
 		for (const node of Array.from(root.children)) {
 			if (node.getAttribute("data-testid") === "rail-separator") {
 				clusters.push([]);
 				continue;
 			}
 			for (const entry of Array.from(node.querySelectorAll<HTMLElement>("[data-rail-entry]"))) {
+				// Tools placed nowhere trail the panes without a divider; they still form their own cluster.
+				const unplaced = entry.dataset.unplaced === "true";
+				if (unplaced !== previousUnplaced && (clusters.at(-1)?.length ?? 0) > 0) clusters.push([]);
+				previousUnplaced = unplaced;
 				clusters.at(-1)?.push(entry.dataset.testid ?? "");
 			}
 		}

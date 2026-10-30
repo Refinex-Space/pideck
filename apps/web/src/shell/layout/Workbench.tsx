@@ -58,18 +58,12 @@ import {
 	revealTool,
 	selectTab,
 	setAuxiliaryGroupFolded,
-	setBottomAlignment,
 	splitCenterGroup,
 } from "./model";
 import { tabIcon } from "./tabIcon";
 import type { LayoutAuxiliaryRegion, LayoutTab, LayoutToolId } from "./types";
 import { FILE_WORKBENCH_GROUP } from "./types";
-import {
-	BottomAlignedRow,
-	BottomAlignmentMenu,
-	BottomDropZone,
-	BottomStack,
-} from "./workbenchBottom";
+import { BottomAlignedRow, BottomDropZone, BottomStack } from "./workbenchBottom";
 import { CenterGroupView, CenterNodeView } from "./workbenchCenter";
 import { AuxiliaryRegionRail } from "./workbenchRails";
 import type {
@@ -958,13 +952,6 @@ export function Workbench({
 					shared={shared}
 					attention={attention}
 				/>
-				{!bottomVisible ? (
-					<BottomAlignmentMenu
-						alignment={document.bottom.alignment}
-						onChange={(alignment) => onCommit(setBottomAlignment(document, alignment))}
-						onHide={() => hideSideRegion("bottom")}
-					/>
-				) : null}
 			</div>
 			{rightVisible ? null : (
 				<div

@@ -99,15 +99,15 @@ Its wire connection uses the launched page's port, not the source host's fixed p
 packaged-desktop adapters launch different endpoints for the same test.
 Historical fixtures are seeded before entering their workspace, so discovery does not race a just-created
 placement's persistence during browser reload. It never seeds a running resource or turns transcript
-text into execution authority. The empty-catalog UI probes cover the inspector's keyboard focus and
-focus return, the absent dock, narrow layouts, welcome/reconnect hydration and old-host capability hiding
+text into execution authority. The empty-catalog UI probes cover the status dock's Background tasks block,
+the absent composer strip, the narrow-pane dock, welcome/reconnect hydration and old-host capability hiding
 using real responses; the old-host probe changes only the advertised protocol version. The
-retirement focus probe supplies a completed child and persisted-form transcript at the wire seam, selects
-it in the inspector, then downgrades the next welcome; the UI, reconnect, capability retirement and Radix
-focus teardown remain real. This terminal-only fixture is not evidence of
+retirement probe supplies a completed child and persisted-form transcript at the wire seam, opens it in the
+detail dialog from the roster, then downgrades the next welcome; the UI, reconnect and capability
+retirement remain real, and a wire-injected MCP list pins the connector rows' one-line geometry. This terminal-only fixture is not evidence of
 agent resource execution. Tagged provider-backed probes launch real commands and
-children through agent tools, inspect bounded plain-text logs/transcripts in the inspector, verify chat
-isolation, reload and closed-inspector completion, and exercise individual Stop and confirmed Stop all. They never
+children through agent tools, inspect bounded plain-text logs/transcripts in the detail dialog, verify chat
+isolation, reload and closed-dock completion, and exercise individual Stop and confirmed Stop all. They never
 select a model or seed a running-resource catalog. SDK faux-provider unit tests are not evidence of
 browser agent execution. `attention-background-work.live` pins the background-work unread hold end to end:
 while a real background command or detached subagent runs after the parent settled, the host never
@@ -118,7 +118,7 @@ publishes an unread completion and the worktree row shows running, not a dot; wi
 absolute path of the runner's `bun`, since the host's hermetic `PATH` has none. It adds a user server
 through the Settings form while the workspace's persisted chat is open (entering a workspace auto-opens
 its latest chat, so the test waits for that tab first instead of racing it), sees it Connected · 4 tools
-once that chat reloads, and disabled for that chat from the Resources inspector, then removes it; it opens a chat from a not-running
+once that chat reloads, and disabled for that chat from the status dock's Connectors block, then removes it; it opens a chat from a not-running
 server's row, reconnects that server per chat once it fails and shows its masked log, and names an
 unreadable user `mcp.json` with an edit hint; and it proves a repository-defined server flags the chat's
 attention marker, waits for Review & approve, and starts once approved. Each test removes the `mcp.json`

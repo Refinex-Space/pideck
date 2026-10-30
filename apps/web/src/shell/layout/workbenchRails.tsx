@@ -133,6 +133,7 @@ export function AuxiliaryRailButton({
 								: "empty-rail-group"
 					}
 					data-rail-entry={entry.key}
+					data-unplaced={unplaced || undefined}
 					data-group-id={entry.groupId ?? undefined}
 					aria-label={name}
 					aria-pressed={active}

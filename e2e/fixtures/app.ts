@@ -37,7 +37,7 @@ import { seedWorkspaceSession } from "./sessions";
 import { E2eWire } from "./wire";
 
 export async function workspaceDetail(page: Page, testId: string): Promise<Locator> {
-	const toggle = page.getByTestId("open-workspace-details");
+	const toggle = page.getByTestId("open-status-panel");
 	if (
 		!(await page.getByTestId("workspace-details").isVisible()) &&
 		(await page.locator('[role="dialog"]:visible, [role="alertdialog"]:visible').count()) === 0
@@ -61,6 +61,43 @@ export async function openAppSettings(page: Page): Promise<void> {
 	}
 	await menu.click();
 	await page.getByTestId("open-settings").click();
+}
+
+/** Opens Settings on one of its sections, e.g. "skills" or "mcp". */
+export async function openSettingsSection(page: Page, section: string): Promise<void> {
+	await openAppSettings(page);
+	await page.getByTestId(`settings-nav-${section}`).click();
+}
+
+/** Opens the status dock beside the chat (no-op when it is already open). */
+export async function openStatusDock(page: Page): Promise<Locator> {
+	const toggle = page.getByTestId("open-status-panel");
+	if ((await toggle.getAttribute("aria-pressed")) !== "true") await toggle.click();
+	const panel = page.getByTestId("status-panel");
+	await expect(panel).toBeVisible();
+	return panel;
+}
+
+/** The status dock's Background tasks block with its roster, finished rows included. */
+export async function openTasks(page: Page): Promise<Locator> {
+	const panel = await openStatusDock(page);
+	const tasks = panel.getByTestId("status-block-tasks");
+	const toggle = tasks.getByTestId("resources-finished-toggle");
+	if ((await toggle.getAttribute("aria-expanded")) !== "true") await toggle.click();
+	return tasks;
+}
+
+/** Waits until the roster reports exactly `count` running commands and subagents. */
+export async function expectActiveTasks(
+	page: Page,
+	count: number,
+	timeout?: number,
+): Promise<void> {
+	await expect(page.getByTestId("resources-active")).toHaveAttribute(
+		"data-active-count",
+		String(count),
+		timeout === undefined ? {} : { timeout },
+	);
 }
 
 export const PHONE_VIEWPORT = { width: 390, height: 780 } as const;

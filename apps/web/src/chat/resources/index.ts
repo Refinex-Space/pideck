@@ -1,6 +1,8 @@
 export { CommandLogView } from "./CommandLogView";
-export { ResourcesAttention, ResourcesButton } from "./ResourcesButton";
+export { McpConnectorList } from "./mcpRow";
+export { ResourceDetailDialog } from "./ResourceDetailDialog";
 export { ResourcesDock } from "./ResourcesDock";
-export { ResourcesInspector } from "./ResourcesInspector";
+export { ResourcesRoster } from "./ResourcesRoster";
 export { type ResultReceipt, ResultRow, type ResultSource } from "./ResultRow";
-export type { ResourceTarget } from "./resourceRow";
+export type { Resource, ResourceTarget } from "./resourceRow";
+export { resourceTarget } from "./resourceRow";

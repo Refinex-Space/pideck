@@ -1,7 +1,12 @@
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test } from "@playwright/test";
-import { createWorkspaceViaDialog, openFixtureProject, PHONE_VIEWPORT } from "./fixtures/app";
+import {
+	createWorkspaceViaDialog,
+	openFixtureProject,
+	openSettingsSection,
+	PHONE_VIEWPORT,
+} from "./fixtures/app";
 import { E2E_FIXTURE_REPO } from "./fixtures/paths";
 
 test("Skills renders existing controls as explicit switches without making rows interactive", async ({
@@ -18,9 +23,9 @@ test("Skills renders existing controls as explicit switches without making rows 
 	});
 	await openFixtureProject(page);
 	await createWorkspaceViaDialog(page);
-	await page.getByTestId("open-skills").click();
+	await openSettingsSection(page, "skills");
 
-	const dialog = page.getByTestId("skills-dialog");
+	const dialog = page.getByTestId("skills-settings");
 	const groupSwitch = page.getByTestId("group-toggle").first();
 	await expect(groupSwitch).toHaveRole("switch");
 	await expect(groupSwitch).toHaveAttribute("aria-checked", /true|false/);
@@ -93,7 +98,7 @@ test("a chat's Skills dialog names the project's Pi resources and grants them wi
 	try {
 		await openFixtureProject(page);
 		await createWorkspaceViaDialog(page);
-		await page.getByTestId("open-skills").click();
+		await openSettingsSection(page, "skills");
 
 		const banner = page.getByTestId("skills-trust-all");
 		await expect(banner).toContainText("1 skill and its own Pi resources");

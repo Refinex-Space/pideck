@@ -15,7 +15,6 @@ import {
 } from "../../lib";
 import type {
 	LayoutAuxiliaryRegion,
-	LayoutBottomAlignment,
 	LayoutBottomRegion,
 	LayoutCenterGroup,
 	LayoutCenterNode,
@@ -1183,14 +1182,6 @@ export function resizeBottomRegion(
 	const normalized = Math.max(Number.MIN_VALUE, Math.min(LAYOUT_LIMITS.maxBottomHeight, requested));
 	if (Math.abs(normalized - document.bottom.height) < 1e-9) return document;
 	return { ...document, bottom: { ...document.bottom, height: normalized } };
-}
-
-export function setBottomAlignment(
-	document: WorkspaceLayoutDocument,
-	alignment: LayoutBottomAlignment,
-): WorkspaceLayoutDocument {
-	if (document.bottom.alignment === alignment) return document;
-	return { ...document, bottom: { ...document.bottom, alignment } };
 }
 
 export function resizeAuxiliaryGroups(

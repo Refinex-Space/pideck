@@ -409,7 +409,7 @@ grant would load. Presence comes from `chat/useProjectTrustSummary` (`project.tr
 the kinds of pi's own trust-requiring resources and project subagent definitions, and the count of
 `.pi/mcp.json` entries; older hosts answer
 `project.aliasSkills` only, read as "aliases only"), and the
-pure `chat/projectTrust` derivation — shared with `chat/SkillsDialog`'s trust banner and New Workspace, so
+pure `chat/projectTrust` derivation — shared with `SkillsSettings`' trust banner and New Workspace, so
 the three surfaces cannot disagree about what a grant loads — `deriveProjectTrustNotice` evaluates the alias grant (`Project.trusted`) and pi-level trust
 (`Project.piResourceTrust`) **separately**, so the notice names only what is still off: "ships N skills and
 its own Pi resources → *Trust project*", plus — when pi-level resources are gated — exactly the kinds a
@@ -426,11 +426,15 @@ trusted when it was added, or one trusted only partly, keeps a revoke path — a
 `project.setTrust({ trusted: false })`, revoking both grants; its confirmation (`stopTrustingText`) says pi
 resources stop loading, running subagents stop and open chats reload only when `piResourceTrust` is
 `granted` and the host supports project trust, otherwise that project skills stop loading in new chats. It never renders the skills'
-(attacker-controlled) names before trust. The full manager (`chat/SkillsDialog` in **project mode**
-— trust + group/skill toggles, no session yet) is reached from **New Workspace**, whose opener is the shared
-`chat/SkillsButton` primitive (so it cannot drift from the chat header's Skills trigger). This is the
-pre-session half of the user's skill settings; the chat header opens the same dialog in workspace mode
-(with Reload).
+(attacker-controlled) names before trust. The full manager is the **Skills** section of Settings
+(Agent group, after MCP servers; `panels/SkillsSettings`, the former chat Skills dialog): trust + group/skill
+toggles for the **active workspace** — workspace overrides, plus a **Reload** that applies changes to its
+chat when it has one — or, at Project Home with no active workspace, the context project's baseline with no
+session. Its caption names the target ("Changes apply to the workspace/project …"). Each source group
+(ThinkRail, Pi, Personal, each installed Claude plugin, the repo's Project skills) is its own hairline-bordered
+card with a header row — name, count, group switch — above its skill rows, with the **All plugins** master
+between the regular groups and the plugin cards, so the groups read as separate units. There is no Skills
+button in the chat or on the New Workspace page any more.
 
 **`NewSessionPage`** (`panels/NewSessionPage.tsx`) is the start-working surface. It is a page in the
 Project Home main panel, **not a dialog**: a project's `+` opens a two-item menu (*Isolated workspace* /
@@ -2258,3 +2262,63 @@ The form exposes environment precedence, unsupported detection/bypass cases and 
 Diagnosis is disabled for unsaved or pending-restart settings; results distinguish network reachability
 from authentication, region policy and actual model access. Render-time translations use useT.
 The form and navigation have unit coverage; `e2e/network-settings.spec.ts` covers persistence and layout.
+
+## Status dock
+
+`StatusDock` wraps a chat (and a workspace's empty center, which has no chat yet) and opens a column of
+hairline blocks to its right; it is **not** a layout-engine tool, so it has no rail entry, pane or
+`LayoutToolId`. The wrapper stays at one position in the tree whether the dock is open or not: opening only
+narrows the chat's column (the aside animates `w-0` → `min(24rem, 45%)`, `motion-safe` only), so the
+conversation slides left and the blocks take the freed width. In a pane narrower than 40rem there is no room
+to share, so the open dock instead overlays the pane's right edge at up to 24rem with a hairline and shadow.
+A closing dock keeps its content for the 200 ms of the slide (`useLingering`) and is `inert` while closed.
+Each chat pane renders its own dock for its own session, so two visible chats each show their own context,
+tasks and connectors; the open state is shared. The toggle is the location bar's `open-status-panel` icon,
+left of the terminal entry where the workspace-details control used to sit
+([[submodule-web-shell-location-bar]]); a corner dot on it signals a connector that needs attention
+(warning) or background work in flight (working) for the focused chat, so closing the dock never hides
+either.
+
+`StatusPanel` renders five blocks in a persisted order — **Environment, Context, Background tasks,
+Connectors, Changes** — each a `StatusBlockFrame`: a fold toggle titled by the block (the body stays
+mounted while folded, so a pending confirmation or draft survives) and a grip that appears on hover or
+focus. Reordering is pointer drag (`useStatusReorder`: the grip's pointer capture moves the dragged block
+with `--status-drag-y` and its neighbours step aside by `--status-shift`; only the final order reaches React
+state, and the drop applies without a transition so nothing re-animates after the DOM reorders) or
+`Alt+↑` / `Alt+↓` on the grip, with a polite live-region announcement. `statusBlocks` owns the pure model
+(`normalizeStatusBlocks` drops unknown ids and appends blocks a newer build added, `moveStatusBlock`,
+`dropIndex`, `dragShift`) and a small window-local store persisted through the stable preference adapter
+(else `localStorage` under a host-qualified key) holding **open, order and folds** — shared by every
+workspace, never sent to the host.
+
+What each block reads, and what it deliberately does not claim:
+
+- **Environment** is the location bar's `LocationDetails` (project, branch + copy, based-on, compare-to
+  picker, remote and review rows with their ship actions), supplied by the shell as a slot because the shell
+  owns `useBranchStatus` and the ship runner. Nothing about those actions changed when they moved here.
+- **Context** shows the engine's `contextUsage` as reported: used percent, `tokens / contextWindow`, a bar
+  that turns warning at 80 % and error at 95 %, and the session's counters (input, output, cache read/write,
+  cost, messages — zero counters omitted). An unknown estimate (`percent: null`, right after a compaction)
+  says so instead of drawing a bar. It does **not** break the window down by system prompt, tools, skills or
+  memory files: Pi reports no such split, and the host does not estimate one. When the chat's skills are
+  older than what is on disk (`selectSkillsStale`) a notice above the bar offers a one-click **Reload**
+  (disabled while the chat streams) — the signal the chat's former Skills button badge carried.
+- **Background tasks** is the chat resources' `ResourcesRoster` ([[submodule-web-chat-resources]]): Active
+  rows with Stop and Stop all (confirmed), and a folded **Finished** count; a row opens the detail dialog
+  (command output or subagent transcript). It reads the chat's shared resources scope, not its own sync.
+  Without a chat it says nothing is running; on a host that does not report resources it says so.
+- **Connectors** is the chat's MCP servers as one-line `McpConnectorList` rows (state or tool count, one
+  inline action when needed, an always-present ⋯ menu with per-chat Disable) closed by a **Manage** row —
+  a full-width footer action whose icon sits in the rows' icon column and which tints on hover — into
+  Settings → MCP servers. While the block is open it keeps the workspace's MCP status watch alive.
+  (Claude Desktop's "Connectors" block is MCP servers, not subagents.)
+- **Changes** reads `useGitStatus` — the same cached read the Files panel uses, for the scope the Changes tab
+  has selected — and summarizes files and `+added −removed`; *Review changes* opens that scope's Changes tab.
+  There is no commit action because the host has no commit request.
+
+While the dock is open the composer's task strip steps aside (the roster shows the same rows).
+
+Tests: `statusBlocks.test.ts` and `statusModel.test.ts` cover the order model, persistence and the pure
+derivations; `e2e/status-dock.spec.ts` covers placement, the slide, fold, drag and keyboard reorder, reload
+persistence and the chat-less dock, and `e2e/chat-resources.spec.ts` the roster, the detail dialog and the
+connector rows' geometry.

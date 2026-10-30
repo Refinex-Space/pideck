@@ -235,7 +235,7 @@ blocks in order into rows; `ChatTurnView` dispatches on row kind:
   the signal and the agent's reaction follows directly; the old always-open 240px log read as an
   unexplained box. Expanding shows the bounded excerpt (escaped plain text, wrapped, natural height, no
   inner scroll) or the report Markdown without pi-subagents' `Subagent "x" (id) status:` header. The open
-  action comes from `ChatActions.resultOpener`: `ChatView` opens the Resources inspector at that row while
+  action comes from `ChatActions.resultOpener`: `ChatView` opens the resource detail dialog at that row while
   the snapshot holds it, a subagent that left the in-memory registry (host restart, older than the latest
   twenty) falls back to the transcript dialog, and a command has no fallback (no action). A row whose
   details carry a `delivery` marker leads with whether the agent received it ("Agent received") or will
@@ -512,13 +512,12 @@ both message orders. *Rejected:* keeping the modal for non-MCP extensions — ev
   `provider/id` with the level word but no bars (there is no model scale to place it on); the raw
   reference is also its tooltip. The picker's `thinking-selector` test id stays its own. A run
   without `thinkingLevel` shows the model alone; one without `model`, nothing.
-- **Subagent transcript view** (`SubagentTranscriptDialog.tsx` — an integration file, like
-  `SkillsDialog`): `SubagentTranscriptPane` renders a hidden child's **read-only** transcript with the
+- **Subagent transcript view** (`SubagentTranscriptDialog.tsx` — an integration file): `SubagentTranscriptPane` renders a hidden child's **read-only** transcript with the
   same primitives (`messagesToRuntime` → `deriveRows` → `ChatTurnView`), fetched via
   `subagent.getTranscript` keyed `(workspaceId, parentSessionId = this chat, childSessionId)`; the
   dialog of the same file wraps the pane as an overlay for the subagent cards'
-  `ChatActions.openSubagentTranscript`, and the Resources inspector embeds the pane as its subagent
-  detail. Both render under a `null` `ChatActions` provider so nothing inside can talk back (and a
+  `ChatActions.openSubagentTranscript`, and the resource detail dialog embeds the pane as its subagent
+  body. Both render under a `null` `ChatActions` provider so nothing inside can talk back (and a
   nested transcript link cannot exist). Liveness comes from the
   **host** with each response: `subagent.getTranscript` carries the run's current registry `status`
   (absent once the host no longer knows the run — restart, dispose). The mounted pane keeps exactly one
@@ -901,30 +900,20 @@ both message orders. *Rejected:* keeping the modal for non-MCP extensions — ev
   and `LEVEL_HINT` is a partial record of qualitative copy a level may simply lack. Rows follow the
   **live catalog** — `ChatView` resolves the session's model through `store`'s `selectCatalogModel`
   before passing it down, so a `model.refresh` that changes what a model supports changes the offered
-  levels with it), `SessionStatsBar`, `ChatHeader` (the fixed, single-line **panel-header row** —
-  `h-panel-header-row` (`--panel-header-row-height`, currently 28px), the shared structural geometry with
-  workbench Group Headers and the Changes toolbar, not a value pinned here; it never scrolls,
-  and constrained widths clip/truncate TODO + status/usage text while preserving the trailing Skills
-  action. Its **Skills** button is the presentational **`SkillsButton`**
-  primitive — a `BookOpen` pill, badged when a skill dir changed on disk — also shared with
-  `NewSessionPage` so the two triggers cannot drift), and **`SkillsDialog`** (the **Skills manager**: a catalog
-  grouped by source with **sticky section headers** — the first-party **ThinkRail** and **Pi** groups lead
-  (above the All-plugins master, which governs only the plugin groups), then Personal / **a group per
-  installed Claude plugin** / the repo's Project skills last — each with its admission verdict,
-  project-trust (the same `projectTrust` derivation and copy as the Welcome notice — `useProjectTrustSummary`
-  plus this catalog's untrusted aliases, so a worktree-only alias still shows — so in a chat it is the place
-  to grant pi-level trust, and its `project.setTrust` carries `resources: true` exactly when it named the
-  project's Pi resources), re-confirm-new, a per-group track/thumb **switch** + an **All-plugins** master, and per-skill
-  switches. Switch position plus semantic colour carries state without visible On/Off text; the switch target
-  alone mutates, while unavailable controls keep the existing trust/parent explanation and acknowledgement
-  behavior. It runs in **two modes** via an optional `workspace` prop: chat (`skills.state`, per-workspace
-  skill overrides, + a **Reload** that applies changes to this chat's session via `session.reloadResources`,
-  disabled while streaming) or project (`project.skills`, per-project-baseline toggles, no session) — the
-  latter reused by `panels` pre-session). All props-driven; behavior detail lives in the components' jsdoc.
-- **Live session telemetry follows Pi's finalized boundaries.** `SessionStatsBar` renders only the host's
-  authoritative `session.getStats` snapshot; the web never derives billed totals or context usage from
-  message content. Totals include delegated subagent spend, which the host records into the parent as pi
-  `usage` entries after each response of a running subagent and at its run's end, so the toolbar moves
+  levels with it) and `ChatHeader` (the **extension status row**: the single-line panel-header row —
+  `h-panel-header-row`, the shared structural geometry with workbench Group Headers and the Changes
+  toolbar — that shows `ctx.ui.setStatus` lines and **renders nothing when an extension set none**. It
+  no longer carries token usage, cost, context use, a Resources button or a Skills button: usage and
+  context live in the status dock's Context block, running work in its Background tasks block, and skills
+  are managed in Settings → Agent → Skills (`panels/SkillsSettings`, the former Skills manager as a
+  settings section, in the same two modes: the active workspace with this chat's **Reload**, or the
+  project's baseline at Project Home). The "skills changed on disk" signal that the button's badge used to
+  carry is a notice with a one-click Reload in the dock's Context block).
+- **Live session telemetry follows Pi's finalized boundaries.** The status dock's Context block renders only
+  the host's authoritative `session.getStats` snapshot (`usageFormat.ts` holds the shared token, cost and
+  elapsed formatters); the web never derives billed totals or context usage from message content. Totals
+  include delegated subagent spend, which the host records into the parent as pi
+  `usage` entries after each response of a running subagent and at its run's end, so the readout moves
   while a subagent works instead of jumping when it finishes. The mounted chat refreshes on mount/reconnect, after each finalized message, compaction,
   settlement, and appended spend- or context-bearing entry (`usage` from subagent runs or cache warming,
   `compaction`, `branch_summary`, `context_edit`), and after Pi accepts a model change. A reconnect read may race a restarted host before
@@ -1453,7 +1442,7 @@ both message orders. *Rejected:* keeping the modal for non-MCP extensions — ev
   the explicit exception owned by [[submodule-web-store]]): `ChatTranscript`
   acknowledges the exact unread completion while the window has focus and is visible, the chat is
   attended (`selectChatAttended`: selected in the last-focused center group of the active workspace, no
-  history overlay open or requested for it), neither the Resources inspector nor an open modal dialog covers the transcript
+  history overlay open or requested for it), no open modal dialog (the resource detail included) covers the transcript
   (`useModalLayerOpen` from `@thinkrail/ui/dialog`, which marks every modal overlay), and the
   transcript follows the latest edge (`followState`), once that exact result row has
   rendered (`selectReadyCompletionAck`). A result landing while the user follows never stays lit; one that
@@ -1474,41 +1463,44 @@ both message orders. *Rejected:* keeping the modal for non-MCP extensions — ev
 
 ## Chat Resources
 
-[[submodule-web-chat-resources]] owns the three presentation surfaces — header trigger, composer
-dock, transcript-region inspector — and their shared row grammar. `ChatView` composes its barrel with
-the `useChatResources` integration hook: it mounts the trigger in the header, the dock between the queue
-strip and the composer (only while the inspector is closed), and the inspector inside the transcript
-region so the header and composer stay usable; it owns the open/selected state and fills the inspector's
-detail slot — `CommandLogView` fed by `useCommandLog` for a command, `SubagentTranscriptPane` for a
-subagent — and the subagent detail header's `renderSubagentModel` with `RunModelLabel`. No new shell pane, workbench resource
-kind or terminal attachment is involved. Tool/command completion rendering remains in the conversation primitives, joined through tool/custom-message
-names rather than imports of the capability packages; the latest turn divider carries the "still
-running" chip as a parent-supplied deep link into the inspector. The resources view has a third list,
-the session's MCP servers (`SessionResources.mcpServers`): `useChatResources` passes it only on an
-MCP-capable protocol (older hosts omit the field; either way there is no list) and
-extends the shared controls with `mcp.setSessionOverride` (Disable / Enable in this chat, applied at the
-next idle reload) and `mcp.reconnect`, keyed `mcp:<name>` beside the stop actions. `ChatView` adds the
-connected/starting servers to the trigger's count without making it breathe, mounts `ResourcesAttention`
-beside the trigger while a server needs sign-in, failed or awaits approval, and deep-links that marker and
-the rows' Sign in / Review / Edit to `openSettings(SettingsSection.Mcp)`. While the inspector is open on a
-chat with servers it runs `watchMcpWorkspace`, restarted on every connected generation so a reconnect
-gets a fresh bounded read: the host publishes no edge when a server finishes
-connecting, and the `mcp.list` re-read is what makes it refresh status and push `session.resourcesChanged`.
-The divider's "still running" chip and the dock keep counting work only. No PID is shown — pi exposes
-none — and there is no immediate per-server stop.
+[[submodule-web-chat-resources]] owns the presentation surfaces — task roster, composer strip, detail
+dialog, MCP connector rows — and their shared row grammar. The integration is `ChatResourcesScope.tsx`:
+`ChatResourcesProvider` (mounted by the shell around a chat and its status dock) calls `useChatResources`
+**once** and shares the result — snapshot groups, Stop and MCP controls with their pending state, the
+fresh-result tracking and the 30 s clock — with `ChatView`, the composer strip and the dock's blocks through
+context, so a Stop pressed in the dock shows its pending state everywhere. The provider also owns the detail
+dialog (`openDetail(target)`): `CommandLogView` fed by `useCommandLog` for a command, `SubagentTranscriptPane`
+for a subagent, with `RunModelLabel` as the header's `renderSubagentModel`; `openTranscript(childId)` opens
+the transcript dialog for a card whose subagent the roster no longer lists. `ChatView` reads the scope with
+`useChatResourcesScope()`, mounts the strip between the queue strip and the composer (**not while the dock
+is open**, which already lists the same rows), and passes `openDetail` to the strip, the result rows and the
+"still running" chip's sibling, while the chip itself reveals the dock (`openStatus`). No new shell pane,
+workbench resource kind or terminal attachment is involved. Tool/command completion rendering remains in the
+conversation primitives, joined through tool/custom-message names rather than imports of the capability
+packages. The resources view has a third list, the session's MCP servers (`SessionResources.mcpServers`):
+`useChatResources` passes it only on an MCP-capable protocol (older hosts omit the field; either way there
+is no list) and extends the shared controls with `mcp.setSessionOverride` (Disable / Enable in this chat,
+applied at the next idle reload) and `mcp.reconnect`, keyed `mcp:<name>` beside the stop actions. The
+status toggle in the location bar shows a warning dot while any server needs sign-in, failed or awaits
+approval, and a working dot while background work runs; the rows' Sign in / Review / Edit deep-link to
+`openSettings(SettingsSection.Mcp)`. While the dock's Connectors block is open on a chat with servers it runs
+`watchMcpWorkspace`, restarted on every connected generation so a reconnect gets a fresh bounded read: the
+host publishes no edge when a server finishes connecting, and the `mcp.list` re-read is what makes it refresh
+status and push `session.resourcesChanged`. No PID is shown — pi exposes none — and there is no immediate
+per-server stop.
 
 **New results.** `useFreshResults` tells the user a background result exists before or regardless of
 when the agent receives it (user-settled, 2026-10: "Resources announces, the chat marks receipt").
-A finished command or background (`detached`) subagent is **new** until the user opens it — its dock
-row, the inspector selection once it has finished, or its chat result row
+A finished command or background (`detached`) subagent is **new** until the user opens it — its strip
+row, the detail dialog once it has finished, or its chat result row
 (`ChatActions.markResultSeen`) — or sends the next message.
-`ChatView` passes the new ones to the dock (highlighted, with dismiss) and their count to the trigger.
+`ChatView` passes the new ones to the strip (highlighted, with dismiss).
 The seen set is client UI state under a host-qualified localStorage key per chat: a client's first
 visit baselines everything already finished as seen (an acknowledgement before that first
 authoritative snapshot keeps the baseline pending), later visits surface what finished while away,
 and every send resets the set to the current finished list, so it stays bounded by the snapshot.
 
-The dependency edges are `ChatView`/`useChatResources` → `resources`, `store`, `transport`,
+The dependency edges are `ChatView`/`ChatResourcesScope`/`useChatResources` → `resources`, `store`, `transport`,
 `BackgroundResult` → `resources` (`ResultRow`, the run label as its `metaLead`), `tools/subagent`
 (`runDetails` helpers) and `ModelEffortLabel`, and `ChatView` → the transcript pane. The `resources`
 child stays props-only and imports no sibling tool implementation; it receives the shared 30 s clock as a `now` prop. Command logs are fetched by the

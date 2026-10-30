@@ -64,23 +64,6 @@ async function expectHorizontalSpan(surface: Locator, start: Locator, end: Locat
 		.toBeLessThan(4);
 }
 
-async function expectVerticalSpan(surface: Locator, start: Locator, end: Locator): Promise<void> {
-	await expect
-		.poll(async () => {
-			const [surfaceBox, startBox, endBox] = await Promise.all([
-				surface.boundingBox(),
-				start.boundingBox(),
-				end.boundingBox(),
-			]);
-			if (!surfaceBox || !startBox || !endBox) return Number.POSITIVE_INFINITY;
-			return Math.max(
-				Math.abs(surfaceBox.y - startBox.y),
-				Math.abs(surfaceBox.y + surfaceBox.height - (endBox.y + endBox.height)),
-			);
-		})
-		.toBeLessThan(4);
-}
-
 async function dragHandle(page: Page, handle: Locator, x: number, y: number): Promise<void> {
 	const box = await handle.boundingBox();
 	if (!box) throw new Error("resize handle has no bounding box");
@@ -105,12 +88,6 @@ async function startTabDrag(page: Page, tab: Locator): Promise<void> {
 async function cancelTabDrag(page: Page): Promise<void> {
 	await page.keyboard.press("Escape");
 	await page.mouse.up();
-}
-
-async function setBottomAlignment(page: Page, name: string): Promise<void> {
-	await page.getByRole("button", { name: "Bottom panel alignment" }).click();
-	await page.getByRole("menuitemradio", { name, exact: true }).click();
-	await waitForLayoutSettled(page);
 }
 
 async function requestOverWire<T>(
@@ -238,7 +215,6 @@ test("panel-header actions are square IconButton m controls", async ({ page }) =
 		page.getByTestId("terminal-rail-group").first(),
 		page.getByTestId("side-group-fold").first(),
 		page.getByTestId("side-group-menu").first(),
-		page.getByRole("button", { name: "Bottom panel alignment" }),
 		page.getByTestId("bottom-group-fold"),
 	];
 	for (const control of controls) await square(control);
@@ -399,32 +375,12 @@ test("Mod+Shift+J works from xterm, preserves its PTY through hide and reload, a
 	await expect(page.getByTestId("bottom-panel")).toHaveCount(0);
 });
 
-test("bottom height, all alignments, and keyboard resizing persist across reload", async ({
-	page,
-}) => {
+test("bottom height and keyboard resizing persist across reload", async ({ page }) => {
 	await openDefaultWorkbench(page);
 	const bottom = page.getByTestId("bottom-panel");
 	const center = page.getByTestId("center-tabs");
-	const left = page.getByTestId("left-stack");
-	const right = page.getByTestId("right-stack");
 	await expectHorizontalSpan(bottom, center, center);
-	const alignmentButton = page.getByRole("button", { name: "Bottom panel alignment" });
-	await alignmentButton.focus();
-	await page.keyboard.press("Enter");
-	await expect(
-		page.getByRole("menuitemradio", { name: "Below center", exact: true }),
-	).toBeFocused();
-	await page.keyboard.press("ArrowDown");
-	await expect(
-		page.getByRole("menuitemradio", { name: "Below center and left", exact: true }),
-	).toBeFocused();
-	await page.keyboard.press("Enter");
-	await waitForLayoutSettled(page);
-	await expect(page.getByTestId("bottom-aligned-row")).toHaveAttribute(
-		"data-alignment",
-		"center-left",
-	);
-	await setBottomAlignment(page, "Below center");
+	await expect(page.getByRole("button", { name: "Bottom panel alignment" })).toHaveCount(0);
 	const before = await size(bottom, "height");
 	const handle = page.getByTestId("resize-bottom");
 	const handleBox = await handle.boundingBox();
@@ -433,28 +389,8 @@ test("bottom height, all alignments, and keyboard resizing persist across reload
 	await expect.poll(() => size(bottom, "height")).toBeGreaterThan(before + 55);
 	const resized = await size(bottom, "height");
 
-	await setBottomAlignment(page, "Below center and left");
-	await expect(page.getByTestId("bottom-aligned-row")).toHaveAttribute(
-		"data-alignment",
-		"center-left",
-	);
-	await expectHorizontalSpan(bottom, left, center);
-	await setBottomAlignment(page, "Below center and right");
-	await expect(page.getByTestId("bottom-aligned-row")).toHaveAttribute(
-		"data-alignment",
-		"center-right",
-	);
-	await expectHorizontalSpan(bottom, center, right);
-	await setBottomAlignment(page, "Full width");
-	await expect(page.getByTestId("bottom-aligned-row")).toHaveAttribute("data-alignment", "full");
-	await expectHorizontalSpan(bottom, left, right);
-	await setBottomAlignment(page, "Below center and left");
-
 	await reloadDefaultWorkbench(page);
-	await expect(page.getByTestId("bottom-aligned-row")).toHaveAttribute(
-		"data-alignment",
-		"center-left",
-	);
+	await expect(page.getByTestId("bottom-aligned-row")).toHaveAttribute("data-alignment", "center");
 	await expect
 		.poll(async () => Math.abs((await size(page.getByTestId("bottom-panel"), "height")) - resized))
 		.toBeLessThan(24);
@@ -477,81 +413,20 @@ test("bottom height, all alignments, and keyboard resizing persist across reload
 	expect(dropBox.x + dropBox.width).toBeLessThanOrEqual(railBox.x + railBox.width);
 	await cancelTabDrag(page);
 	await pressPlatformShortcut(page, "Shift+j");
-	await expectHorizontalSpan(page.getByTestId("bottom-panel"), left, center);
-});
-
-test("bottom alignments give excluded lower corners to the actual side panels", async ({
-	page,
-}) => {
-	await openDefaultWorkbench(page);
-	const workbench = page.getByTestId("workbench");
-	const center = page.getByTestId("center-column");
-	const left = page.getByTestId("left-column");
-	const right = page.getByTestId("right-column");
-
-	const cases = [
-		{ name: "Below center", leftOwnsCorner: true, rightOwnsCorner: true },
-		{ name: "Below center and left", leftOwnsCorner: false, rightOwnsCorner: true },
-		{ name: "Below center and right", leftOwnsCorner: true, rightOwnsCorner: false },
-		{ name: "Full width", leftOwnsCorner: false, rightOwnsCorner: false },
-	];
-	for (const alignment of cases) {
-		await setBottomAlignment(page, alignment.name);
-		await expectVerticalSpan(
-			left,
-			alignment.leftOwnsCorner ? workbench : center,
-			alignment.leftOwnsCorner ? workbench : center,
-		);
-		await expectVerticalSpan(
-			right,
-			alignment.rightOwnsCorner ? workbench : center,
-			alignment.rightOwnsCorner ? workbench : center,
-		);
-		await pressPlatformShortcut(page, "Shift+j");
-		await expectVerticalSpan(
-			left,
-			alignment.leftOwnsCorner ? workbench : center,
-			alignment.leftOwnsCorner ? workbench : center,
-		);
-		await expectVerticalSpan(
-			right,
-			alignment.rightOwnsCorner ? workbench : center,
-			alignment.rightOwnsCorner ? workbench : center,
-		);
-		await pressPlatformShortcut(page, "Shift+j");
-	}
-});
-
-test("bottom alignments follow locally compressed side geometry at narrow widths", async ({
-	page,
-}) => {
-	await openDefaultWorkbench(page);
-	await page.setViewportSize({ width: 390, height: 844 });
-	const bottom = page.getByTestId("bottom-panel");
-	const center = page.getByTestId("center-tabs");
-	const left = page.getByTestId("left-stack");
-	const right = page.getByTestId("right-stack");
-
-	await setBottomAlignment(page, "Below center");
-	await expectHorizontalSpan(bottom, center, center);
-	await setBottomAlignment(page, "Below center and left");
-	await expectHorizontalSpan(bottom, left, center);
-	await setBottomAlignment(page, "Below center and right");
-	await expectHorizontalSpan(bottom, center, right);
+	await expectHorizontalSpan(page.getByTestId("bottom-panel"), center, center);
 });
 
 for (const scenario of [
-	{ alignment: "Full width", side: "left", input: "pointer" },
-	{ alignment: "Full width", side: "right", input: "keyboard" },
-	{ alignment: "Below center", side: "left", input: "keyboard" },
-	{ alignment: "Below center", side: "right", input: "pointer" },
+	{ side: "left", input: "pointer" },
+	{ side: "right", input: "keyboard" },
+	{ side: "left", input: "keyboard" },
+	{ side: "right", input: "pointer" },
 ] as const) {
-	test(`narrow side resizing commits only ${scenario.side}: ${scenario.alignment}, ${scenario.input}`, async ({
+	test(`narrow side resizing commits only ${scenario.side}: ${scenario.input}`, async ({
 		page,
 	}) => {
 		await openDefaultWorkbench(page);
 		await page.setViewportSize({ width: 1200, height: 844 });
-		await setBottomAlignment(page, scenario.alignment);
 		const durableBefore = await readPersistedSideWidths(page);
 		await page.setViewportSize({ width: 640, height: 844 });
 		await expect
@@ -586,7 +461,7 @@ for (const scenario of [
 						(await readPersistedSideWidths(page))[scenario.side] - durableBefore[scenario.side],
 					),
 				{
-					message: `${scenario.alignment}: ${scenario.side} ${scenario.input} resize must commit its ratio`,
+					message: `${scenario.side} ${scenario.input} resize must commit its ratio`,
 				},
 			)
 			.toBeGreaterThan(0.001);
@@ -612,36 +487,6 @@ test("closing a final bottom resource retains its frame groups until explicit re
 	await expect(page.getByTestId("bottom-panel")).toHaveCount(0);
 	await expect(page.getByTestId("bottom-drop-zone")).toHaveCount(0);
 	await expect(page.getByTestId("center-group").first()).toBeFocused();
-});
-
-test("bottom alignments follow side geometry while a resize gesture is in progress", async ({
-	page,
-}) => {
-	await openDefaultWorkbench(page);
-	const bottom = page.getByTestId("bottom-panel");
-	const center = page.getByTestId("center-tabs");
-	const left = page.getByTestId("left-stack");
-	const right = page.getByTestId("right-stack");
-	const handle = page.getByTestId("resize-left");
-	const cases: Array<{ name: string; start: Locator; end: Locator; offset: number }> = [
-		{ name: "Below center", start: center, end: center, offset: 60 },
-		{ name: "Below center and left", start: left, end: center, offset: -50 },
-		{ name: "Below center and right", start: center, end: right, offset: 50 },
-	];
-
-	for (const alignment of cases) {
-		await setBottomAlignment(page, alignment.name);
-		const handleBox = await handle.boundingBox();
-		if (!handleBox) throw new Error("left resize handle has no bounding box");
-		const x = handleBox.x + handleBox.width / 2;
-		const y = handleBox.y + handleBox.height / 2;
-		await page.mouse.move(x, y);
-		await page.mouse.down();
-		await page.mouse.move(x + alignment.offset, y, { steps: 8 });
-		await expectHorizontalSpan(bottom, alignment.start, alignment.end);
-		await page.mouse.up();
-		await waitForLayoutSettled(page);
-	}
 });
 
 test("bottom groups arrange left-to-right, resize, fold to the edge rail, restore, and enforce their own limit", async ({
@@ -724,12 +569,9 @@ test("a narrow viewport locally compresses bottom groups without rewriting their
 	const groupIds = await bottomGroups(page).evaluateAll((groups) =>
 		groups.map((group) => group.getAttribute("data-group-id")),
 	);
-	await setBottomAlignment(page, "Full width");
-	await waitForLayoutSettled(page);
 
 	await page.setViewportSize({ width: 390, height: 844 });
 	await expect(bottomGroups(page)).toHaveCount(3);
-	await expect(page.getByTestId("bottom-aligned-row")).toHaveAttribute("data-alignment", "full");
 	const rowBox = await page.getByTestId("bottom-aligned-row").boundingBox();
 	if (!rowBox) throw new Error("bottom row has no bounding box");
 	for (const group of await bottomGroups(page).all()) {
@@ -752,7 +594,7 @@ test("a narrow viewport locally compresses bottom groups without rewriting their
 
 	await reloadDefaultWorkbench(page);
 	await expect(bottomGroups(page)).toHaveCount(3);
-	await expect(page.getByTestId("bottom-aligned-row")).toHaveAttribute("data-alignment", "full");
+	await expect(page.getByTestId("bottom-aligned-row")).toHaveAttribute("data-alignment", "center");
 	await expect
 		.poll(() =>
 			bottomGroups(page).evaluateAll((groups) =>
@@ -762,7 +604,7 @@ test("a narrow viewport locally compresses bottom groups without rewriting their
 		.toEqual(groupIds);
 });
 
-test("bottom visibility and alignment stay local to each window and survive its reload", async ({
+test("bottom visibility stays local to each window and survives its reload", async ({
 	page,
 	context,
 }) => {
@@ -775,18 +617,12 @@ test("bottom visibility and alignment stay local to each window and survive its 
 	await applyWorkbenchPreset(peer, "Balanced");
 	await expect(peer.getByTestId("bottom-panel")).toBeVisible();
 
-	await setBottomAlignment(page, "Full width");
-	await expect(peer.getByTestId("bottom-aligned-row")).toHaveAttribute("data-alignment", "center");
 	await pressPlatformShortcut(page, "Shift+j");
 	await expect(page.getByTestId("bottom-panel")).toHaveCount(0);
 	await expect(peer.getByTestId("bottom-panel")).toBeVisible();
 
-	await setBottomAlignment(peer, "Below center and left");
 	await peer.reload();
-	await expect(peer.getByTestId("bottom-aligned-row")).toHaveAttribute(
-		"data-alignment",
-		"center-left",
-	);
+	await expect(peer.getByTestId("bottom-panel")).toBeVisible();
 	await expect(page.getByTestId("bottom-panel")).toHaveCount(0);
 	await peer.close();
 });

@@ -14,7 +14,6 @@ import {
 	type ResourceActions,
 	ResourceRow,
 	type ResourceTarget,
-	resourceId,
 	resourceTarget,
 	sortLive,
 	sortSettled,
@@ -43,7 +42,7 @@ export function ResourcesDock({
 	now: number;
 	authoritative: boolean;
 	actions: ResourceActions;
-	onInspect: (resourceId: string) => void;
+	onInspect: (target: ResourceTarget) => void;
 	onStopCommand: (commandId: string) => void;
 	onStopSubagent: (childSessionId: string) => void;
 	onDismiss?: (target: ResourceTarget) => void;
@@ -75,7 +74,7 @@ export function ResourcesDock({
 							authoritative={authoritative}
 							action={actions[actionKey(resource)]}
 							stopAllPending={!!actions.all?.pending}
-							onSelect={() => onInspect(resourceId(resource))}
+							onSelect={() => onInspect(resourceTarget(resource))}
 							onStop={() => stop(resource)}
 						/>
 					))}
@@ -87,7 +86,7 @@ export function ResourcesDock({
 							authoritative={authoritative}
 							action={actions[actionKey(resource)]}
 							fresh
-							onSelect={() => onInspect(resourceId(resource))}
+							onSelect={() => onInspect(resourceTarget(resource))}
 							onStop={() => stop(resource)}
 							onDismiss={onDismiss ? () => onDismiss(resourceTarget(resource)) : undefined}
 						/>

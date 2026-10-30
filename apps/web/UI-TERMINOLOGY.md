@@ -206,35 +206,43 @@ The agent conversation, rendered inside a Chat tab in the Center Tabbed Area.
 - **Canonical name:** Chat Header.
 - **Implementation:** `chat/ChatHeader.tsx` → `ChatHeader`.
 - **Parent:** Chat View.
-- **Position:** Slim top bar of the Chat View.
+- **Position:** Slim top bar of the Chat View; **absent** unless an extension set a status.
 - **Children / slots:**
-  - **Status Entries** — inline muted `statusEntries` text (extension status).
-  - **Session Stats Bar** — `chat/SessionStatsBar.tsx` → `SessionStatsBar` (token/cost stats).
-  - **Resources Trigger** — `chat/resources/ResourcesButton.tsx` → `ResourcesButton`
-    (`data-testid="resources-trigger"`); the active-resource count — live work plus connected/starting MCP
-    servers (or `—` while the count is not authoritative) — breathing while work runs; toggles the
-    **Resources Inspector**. Beside it, the **MCP Attention Marker** (`ResourcesAttention`,
-    `resources-mcp-attention`) opens Settings › MCP servers while a server needs sign-in, failed, or awaits
-    approval.
-  - **Skills Button** — `chat/SkillsButton.tsx` → `SkillsButton` (`data-testid="open-skills"`); opens the
-    **Skills Dialog** (`chat/SkillsDialog.tsx` → `SkillsDialog`).
+  - **Status Entries** — inline muted `statusEntries` text (extension status). Token usage, cost and context
+    use live in the **Status Dock**'s Context block; the former Session Stats Bar, Resources Trigger, MCP
+    Attention Marker and Skills Button are gone (Skills are managed in Settings › Agent › Skills).
 
-## Resources
+## Status Dock
 
-The current chat's background commands and subagents, rendered through one row grammar on three
-surfaces owned by `chat/resources/`.
+A column of hairline blocks beside the chat, opened by the **Status Toggle**; it is not a workbench tool.
 
 | Canonical name | Implementation | `data-testid` | Responsibility |
 |---|---|---|---|
-| Resources Trigger | `resources/ResourcesButton.tsx` → `ResourcesButton` | `resources-trigger` (`data-active-count`) | Header toggle for the inspector; live count |
-| Resources Dock | `resources/ResourcesDock.tsx` → `ResourcesDock` | `resources-dock` (`resources-dock-toggle`) | Live rows above the Composer; hidden while the inspector is open; collapses past four rows |
-| Resources Inspector | `resources/ResourcesInspector.tsx` → `ResourcesInspector` | `resources-inspector` | Non-modal in-place dialog over the Message List: roster (Active / Finished / MCP servers) + detail of the selected row |
-| MCP Server Row | `resources/mcpRow.tsx` (private) | `resource-mcp` (`data-name`, `data-state`; `resource-mcp-state`, `resource-mcp-disable` / `-enable` / `-reconnect` / `-settings`), next to the section header's Settings link `resources-mcp-settings` | One of the chat's MCP servers in the inspector's third section: state label, tool count, transport, per-chat actions |
-| Resource Row | shared row inside dock and inspector | `resource-command` / `resource-subagent` (`data-resource-id`, `data-status`, `data-state`) | One command or subagent: glyph · name · activity · state · elapsed. In the dock the name and activity are one Inspect button (`resource-inspect`); in the inspector the row wrapper (`data-selected`) holds a listbox option (name · state · elapsed over a truncated activity line; accessible name `name: activity, state`) and its sibling Stop. Stop appears on hover and focus (`resource-stop`) |
-| Command Log View | `resources/CommandLogView.tsx` → `CommandLogView` | `command-log-output` / `command-log-unavailable` | Bounded plain-text output; the inspector's detail body for a command |
-| Subagent Transcript Pane | `chat/SubagentTranscriptDialog.tsx` → `SubagentTranscriptPane` | `subagent-transcript` | Read-only child transcript; the inspector's detail body for a subagent (and the body of the Subagent Transcript Dialog) |
-| Stop-All Action | roster header in the inspector | `resources-stop-all` → `resources-stop-all-confirm` | Stops this chat's active subagents after a confirmation naming the count |
-| Still-Running Chip | `TurnDivider` in `chat/turns.tsx` | `turn-divider-running` | "N still running" on the latest turn divider; opens the inspector |
+| Status Toggle | `shell/locationBar/LocationBar.tsx` (`StatusToggle`) | `open-status-panel` (`aria-pressed`, `data-signal`) | Icon left of the terminal entry; opens the dock; corner dot = attention / working |
+| Status Dock | `panels/StatusDock.tsx` → `StatusDock` | `status-dock` (`status-dock-layout`) | Wraps a chat or the empty center; the chat narrows when it opens, overlays below 40rem |
+| Status Panel | `panels/StatusPanel.tsx` → `StatusPanel` | `status-panel` | The five blocks in the user's order; live-region announcements of moves |
+| Status Block | `panels/StatusBlockFrame.tsx` → `StatusBlockFrame` | `status-block-<id>` (`-toggle-`, `-handle-`, `-body-`) | One hairline block: fold toggle title + drag grip; ids `environment`, `context`, `tasks`, `connectors`, `changes` |
+| Context Block | `panels/StatusContextBlock.tsx` | `status-context` (`status-context-used` / `-window` / `-<counter>`, `status-skills-stale`) | Engine-reported usage, bar and counters; stale-skills Reload |
+| Tasks Block | `panels/StatusTasksBlock.tsx` | `resources-roster` | The Resources Roster for this chat |
+| Connectors Block | `panels/StatusConnectorsBlock.tsx` | `status-connectors`, `status-connectors-manage` | MCP Connector Rows + the Manage footer row |
+| Changes Block | `panels/StatusChangesBlock.tsx` | `status-changes-count`, `status-changes-review` | Files changed, `+/−`, Review changes |
+
+## Resources
+
+The current chat's background commands and subagents, rendered through one row grammar by `chat/resources/`
+on the dock, the composer strip and the detail dialog.
+
+| Canonical name | Implementation | `data-testid` | Responsibility |
+|---|---|---|---|
+| Resources Roster | `resources/ResourcesRoster.tsx` → `ResourcesRoster` | `resources-roster` (`resources-active` with `data-active-count`, `resources-finished`, `resources-finished-toggle`) | Active and (folded) Finished rows with Stop and confirmed Stop all |
+| Resources Strip | `resources/ResourcesDock.tsx` → `ResourcesDock` | `resources-dock` (`resources-dock-toggle`) | Live rows above the Composer; hidden while the Status Dock is open; collapses past four rows |
+| Resource Detail Dialog | `resources/ResourceDetailDialog.tsx` → `ResourceDetailDialog` | `resources-detail` | Modal: header (name, state, timing, Stop) + command output or subagent transcript |
+| MCP Connector Row | `resources/mcpRow.tsx` → `McpConnectorList` | `resource-mcp` (`data-name`, `data-state`; `resource-mcp-state`, `-menu`, `-enable` / `-reconnect` / `-settings` / `-disable`) | One MCP server on one line: state or tool count, one inline action, an always-present ⋯ menu |
+| Resource Row | shared row inside strip and roster | `resource-command` / `resource-subagent` (`data-resource-id`, `data-status`, `data-state`) | One command or subagent: glyph · name · activity · state · elapsed; the name and activity are one Inspect button (`resource-inspect`), Stop appears on hover and focus (`resource-stop`) |
+| Command Log View | `resources/CommandLogView.tsx` → `CommandLogView` | `command-log-output` / `command-log-unavailable` | Bounded plain-text output; the detail body for a command |
+| Subagent Transcript Pane | `chat/SubagentTranscriptDialog.tsx` → `SubagentTranscriptPane` | `subagent-transcript` | Read-only child transcript; the detail body for a subagent (and the body of the Subagent Transcript Dialog) |
+| Stop-All Action | roster header | `resources-stop-all` → `resources-stop-all-confirm` | Stops this chat's active subagents after a confirmation naming the count |
+| Still-Running Chip | `TurnDivider` in `chat/turns.tsx` | `turn-divider-running` | "N still running" on the latest turn divider; reveals the Status Dock |
 
 ## Message List
 
@@ -464,8 +472,8 @@ hidden terminal placements do not attach. One terminal identity has at most one 
 - **Responsibility:** preserve host-owned shell identity while layout controls placement and visibility.
   Closing retains the explicit busy-process confirmation flow.
 
-**⚠ Naming note (Status Bar):** ThinkRail has **no dedicated status bar component**. The closest surfaces
-are the Top Bar's Connection Status and the Chat Header's Session Stats Bar.
+**⚠ Naming note (Status Bar):** there is **no status bar component**. The closest surfaces are the Top Bar's
+Connection Status and the **Status Dock** beside the chat (usage, tasks, connectors, changes, environment).
 
 ---
 
@@ -521,7 +529,6 @@ App-level dialog/popover instances built on those primitives:
 | Notice Dialog | `panels/NoticeDialog.tsx` → `NoticeDialog` | Dialog | Single-button info modal for failures |
 | Confirm Popover | `panels/ConfirmPopover.tsx` → `ConfirmPopover` | Popover | Anchored yes/no from a dedicated action control (template delete) |
 | Template Editor Dialog | `chat/TemplateEditorDialog.tsx` → `TemplateEditorDialog` | Dialog | Create/edit a prompt template |
-| Skills Dialog | `chat/SkillsDialog.tsx` → `SkillsDialog` | Dialog | Skills manager (chat + project modes) |
 | Login Dialog | `auth/` → `LoginDialog` | Dialog | Provider OAuth / API-key login |
 
 **⚠ Naming notes (primitives):**
@@ -533,8 +540,8 @@ App-level dialog/popover instances built on those primitives:
   are still the **Dropdown Menu** primitive plus a shared right-click handler — call that one the
   "Row Actions Menu". Both wear the same look via `packages/ui/menu-styles.ts`.
 - **Drawer** — there is **no drawer** primitive or component. The mobile single-view shell is designed
-  but not built; do not use "Drawer" for any current region. The **Resources Inspector** is an in-place
-  non-modal **Dialog** (`DialogPanel`), not a drawer.
+  but not built; do not use "Drawer" for any current region. The **Status Dock** is a split beside the chat
+  (an overlay only in narrow panes), not a drawer.
 - **Toolbar** — there is no `Toolbar` component; the slim per-panel control rows (Changes Header, the
   Diff Pane header, the Review Toolbar, the view toggles) are inline. Use **Panel Header** / **Panel Toolbar** descriptively,
   not as component names.
@@ -588,9 +595,10 @@ its alternatives in parentheses.
 **Chat**
 
 - **Chat View** — the whole conversation surface.
-- **Chat Header** — its top bar. **Session Stats Bar**, **Resources Trigger**, **Skills Button**.
-- **Resources** — **Resources Trigger**, **Resources Dock**, **Resources Inspector**, **Resource Row**,
-  **Command Log View**, **Subagent Transcript Pane**, **Stop-All Action**, **Still-Running Chip**.
+- **Chat Header** — the optional extension-status bar.
+- **Status Dock** — **Status Toggle**, **Status Panel**, **Status Block** (Context, Tasks, Connectors, Changes, Environment).
+- **Resources** — **Resources Roster**, **Resources Strip**, **Resource Detail Dialog**, **MCP Connector Row**,
+  **Resource Row**, **Command Log View**, **Subagent Transcript Pane**, **Stop-All Action**, **Still-Running Chip**.
 - **Message List** (alt: Transcript). Units: **Turn** (pi message), **Row** (derived render unit).
 - Row renderers: **User Message**, **Assistant Markdown**, **System Notice**, **Error Turn**,
   **Retry Indicator**, **Tool Card**, **Activity Group**, **Turn Divider** (with **Artifact Chip** /
@@ -639,12 +647,12 @@ its alternatives in parentheses.
 - **Modal** = the **Dialog** primitive. **Dropdown Menu**, **Context Menu**, **Popover**, **Command**,
   **Tooltip**, **Toast**, **Resizable**, **Error Boundary**.
 - App dialogs: **New Workspace Dialog**, **Confirm Dialog**, **Notice Dialog**, **Confirm Popover**,
-  **Template Editor Dialog**, **Skills Dialog**, **Login Dialog**. (Extension dialogs are not a modal: see
+  **Template Editor Dialog**, **Resource Detail Dialog**, **Login Dialog**. (Extension dialogs are not a modal: see
   **Ext-UI Prompt**.)
 
 **Terms that do NOT map to a ThinkRail region (avoid or use only as noted)**
 
-- **Status Bar** — none exists; the closest are the Connection Status pill and the Session Stats Bar.
+- **Status Bar** — none exists; the closest are the Connection Status pill and the **Status Dock**.
 - **Context Menu** — a real primitive now (Project Row right-click); the Changes rows' right-click is still
   the Dropdown Menu (the **Row Actions Menu**). Name the surface, not just "context menu".
 - **Drawer** — none exists (mobile shell not yet built).

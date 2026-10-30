@@ -325,7 +325,7 @@ re-read while a server starts. The state vocabulary and the attention/active pre
     `selectChatAttended` holds — the chat is the selected tab of the last-focused center group in the active
     workspace and no history overlay obscures it or is requested for it (a pending
     `historyOpenRequest` must not let the focusing jump acknowledge before the overlay mounts). `ChatTranscript` adds the facts the store cannot know (the window
-    has focus and is visible; no Resources inspector or modal layer covers the transcript; it follows the latest edge) and acknowledges once all hold.
+    has focus and is visible; no modal layer — the resource detail dialog included — covers the transcript; it follows the latest edge) and acknowledges once all hold.
     The condition is continuous, so it needs no recorded activation, pending cold-connection gesture or
     tick ordering: a result that arrives while the user follows clears at once, scrolling back to the latest
     edge clears it later, and an unfocused window keeps it lit (and notifying) until the user returns. The

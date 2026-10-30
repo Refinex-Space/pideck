@@ -10,7 +10,7 @@ import type {
 import { currentTranslator } from "@thinkrail/locales/react";
 import { TooltipProvider } from "@thinkrail/ui/tooltip";
 import { renderToStaticMarkup } from "react-dom/server";
-import { LocationBar } from "./LocationBar";
+import { LocationBar, LocationDetails } from "./LocationBar";
 import {
 	checksSummary,
 	pluralCommits,
@@ -64,6 +64,16 @@ function render(
 				refreshBranchStatus={() => {}}
 				onNewWorkspace={() => {}}
 			/>
+			{workspace ? (
+				<LocationDetails
+					project={project}
+					workspace={workspace}
+					review={openReview}
+					branchStatus={branchStatus}
+					noteOpenReview={() => {}}
+					refreshBranchStatus={() => {}}
+				/>
+			) : null}
 		</TooltipProvider>,
 	);
 }
@@ -172,10 +182,23 @@ test("every interactive control in the drag strip opts out of dragging", () => {
 	expect(pillClass.split(/\s+/)).toContain("window-no-drag");
 	expect(chipClass("success", true).split(/\s+/)).toContain("window-no-drag");
 	expect(chipClass("success").split(/\s+/)).not.toContain("window-no-drag");
-	const html = render(worktree, review);
-	const card = html.indexOf("<section");
-	expect(html.slice(card, card + 400)).toContain("window-no-drag");
-	for (const tag of html.slice(0, card).matchAll(/<(?:button|a|input)\b[^>]*class="([^"]*)"/g)) {
+	const html = renderToStaticMarkup(
+		<TooltipProvider>
+			<LocationBar
+				project={project}
+				workspace={worktree}
+				review={review}
+				branchStatus={null}
+				noteOpenReview={() => {}}
+				refreshBranchStatus={() => {}}
+				onNewWorkspace={() => {}}
+			/>
+		</TooltipProvider>,
+	);
+	expect(html).not.toContain("<section");
+	const controls = [...html.matchAll(/<(?:button|a|input)\b[^>]*class="([^"]*)"/g)];
+	expect(controls.length).toBeGreaterThan(0);
+	for (const tag of controls) {
 		expect(tag[1]?.split(/\s+/)).toContain("window-no-drag");
 	}
 });

@@ -196,8 +196,6 @@ test("workbench strips and feature toolbars keep one-row geometry with ARIA tabs
 		await expect(header).toHaveCSS("height", height);
 		await expect(header.getByRole("tablist")).toHaveCount(0);
 	}
-	await expect(page.getByTestId("chat-toolbar")).toHaveCSS("height", "32px");
-	await expect(page.getByTestId("chat-toolbar")).toHaveCSS("overflow-x", "clip");
 	await expect(page.getByTestId("changes-view-toggle")).toHaveCSS("height", "32px");
 });
 

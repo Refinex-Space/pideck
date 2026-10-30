@@ -304,44 +304,6 @@ test("an unread result clears only once its chat is seen at the latest edge of a
 	}
 });
 
-test("a result finished under the open Resources inspector clears only once the inspector closes", async ({
-	page,
-}) => {
-	await openFixtureProject(page);
-	const session = seedWorkspaceSession(realpathSync(E2E_FIXTURE_REPO), {
-		name: "inspector state receipt",
-		messages: [
-			{ role: "user", text: "Finish behind the inspector.", timestamp: BASE_TS + 120 },
-			{ role: "assistant", text: "Covered finished result.", timestamp: BASE_TS + 121 },
-		],
-	});
-	const acknowledgements = recordAcknowledgements(page);
-	try {
-		await reconnectWithSeed(page);
-		const workspace = defaultWorkspaceRow(page);
-		await expectAttentionDot(workspace);
-
-		await setWindowFocus(page, false);
-		await enterDefaultWorkspace(page);
-		await openPersistedChat(page, "inspector state receipt");
-		await expect(page.getByText("Covered finished result.", { exact: true })).toBeVisible();
-		await page.getByTestId("resources-trigger").click();
-		const inspector = page.getByTestId("resources-inspector");
-		await expect(inspector).toBeVisible();
-		await setWindowFocus(page, true);
-		await settleFrames(page);
-		expect(acknowledgements()).toBe(0);
-		await expectAttentionDot(workspace);
-
-		await inspector.getByTestId("resources-inspector-close").click();
-		await expect(inspector).toHaveCount(0);
-		await expect(workspace).not.toHaveAttribute("data-attention", /.+/);
-		expect(acknowledgements()).toBe(1);
-	} finally {
-		rmSync(session.path, { force: true });
-	}
-});
-
 test("a result behind an open modal clears only once the modal closes", async ({ page }) => {
 	await openFixtureProject(page);
 	const session = seedWorkspaceSession(realpathSync(E2E_FIXTURE_REPO), {

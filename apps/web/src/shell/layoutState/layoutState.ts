@@ -453,7 +453,10 @@ function decodeLocalLayout(raw: string): LocalLayoutStatePayload | undefined {
 		}
 		const preferences = parsePreferences(parsed.preferences);
 		if (!preferences) return undefined;
-		const frame = parsed.frame;
+		const frame: WorkbenchFrame = {
+			...parsed.frame,
+			bottom: { ...parsed.frame.bottom, alignment: "center" },
+		};
 		const validGroupIds = frameGroupIds(frame);
 		const viewsByWorkspace: Record<string, WorkspaceViewState> = {};
 		const documentsByWorkspace: Record<string, WorkspaceLayoutDocument> = {};

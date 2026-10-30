@@ -44,8 +44,6 @@ import {
 	PromptImageChips,
 	usePromptImages,
 } from "@/chat/promptImages";
-import { SkillsButton } from "@/chat/SkillsButton";
-import { SkillsDialog } from "@/chat/SkillsDialog";
 import { useMentionSource } from "@/chat/useMentionSource";
 import { useModelCatalog } from "@/chat/useModelCatalog";
 import { useModelPreferences } from "@/chat/useModelPreferences";
@@ -147,7 +145,6 @@ export function NewSessionPage({
 	const attachedImages = usePromptImages();
 	const [creating, setCreating] = useState(false);
 	const [trusting, setTrusting] = useState(false);
-	const [manageSkills, setManageSkills] = useState(false);
 	const promptRef = useRef<HTMLTextAreaElement>(null);
 	const hostDefaultAsked = useRef(false);
 	const updatePromptDraft = useCallback(
@@ -756,18 +753,8 @@ export function NewSessionPage({
 							onRefresh={refreshBranches}
 						/>
 					) : null}
-					<SkillsButton
-						onOpen={() => setManageSkills(true)}
-						testId="ws-manage-skills"
-						className="ml-auto"
-					/>
 				</div>
 			</div>
-			<SkillsDialog
-				projectId={selectedProjectId}
-				open={manageSkills}
-				onOpenChange={setManageSkills}
-			/>
 		</form>
 	);
 }

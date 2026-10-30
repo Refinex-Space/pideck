@@ -93,7 +93,7 @@ test("the location segments name the active workspace and switch through their m
 	await card.getByTestId("scope-diff-base").click();
 	await page.getByTestId("branch-option").filter({ hasText: "workspace-1" }).first().click();
 	await expect(card.getByTestId("scope-diff-base")).toContainText("workspace-1");
-	await page.keyboard.press("Escape");
+	await page.getByTestId("open-status-panel").click();
 	await expect(card).toBeHidden();
 	await revealWorkbenchTool(page, "changes");
 	await expect(page.getByTestId("changes-target-picker")).toContainText("workspace-1");

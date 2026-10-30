@@ -81,8 +81,9 @@ test("model picker plus file and portable-skill completion use the live session 
 
 	await expect(page.getByTestId("thinking-selector")).toBeVisible();
 
-	await expect(page.getByTestId("session-stats")).toBeVisible();
-	await expect(page.getByTestId("session-stats")).toContainText(/[?%]\/\d/);
+	const panel = await openStatusDock(page);
+	await expect(panel.getByTestId("status-context")).toBeVisible();
+	await expect(panel.getByTestId("status-context-window")).toContainText(/[?\d]\s*\/\s*\d/);
 
 	const input = page.getByTestId("chat-input");
 	await input.fill("/e2e");
@@ -114,9 +115,10 @@ test("stats refresh after a turn completes (cheap win #3)", { tag: "@agent" }, a
 	await expect(
 		page.locator('[data-testid="chat-message"][data-role="system"]').filter({ hasText: "Done" }),
 	).toBeVisible({ timeout: 80_000 });
-	const stats = page.getByTestId("session-stats");
-	await expect(stats).toBeVisible();
-	await expect(stats).toContainText(/[↑↓RW]/);
+	const context = (await openStatusDock(page)).getByTestId("status-context");
+	await expect(context).toBeVisible();
+	await expect(context.getByTestId("status-context-messages")).toBeVisible();
+	await expect(context.getByTestId("status-context-input")).toBeVisible();
 
 	await hideAuxiliaryWorkbench(page);
 	await page.setViewportSize(PHONE_VIEWPORT);
@@ -126,13 +128,8 @@ test("stats refresh after a turn completes (cheap win #3)", { tag: "@agent" }, a
 			return chatBox ? chatBox.x + chatBox.width : Number.POSITIVE_INFINITY;
 		})
 		.toBeLessThanOrEqual(PHONE_VIEWPORT.width);
-	const skills = page.getByTestId("open-skills");
-	await expect(skills).toBeVisible();
-	const statsBox = await stats.boundingBox();
-	const skillsBox = await skills.boundingBox();
-	if (!statsBox || !skillsBox) throw new Error("chat header item has no bounding box");
-	for (const box of [statsBox, skillsBox]) {
-		expect(box.x).toBeGreaterThanOrEqual(0);
-		expect(box.x + box.width).toBeLessThanOrEqual(PHONE_VIEWPORT.width);
-	}
+	const toggleBox = await page.getByTestId("open-status-panel").boundingBox();
+	if (!toggleBox) throw new Error("status toggle has no bounding box");
+	expect(toggleBox.x).toBeGreaterThanOrEqual(0);
+	expect(toggleBox.x + toggleBox.width).toBeLessThanOrEqual(PHONE_VIEWPORT.width);
 });

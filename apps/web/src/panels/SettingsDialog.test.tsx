@@ -64,6 +64,7 @@ describe("settingsNavGroups", () => {
 					SettingsSection.Models,
 					SettingsSection.Providers,
 					SettingsSection.Mcp,
+					SettingsSection.Skills,
 					SettingsSection.Templates,
 				],
 			],

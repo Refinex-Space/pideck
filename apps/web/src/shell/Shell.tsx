@@ -29,7 +29,7 @@ import { AppShortcuts } from "./AppShortcuts";
 import { JbcentralQuotaTopbar } from "./JbcentralQuotaTopbar";
 import { LayoutSettings } from "./LayoutSettings";
 import { useLocalLayoutState } from "./layoutState";
-import { LocationBar } from "./locationBar";
+import { LocationBar, LocationDetails } from "./locationBar";
 import { NativeWindowControls } from "./NativeWindowControls";
 import { NavigationHistoryButtons } from "./NavigationHistoryButtons";
 import { PROJECT_HOME_PROJECTS_REGION_ID, ProjectHome } from "./ProjectHome";
@@ -148,6 +148,16 @@ export function Shell() {
 		</ApplicationMenu>
 	);
 	const navigationActions = <NavigationHistoryButtons />;
+	const statusEnvironment = contextProject ? (
+		<LocationDetails
+			project={contextProject}
+			workspace={activeWorkspace}
+			review={activeWorkspace ? locationReview : null}
+			branchStatus={branchStatus}
+			noteOpenReview={noteOpenReview}
+			refreshBranchStatus={refreshBranchStatus}
+		/>
+	) : null;
 	const locationBar = (placement: "header" | "tabs") =>
 		contextProject ? (
 			<LocationBar
@@ -189,6 +199,7 @@ export function Shell() {
 						<WorkspaceWorkbench
 							workspaceId={activeWorkspaceId}
 							workspaceLocation={workspaceLocation}
+							statusEnvironment={statusEnvironment}
 							navigationActions={navigationActions}
 							navigationFooter={footer(false)}
 						/>

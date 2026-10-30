@@ -1,1 +1,1 @@
-export { LocationBar } from "./LocationBar";
+export { LocationBar, LocationDetails, type LocationDetailsProps } from "./LocationBar";

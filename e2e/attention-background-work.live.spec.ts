@@ -34,8 +34,8 @@ async function expectHeldThenLit(
 	finished: () => Promise<void>,
 ): Promise<void> {
 	const row = activeWorktreeRow(page);
-	const trigger = page.getByTestId("resources-trigger");
-	await expect(trigger).toHaveAttribute("data-active-count", "1", { timeout: 180_000 });
+	const trigger = page.getByTestId("open-status-panel");
+	await expect(trigger).toHaveAttribute("data-signal", "working", { timeout: 180_000 });
 	await expect.poll(() => states().at(-1)?.execution, { timeout: 120_000 }).toBe("idle");
 	const launchSettled = states().length;
 	expect(states().at(-1)).toMatchObject({
@@ -45,14 +45,14 @@ async function expectHeldThenLit(
 	});
 	expect(states().at(-1)?.completion).not.toBeNull();
 	await page.waitForTimeout(3_000);
-	await expect(trigger).toHaveAttribute("data-active-count", "1");
+	await expect(trigger).toHaveAttribute("data-signal", "working");
 	await expect(row).not.toHaveAttribute("data-attention", "true");
 	await expect(row.getByTestId("attention-dot")).toHaveCount(0);
 	await expect(row).toHaveAttribute("data-running", "true");
 
 	await setWindowFocus(page, false);
 	await finished();
-	await expect(trigger).toHaveAttribute("data-active-count", "0", { timeout: 180_000 });
+	await expect(trigger).not.toHaveAttribute("data-signal", /.+/, { timeout: 180_000 });
 	await expect.poll(() => states().some(isIdleUnread), { timeout: 180_000 }).toBe(true);
 	await expect(row).toHaveAttribute("data-attention", "true", { timeout: 30_000 });
 	await expect(row.getByTestId("attention-dot")).toHaveAttribute("aria-label", "Needs attention");

@@ -7,6 +7,7 @@ import {
 	openAppFresh,
 	openAppSettings,
 	openFixtureProject,
+	openSettingsSection,
 	openWorkspaceChat,
 	openWorkspaceMenu,
 	revealWorkbenchTool,
@@ -89,9 +90,9 @@ test("entity rows, branch metadata and eyebrows are proportional", async ({ page
 		expect(type.family, `${testid} must be proportional`).toMatch(INTERFACE_FACE);
 		expect(type.family, `${testid} must not be mono`).not.toMatch(CODE_FACE);
 	}
-	await page.getByTestId("open-skills").click();
+	await openSettingsSection(page, "skills");
 	const groupLabel = await typeOf(
-		page.getByTestId("skills-dialog").locator(".tr-text-emphasis").first(),
+		page.getByTestId("skills-settings").locator(".tr-text-emphasis").first(),
 	);
 	expect(groupLabel.family).toMatch(INTERFACE_FACE);
 	expect(groupLabel.transform).toBe("none");

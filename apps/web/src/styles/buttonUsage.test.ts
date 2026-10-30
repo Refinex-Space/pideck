@@ -183,6 +183,12 @@ const SPECIALIZED: Exception[] = [
 
 const OVERRIDES: Exception[] = [
 	{
+		file: "panels/StatusBlockFrame.tsx",
+		contains: "status-block-handle-",
+		reason:
+			"drag handle: its grab cursors and touch-action belong to the pointer-drag gesture, not to the button skin",
+	},
+	{
 		file: "chat/ExtUiPrompt.tsx",
 		contains: 'data-testid="ext-ui-option"',
 		reason:

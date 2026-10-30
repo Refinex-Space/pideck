@@ -8,7 +8,6 @@ import { useModalLayerOpen } from "@thinkrail/ui/dialog";
 import { cn } from "@thinkrail/ui/utils";
 import {
 	forwardRef,
-	type ReactNode,
 	type RefCallback,
 	useCallback,
 	useEffect,
@@ -174,18 +173,16 @@ const ChatTranscript = forwardRef<
 		onOpenFile?: ((path: string) => void) | undefined;
 		workspaceRoot: string | undefined;
 		focusComposer: () => void;
-		openSubagentTranscript: (childSessionId: string | null) => void;
+		openSubagentTranscript: (childSessionId: string) => void;
 		resultOpener: ChatActions["resultOpener"];
 		markResultSeen?: ChatActions["markResultSeen"];
 		onTryAgain: () => void;
 		historyOpen: boolean;
-		inspectorOpen: boolean;
 		stillRunning: { count: number; onOpen: () => void } | undefined;
 		readMcpOutput?: ChatActions["readMcpOutput"];
 		openMcpSettings?: ChatActions["openMcpSettings"];
 		openProviderSettings?: ChatActions["openProviderSettings"];
 		findModel?: ChatActions["findModel"];
-		resourcesOverlay?: ReactNode;
 	}
 >(function ChatTranscript(
 	{
@@ -199,13 +196,11 @@ const ChatTranscript = forwardRef<
 		markResultSeen,
 		onTryAgain,
 		historyOpen,
-		inspectorOpen,
 		stillRunning,
 		readMcpOutput,
 		openMcpSettings,
 		openProviderSettings,
 		findModel,
-		resourcesOverlay,
 	},
 	ref,
 ) {
@@ -353,12 +348,7 @@ const ChatTranscript = forwardRef<
 	const windowFocused = useWindowFocused();
 	const modalOpen = useModalLayerOpen();
 	const seen =
-		windowFocused &&
-		attended &&
-		!historyOpen &&
-		!inspectorOpen &&
-		!modalOpen &&
-		followState === "following";
+		windowFocused && attended && !historyOpen && !modalOpen && followState === "following";
 	useEffect(() => {
 		if (!seen || !readyCompletionId) return;
 		let cancelled = false;
@@ -748,7 +738,6 @@ const ChatTranscript = forwardRef<
 								<PendingExtUiPrompt pending={pendingExtUi} />
 							</div>
 						) : null}
-						{resourcesOverlay}
 					</div>
 				</InteractionStatesContext.Provider>
 			</PendingExtUiContext.Provider>

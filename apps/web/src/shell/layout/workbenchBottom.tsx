@@ -1,21 +1,7 @@
 import { useDroppable } from "@dnd-kit/core";
-import {
-	RiCheckFill as Check,
-	RiMoreLine as MoreHorizontal,
-	RiTerminalBoxLine as SquareTerminal,
-} from "@remixicon/react";
-import type { MessageKey } from "@thinkrail/locales";
+import { RiTerminalBoxLine as SquareTerminal } from "@remixicon/react";
 import { useT } from "@thinkrail/locales/react";
-import { Button, IconButton } from "@thinkrail/ui/button";
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuRadioGroup,
-	DropdownMenuRadioItem,
-	DropdownMenuSeparator,
-	DropdownMenuTrigger,
-} from "@thinkrail/ui/dropdown-menu";
+import { Button } from "@thinkrail/ui/button";
 import { type ImperativePanelGroupHandle, ResizablePanelGroup } from "@thinkrail/ui/resizable";
 import { memo, type ReactNode, useMemo, useRef } from "react";
 import { type LayoutAttention, readLayoutSelection, tupleKey } from "../../lib";
@@ -27,9 +13,8 @@ import {
 	type LayoutGroupLocation,
 	layoutTabName,
 	setAuxiliaryGroupFolded,
-	setBottomAlignment,
 } from "./model";
-import type { LayoutBottomAlignment, LayoutBottomGroup, WorkspaceLayoutDocument } from "./types";
+import type { LayoutBottomGroup, WorkspaceLayoutDocument } from "./types";
 import type { DropTarget, SharedGroupProps, WorkbenchProps } from "./workbenchShared";
 import {
 	DropZone,
@@ -45,62 +30,6 @@ import {
 	useTopologySettled,
 } from "./workbenchShared";
 import { AuxiliaryGroupHeader } from "./workbenchSide";
-
-export const BOTTOM_ALIGNMENT_LABELS = {
-	center: "workbench.bottom.alignCenter",
-	"center-left": "workbench.bottom.alignCenterLeft",
-	"center-right": "workbench.bottom.alignCenterRight",
-	full: "workbench.bottom.alignFull",
-} as const satisfies Record<LayoutBottomAlignment, MessageKey>;
-
-export function BottomAlignmentMenu({
-	alignment,
-	onChange,
-	onHide,
-}: {
-	alignment: LayoutBottomAlignment;
-	onChange: (alignment: LayoutBottomAlignment) => void;
-	onHide: () => void;
-}) {
-	const t = useT();
-	return (
-		<DropdownMenu>
-			<DropdownMenuTrigger asChild>
-				<IconButton
-					variant="ghost"
-					size="m"
-					icon={MoreHorizontal}
-					label={t("workbench.bottom.alignment")}
-					tooltip={t("workbench.bottom.alignmentCurrent", {
-						alignment: t(BOTTOM_ALIGNMENT_LABELS[alignment]),
-					})}
-					wrapTrigger
-					className="shrink-0 self-center"
-				/>
-			</DropdownMenuTrigger>
-			<DropdownMenuContent align="end" className="w-224">
-				<DropdownMenuRadioGroup
-					value={alignment}
-					onValueChange={(value) => onChange(value as LayoutBottomAlignment)}
-				>
-					{(Object.keys(BOTTOM_ALIGNMENT_LABELS) as LayoutBottomAlignment[]).map((value) => (
-						<DropdownMenuRadioItem
-							key={value}
-							value={value}
-							data-testid={`bottom-align-${value}`}
-							className="justify-between"
-						>
-							<span>{t(BOTTOM_ALIGNMENT_LABELS[value])}</span>
-							{alignment === value ? <Check className="text-primary" /> : null}
-						</DropdownMenuRadioItem>
-					))}
-				</DropdownMenuRadioGroup>
-				<DropdownMenuSeparator />
-				<DropdownMenuItem onSelect={onHide}>{t("workbench.bottom.hide")}</DropdownMenuItem>
-			</DropdownMenuContent>
-		</DropdownMenu>
-	);
-}
 
 export function BottomCreationTargets({
 	group,
@@ -157,17 +86,13 @@ export const BottomGroupView = memo(function BottomGroupView({
 	group,
 	groupIndex,
 	selectedId,
-	showAlignmentMenu,
 	onFold,
-	onAlignmentChange,
 	...shared
 }: SharedGroupProps & {
 	group: LayoutBottomGroup;
 	groupIndex: number;
 	selectedId: string | undefined;
-	showAlignmentMenu: boolean;
 	onFold: () => void;
-	onAlignmentChange: (alignment: LayoutBottomAlignment) => void;
 }) {
 	const t = useT();
 	const location: LayoutGroupLocation = { area: "bottom", groupId: group.id };
@@ -195,15 +120,6 @@ export const BottomGroupView = memo(function BottomGroupView({
 				selected={selected}
 				shared={shared}
 				onFold={onFold}
-				trailing={
-					showAlignmentMenu ? (
-						<BottomAlignmentMenu
-							alignment={shared.document.bottom.alignment}
-							onChange={onAlignmentChange}
-							onHide={() => shared.onHideSide("bottom")}
-						/>
-					) : null
-				}
 			/>
 			<section
 				id={groupPanelId(location)}
@@ -250,13 +166,6 @@ export const BottomStack = memo(function BottomStack({
 }) {
 	const t = useT();
 	const [sizeRef, size] = useElementSize();
-	const region = shared.document.bottom;
-	const alignmentMenuGroupId =
-		region.groups.find((group) => !group.folded)?.id ?? region.groups[0]?.id;
-	const commitAlignment = (alignment: LayoutBottomAlignment) => {
-		const next = setBottomAlignment(shared.document, alignment);
-		if (next !== shared.document) onCommit(next);
-	};
 	const visible = useMemo(
 		() => visibleAuxiliaryGroups(shared.document, "bottom"),
 		[shared.document],
@@ -318,9 +227,7 @@ export const BottomStack = memo(function BottomStack({
 								group={group}
 								groupIndex={documentIndex}
 								selectedId={readLayoutSelection(attention, group.id)}
-								showAlignmentMenu={group.id === alignmentMenuGroupId}
 								onFold={fold}
-								onAlignmentChange={commitAlignment}
 								{...shared}
 							/>
 						</PanelWithHandle>

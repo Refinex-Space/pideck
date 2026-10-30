@@ -2,7 +2,7 @@ import type { DelegationRunDetails, DelegationRunStatus } from "@thinkrail/contr
 import { isDelegationRunDetails } from "@thinkrail/contracts";
 import { strArg, type ToolRenderProps } from "@thinkrail/extension-api/web";
 import type { Translator } from "@thinkrail/locales/react";
-import { formatCost, formatElapsed, formatTokens } from "../../SessionStatsBar";
+import { formatCost, formatElapsed, formatTokens } from "../../usageFormat";
 
 export function readRunDetails(value: unknown): DelegationRunDetails | undefined {
 	if (!value || typeof value !== "object" || !("details" in value)) return undefined;

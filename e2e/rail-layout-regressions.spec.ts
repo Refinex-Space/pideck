@@ -49,8 +49,6 @@ test("bottom measurement reconnects after a frame transition and viewport resize
 }) => {
 	await openDefault(page);
 	await page.getByTestId("tool-rail-specs").click();
-	await page.getByRole("button", { name: "Bottom panel alignment" }).click();
-	await page.getByRole("menuitemradio", { name: "Full width", exact: true }).click();
 	await page.setViewportSize({ width: 1440, height: 680 });
 	const panel = page.getByTestId("bottom-panel");
 	await expect
@@ -184,7 +182,6 @@ async function frame(page: Page): Promise<string> {
 
 for (const kind of [
 	"outer-side",
-	"aligned-side",
 	"bottom-height",
 	"side-groups",
 	"bottom-groups",
@@ -198,10 +195,6 @@ for (const kind of [
 		await waitTerminalReady(page);
 		await activateDefaultWorkspace(page);
 		await waitTerminalReady(page);
-		if (kind === "aligned-side") {
-			await page.getByRole("button", { name: "Bottom panel alignment" }).click();
-			await page.getByRole("menuitemradio", { name: "Full width", exact: true }).click();
-		}
 		if (kind === "bottom-groups") {
 			await page.getByTestId("tool-rail-review").click({ button: "right" });
 			await page.getByRole("menuitem", { name: "New bottom group at right", exact: true }).click();

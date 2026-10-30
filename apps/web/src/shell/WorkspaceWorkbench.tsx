@@ -13,6 +13,7 @@ import {
 	useState,
 } from "react";
 import { useShallow } from "zustand/react/shallow";
+import { ChatResourcesProvider } from "../chat/ChatResourcesScope";
 import { prepareChatTitle } from "../chat/chatTitle";
 import { useAutoPlanSummary } from "../chat/useChatTodos";
 import { ErrorBoundary } from "../components/ErrorBoundary";
@@ -29,6 +30,8 @@ import { ProjectTree } from "../panels/ProjectTree";
 import { ReviewPanel, selectActiveReviewedPath } from "../panels/ReviewPanel";
 import { reviewFlagForPaths, reviewFlags, tabReviewPaths } from "../panels/reviewModel";
 import { SpecsPanel } from "../panels/SpecsPanel";
+import { StatusDock } from "../panels/StatusDock";
+import { openStatusDock, useStatusBlocks } from "../panels/statusBlocks";
 import { TerminalWorkbenchBody, useTerminalClose } from "../panels/TerminalWorkbench";
 import { useWorkspaceReview } from "../panels/useWorkspaceReview";
 import { useWorkspaceSpecs } from "../panels/useWorkspaceSpecs";
@@ -186,13 +189,17 @@ const CHAT_RETRY_DELAY_MS = 4000;
 function ChatResourceBody({
 	workspaceId,
 	tab,
+	statusEnvironment,
 	onOpenFile,
 }: {
 	workspaceId: string;
 	tab: Extract<LayoutCenterTab, { kind: "chat" }>;
+	statusEnvironment: ReactNode;
 	onOpenFile: (path: string) => void;
 }) {
 	const t = useT();
+	const { layout: statusLayout } = useStatusBlocks();
+	const statusOpen = statusLayout.open;
 	const available = useAppStore((state) => state.sessions[tab.sessionId] !== undefined);
 	const [stalled, setStalled] = useState(false);
 	useEffect(() => {
@@ -208,9 +215,26 @@ function ChatResourceBody({
 				reportId="chat"
 				resetKeys={[workspaceId, tab.id]}
 			>
-				<Suspense fallback={<MissingResource kind="chat" />}>
-					<ChatView sessionId={tab.sessionId} workspaceId={workspaceId} onOpenFile={onOpenFile} />
-				</Suspense>
+				<ChatResourcesProvider
+					workspaceId={workspaceId}
+					sessionId={tab.sessionId}
+					onOpenStatus={openStatusDock}
+					statusOpen={statusOpen}
+				>
+					<StatusDock
+						workspaceId={workspaceId}
+						sessionId={tab.sessionId}
+						environment={statusEnvironment}
+					>
+						<Suspense fallback={<MissingResource kind="chat" />}>
+							<ChatView
+								sessionId={tab.sessionId}
+								workspaceId={workspaceId}
+								onOpenFile={onOpenFile}
+							/>
+						</Suspense>
+					</StatusDock>
+				</ChatResourcesProvider>
 			</ErrorBoundary>
 		);
 	}
@@ -311,11 +335,14 @@ function useTerminalReservation(workspaceId: string): void {
 export function WorkspaceWorkbench({
 	workspaceId,
 	workspaceLocation,
+	statusEnvironment,
 	navigationActions,
 	navigationFooter,
 }: {
 	workspaceId: string;
 	workspaceLocation: ReactNode;
+	/** The Status tool's Environment block, composed by the shell from the location controls. */
+	statusEnvironment: ReactNode;
 	navigationActions: ReactNode;
 	navigationFooter: ReactNode;
 }) {
@@ -597,7 +624,14 @@ export function WorkspaceWorkbench({
 	const renderResourceBody = useCallback(
 		(tab: LayoutCenterTab | Extract<LayoutTab, { kind: "terminal" }>) => {
 			if (tab.kind === "chat") {
-				return <ChatResourceBody workspaceId={workspaceId} tab={tab} onOpenFile={openToolFile} />;
+				return (
+					<ChatResourceBody
+						workspaceId={workspaceId}
+						tab={tab}
+						statusEnvironment={statusEnvironment}
+						onOpenFile={openToolFile}
+					/>
+				);
 			}
 			if (tab.kind === "document") {
 				if (deletedSessions?.[tab.sourceId]) return <MissingResource kind="plan" />;
@@ -639,7 +673,7 @@ export function WorkspaceWorkbench({
 			}
 			return <EditorResourceBody workspaceId={workspaceId} tab={tab} />;
 		},
-		[deletedSessions, document, openToolFile, t, terminalByKey, workspaceId],
+		[deletedSessions, document, openToolFile, statusEnvironment, t, terminalByKey, workspaceId],
 	);
 	const renderTabBody = useCallback(
 		(tab: LayoutCenterTab | Extract<LayoutTab, { kind: "terminal" }>) => (
@@ -753,15 +787,17 @@ export function WorkspaceWorkbench({
 			: workspace.name;
 	const renderEmptyCenter = useCallback(
 		(groupId: string): ReactNode => (
-			<WorkspaceReady
-				kind={readyKind}
-				workspace={workspace ?? null}
-				title={readyTitle}
-				starting={chatStarting}
-				onStart={() => startChat(groupId)}
-			/>
+			<StatusDock workspaceId={workspaceId} sessionId={null} environment={statusEnvironment}>
+				<WorkspaceReady
+					kind={readyKind}
+					workspace={workspace ?? null}
+					title={readyTitle}
+					starting={chatStarting}
+					onStart={() => startChat(groupId)}
+				/>
+			</StatusDock>
 		),
-		[chatStarting, readyKind, readyTitle, startChat, workspace],
+		[chatStarting, readyKind, readyTitle, startChat, statusEnvironment, workspace, workspaceId],
 	);
 
 	if (!rendered) {

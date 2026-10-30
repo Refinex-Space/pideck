@@ -10,20 +10,22 @@ tags: [ui, topbar, public-surface-checked]
 
 ## PiDeck presentation and responsibility
 
-The workspace switcher remains in the main canvas's 40px window-control row. Project, branch,
-remote and review actions live in the adjacent Workspace details disclosure **only in a workspace**.
-Project Home keeps its workspace switcher and uses the sidebar for project selection; it has no redundant
-information button or nested project-only details card. The workspace card is fixed to its trigger
-rectangle, clamped inside the viewport with the shared 8px gap; ancestor resizing and scrolling update
-the anchor, and available height scrolls internally. Native `details` keeps
-its child controllers mounted while collapsed: closing the surface must not discard a pending ship
-confirmation, draft, retry or project picker. Escape returns focus to the summary; outside pointer
-interaction closes it except while interacting with its Radix menu/dialog layers. It uses existing
-panels-owned actions and reads host state; it introduces no parallel domain owner.
+The workspace switcher remains in the main canvas's 40px window-control row. In a workspace it is
+followed by one **Status toggle** (`open-status-panel`, a `LayoutList` icon, `aria-pressed`, selected fill
+while open) that opens and closes the status dock beside the chat ([[submodule-web-panels]], *Status dock*).
+It sits where the workspace-details control did, immediately left of the terminal entry, and is absent at
+Project Home, which keeps its workspace switcher and uses the sidebar for project selection.
 
-The lightweight details surface follows the same semantic tokens as menus. Repeated category
-captions remain screen-reader text; base branch and settled state remain subdued details. All
-project/workspace/branch/remote/review actions and the existing protocol guards remain available.
+The project, branch, remote and review controls are no longer a popover: `LocationDetails` — the same
+hairline `DetailRow`s — renders inside the dock's Environment block. The shell builds it from the one
+`useBranchStatus` instance it already runs (so CI polling still happens once) and hands it down as a slot;
+this module owns the rows, the dock owns the container. Folding the Environment block keeps the rows
+mounted; closing the dock unmounts them after its slide, so a pending ship confirmation, draft, retry or
+project picker lives only while the dock is open. The runner is still keyed by workspace id, so moving to
+another workspace discards it as before.
+
+All project/workspace/branch/remote/review actions and the existing protocol guards remain available.
+Repeated category captions stay screen-reader text; base branch and settled state remain subdued details.
 
 ## Boundary
 
@@ -33,12 +35,14 @@ project/workspace/branch/remote/review actions and the existing protocol guards 
   and review rows), the Remote and Pull request segments, and the responsive drop order.
 - **Public surface (`index.ts`):**
   - `LocationBar`
+  - `LocationDetails`
+  - `LocationDetailsProps`
 - **Allowed deps:** `store` (projects, workspaces, session state, diff base selector, toasts), `transport`
   (`workspace.setDiffBase`), `lib` (`copyText`, `platformShortcutLabel`), `components/RunningIcon`,
   `@thinkrail/ui/*`, `@remixicon/react`, `@thinkrail/locales` (UI strings), contracts types, and these `panels` files per-file:
   `workspaceActions` (the one implementation of open-in / rename / reveal / remove / `editor.list` /
   `workspace.list`, shared with `ProjectTree`), `RemoveWorkspaceDialog`, `BranchPicker` + `branches`,
-  `useOpenProject`, `useBranchStatus` (`openReviewLabel`, `resolveBranchReview`), `shipActions` (the
+  `useOpenProject`, `statusBlocks` (`useStatusBlocks`, the Status toggle's open state), `useBranchStatus` (`openReviewLabel`, `resolveBranchReview`), `shipActions` (the
   derivation), and `useShipRunner` (the action runner with its dialogs, shared with the Plan pane). A
   `ShipStrip` keyed by the workspace id owns the runner: a compose draft survives the segments unmounting on a
   disconnect, while moving to another workspace discards the draft, its retry, and any pending preview with
@@ -176,9 +180,9 @@ project/workspace/branch/remote/review actions and the existing protocol guards 
 
 ## Details card layout
 
-The ⓘ control (with a tooltip) opens one card of hairline-separated rows — `DetailRow`: a 72px caption
+The dock's Environment block is one run of hairline-separated rows — `DetailRow`: a 72px caption
 column, then the value, then trailing actions. Project (always-visible chevron), Branch (+ copy), Based
 on, Compare to (the branch picker, inline — there is no nested branch popover), Remote and Pull request
 (with their split action buttons), and the Checks / Decision rows when a review exists. Every value starts
 on the same left edge; pill and picker triggers pull themselves left by their own padding so their icons
-line up with plain text. The branch list loads only while the card is open.
+line up with plain text. The branch list loads only while the dock is open.

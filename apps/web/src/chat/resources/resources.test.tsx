@@ -11,11 +11,11 @@ import type { ComponentProps, ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import * as resources from "./index";
 import { mcpRowActions } from "./mcpRow";
+import { DetailHeader } from "./ResourceDetailDialog";
 import { elapsedLabel, formatElapsed, resourceState, sortLive } from "./resourceRow";
 
 const NOW = 10 * 60_000;
-const renderInspector = (node: ReactNode) =>
-	renderToStaticMarkup(<TooltipProvider>{node}</TooltipProvider>);
+const render = (node: ReactNode) => renderToStaticMarkup(<TooltipProvider>{node}</TooltipProvider>);
 const command: BackgroundCommandSummary = {
 	id: "build",
 	sessionId: "chat",
@@ -32,9 +32,7 @@ const child: SubagentResourceSummary = {
 	status: "queued",
 	createdAt: new Date(NOW - 30_000).toISOString(),
 };
-const inspectorProps: ComponentProps<typeof resources.ResourcesInspector> = {
-	open: true,
-	onOpenChange: () => {},
+const rosterProps: ComponentProps<typeof resources.ResourcesRoster> = {
 	commands: [],
 	subagents: [],
 	finishedCommands: [],
@@ -45,13 +43,11 @@ const inspectorProps: ComponentProps<typeof resources.ResourcesInspector> = {
 	stale: false,
 	error: null,
 	actions: {},
-	selectedId: null,
-	onSelect: () => {},
+	onInspect: () => {},
 	onRetry: () => {},
 	onStopCommand: () => {},
 	onStopSubagent: () => {},
 	onStopAll: () => {},
-	detail: <div data-testid="detail-slot">slot</div>,
 };
 const dockProps: ComponentProps<typeof resources.ResourcesDock> = {
 	commands: [],
@@ -129,39 +125,18 @@ test("the row vocabulary collapses wire statuses into one live and three settled
 	expect(order).toEqual(["build", "stopping", "child", "late"]);
 });
 
-test("resource trigger distinguishes an authoritative count from an unknown count and breathes only while live", () => {
-	const render = (activeCount: number | null, open = false) =>
-		renderToStaticMarkup(
-			<TooltipProvider>
-				<resources.ResourcesButton activeCount={activeCount} open={open} />
-			</TooltipProvider>,
-		);
-	const current = render(3, true);
-	expect(current).toContain('data-active-count="3"');
-	expect(current).toContain('aria-label="Resources, 3 active"');
-	expect(current).toContain('aria-expanded="true"');
-	expect(current).toContain('data-live="true"');
-	expect(current).toContain("animate-working");
-	expect(current).toContain(">3</span>");
-
-	const idle = render(0);
-	expect(idle).not.toContain("data-live");
-	expect(idle).not.toContain("animate-working");
-
-	const unknown = render(null);
-	expect(unknown).toContain('data-active-count="unknown"');
-	expect(unknown).toContain('aria-label="Resources, active count unavailable"');
-	expect(unknown).toContain(">—</span>");
-	expect(unknown).not.toContain("null active");
-	expect(unknown).not.toContain("animate-working");
-});
-
-test("ChatView mounts the trigger, dock and inspector and retires resource-only layers", () => {
+test("ChatView mounts the task strip and reads one provider-owned resources scope", () => {
 	const source = readFileSync(`${import.meta.dir}/../ChatView.tsx`, "utf8");
 	expect(source).toContain("<ResourcesDock");
-	expect(source).toContain("<ResourcesInspector");
-	expect(source).toContain("if (!resources.knownUnsupported) return;");
-	expect(source).toContain("resources.visible && !inspectorOpen ? (");
+	expect(source).toContain("useChatResourcesScope()");
+	expect(source).toContain("resources.visible && !statusOpen ? (");
+	for (const retired of [
+		"ResourcesInspector",
+		"ResourcesButton",
+		"ResourcesAttention",
+		"SkillsDialog",
+	])
+		expect(source).not.toContain(retired);
 });
 
 test("the dock lists live rows oldest-first with escaped text, one inspect control and stop, and collapses past four", () => {
@@ -217,10 +192,10 @@ test("the dock lists live rows oldest-first with escaped text, one inspect contr
 	expect(stale).toContain("reconnecting");
 });
 
-test("the inspector renders a listbox of options whose accessible names carry the activity, selects the first live row, and keeps Stop beside the option", () => {
-	const html = renderInspector(
-		<resources.ResourcesInspector
-			{...inspectorProps}
+test("the roster lists live rows with escaped text and keeps Stop beside each, finished rows wait behind a count", () => {
+	const html = render(
+		<resources.ResourcesRoster
+			{...rosterProps}
 			commands={[command]}
 			subagents={[child]}
 			finishedCommands={[
@@ -229,83 +204,80 @@ test("the inspector renders a listbox of options whose accessible names carry th
 			finishedSubagents={[{ ...child, status: "aborted", abortReason: "Stopped by user" }]}
 		/>,
 	);
-	expect(html).toContain('data-testid="resources-inspector"');
-	expect(html).toContain('role="listbox"');
+	expect(html).toContain('data-testid="resources-roster"');
 	expect(html).toContain('data-testid="resources-active"');
 	expect(html).toContain('data-testid="resources-finished"');
-	expect(html).toMatch(/data-resource-id="build"[^>]*data-selected="true"/);
-	expect(html).not.toMatch(/data-resource-id="child"[^>]*data-selected="true"/);
-	expect(html).toContain('aria-selected="true"');
-	expect(html).toContain(
-		'aria-label="Build &lt;script&gt;: echo &#x27;&lt;img src=x onerror=bad()&gt;&#x27;, Running"',
+	expect(html).toContain('data-resource-id="build"');
+	expect(html).toContain('data-resource-id="child"');
+	expect(html.indexOf('data-resource-id="build"')).toBeLessThan(
+		html.indexOf('data-resource-id="child"'),
 	);
-	expect(html).toContain('aria-label="scout: &lt;b&gt;Inspect&lt;/b&gt; the registry, Queued"');
-	expect(html.match(/&lt;b&gt;Inspect&lt;\/b&gt; the registry/g)?.length).toBeGreaterThanOrEqual(2);
-	const options = html.match(/<div role="option"[^>]*>(?:(?!<\/div>)[\s\S])*<\/div>/g) ?? [];
-	expect(options.length).toBe(4);
-	for (const option of options) expect(option).not.toContain("resource-stop");
 	expect(html.match(/data-testid="resource-stop"/g)?.length).toBe(2);
-	expect(html).toContain('data-testid="resource-detail-stop"');
-	expect(html).toContain('data-testid="detail-slot"');
 	expect(html).toContain('aria-label="Stop all subagents"');
-	expect(html).toContain("exit 1");
-	expect(html).toContain('data-state="failed"');
-	expect(html).toContain('data-state="stopped"');
-	expect(html).toContain("2 active");
+	expect(html).toContain("Finished");
+	expect(html).toContain("· 2");
+	expect(html).toMatch(/data-testid="resources-finished-toggle"[^>]*aria-expanded="false"/);
+	expect(html).not.toContain('data-resource-id="finished"');
+	expect(html).toContain("Build &lt;script&gt;");
 	expect(html).not.toContain("<img");
 	expect(html).not.toContain("<b>");
+	expect(html).not.toContain("resources-inspector");
 });
 
-test("the inspector keeps the selected finished row, disables controls when stale, and surfaces failures with retry", () => {
-	const html = renderInspector(
-		<resources.ResourcesInspector
-			{...inspectorProps}
+test("the roster disables controls when stale, and surfaces failures with retry", () => {
+	const html = render(
+		<resources.ResourcesRoster
+			{...rosterProps}
 			commands={[command]}
-			finishedCommands={[{ ...command, id: "done", status: "completed", exitCode: 0 }]}
-			selectedId="done"
 			authoritative={false}
 			stale
 			error="Read failed"
 			actions={{ "command:build": { pending: false, error: "Stop failed" } }}
 		/>,
 	);
-	expect(html).toMatch(/data-resource-id="done"[^>]*data-selected="true"/);
 	expect(html).toContain("Snapshot is stale");
 	expect(html).toContain("reconnecting");
 	expect(html).toMatch(/data-testid="resource-stop"[^>]*disabled/);
-	expect(html).not.toContain('data-testid="resource-detail-stop"');
 	expect(html).toContain("Stop failed");
 	expect(html).toContain("Read failed");
 	expect(html).toContain('role="alert"');
 	expect(html).toContain('data-testid="resources-retry"');
 	expect(html).not.toContain('data-testid="resources-stop-all"');
-	expect(html).toContain("Done");
+	const idle = render(<resources.ResourcesRoster {...rosterProps} />);
+	expect(idle).toContain("Nothing is running in the background.");
 });
 
 test("the detail header shows a subagent's model through the parent's label and omits it when the host sent none", () => {
-	const withModel = { ...child, model: "openai/gpt-6", thinkingLevel: "max" as const };
-	const labelled = renderInspector(
-		<resources.ResourcesInspector
-			{...inspectorProps}
-			subagents={[withModel]}
-			renderSubagentModel={(summary) => (
-				<span data-testid="label">{`${summary.model} @ ${summary.thinkingLevel}`}</span>
-			)}
-		/>,
-	);
+	const header = (summary: SubagentResourceSummary, label: boolean) =>
+		render(
+			<DetailHeader
+				resource={{ kind: "subagent", summary }}
+				now={NOW}
+				authoritative
+				actions={{}}
+				onStop={() => {}}
+				renderSubagentModel={
+					label
+						? (value) => (
+								<span data-testid="label">{`${value.model} @ ${value.thinkingLevel}`}</span>
+							)
+						: () => <span>never</span>
+				}
+			/>,
+		);
+	const labelled = header({ ...child, model: "openai/gpt-6", thinkingLevel: "max" }, true);
 	expect(labelled).toContain('data-testid="resource-detail-model"');
 	expect(labelled).toContain(">Model<");
 	expect(labelled).toContain("openai/gpt-6 @ max");
+	expect(labelled).toContain('data-testid="resource-detail-stop"');
 
-	const older = renderInspector(
-		<resources.ResourcesInspector
-			{...inspectorProps}
-			subagents={[child]}
-			renderSubagentModel={() => <span>never</span>}
-		/>,
-	);
+	const older = header(child, false);
 	expect(older).not.toContain('data-testid="resource-detail-model"');
 	expect(older).not.toContain("never");
+
+	const settled = header({ ...child, status: "completed", durationMs: 7 * 60_000 }, true);
+	expect(settled).not.toContain('data-testid="resource-detail-stop"');
+	expect(settled).toContain("7 min");
 });
 
 test("command logs distinguish loading, empty, retry, permanent unavailability, stale and truncated plain text", () => {
@@ -425,27 +397,6 @@ test("the result row maps a completion to the shared states, teases the last out
 	expect(subagent).not.toContain("min<");
 });
 
-test("the trigger counts connected MCP servers without breathing, and the attention marker names what needs the user", () => {
-	const html = renderToStaticMarkup(
-		<TooltipProvider>
-			<resources.ResourcesButton activeCount={2} open={false} working={false} />
-			<resources.ResourcesAttention count={2} onOpen={() => {}} />
-		</TooltipProvider>,
-	);
-	expect(html).toContain('data-active-count="2"');
-	expect(html).not.toContain("data-live");
-	expect(html).not.toContain("animate-working");
-	expect(html).toContain('data-testid="resources-mcp-attention"');
-	expect(html).toContain('aria-label="2 MCP servers need attention — open MCP settings"');
-	expect(
-		renderToStaticMarkup(
-			<TooltipProvider>
-				<resources.ResourcesButton activeCount={3} open={false} working />
-			</TooltipProvider>,
-		),
-	).toContain('data-live="true"');
-});
-
 test("MCP rows offer per-chat actions by state: disable, enable, reconnect, and Settings for sign-in or approval", () => {
 	const actions = (state: McpServerResourceSummary["state"]) =>
 		mcpRowActions({ name: "docs", state, transport: "stdio" }).map((action) => action.id);
@@ -467,44 +418,45 @@ test("MCP rows offer per-chat actions by state: disable, enable, reconnect, and 
 	expect(registered("needs-sign-in")).toEqual(["settings"]);
 });
 
-test("the inspector lists the chat's MCP servers as a third section and hides it for older hosts", () => {
+test("the connector list is one line per server: tool count when connected, a state otherwise, an inline action only when one is needed", () => {
 	const mcpServers: McpServerResourceSummary[] = [
 		{ name: "linear", state: "needs-sign-in", transport: "http" },
 		{ name: "fixture", state: "connected", toolCount: 2, transport: "stdio" },
 		{ name: "quiet", state: "disabled-in-chat", transport: "stdio" },
+		{ name: "ext", state: "connected", toolCount: 1, transport: "http", registered: true },
 	];
-	const html = renderInspector(
-		<resources.ResourcesInspector
-			{...inspectorProps}
-			mcpServers={mcpServers}
-			actions={{ "mcp:fixture": { pending: false, error: "Disable failed" } }}
-		/>,
-	);
+	const list = (props: Partial<ComponentProps<typeof resources.McpConnectorList>> = {}) =>
+		render(
+			<resources.McpConnectorList
+				servers={mcpServers}
+				authoritative
+				actions={{ "mcp:fixture": { pending: false, error: "Disable failed" } }}
+				onSetEnabled={() => {}}
+				onReconnect={() => {}}
+				onOpenSettings={() => {}}
+				{...props}
+			/>,
+		);
+	const html = list();
 	expect(html).toContain('data-testid="resources-mcp"');
-	expect(html.match(/data-testid="resource-mcp"/g)).toHaveLength(3);
-	expect(html).toMatch(/data-testid="resource-mcp-state"[^>]*>Connected · 2 tools</);
+	expect(html.match(/data-testid="resource-mcp"/g)).toHaveLength(4);
+	expect(html).toMatch(
+		/data-testid="resource-mcp-state"[^>]*>(?:<span class="sr-only">Connected · <\/span>)2 tools</,
+	);
 	expect(html).toMatch(/data-name="quiet" data-state="disabled-in-chat"/);
+	expect(html).toContain("Needs sign-in");
+	expect(html).toContain("Disabled in this chat");
+	// Sign in and Enable sit on their rows; Disable lives in the menu of rows that can offer it.
+	expect(html).toContain('data-testid="resource-mcp-settings"');
 	expect(html).toContain('data-testid="resource-mcp-enable"');
-	expect(html).toContain("Disable in this chat");
-	expect(html).toContain("Disabling applies when the chat is idle — restarts this chat");
+	expect(html).not.toContain('data-testid="resource-mcp-disable"');
+	expect(html.match(/data-testid="resource-mcp-menu"/g)).toHaveLength(2);
 	expect(html).toContain("Disable failed");
-	expect(html).toContain('data-testid="resources-mcp-settings"');
-	expect(html).toContain("stdio · runs on host");
-	const stale = renderInspector(
-		<resources.ResourcesInspector
-			{...inspectorProps}
-			mcpServers={mcpServers}
-			authoritative={false}
-		/>,
+	expect(html).not.toContain("Disabling applies when the chat is idle");
+	expect(list({ authoritative: false })).toMatch(
+		/data-testid="resource-mcp-settings"[^>]*disabled=""/,
 	);
-	expect(stale).toMatch(/data-testid="resource-mcp-disable"[^>]*disabled=""/);
-	const empty = renderInspector(
-		<resources.ResourcesInspector {...inspectorProps} mcpServers={[]} />,
-	);
-	expect(empty).toContain("No MCP servers in this chat.");
-	expect(renderInspector(<resources.ResourcesInspector {...inspectorProps} />)).not.toContain(
-		'data-testid="resources-mcp"',
-	);
+	expect(list({ servers: [] })).toBe("");
 });
 
 test("the dock keeps finished results the user has not seen yet, with inspect and dismiss", () => {
@@ -556,22 +508,4 @@ test("the dock keeps finished results the user has not seen yet, with inspect an
 		/>,
 	);
 	expect(crowded).toContain('data-collapsed="true"');
-});
-
-test("the trigger shows how many finished results are new", () => {
-	const render = (freshCount?: number) =>
-		renderToStaticMarkup(
-			<TooltipProvider>
-				<resources.ResourcesButton
-					activeCount={1}
-					open={false}
-					{...(freshCount ? { freshCount } : {})}
-				/>
-			</TooltipProvider>,
-		);
-	const fresh = render(2);
-	expect(fresh).toContain('data-testid="resources-trigger-fresh"');
-	expect(fresh).toContain("2 new");
-	expect(fresh).toContain('aria-label="Resources, 1 active, 2 new"');
-	expect(render()).not.toContain("resources-trigger-fresh");
 });

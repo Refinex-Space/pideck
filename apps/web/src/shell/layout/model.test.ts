@@ -31,7 +31,6 @@ import {
 	selectTab,
 	separatePanesReason,
 	setAuxiliaryGroupFolded,
-	setBottomAlignment,
 	setSideGroupFolded,
 	setSideVisibility,
 	showBottom,
@@ -404,9 +403,8 @@ describe("workspace layout model", () => {
 		document = mutation(setAuxiliaryGroupFolded(document, "bottom", firstGroupId, true)).document;
 		document = resizeAuxiliaryGroups(document, "bottom", [5, 95]);
 		expect(document.bottom.groups.map((group) => group.weight)).toEqual([0.5, 0.5]);
-		document = setBottomAlignment(document, "full");
 		document = resizeBottomRegion(document, 0.9);
-		expect(document.bottom.alignment).toBe("full");
+		expect(document.bottom.alignment).toBe("center");
 		expect(document.bottom.height).toBe(0.7);
 		document = closeLayoutTab(document, terminal.id).document;
 		expect(document.bottom.groups).toHaveLength(2);

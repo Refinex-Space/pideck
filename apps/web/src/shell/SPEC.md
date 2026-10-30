@@ -39,7 +39,7 @@ Every child is a directory module with `index.ts` as its public surface:
 - `chatReconciliation/` ([[submodule-web-shell-chat-reconciliation]]) owns host session/local placement/cache/history convergence and chat deep-link orchestration.
 - `terminalReconciliation/` ([[submodule-web-shell-terminal-reconciliation]]) owns host terminal-catalog/local placement convergence without owning PTY lifetime.
 - `legacySelection/` ([[submodule-web-shell-legacy-selection]]) is the sole temporary adapter from workbench attention to migration-era active editor/terminal/preview mirrors.
-- `locationBar/` ([[submodule-web-shell-location-bar]]) owns the workspace switcher and its details disclosure and their project / workspace / branch controls; it reaches `panels` per-file and `store`/`transport`, never the layout engine.
+- `locationBar/` ([[submodule-web-shell-location-bar]]) owns the workspace switcher, the Status toggle and the project / workspace / branch rows the status dock's Environment block renders; it reaches `panels` per-file and `store`/`transport`, never the layout engine.
 
 The sibling dependency graph is: `layoutState → layout`; `chatReconciliation → layout + layoutState`; `terminalReconciliation → layout`; `layoutIntents → layout + chatReconciliation + terminalReconciliation`; `legacySelection` reaches store selectors/actions only; and `WorkspaceWorkbench` composes each active orchestration barrel with `layout`, panels, and render callbacks. Chat resource availability is isolated behind a per-session selector component; the parent workbench never subscribes to the whole `sessions` record, so a streaming runtime cannot invalidate every tab renderer and side tool behind it. Siblings import only through barrels. Tests live with the orchestration module that owns the behavior rather than making store tests import shell runtime effects.
 
@@ -113,6 +113,12 @@ on large screens without narrowing a saved layout.
 After `main.tsx`'s synchronous first-paint apply, Shell is the sole mounted theme side-effect owner. While `welcomeGeneration === 0` it retains the versioned preference hint; afterward it projects store's opaque fixed id + fixed/system mode + optional pair through `themes` and writes the reconciled hint. Fixed mode has no media listener. System mode owns exactly one `prefers-color-scheme` listener, reapplies the locally resolved slot on change, and cleans it up on preference/unmount; that local event never mutates store, calls the host, or changes another client. No other component mutates `[data-theme]`.
 
 ## Workbench behavior
+
+`WorkspaceWorkbench` wraps every chat body, and the empty center of a workspace with no chat, in `panels`' `StatusDock`
+([[submodule-web-panels]], *Status dock*). The dock is a presentation split inside the pane, not frame state: it adds no
+tool id, rail entry or persisted layout field, and the chat keeps its position in the tree whether the dock is open or
+not. `Shell` builds the Environment block (`LocationDetails`) from its single `useBranchStatus` instance and passes it
+down as `statusEnvironment`, so branch status is still read and polled once.
 
 `WorkspaceWorkbench` owns the idle editor preload (`useIdleEditorPreload`): when `panels/editorWarm`'s
 `useEditorWarm` allows it (not phone-class, not `saveData`), it schedules one `whenFilesTreeIdle` preload of the

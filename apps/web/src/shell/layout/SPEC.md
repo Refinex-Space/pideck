@@ -17,8 +17,8 @@ columns. The expanded left rail is horizontal inside its column; when collapsed 
 (`window-drag`, `h-topbar-row`, `window-no-drag` on tabs and action clusters). The top-left center group's
 strip starts with the window inset spacer (and, when the left column is collapsed, the left rail plus history
 buttons). The top-right group's strip ends with, in order: the shell's location pill (worktree and external
-workspaces only; the project folder has none) and details control, the **bottom rail** (the single global terminal entry; the former bottom bar is gone), the
-**right rail** tools, the bottom-alignment menu while the bottom body is hidden, and the right inset spacer
+workspaces only; the project folder has none) and the Status toggle ([[submodule-web-shell-location-bar]]), the **bottom rail** (the single global terminal entry; the former bottom bar is gone), the
+**right rail** tools and the right inset spacer
 (omitted while the right column is visible, which owns that corner). Both rails are horizontal 32px-frame
 toolbars, so no vertical right column exists; their tooltips open downward. The center strip shows **one chat tab**: the selected chat, else the last one selected in that group.
 Other chat tabs stay in the layout (and in the tab search) but are reached from the sidebar's session rows; the
@@ -99,7 +99,8 @@ document order, separated by a hairline, so the rail answers "which icons share 
 strip — the group model stays the authority and merely becomes observable. A singleton entry sits in the
 cluster of the group that holds it; each terminal-bearing group has one entry with its own named session
 tabs; an empty group is a one-entry cluster. Tools placed nowhere (after *Remove tool from group*) form a
-trailing, dimmed cluster behind a last separator; activating one restores it to its recorded target.
+trailing, dimmed cluster with **no separator before it** (the dimming marks the boundary, and the entry
+carries `data-unplaced`); activating one restores it to its recorded target.
 Exactly one entry per expanded pane is pressed and none in a folded or hidden one, so the pressed set
 reads as "panes currently open". Clicking an unpressed entry selects it in *its* pane (revealing or
 unfolding the pane); clicking the pressed one folds that pane. When a single entry reveals a hidden
@@ -164,6 +165,11 @@ decides how loud it reads, never a per-theme selector in the component.
   exposes a broad Primary restore/drop target in unused rail space, leaving explicit group controls
   reachable; dropping reveals its destination. With no drag active, `Mod+Shift+J` and the rail provide
   the same restore path. Height starts at 30%, has a 120 px body minimum, and caps at 70%.
+  **There is no user control for alignment**: the bottom-panel menu (position under the center, left, right
+  or full width, plus Hide) was removed, since the terminal entry and `Mod+Shift+J` already show and hide the
+  body. New frames use center, and a saved frame's alignment is read back as center when hydrated
+  (`layoutState`), so no layout is stranded on a position that can no longer be changed. The renderer still
+  implements the other spans for custom presets that carry them — removing that code is a separate cleanup.
   Alignment is center, center+left, center+right, or full workbench. A side excluded from that span owns its
   lower corner and continues to the workbench bottom; an included side ends above it; the drag-time drop zone
   follows the same ownership. Alignment follows actual browser-local side projection during resize and narrow

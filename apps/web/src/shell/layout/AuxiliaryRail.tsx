@@ -187,7 +187,7 @@ export function AuxiliaryRail({
 			{clusters.map((cluster, clusterIndex) => (
 				<Fragment key={cluster.key}>
 					{cluster.groupId !== null ? boundary(clusterIndex) : null}
-					{clusterIndex > 0 ? (
+					{clusterIndex > 0 && cluster.groupId !== null ? (
 						<hr
 							aria-orientation={horizontal ? "vertical" : "horizontal"}
 							data-testid="rail-separator"

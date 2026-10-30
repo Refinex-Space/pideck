@@ -202,7 +202,7 @@ test("live safe areas on either edge preserve header and workbench geometry", as
 			const workbenchBox = await bounds(workbench);
 			expect(workbenchBox).toEqual(baselineWorkbench);
 			expect(workbenchBox.y).toBe(0);
-			await expect(page.getByTestId("open-workspace-details")).toBeVisible();
+			await expect(page.getByTestId("open-status-panel")).toBeVisible();
 			await expect(page.getByTestId("center-tabs")).toBeVisible();
 			if (left === 80 && right === 138) {
 				await testInfo.attach(`injected-insets-${viewport.width}`, {

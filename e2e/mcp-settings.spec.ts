@@ -8,6 +8,7 @@ import {
 	openAppSettings,
 	openFixtureProject,
 	openPersistedChat,
+	openStatusDock,
 } from "./fixtures/app";
 import { resolveBunExecutable } from "./fixtures/executables";
 import { E2E_FIXTURE_REPO, E2E_PI_AGENT_DIR } from "./fixtures/paths";
@@ -241,17 +242,18 @@ test("a stdio server added through the form connects in a chat, is disabled ther
 		});
 		await closeSettings(page);
 
-		await page.getByTestId("resources-trigger").click();
-		const inspector = page.getByTestId("resources-inspector");
-		const chatRow = inspector.locator('[data-testid="resource-mcp"][data-name="fixture"]');
+		const dock = await openStatusDock(page);
+		const chatRow = dock.locator('[data-testid="resource-mcp"][data-name="fixture"]');
 		await expect(chatRow.getByTestId("resource-mcp-state")).toHaveText("Connected · 4 tools", {
 			timeout: 30_000,
 		});
-		await chatRow.getByTestId("resource-mcp-disable").click();
+		await chatRow.getByTestId("resource-mcp-menu").click();
+		await page.getByTestId("resource-mcp-disable").click();
 		await expect(chatRow).toHaveAttribute("data-state", "disabled-in-chat", { timeout: 30_000 });
 		await expect(chatRow.getByTestId("resource-mcp-state")).toHaveText("Disabled in this chat");
 		await expect(chatRow.getByTestId("resource-mcp-enable")).toBeVisible();
-		await inspector.getByTestId("resources-inspector-close").click();
+		await page.getByTestId("open-status-panel").click();
+		await expect(dock).toHaveCount(0);
 
 		await openMcpSettings(page);
 		await row.getByTestId("mcp-server-menu").click();
@@ -381,9 +383,16 @@ test("a repository-defined server flags the chat, waits for approval and starts 
 		await enterDefaultWorkspace(page);
 		await openPersistedChat(page, "Repo MCP chat");
 
-		const attention = page.getByTestId("resources-mcp-attention");
-		await expect(attention).toHaveAttribute("data-count", "1", { timeout: 30_000 });
-		await attention.click();
+		// The status toggle's corner dot flags the server that needs the user; Review opens its settings.
+		await expect(page.getByTestId("open-status-panel")).toHaveAttribute(
+			"data-signal",
+			"attention",
+			{ timeout: 30_000 },
+		);
+		const dock = await openStatusDock(page);
+		const pending = dock.locator('[data-testid="resource-mcp"][data-name="repo-fixture"]');
+		await expect(pending).toHaveAttribute("data-state", "pending-approval");
+		await pending.getByTestId("resource-mcp-settings").click();
 		await expect(page.getByTestId("settings-mcp")).toBeVisible();
 		const row = serverRow(page, "repo-fixture");
 		await expect(row).toHaveAttribute("data-state", "pending-approval");
@@ -418,7 +427,11 @@ test("a repository-defined server flags the chat, waits for approval and starts 
 		await editor.getByRole("button", { name: "Cancel" }).click();
 		await expect(editor).toBeHidden();
 		await closeSettings(page);
-		await expect(attention).toHaveCount(0, { timeout: 30_000 });
+		await expect(page.getByTestId("open-status-panel")).not.toHaveAttribute(
+			"data-signal",
+			"attention",
+			{ timeout: 30_000 },
+		);
 	} finally {
 		rmSync(PROJECT_CONFIG_DIR, { recursive: true, force: true });
 	}

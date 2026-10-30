@@ -27,7 +27,7 @@ import {
 } from "@thinkrail/contracts";
 import type { MessageKey } from "@thinkrail/locales";
 import type { Translator } from "@thinkrail/locales/react";
-import { Network } from "lucide-react";
+import { Blocks, Network } from "lucide-react";
 import type { ComponentType } from "react";
 import { SettingsSection } from "@/store";
 
@@ -61,6 +61,7 @@ const NAV_GROUPS: SettingsNavGroup[] = [
 				icon: RiPlugLine,
 				requiresProtocolVersion: MCP_PROTOCOL_VERSION,
 			},
+			{ id: SettingsSection.Skills, label: "settings.nav.skills", icon: Blocks },
 			{ id: SettingsSection.Templates, label: "settings.nav.templates", icon: RiLayoutGridLine },
 			{
 				id: SettingsSection.Environment,

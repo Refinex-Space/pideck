@@ -17,6 +17,7 @@ import { NetworkSettings } from "./NetworkSettings";
 import { NotificationsSettings } from "./NotificationsSettings";
 import { PrivacySettings } from "./PrivacySettings";
 import { ProvidersSettings } from "./ProvidersSettings";
+import { SkillsSettings } from "./SkillsSettings";
 import { resolveSettingsSection, searchSettingsNavGroups, settingsNavGroups } from "./settingsNav";
 import { TemplatesSettings } from "./TemplatesSettings";
 import { TerminalSettings } from "./TerminalSettings";
@@ -158,6 +159,8 @@ export function SettingsDialog({
 							<ProvidersSettings />
 						) : selectedSection === SettingsSection.Mcp ? (
 							<McpSettings />
+						) : selectedSection === SettingsSection.Skills ? (
+							<SkillsSettings />
 						) : selectedSection === SettingsSection.Templates ? (
 							<TemplatesSettings />
 						) : selectedSection === SettingsSection.Environment ? (

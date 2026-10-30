@@ -14,7 +14,6 @@
 ../../thinkrail-extensions/ask-user-question/web/AskUserQuestionCard.tsx AskUserQuestionCard
 src/chat/ChatTranscript.tsx useVirtualRows
 src/chat/HistoryOverlay.tsx Highlight
-src/chat/resources/ResourcesInspector.tsx ResourcesInspector
 src/panels/branches.ts useBranchList
 src/panels/useAnalyticsConsent.ts useAnalyticsConsent
 src/panels/useBranchStatus.ts useBranchStatus

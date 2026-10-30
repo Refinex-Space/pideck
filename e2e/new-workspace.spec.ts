@@ -9,6 +9,7 @@ import {
 	openAppFresh,
 	openFixtureProject,
 	openNewSessionPage,
+	workspaceDetail,
 	worktreeRows,
 } from "./fixtures/app";
 import { git, gitAs, gitText } from "./fixtures/git";
@@ -139,11 +140,11 @@ test("the dialog lists local branches (no stray origin) and creates a worktree",
 	await expect(worktreeRows(page)).toHaveCount(1);
 	await expect(worktreeRows(page).first()).toHaveAttribute("data-active", "true");
 
-	const scope = page.getByTestId("scope-context");
-	await expect(scope).toHaveAttribute("data-context", "workspace");
-	await expect(scope).toContainText("sample-project");
-	await expect(scope).toContainText("workspace-1");
-	await expect(scope).toContainText(/Based on\s*main/);
+	await expect(page.getByTestId("scope-context")).toHaveAttribute("data-context", "workspace");
+	const details = await workspaceDetail(page, "workspace-details");
+	await expect(details).toContainText("sample-project");
+	await expect(details).toContainText("workspace-1");
+	await expect(details).toContainText(/Based on\s*main/);
 
 	await expect(page.locator('[data-testid="editor-tab"][data-kind="chat"]')).toHaveCount(1, {
 		timeout: 30_000,

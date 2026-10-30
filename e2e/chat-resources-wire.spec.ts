@@ -1,6 +1,5 @@
 import { expect, test } from "@playwright/test";
 import { enterDefaultWorkspace, openFixtureProject, openPersistedChat } from "./fixtures/app";
-import { shot } from "./fixtures/screenshots";
 import { seedWorkspaceSession } from "./fixtures/sessions";
 import { E2eWire } from "./fixtures/wire";
 
@@ -32,7 +31,7 @@ test("resource reads require the current chat's workspace and never recover hand
 		});
 		await enterDefaultWorkspace(page);
 		await openPersistedChat(page, "Resource history");
-		await expect(page.getByTestId("chat-toolbar")).toBeVisible();
+		await expect(page.getByTestId("chat-input")).toBeVisible();
 		const scope = { workspaceId: workspace.id, sessionId: parent.id };
 		await expect(wire.request("session.resources", scope)).resolves.toEqual({
 			...scope,
@@ -79,7 +78,6 @@ test("resource reads require the current chat's workspace and never recover hand
 			subagents: [],
 			mcpServers: [],
 		});
-		await shot(page.getByTestId("chat-toolbar"), "chat-resources", "wire-chat-header");
 	} finally {
 		wire.close();
 	}

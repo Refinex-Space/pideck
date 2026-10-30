@@ -30,8 +30,7 @@ test("specified navigation icons retain their controls and default workspace has
 		["tool-rail-specs", "book-open"],
 		["tool-rail-files", "folder"],
 		["tool-rail-plan", "square-check-big"],
-		["open-skills", "blocks"],
-		["resources-trigger", "package-2"],
+		["open-status-panel", "layout-list"],
 	]) {
 		const svg = page.getByTestId(control).first().locator(`svg.lucide-${icon}`);
 		await expect(svg).toHaveCount(1);
@@ -61,8 +60,8 @@ test("specified navigation icons retain their controls and default workspace has
 	await expect(page.getByTestId("navigation-history")).toHaveCount(1);
 	await sidebar.click();
 	await expect(sidebar.locator("svg.lucide-panel-left")).toHaveCount(1);
-	await page.getByTestId("resources-trigger").click();
-	await expect(page.getByTestId("resources-trigger").locator("svg.lucide-package-2")).toHaveCount(
+	await page.getByTestId("open-status-panel").click();
+	await expect(page.getByTestId("open-status-panel").locator("svg.lucide-layout-list")).toHaveCount(
 		1,
 	);
 });

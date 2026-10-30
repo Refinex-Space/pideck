@@ -8,21 +8,27 @@ import type { Project, SkillCatalogEntry, Workspace } from "@thinkrail/contracts
 import type { MessageKey } from "@thinkrail/locales";
 import { T, type Translator, t as translate, useT } from "@thinkrail/locales/react";
 import { Button } from "@thinkrail/ui/button";
-import { Dialog, DialogContent, DialogTitle } from "@thinkrail/ui/dialog";
 import { LoadingRegion } from "@thinkrail/ui/skeleton";
 import { Switch } from "@thinkrail/ui/switch";
 import { IconTooltip } from "@thinkrail/ui/tooltip";
 import { cn } from "@thinkrail/ui/utils";
 import { useCallback, useEffect, useState } from "react";
-import { toast, useAppStore } from "@/store";
-import { errorText, getTransport, reloadSessionResourcesWithSkillBaseline } from "@/transport";
 import {
 	deriveProjectTrustNotice,
 	trustEnablesText,
 	trustGrantParams,
 	untrustedNoticeText,
-} from "./projectTrust";
-import { useProjectTrustSummary } from "./useProjectTrustSummary";
+} from "@/chat/projectTrust";
+import { useProjectTrustSummary } from "@/chat/useProjectTrustSummary";
+import {
+	selectActiveWorkspace,
+	selectContextProject,
+	selectRailPlanSessionId,
+	selectSkillsStale,
+	toast,
+	useAppStore,
+} from "@/store";
+import { errorText, getTransport, reloadSessionResourcesWithSkillBaseline } from "@/transport";
 
 const TIER_META: Record<string, { label: MessageKey | null; hint: MessageKey; rank: number }> = {
 	bundled: { label: null, hint: "chat.skills.tier.bundledHint", rank: 0 },
@@ -67,31 +73,31 @@ function isWorkspace(result: Project | Workspace): result is Workspace {
 	return "projectId" in result;
 }
 
+/** The active workspace the toggles write to, and — when it has a chat — the session a reload applies to. */
 export interface SkillsWorkspaceContext {
 	workspaceId: string;
-	sessionId: string;
-	streaming: boolean;
-	stale?: boolean;
-	onReloaded?: (syncedTick: number) => void;
+	name: string;
+	session?: {
+		sessionId: string;
+		streaming: boolean;
+		stale: boolean;
+		onReloaded: (syncedTick: number) => void;
+	};
 }
 
-export function SkillsDialog({
+function SkillsPanel({
 	projectId,
 	workspace,
-	open,
-	onOpenChange,
 }: {
 	projectId: string;
 	workspace?: SkillsWorkspaceContext;
-	open: boolean;
-	onOpenChange: (open: boolean) => void;
 }) {
 	const t = useT();
 	const project = useAppStore((s) => s.projects.find((p) => p.id === projectId));
 	const [entries, setEntries] = useState<SkillCatalogEntry[] | null>(null);
 	const [busy, setBusy] = useState(false);
 	const workspaceId = workspace?.workspaceId;
-	const trustSummary = useProjectTrustSummary(projectId, open);
+	const trustSummary = useProjectTrustSummary(projectId, true);
 
 	const refresh = useCallback(async () => {
 		const load = async () =>
@@ -104,12 +110,8 @@ export function SkillsDialog({
 	}, [workspaceId, projectId]);
 
 	useEffect(() => {
-		if (!open) {
-			setEntries(null);
-			return;
-		}
 		void refresh();
-	}, [open, refresh]);
+	}, [refresh]);
 
 	const mutate = async (request: () => Promise<Project | Workspace>, failure: string) => {
 		if (busy) return;
@@ -125,13 +127,14 @@ export function SkillsDialog({
 	};
 
 	const reload = async () => {
-		if (busy || !workspace) return;
+		const session = workspace?.session;
+		if (busy || !workspace || !session) return;
 		setBusy(true);
 		const run = async () => {
 			const { syncedTick } = await reloadSessionResourcesWithSkillBaseline(workspace.workspaceId, {
-				sessionId: workspace.sessionId,
+				sessionId: session.sessionId,
 			});
-			workspace.onReloaded?.(syncedTick);
+			session.onReloaded(syncedTick);
 			toast.success(translate("chat.skills.reloadedBody"), translate("chat.skills.reloadedTitle"));
 		};
 		await run()
@@ -179,8 +182,14 @@ export function SkillsDialog({
 		const lockedByMaster = group.isPlugin && pluginsDisabled;
 		const groupOn = !lockedByMaster && !disabledGroups.has(group.key);
 		return (
-			<div key={group.key} data-testid="skill-group" data-group={group.key} data-on={groupOn}>
-				<div className={cn("flex items-center gap-8 px-16 pt-16 pb-4", nested && "pt-8")}>
+			<section
+				key={group.key}
+				data-testid="skill-group"
+				data-group={group.key}
+				data-on={groupOn}
+				className="overflow-hidden rounded-lg border border-border-default"
+			>
+				<div className="flex items-center gap-8 border-border-muted border-b px-16 py-8">
 					{group.isPlugin ? (
 						<Puzzle className="size-14 shrink-0 text-text-muted" aria-hidden />
 					) : null}
@@ -204,7 +213,7 @@ export function SkillsDialog({
 						onCheckedChange={(enabled) => setGroupEnabled(group.key, enabled)}
 					/>
 				</div>
-				<div className="px-8">
+				<div className="p-8">
 					{group.items.map((entry) => (
 						<SkillRow
 							key={`${group.key}:${entry.name}`}
@@ -231,126 +240,173 @@ export function SkillsDialog({
 						/>
 					))}
 				</div>
-			</div>
+			</section>
 		);
 	};
 
 	return (
-		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent
-				data-testid="skills-dialog"
-				className="max-w-[720px] gap-0 overflow-hidden p-0"
-			>
-				<div className="flex items-center justify-between gap-8 pt-16 pr-[2rem] pb-8 pl-16">
-					<DialogTitle className="tr-title-dialog text-text-default">
-						{t("chat.skills.title")}
-					</DialogTitle>
-					{workspace ? (
-						<span className="mr-12 flex">
-							<IconTooltip
-								label={
-									workspace.streaming ? t("chat.skills.reloadBusy") : t("chat.skills.reloadHint")
-								}
-								wrapTrigger
-							>
-								<Button
-									size="m"
-									variant="outline"
-									iconLeft={RefreshCw}
-									data-testid="skills-reload"
-									disabled={busy || workspace.streaming}
-									onClick={() => void reload()}
-								>
-									{t("chat.skills.reload")}
-								</Button>
-							</IconTooltip>
-						</span>
-					) : null}
+		<div data-testid="skills-settings" className="flex flex-col gap-12">
+			<div className="flex items-start justify-between gap-12">
+				<div className="flex min-w-0 flex-col gap-2">
+					<h3 className="tr-title-section text-text-default">{t("chat.skills.title")}</h3>
+					<p data-testid="skills-scope" className="tr-text-metadata text-text-muted">
+						{workspace
+							? t("settings.skills.scopeWorkspace", { name: workspace.name })
+							: t("settings.skills.scopeProject", { name: project?.name ?? "" })}
+					</p>
 				</div>
-
-				{workspace?.stale ? (
-					<div
-						data-testid="skills-stale"
-						className="mx-16 mb-8 rounded-sm border border-border-default bg-container-elevated-bg px-12 py-8 text-text-muted tr-text-metadata"
+				{workspace?.session ? (
+					<IconTooltip
+						label={
+							workspace.session.streaming
+								? t("chat.skills.reloadBusy")
+								: t("chat.skills.reloadHint")
+						}
+						wrapTrigger
 					>
-						<T
-							i18nKey="chat.skills.staleNotice"
-							components={[<span key="reload" className="text-text-default" />]}
-						/>
-					</div>
+						<Button
+							size="m"
+							variant="outline"
+							iconLeft={RefreshCw}
+							data-testid="skills-reload"
+							disabled={busy || workspace.session.streaming}
+							onClick={() => void reload()}
+						>
+							{t("chat.skills.reload")}
+						</Button>
+					</IconTooltip>
 				) : null}
+			</div>
 
-				{trustNotice.kind === "untrusted" ? (
-					<div
-						data-testid="skills-trust-all"
-						className="mx-16 mb-8 flex flex-col gap-8 rounded-sm border border-feedback-warning-muted bg-container-elevated-bg px-12 py-8"
-					>
-						<div className="flex items-start gap-8">
-							<TriangleAlert className="mt-2 size-14 shrink-0 text-feedback-warning" aria-hidden />
-							<span className="flex min-w-0 flex-1 flex-col gap-2">
-								<span className="tr-text-ui text-text-default">
-									{untrustedNoticeText(t, trustNotice)}
-								</span>
-								{trustEnables ? (
-									<span className="text-text-muted tr-text-metadata">{trustEnables}</span>
-								) : null}
+			{workspace?.session?.stale ? (
+				<div
+					data-testid="skills-stale"
+					className="mx-16 mb-8 rounded-sm border border-border-default bg-container-elevated-bg px-12 py-8 text-text-muted tr-text-metadata"
+				>
+					<T
+						i18nKey="chat.skills.staleNotice"
+						components={[<span key="reload" className="text-text-default" />]}
+					/>
+				</div>
+			) : null}
+
+			{trustNotice.kind === "untrusted" ? (
+				<div
+					data-testid="skills-trust-all"
+					className="mx-16 mb-8 flex flex-col gap-8 rounded-sm border border-feedback-warning-muted bg-container-elevated-bg px-12 py-8"
+				>
+					<div className="flex items-start gap-8">
+						<TriangleAlert className="mt-2 size-14 shrink-0 text-feedback-warning" aria-hidden />
+						<span className="flex min-w-0 flex-1 flex-col gap-2">
+							<span className="tr-text-ui text-text-default">
+								{untrustedNoticeText(t, trustNotice)}
 							</span>
-						</div>
-						<div className="flex justify-end">
-							<Button
-								variant="outline"
-								size="m"
-								disabled={busy}
-								onClick={() =>
-									void mutate(
-										() =>
-											getTransport().request(
-												"project.setTrust",
-												trustGrantParams(projectId, trustNotice),
-											),
-										translate("chat.skills.trustFailed"),
-									)
-								}
-							>
-								{t("chat.skills.trustProject")}
-							</Button>
-						</div>
-					</div>
-				) : null}
-
-				<div className="max-h-[60vh] min-h-[min(60vh,420px)] overflow-y-auto border-border-default border-t pb-8">
-					{entries === null ? (
-						<LoadingRegion rows={4} className="px-16 py-12" />
-					) : entries.length === 0 ? (
-						<p className="px-16 py-12 text-text-muted tr-text-ui">{t("chat.skills.empty")}</p>
-					) : (
-						<>
-							{regularGroups.map((group) => renderGroup(group))}
-							{pluginGroups.length > 0 ? (
-								<>
-									<div
-										data-testid="skills-all-plugins"
-										className="flex items-center gap-8 px-16 pt-16 pb-4"
-									>
-										<span className="min-w-0 flex-1 truncate tr-text-emphasis text-text-default">
-											{t("chat.skills.allPlugins")}
-										</span>
-										<SkillSwitch
-											checked={!pluginsDisabled}
-											busy={busy}
-											label={t("chat.skills.enableAllPlugins")}
-											testId="all-plugins-toggle"
-											onCheckedChange={(enabled) => setGroupEnabled("@plugins", enabled)}
-										/>
-									</div>
-									{pluginGroups.map((group) => renderGroup(group, true))}
-								</>
+							{trustEnables ? (
+								<span className="text-text-muted tr-text-metadata">{trustEnables}</span>
 							) : null}
-						</>
-					)}
+						</span>
+					</div>
+					<div className="flex justify-end">
+						<Button
+							variant="outline"
+							size="m"
+							disabled={busy}
+							onClick={() =>
+								void mutate(
+									() =>
+										getTransport().request(
+											"project.setTrust",
+											trustGrantParams(projectId, trustNotice),
+										),
+									translate("chat.skills.trustFailed"),
+								)
+							}
+						>
+							{t("chat.skills.trustProject")}
+						</Button>
+					</div>
 				</div>
-			</DialogContent>
-		</Dialog>
+			) : null}
+
+			<div data-testid="skills-list" className="flex flex-col gap-12">
+				{entries === null ? (
+					<LoadingRegion rows={4} className="px-16 py-12" />
+				) : entries.length === 0 ? (
+					<p className="px-16 py-12 text-text-muted tr-text-ui">{t("chat.skills.empty")}</p>
+				) : (
+					<>
+						{regularGroups.map((group) => renderGroup(group))}
+						{pluginGroups.length > 0 ? (
+							<>
+								<div data-testid="skills-all-plugins" className="flex items-center gap-8 px-4 pt-8">
+									<span className="min-w-0 flex-1 truncate tr-text-emphasis text-text-default">
+										{t("chat.skills.allPlugins")}
+									</span>
+									<SkillSwitch
+										checked={!pluginsDisabled}
+										busy={busy}
+										label={t("chat.skills.enableAllPlugins")}
+										testId="all-plugins-toggle"
+										onCheckedChange={(enabled) => setGroupEnabled("@plugins", enabled)}
+									/>
+								</div>
+								{pluginGroups.map((group) => renderGroup(group, true))}
+							</>
+						) : null}
+					</>
+				)}
+			</div>
+		</div>
+	);
+}
+
+/** Skills settings: the active workspace's catalog with its chat's reload, or the project's at Project Home. */
+export function SkillsSettings() {
+	const t = useT();
+	const workspace = useAppStore(selectActiveWorkspace);
+	const contextProject = useAppStore(selectContextProject);
+	const workspaceId = workspace?.id ?? null;
+	const sessionId = useAppStore((state) =>
+		workspaceId ? selectRailPlanSessionId(state, workspaceId) : null,
+	);
+	const streaming = useAppStore((state) =>
+		sessionId ? (state.sessions[sessionId]?.isStreaming ?? false) : false,
+	);
+	const stale = useAppStore((state) =>
+		workspaceId && sessionId ? selectSkillsStale(state, workspaceId, sessionId) : false,
+	);
+	const projectId = workspace?.projectId ?? contextProject?.id ?? null;
+	if (!projectId) {
+		return (
+			<p data-testid="skills-no-project" className="text-text-muted tr-text-ui">
+				{t("settings.skills.noProject")}
+			</p>
+		);
+	}
+	return (
+		<SkillsPanel
+			key={`${projectId}:${workspaceId ?? ""}:${sessionId ?? ""}`}
+			projectId={projectId}
+			{...(workspace
+				? {
+						workspace: {
+							workspaceId: workspace.id,
+							name: workspace.name,
+							...(sessionId
+								? {
+										session: {
+											sessionId,
+											streaming,
+											stale,
+											onReloaded: (syncedTick: number) =>
+												useAppStore.getState().markSkillsSynced(sessionId, syncedTick),
+										},
+									}
+								: {}),
+						},
+					}
+				: {})}
+		/>
 	);
 }
 

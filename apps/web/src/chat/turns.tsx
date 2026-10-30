@@ -44,11 +44,11 @@ import { PromptText } from "./PromptText";
 import { ReviewPackageComments } from "./ReviewPackageComments";
 import { parseReviewPackage, reviewFixCommentsToItems, reviewPackageLabel } from "./reviewPackage";
 import { type ChatRow, LARGE_USER_MESSAGE, type TurnDividerData } from "./rows";
-import { formatElapsed, formatTokens } from "./SessionStatsBar";
 import { ToolCard } from "./ToolCard";
 import { ToolRendererBody } from "./ToolRendererBody";
 import { getToolChrome, getToolSummary } from "./toolRegistry";
 import type { CompactionState } from "./types";
+import { formatElapsed, formatTokens } from "./usageFormat";
 
 function ChatTurnViewImpl({
 	row,

@@ -5,10 +5,12 @@ export interface DesktopHostOptions {
 	channel: string;
 	posthogProjectKey: string;
 	openExternal?: (url: string) => void;
+	browser?: BrowserEngine;
 }
 
 export interface DesktopHost {
 	server: {
+		browser?: BrowserHostControl;
 		readonly port: number;
 		startAttributionClaim(): void;
 		stop(): void;
@@ -22,3 +24,5 @@ export interface DesktopHost {
 export interface DesktopServerRuntime {
 	startDesktopHost(options: DesktopHostOptions): Promise<DesktopHost>;
 }
+
+import type { BrowserEngine, BrowserHostControl } from "@thinkrail/contracts";

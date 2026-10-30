@@ -21,3 +21,18 @@ The source library's MIT notice is retained in packages/shared/assets/pi.LICENSE
 PiDeck uses the glyph in its native icons, favicon and interface mark; native
 background and interface colour/animation are adaptations. This does not imply
 endorsement by Pi or theSVG.
+
+Embedded browser behavior
+The browser panel and element-selection behavior are adapted from the Apache-2.0 ZCode project:
+https://github.com/zai-org/ZCode, commit 3c5b227649371507ddc4eb46ac5133afe6db1cab.
+References: packages/ui/src/browser-use/UnifiedBrowserView.tsx, EmbeddedBrowserPaneParts.tsx,
+lib/webElementPickerScript.ts and hooks/useWebElementPicker.ts.
+PiDeck reimplements the integration for Electrobun/CEF, its contracts, themes and chat drafts.
+The Apache License, Version 2.0 is included in LICENSE.
+Chromium/CEF licensing notices ship with the Electrobun CEF distribution.
+
+Browser automation and recording behavior additionally reference ZCode's browser-use command metadata,
+browser-client facade/Playwright API, browserGuestManager recording actions, browserVideoRecorder,
+electronBrowserWebmRecorder and virtual clipboard paste behavior at the same revision.
+The Pi tool/host integration, CEF input/capture adapters and WebM encoding transport are adapted for PiDeck.
+Playwright core is distributed under Apache-2.0; its LICENSE and NOTICE accompany the staged package.

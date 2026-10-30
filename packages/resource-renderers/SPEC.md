@@ -11,8 +11,8 @@ references: [submodule-web-panels, submodule-web-chat]
 ## Responsibility
 
 Everything that turns a workspace resource into a viewable, reviewable surface: the engine-neutral resource
-description and renderer registry, the eleven bundled file/diff renderers (code, markdown, binary, LFS,
-image, SVG, CSV, JSON, notebook, PDF, HTML) with their review composers, thread cards and region surfaces,
+description and renderer registry, the twelve bundled file/diff renderers (code, markdown, binary, LFS,
+image, SVG, CSV, JSON, notebook, PDF, HTML, WebM video) with their review composers, thread cards and region surfaces,
 and the shared Monaco, Pierre and markdown-document machinery they run on. It is presentation: it owns no
 content loading, review persistence, tabs or navigation — a host supplies those.
 
@@ -721,3 +721,10 @@ evaluated, using the application language at first load. Monaco module-level lab
 until page reload. Menu chrome uses application radius/shadow tokens in both document and Monaco
 shadow roots. Find action boxes preserve Monaco content-box sizing despite the application reset.
 The find close button suppresses hover activation only; click and its accessible label remain intact.
+
+## Browser recording artifacts
+
+The WebM video renderer is view-only, available on desktop and mobile, and consumes the host-provided byte
+URL. It uses native playback/seeking/fullscreen controls, preserves aspect ratio, and offers the existing
+file download fallback on decoder failure. Video diffs retain binary comparison; no edit, copy, whitespace,
+layout or review-anchor capability is advertised. This also makes browser-tool artifact links playable.

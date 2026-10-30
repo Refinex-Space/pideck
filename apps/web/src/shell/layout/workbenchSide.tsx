@@ -224,6 +224,7 @@ export const SideGroupView = memo(function SideGroupView({
 SideGroupView.displayName = "SideGroupView";
 
 export function SideGroupMenu({
+	unavailableTools,
 	document,
 	side,
 	group,
@@ -231,6 +232,7 @@ export function SideGroupMenu({
 	onNewTerminal,
 	onRevealTool,
 }: {
+	unavailableTools?: readonly LayoutToolId[] | undefined;
 	document: WorkspaceLayoutDocument;
 	side: LayoutAuxiliaryRegion;
 	group: LayoutSideGroup;
@@ -239,7 +241,9 @@ export function SideGroupMenu({
 	onRevealTool: (tool: LayoutToolId) => void;
 }) {
 	const t = useT();
-	const missing = unplacedToolsForRegion(document, side);
+	const missing = unplacedToolsForRegion(document, side).filter(
+		(tool) => !unavailableTools?.includes(tool),
+	);
 	const toolPane = group.tabs.some((tab) => tab.kind === "tool");
 	const paneBelowAvailable = !toolPane || document[side].groups.length < limit;
 	const newTerminalPaneLabel =
@@ -318,16 +322,20 @@ export function AuxiliaryGroupHeader({
 		disabled: !dropEnabled,
 	});
 	const removal = removeLayoutGroup(t, shared.document, location);
+	const toolHeader = selected?.kind === "tool" ? shared.renderToolHeader?.(selected.tool) : null;
 	const actions = (
 		<>
-			<SideGroupMenu
-				document={shared.document}
-				side={region}
-				group={group}
-				limit={region === "bottom" ? shared.maxBottomGroups : shared.maxSideGroups}
-				onNewTerminal={shared.onNewTerminal}
-				onRevealTool={shared.onRevealTool}
-			/>
+			{!toolHeader && (
+				<SideGroupMenu
+					unavailableTools={shared.unavailableTools}
+					document={shared.document}
+					side={region}
+					group={group}
+					limit={region === "bottom" ? shared.maxBottomGroups : shared.maxSideGroups}
+					onNewTerminal={shared.onNewTerminal}
+					onRevealTool={shared.onRevealTool}
+				/>
+			)}
 			{trailing}
 			{group.tabs.length === 0 ? (
 				<IconButton
@@ -383,6 +391,7 @@ export function AuxiliaryGroupHeader({
 	return (
 		<AuxiliaryPaneHeader
 			ref={setNodeRef}
+			content={toolHeader}
 			title={
 				selected
 					? layoutTabName(t, selected)

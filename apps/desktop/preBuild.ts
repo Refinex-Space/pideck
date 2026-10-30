@@ -2,6 +2,7 @@ import { spawnSync } from "node:child_process";
 import {
 	chmodSync,
 	copyFileSync,
+	cpSync,
 	mkdirSync,
 	readdirSync,
 	readFileSync,
@@ -10,6 +11,7 @@ import {
 	writeFileSync,
 } from "node:fs";
 import { basename, join, relative, resolve, sep } from "node:path";
+import { fileURLToPath } from "node:url";
 import type { BundledExtensions } from "@thinkrail/server";
 import type { BuildRuntimeSources } from "@thinkrail/server/build-support";
 import { injectChunkId, type SourceMapJson } from "./src/runtimeSourceMap";
@@ -113,6 +115,11 @@ const webMaps = listFiles(join(repoRoot, "apps", "web", "dist")).filter((file) =
 if (webMaps.length) throw new Error(`refusing to package web source maps: ${webMaps.join(", ")}`);
 rmSync(stageDir, { recursive: true, force: true });
 mkdirSync(runtimeDir, { recursive: true });
+cpSync(
+	resolve(fileURLToPath(import.meta.resolve("playwright-core/package.json")), ".."),
+	join(runtimeDir, "playwright-core"),
+	{ recursive: true },
+);
 const sources = resolveRuntimeSources();
 const skillRoutes = new Set<string>();
 for (const skillRoot of sources.skillRoots) {
@@ -126,6 +133,30 @@ for (const skillRoot of sources.skillRoots) {
 	}
 }
 const target = runtimeTarget(process.platform, process.arch);
+if (process.platform === "darwin") {
+	const manifest = JSON.parse(readFileSync(join(desktopDir, "package.json"), "utf8"));
+	if (manifest.devDependencies.electrobun !== "2.0.5")
+		throw new Error("Review the CEF view lifecycle adapter before upgrading Electrobun");
+	const compile = spawnSync(
+		"xcrun",
+		[
+			"clang",
+			"-dynamiclib",
+			"-mmacosx-version-min=14.0",
+			"-fobjc-arc",
+			"-fblocks",
+			"-framework",
+			"Cocoa",
+			"-Werror",
+			"-o",
+			join(runtimeDir, "libpideck-browser-lifecycle.dylib"),
+			join(desktopDir, "src", "browser", "cefViewLifecycle.m"),
+		],
+		{ stdio: "inherit" },
+	);
+	if (compile.error) throw compile.error;
+	if (compile.status !== 0) throw new Error("Could not compile the CEF view lifecycle adapter");
+}
 copyFileSync(sources.ptyLibraries[target], join(runtimeDir, ptyLibraryName(target)));
 for (const helper of Object.values(sources.trashHelpers)) {
 	copyFileSync(helper, join(runtimeDir, basename(helper)));
@@ -155,6 +186,7 @@ export async function startDesktopHost(options) {
     resolveShellEnv: true,
     staticDir: options.staticDir,
     appVersion: options.appVersion,
+    browser: options.browser,
     analytics: {
       posthogApiKey: options.posthogProjectKey,
       channel: options.channel,

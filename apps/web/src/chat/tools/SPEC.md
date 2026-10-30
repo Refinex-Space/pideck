@@ -90,3 +90,8 @@ renderers are registered by the host's `extensions/registry.ts`. Unregistered to
   summary, chrome and prominence. Prefix renderers never load code from a server; they render pi's result
   ([mcp/SPEC.md](mcp/SPEC.md)). The three resource tools and `tool_search` register exactly.
 - Token-utility styling only (no raw hex / inline `style`).
+
+BrowserCard is the props-only presentation for the native Pi browser tool. It gives operation/recording
+summaries, folds multiline DOM output and links only successful structured artifact paths through
+ToolFileLink. Screenshots remain canonical image blocks rendered by the parent common result layer.
+Recording files open the shared WebM renderer; the card does not own browser state, transport or recording.

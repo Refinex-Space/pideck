@@ -62,10 +62,12 @@ export default function ChatView({
 	sessionId,
 	workspaceId,
 	onOpenFile,
+	onOpenBrowser,
 }: {
 	sessionId: string;
 	workspaceId: string;
 	onOpenFile?: ((path: string) => void) | undefined;
+	onOpenBrowser?: ((url: string) => void) | undefined;
 }) {
 	const t = useT();
 	const sessionExists = useAppStore((s) => s.sessions[sessionId] !== undefined);
@@ -597,6 +599,7 @@ export default function ChatView({
 				sessionId={sessionId}
 				workspaceId={workspaceId}
 				onOpenFile={onOpenFile}
+				onOpenBrowser={onOpenBrowser}
 				workspaceRoot={workspaceRoot}
 				focusComposer={focusComposer}
 				openSubagentTranscript={openTranscript}

@@ -195,7 +195,9 @@ export function AuxiliaryRegionRail({
 }) {
 	const t = useT();
 	const horizontal = orientation ? orientation === "horizontal" : region === "bottom";
-	const entries = projectAuxiliaryRail(shared.document, attention, region);
+	const entries = projectAuxiliaryRail(shared.document, attention, region).filter(
+		(entry) => entry.kind !== "tool" || !shared.unavailableTools?.includes(entry.tool),
+	);
 	const groups = shared.document[region].groups;
 	const draggedAuxiliary =
 		shared.draggingTab?.kind === "tool" || shared.draggingTab?.kind === "terminal"

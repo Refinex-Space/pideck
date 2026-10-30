@@ -69,6 +69,7 @@ internals**. The edges between them are owned here (see the dependency graph), n
 | module | owns | spec |
 | --- | --- | --- |
 | `host` | `Bun.serve` HTTP+WS, static SPA, the WS dispatch registry, channel publish | [host/SPEC.md](src/host/SPEC.md) |
+| `browser` | Native browser session claims, cancellation and atomic workspace artifact delivery | [browser/SPEC.md](src/browser/SPEC.md) |
 | `persistence` | JSON domain/config state under the data dir | [persistence/SPEC.md](src/persistence/SPEC.md) |
 | `log` | explicit leveled diagnostics → pretty stderr + agent-oriented JSONL under `<dataDir>/logs` (pino-roll daily/10 MB rotation, 14 rotated + active); arbitrary console output stays terminal-only | [log/SPEC.md](src/log/SPEC.md) |
 | `settings` | server-synced app config, including the shared custom-layout-preset catalog and Central quota preferences (never current/default layout) | [settings/SPEC.md](src/settings/SPEC.md) |

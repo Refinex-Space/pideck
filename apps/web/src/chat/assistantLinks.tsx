@@ -1,5 +1,14 @@
+import { isLocalBrowserUrl, normalizeBrowserUrl } from "@thinkrail/contracts";
+import { useT } from "@thinkrail/locales/react";
+import {
+	ContextMenu,
+	ContextMenuContent,
+	ContextMenuItem,
+	ContextMenuTrigger,
+} from "@thinkrail/ui/context-menu";
 import { memo, type ReactNode, useMemo } from "react";
 import { type Components, defaultUrlTransform } from "react-markdown";
+import { copyText } from "../lib";
 import { isWindowsAbsolutePath, workspaceFileTarget } from "./fileTargets";
 import { BlockMarkdown } from "./Markdown";
 
@@ -89,19 +98,64 @@ function AssistantLink({
 	children,
 	workspaceRoot,
 	onOpenFile,
+	onOpenBrowser,
 }: {
 	href?: string | undefined;
 	children?: ReactNode;
 	workspaceRoot?: string | undefined;
 	onOpenFile?: ((path: string) => void) | undefined;
+	onOpenBrowser?: ((url: string) => void) | undefined;
 }) {
+	const t = useT();
 	const target = assistantFileTarget(href, workspaceRoot);
 	if (!target || !onOpenFile) {
 		const safeHref = href === undefined ? undefined : defaultUrlTransform(href);
-		return (
-			<a href={safeHref} target="_blank" rel="noopener noreferrer">
+		const browserUrl = safeHref ? normalizeBrowserUrl(safeHref) : null;
+		const local = browserUrl && isLocalBrowserUrl(browserUrl);
+		const link = (
+			<a
+				href={safeHref}
+				target="_blank"
+				rel="noopener noreferrer"
+				onClick={(event) => {
+					if (
+						local &&
+						onOpenBrowser &&
+						!event.ctrlKey &&
+						!event.metaKey &&
+						!event.shiftKey &&
+						!event.altKey
+					) {
+						event.preventDefault();
+						onOpenBrowser(browserUrl);
+					}
+				}}
+			>
 				{children}
 			</a>
+		);
+		if (!browserUrl || !onOpenBrowser) return link;
+		return (
+			<ContextMenu>
+				<ContextMenuTrigger asChild>{link}</ContextMenuTrigger>
+				<ContextMenuContent>
+					<ContextMenuItem onSelect={() => onOpenBrowser(browserUrl)}>
+						{t("browser.openHere")}
+					</ContextMenuItem>
+					<ContextMenuItem
+						onSelect={() => window.open(browserUrl, "_blank", "noopener,noreferrer")}
+					>
+						{t("browser.external")}
+					</ContextMenuItem>
+					<ContextMenuItem
+						onSelect={() => {
+							void copyText(browserUrl);
+						}}
+					>
+						{t("browser.copyUrl")}
+					</ContextMenuItem>
+				</ContextMenuContent>
+			</ContextMenu>
 		);
 	}
 	return (
@@ -121,20 +175,27 @@ export const AssistantMarkdown = memo(function AssistantMarkdown({
 	text,
 	workspaceRoot,
 	onOpenFile,
+	onOpenBrowser,
 }: {
 	text: string;
 	workspaceRoot?: string | undefined;
 	onOpenFile?: ((path: string) => void) | undefined;
+	onOpenBrowser?: ((url: string) => void) | undefined;
 }) {
 	const components = useMemo<Components>(
 		() => ({
 			a: ({ href, children }) => (
-				<AssistantLink href={href} workspaceRoot={workspaceRoot} onOpenFile={onOpenFile}>
+				<AssistantLink
+					href={href}
+					workspaceRoot={workspaceRoot}
+					onOpenFile={onOpenFile}
+					onOpenBrowser={onOpenBrowser}
+				>
 					{children}
 				</AssistantLink>
 			),
 		}),
-		[workspaceRoot, onOpenFile],
+		[workspaceRoot, onOpenFile, onOpenBrowser],
 	);
 	return (
 		<BlockMarkdown

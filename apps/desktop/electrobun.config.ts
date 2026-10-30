@@ -4,6 +4,11 @@ import type { ElectrobunConfig } from "electrobun";
 // Hutch reads `build.bun.version` like the other toolchain versions, but ElectrobunConfig does not type
 // it, so the literal is kept out of the excess-property check. It must match the root packageManager pin.
 const bun = { entrypoint: "src/index.ts", version: "1.4.4" };
+const chromiumFlags = {
+	"disable-background-timer-throttling": true,
+	"disable-renderer-backgrounding": true,
+	"disable-backgrounding-occluded-windows": true,
+};
 
 export default {
 	app: {
@@ -26,9 +31,9 @@ export default {
 			"../web/dist": "views/web",
 			".stage/runtime": "runtime",
 		},
-		mac: { bundleCEF: false, icons: "../../packages/shared/assets/icon.iconset" },
-		linux: { bundleCEF: false, icon: "../../packages/shared/assets/icon.png" },
-		win: { bundleCEF: false, icon: "../../packages/shared/assets/icon.ico" },
+		mac: { bundleCEF: true, chromiumFlags, icons: "../../packages/shared/assets/icon.iconset" },
+		linux: { bundleCEF: true, chromiumFlags, icon: "../../packages/shared/assets/icon.png" },
+		win: { bundleCEF: true, chromiumFlags, icon: "../../packages/shared/assets/icon.ico" },
 	},
 	scripts: { preBuild: "preBuild.ts", postBuild: "postBuild.ts" },
 } satisfies ElectrobunConfig;

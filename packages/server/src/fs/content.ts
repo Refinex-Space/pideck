@@ -34,6 +34,7 @@ const EXTENSION_MIME: Readonly<Record<string, string>> = {
 	".htm": "text/html",
 	".xhtml": "application/xhtml+xml",
 	".txt": "text/plain",
+	".webm": "video/webm",
 };
 
 const SVG_ROOT = /^\s*<svg[\s>]/;

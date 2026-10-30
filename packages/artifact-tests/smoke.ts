@@ -170,6 +170,10 @@ function copyApplication(launcher: string): string {
 	}
 	const copiedRoot = join(root, basename(bundleRoot));
 	cpSync(bundleRoot, copiedRoot, { recursive: true });
+	const versionPath = join(copiedRoot, relative(bundleRoot, resourcesDir), "version.json");
+	const metadata = JSON.parse(readFileSync(versionPath, "utf8"));
+	metadata.identifier = `space.refinex.pideck.smoke-${Date.now()}`;
+	writeFileSync(versionPath, JSON.stringify(metadata));
 	return join(copiedRoot, relative(bundleRoot, launcher));
 }
 

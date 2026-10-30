@@ -1070,3 +1070,21 @@ metadata optionally accompanies `workspace.fsChanged`; legacy clients ignore it 
 closed diagnostic outcomes. Reads redact proxy userinfo and expose only password presence. Updates may
 carry a replacement password or null to clear; it never enters AppConfig or broadcasts. Diagnostics use
 a closed provider selector, not an arbitrary URL. Older clients retain all existing methods.
+
+## Native browser contract
+
+`nativeBrowser` adds type-only BrowserPageState, BrowserSelection, BrowserViewport, BrowserPickerLabels,
+BrowserPageEvent, NativeBrowserPage and NativeBrowserBridge. `normalizeBrowserUrl` is the shared bounded
+HTTP/HTTPS/file address parser and credential/scheme gate. LayoutToolId includes browser for saved
+resource-free presets. Browser operations are shell-local capabilities, not WebSocket methods; no wire
+version change is needed. The bridge has no generic filesystem or arbitrary host-execution endpoint.
+
+isLocalBrowserUrl shares the bounded local-development host classification with address normalization
+and assistant-link routing; lookalike public domains never inherit HTTP preference from an IP prefix.
+
+`browserAutomation` adds type-only BrowserAction, BrowserCommand, BrowserLocator, BrowserTextMatcher,
+BrowserRecordingStep/State, BrowserArtifact, BrowserScope, BrowserTabInfo, BrowserResult/EngineResult,
+BrowserWorkbenchRequest/Result, BrowserEngine and BrowserHostControl. Engine callbacks are in-process;
+workbench messages cross the trusted native bridge. NativeBrowserPage additionally exposes native readiness,
+capture leases, presentation/active state and PNG copying. NativeBrowserBridge registers one workbench
+handler and forwards user browser commands; it exposes no arbitrary host evaluation or filesystem API.

@@ -8,6 +8,7 @@ import type {
 	NativeWindowState,
 } from "@thinkrail/contracts";
 import Electrobun, { Electroview } from "electrobun/view";
+import { createNativeBrowserBridge } from "./browserView";
 import { handlePageZoomShortcut, installPageZoomGestures } from "./pageZoom";
 import {
 	INITIAL_DESKTOP_PREFERENCES_GLOBAL,
@@ -40,6 +41,7 @@ document.addEventListener("DOMContentLoaded", windowChromeStyle.flush, { once: t
 windowChromeStyle.update(initialWindowChrome);
 
 const updateListeners = new Set<(state: NativeUpdateState) => void>();
+const browserListeners = new Set<(viewId: number, payload: unknown) => void>();
 const windowStateListeners = new Set<(state: NativeWindowState) => void>();
 let nativeWindowFocused = document.hasFocus();
 window.addEventListener("focus", () => {
@@ -49,8 +51,11 @@ const shortcuts = createShortcutsBridge(() => rpc.request.quitApp());
 const rpc = Electroview.defineRPC<DesktopRpc>({
 	maxRequestTime: 5000,
 	handlers: {
-		requests: {},
+		requests: { browserWorkbench: (request) => browserBridge.workbench(request) },
 		messages: {
+			browserGuestEvent: ({ viewId, payload }) => {
+				for (const listener of browserListeners) listener(viewId, payload);
+			},
 			updateStateChanged: (state) => {
 				for (const listener of updateListeners) listener(state);
 			},
@@ -62,7 +67,10 @@ const rpc = Electroview.defineRPC<DesktopRpc>({
 				nativeWindowFocused = focused;
 			},
 			quitHintChanged: ({ hint }) => shortcuts.emitQuitHint(hint),
-			nativeCommand: ({ command }) => shortcuts.emitCommand(command),
+			nativeCommand: ({ command }) => {
+				if (command === "close-item" && browserBridge.closeFocusedPage()) return;
+				shortcuts.emitCommand(command);
+			},
 		},
 	},
 });
@@ -77,6 +85,30 @@ installPageZoomGestures(window, navigator.platform, (gesture) => {
 	electroview.rpc?.send.pageZoomGestureRequested(gesture);
 });
 const globals = globalThis as typeof globalThis & Record<string, unknown>;
+const browserBridge = createNativeBrowserBridge({
+	command: (workspaceId, command) =>
+		rpc.request.browserCommand({ workspaceId, command }, { maxRequestTime: 45000 }),
+	external: (viewId) => rpc.request.browserExternal({ viewId }),
+	history: (viewId) => rpc.request.browserHistory({ viewId }),
+	script: (viewId, script) =>
+		rpc.request.browserScript({ viewId, script }, { maxRequestTime: 20000 }),
+	subscribe: (listener) => {
+		browserListeners.add(listener);
+		return () => browserListeners.delete(listener);
+	},
+	attach: (viewId) => rpc.request.browserAttach({ viewId }, { maxRequestTime: 20000 }),
+	viewport: (viewId, viewport) =>
+		rpc.request.browserViewport({ viewId, viewport }, { maxRequestTime: 20000 }),
+	screenshot: (viewId) => rpc.request.browserScreenshot({ viewId }, { maxRequestTime: 20000 }),
+	copyScreenshot: (viewId) =>
+		rpc.request.browserCopyScreenshot({ viewId }, { maxRequestTime: 20000 }),
+	detach: (viewId) => rpc.request.browserDetach({ viewId }),
+});
+Object.defineProperty(globals, "__THINKRAIL_NATIVE_BROWSER__", {
+	value: browserBridge,
+	writable: false,
+	configurable: false,
+});
 const updateBridge: NativeUpdateBridge = Object.freeze({
 	getState: () => rpc.request.getUpdateState(),
 	checkForUpdates: () => rpc.request.checkForUpdates(),

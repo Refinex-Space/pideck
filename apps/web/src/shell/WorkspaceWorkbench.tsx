@@ -13,6 +13,7 @@ import {
 	useState,
 } from "react";
 import { useShallow } from "zustand/react/shallow";
+import { BrowserPanel, BrowserTabs, nativeBrowserBridge, openBrowserUrl } from "../browser";
 import { ChatResourcesProvider } from "../chat/ChatResourcesScope";
 import { prepareChatTitle } from "../chat/chatTitle";
 import { useAutoPlanSummary } from "../chat/useChatTodos";
@@ -231,6 +232,9 @@ function ChatResourceBody({
 								sessionId={tab.sessionId}
 								workspaceId={workspaceId}
 								onOpenFile={onOpenFile}
+								onOpenBrowser={
+									nativeBrowserBridge() ? (url) => openBrowserUrl(workspaceId, url) : undefined
+								}
 							/>
 						</Suspense>
 					</StatusDock>
@@ -695,6 +699,7 @@ export function WorkspaceWorkbench({
 				</QuietScrollArea>
 			),
 			files: <FilesPanel key={workspaceId} workspaceId={workspaceId} />,
+			browser: <BrowserPanel key={workspaceId} workspaceId={workspaceId} />,
 			review: <ReviewPanel key={workspaceId} workspaceId={workspaceId} failed={review.failed} />,
 			plan: railPlanSessionId ? (
 				<ErrorBoundary
@@ -832,6 +837,10 @@ export function WorkspaceWorkbench({
 				renderTabBody={renderTabBody}
 				renderTabAdornment={renderTabAdornment}
 				renderToolBody={renderToolBody}
+				renderToolHeader={(tool) =>
+					tool === "browser" ? <BrowserTabs workspaceId={workspaceId} /> : null
+				}
+				unavailableTools={nativeBrowserBridge() ? [] : ["browser"]}
 				renderEmptyCenter={renderEmptyCenter}
 				onCommit={commit}
 				onAttentionChange={changeAttention}

@@ -30,12 +30,13 @@ function DraggableTitle({ title, tab }: { title: string; tab: LayoutTab }) {
 
 export const AuxiliaryPaneHeader = forwardRef<
 	HTMLDivElement,
-	Omit<ComponentPropsWithoutRef<"div">, "children" | "title"> & {
+	Omit<ComponentPropsWithoutRef<"div">, "children" | "title" | "content"> & {
 		title: string;
+		content?: ReactNode;
 		dragTab?: LayoutTab;
 		actions?: ReactNode;
 	}
->(function AuxiliaryPaneHeader({ title, dragTab, actions, className, ...props }, ref) {
+>(function AuxiliaryPaneHeader({ title, content, dragTab, actions, className, ...props }, ref) {
 	return (
 		<div
 			ref={ref}
@@ -46,13 +47,14 @@ export const AuxiliaryPaneHeader = forwardRef<
 				className,
 			)}
 		>
-			{dragTab ? (
-				<DraggableTitle title={title} tab={dragTab} />
-			) : (
-				<span data-testid="auxiliary-pane-title" className={TITLE_CLASS}>
-					{title}
-				</span>
-			)}
+			{content ??
+				(dragTab ? (
+					<DraggableTitle title={title} tab={dragTab} />
+				) : (
+					<span data-testid="auxiliary-pane-title" className={TITLE_CLASS}>
+						{title}
+					</span>
+				))}
 			{actions}
 		</div>
 	);

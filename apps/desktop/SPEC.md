@@ -47,8 +47,8 @@ engine architecture.
   Windows executable-identity gap (below); shared's native icon set as build input; Bun/Node.
 - **Forbidden:** spawning the CLI or a second engine process; implementing ordinary product feature or
   agent/domain logic; importing web source at runtime; introducing a desktop-only wire or UI state model;
-  storing one active location on the backend; or bundling CEF without a new acceptance failure that
-  justifies it. Native shell, lifecycle, and packaging concerns are the only desktop-specific behavior.
+  storing one active location on the backend; or adding another agent runtime. CEF child pages are explicitly approved for the browser capability
+  ([[submodule-desktop-browser]]); the main UI keeps the system renderer. Native shell, lifecycle, and packaging concerns are the only desktop-specific behavior.
 
 ## Profile and topology
 
@@ -546,7 +546,7 @@ payload or use an incorrect pre-metadata sealing hook. Local framework DMGs rema
 only the private pipeline's verified final DMG is a signed release. The handoff and verification contract
 belong to [[module-ci-release]].
 
-Linux uses native WebKitGTK without CEF and declares Ubuntu 24.04+/glibc 2.38 plus `libgtk-3-0`,
+Linux uses WebKitGTK for the application UI and bundles CEF for browser guests. It declares Ubuntu 24.04+/glibc 2.38 plus `libgtk-3-0`,
 `libwebkit2gtk-4.1-0`, `libayatana-appindicator3-1`, and `librsvg2-2`. Xvfb software-rendering flags are
 CI-only and are never shipped as user configuration.
 
@@ -602,3 +602,25 @@ release checks described in [[module-ci-release]].
 Shared/remote backend profiles, profile selection, multi-window/deep-link routing, CEF, and removing the
 `user32` style-bit shim once blackboardsh/electrobun#558 ships. The update feed publication described above
 remains release-owned.
+
+## Embedded browser
+
+See [[submodule-desktop-browser]] for CEF guests, bootstrap ordering, CDP identity checks and native
+surface retention. The browser preload exposes a frozen optional native capability; the trusted main
+webview keeps same-origin confinement. The child sandbox disables Electrobun RPC and nested view creation;
+it is not a claim of OS-level renderer sandboxing (Electrobun 2.0.5 initializes CEF with no_sandbox).
+The random loopback CDP listener is required for screenshots and device metrics; local processes can
+reach it, and its endpoint is never exposed to guest pages or the host WebSocket protocol.
+BrowserProbe is an opt-in native test seam, enabled only with a report path and loopback fixture URL.
+
+The macOS preBuild compiles a small Cocoa lifecycle adapter for the pinned Electrobun 2.0.5 native
+wrapper, targeting macOS 14.0. Startup installs it before creating the application window and retains
+the loaded library until process exit. It only changes embedded CEF view removal, preserving windowed
+rendering and the existing quit coordinator. `smoke:browser --close` covers real multi-page teardown;
+details and the removal gate belong to [[submodule-desktop-browser]].
+
+The launcher supplies BrowserEngine to the shared host. Playwright core 1.61.0 is staged with its runtime
+assets and license, then loaded from that exact packaged path; it attaches to the existing CEF and never
+launches a browser binary. A loopback WebSocket adapter corrects CEF's preview-scale input coordinates and
+rejects browser-origin connections. Recordings use owned CEF frames plus a separate trusted encoder view,
+not a screen/desktop capture. PNG copying uses the native system clipboard image API.

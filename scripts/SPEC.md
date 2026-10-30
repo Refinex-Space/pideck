@@ -72,3 +72,6 @@ a call (direct, through a namespace import, or passed by reference to such a cal
 reaches them synchronously, default parameters included, transitively; a module-load call; and any getter
 or registered tool `summary` that reads them. Event handlers (`on*` and other non-render props), effects and
 deferred callbacks are event-time and pass. Fixture tests pin each shape, both flagged and allowed. There is no suppression mechanism; a false positive is fixed in the checker with a test.
+
+The root smoke:browser script runs e2e/run-browser-native.ts against the already built desktop artifact.
+It does not build or invoke a model provider. Native validation remains separate from no-agent Web e2e.

@@ -97,7 +97,7 @@ function inferredBinary(path: string): boolean {
 	const mime = inferredMime(path);
 	return (
 		mime !== undefined &&
-		(mime === "application/pdf" || mime.startsWith("image/")) &&
+		(mime === "application/pdf" || mime.startsWith("image/") || mime.startsWith("video/")) &&
 		mime !== "image/svg+xml"
 	);
 }

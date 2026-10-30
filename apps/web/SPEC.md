@@ -396,3 +396,11 @@ Interactive file operations are specified in [file-workbench.md](../../file-work
 the file operation UI, `store` owns editor drafts and composer insertion, and the shared renderers receive
 optional editing/selection callbacks. `shell/layout` also consumes the state-free `fileIcons` barrel;
 AppResourceHost mounts the file-draft persistence/unload guard without moving file contents into layouts.
+
+## Browser module
+
+`browser` ([[submodule-web-browser]]) exposes BrowserPanel, BrowserTabs and nativeBrowserBridge through
+index.ts. It depends on contracts, locales, ui, React/Zustand, clientPreferences, lib, store and the
+existing panels/openChat helper. Shell injects its tab strip into the auxiliary pane header. Native
+capability absence hides the Browser rail and add-menu entries; persisted unavailable tools remain
+readable without pretending to support an iframe fallback.

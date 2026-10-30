@@ -697,3 +697,12 @@ stored. No new tool parameter, no new `status`/`anchorState` enum value.
 Standalone `createServer` also awaits the idempotent initializer before Central/Pi startup.
 The `network.*` handlers delegate through the network barrel. Settings reads and diagnostics never
 broadcast secrets; a save requests restart instead of mutating active transports. See [[submodule-server-network]].
+
+## Native browser composition
+
+`CreateServerOptions.browser` and `BootHostOptions.browser` accept the contracts BrowserEngine. Host
+constructs BrowserService with getSessionWorkspaceId/getWorkspace, installs setBrowserToolHost before
+sessions load, and returns optional RunningServer.browser (BrowserHostControl) to the native launcher.
+The signal wrapper preserves this optional port. It is not a WebSocket method and adds no wire version.
+Graceful shutdown cancels browser jobs before disposing the native engine. Host depends on browser's public
+barrel; the browser module does not import the launcher or agent manager.

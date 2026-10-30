@@ -373,3 +373,10 @@ The collapsed-sidebar peek keeps its recursive hide poll inside the stable callb
 the callback ref separately from zone handlers, keeping React Compiler from classifying the whole props
 object as a ref. The compiler regression checks both units without expanding the bailout baseline;
 hover grace, overlays, focused inputs and Escape behavior remain unchanged.
+
+## Capability-dependent tools and custom headers
+
+Browser is an optional right-side singleton tool. `unavailableTools` filters launcher/menu entries;
+`renderToolHeader` supplies feature-owned tab controls in the existing auxiliary header row. Other
+tools retain draggable titles and group menus. Browser placement remains draggable via its rail.
+These injected presentation slots do not introduce feature-store dependencies into layout.

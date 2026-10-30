@@ -113,3 +113,9 @@ Locators resolve the documented app/installer paths and channel-specific setup n
 matching artifact from an ambiguous directory. Windows setup suffixes retain the stable/canary distinction.
 A macOS run is not evidence of Windows/Linux native execution or download-time Gatekeeper acceptance.
 Signing/notarization verification belongs to [[module-ci-release]]'s private service handoff.
+
+## CEF profile isolation
+
+Desktop smoke changes the copied bundle's runtime identifier before launching. Native CEF derives its
+profile directory from that identifier independently of the host data override, so a test must not reuse
+the product identifier even when its host, Pi and desktop preference directories are temporary.

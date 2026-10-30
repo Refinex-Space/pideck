@@ -46,6 +46,7 @@
         "@thinkrail/locales": "workspace:*",
         "@thinkrail/server": "workspace:*",
         "@thinkrail/shared": "workspace:*",
+        "playwright-core": "catalog:",
       },
       "devDependencies": {
         "@types/bun": "catalog:",
@@ -545,6 +546,7 @@
     "diff": "9.0.0",
     "lucide-react": "1.61.0",
     "mermaid": "12.2.0",
+    "playwright-core": "1.61.0",
     "react": "19.3.1",
     "react-dom": "19.3.1",
     "react-markdown": "10.1.0",

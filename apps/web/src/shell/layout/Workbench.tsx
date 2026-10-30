@@ -91,6 +91,8 @@ import { SideStack } from "./workbenchSide";
 export type { LayoutTabFocusRequest, WorkbenchProps } from "./workbenchShared";
 
 export function Workbench({
+	renderToolHeader,
+	unavailableTools,
 	workspaceLocation,
 	navigationActions,
 	navigationFooter,
@@ -793,6 +795,8 @@ export function Workbench({
 		[apply, maxBottomGroups, maxSideGroups],
 	);
 	const shared: SharedGroupProps = {
+		renderToolHeader,
+		unavailableTools,
 		workspaceId,
 		document,
 		readAttention,

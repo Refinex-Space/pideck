@@ -59,6 +59,7 @@ const MIME_BY_EXTENSION: Readonly<Record<string, string>> = {
 	avif: "image/avif",
 	svg: "image/svg+xml",
 	pdf: "application/pdf",
+	webm: "video/webm",
 };
 
 function extension(path: string): string {

@@ -54,6 +54,7 @@ function ChatTurnViewImpl({
 	row,
 	workspaceRoot,
 	onOpenFile,
+	onOpenBrowser,
 	agentResponded,
 	isFinalAnswer,
 	onOpenSpec,
@@ -66,6 +67,7 @@ function ChatTurnViewImpl({
 	row: ChatRow;
 	workspaceRoot?: string | undefined;
 	onOpenFile?: ((path: string) => void) | undefined;
+	onOpenBrowser?: ((url: string) => void) | undefined;
 	agentResponded: boolean;
 	isFinalAnswer: boolean;
 	onOpenSpec?: ((path: string) => void) | undefined;
@@ -139,6 +141,7 @@ function ChatTurnViewImpl({
 							text={row.text}
 							workspaceRoot={workspaceRoot}
 							onOpenFile={onOpenFile}
+							onOpenBrowser={onOpenBrowser}
 						/>
 					</div>
 				</MessageWithCopy>

@@ -171,6 +171,7 @@ const ChatTranscript = forwardRef<
 		sessionId: string;
 		workspaceId: string;
 		onOpenFile?: ((path: string) => void) | undefined;
+		onOpenBrowser?: ((url: string) => void) | undefined;
 		workspaceRoot: string | undefined;
 		focusComposer: () => void;
 		openSubagentTranscript: (childSessionId: string) => void;
@@ -189,6 +190,7 @@ const ChatTranscript = forwardRef<
 		sessionId,
 		workspaceId,
 		onOpenFile,
+		onOpenBrowser,
 		workspaceRoot,
 		focusComposer,
 		openSubagentTranscript,
@@ -670,6 +672,7 @@ const ChatTranscript = forwardRef<
 													row={row}
 													workspaceRoot={workspaceRoot}
 													onOpenFile={onOpenFile}
+													onOpenBrowser={onOpenBrowser}
 													agentResponded={
 														messageActions.agentRespondedByUserId.get(row.id) ?? false
 													}

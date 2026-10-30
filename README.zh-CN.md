@@ -77,6 +77,7 @@ bun run desktop:dev                  # 构建并打开原生应用
 桌面包在对应宿主平台构建。继承的目标平台包括 macOS 14+（Apple Silicon / Intel）、Windows x64、
 Linux x64 / ARM64。Linux 需要 glibc 2.38+、GTK 3、WebKitGTK 4.1、Ayatana AppIndicator 3 和 librsvg 2。
 本地构建成功不等于所有平台已验收，也不等于安装包已签名。
+macOS 桌面构建还需要 Xcode Command Line Tools（`xcrun clang`），用于编译 CEF 子视图生命周期适配器。
 
 ## 配置与数据
 
@@ -178,3 +179,17 @@ PAC/WPAD、仅 SOCKS 的代理，以及超出域名/IP/主机:端口子集的旁
 Token；端点响应不代表登录、模型权限或地区政策通过。外部登录浏览器使用自己的网络设置。
 
 各平台解析器有 fixture 测试；macOS/Linux 原生行为仍须在对应系统验收，不能用 Windows 结果替代。
+
+### 侧边浏览器（桌面端）
+
+浏览器工具在会话旁打开独立 Chromium/CEF 页面，提供多标签、导航、页内查找、开发者工具、
+截图复制、自由视口和元素选取。选取结果可预览后加入聊天草稿，不会自动发送。普通 Web/手机端
+不提供这项原生能力；CEF 会增加桌面安装包体积。范围与验证边界见
+[浏览器规格](apps/web/src/browser/SPEC.md)。
+
+桌面宿主会向现有 Pi 会话注册 `browser` 工具，支持 DOM/可访问性定位、iframe、鼠标键盘、
+导航、对话框、上传下载和截图；各聊天独立认领标签页。工具栏相机按钮直接复制 PNG，随后可用
+Ctrl+V / Command+V 粘贴；保存文件保留在更多菜单。摄像机按钮支持 WebM 录屏、结束、取消和播放，
+智能体还可执行最长 90 秒的录制动作序列。结果保存在工作区 `.thinkrail/browser/`，聊天中的录制文件
+可直接打开视频查看器。复用当前 CEF 页面和 Pi 运行时，不启动第二个浏览器实例或智能体运行时。
+实现与验收边界见[原生浏览器规格](apps/desktop/src/browser/SPEC.md)。

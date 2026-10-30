@@ -1692,3 +1692,10 @@ File-reference insertion uses session-local cursor memory and a consume-once foc
 updates the remembered range after programmatic focus, so a later reference preserves the insertion
 point across file-tab navigation. It never reuses insertText (which intentionally replaces a history
 recall draft), never submits a message, and never moves focus after a workspace switch.
+
+## Browser links
+
+The shell supplies an optional onOpenBrowser callback through ChatView, ChatTranscript and the assistant
+markdown renderer. Displays remain props-only. Local development links open in the side browser when
+the capability exists; modified clicks preserve the platform behavior. External links retain their
+default and gain explicit side-browser / default-browser / copy actions in a context menu.

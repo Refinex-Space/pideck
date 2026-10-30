@@ -58,6 +58,8 @@ export interface PreparedLayoutClose {
 }
 
 export interface WorkbenchProps {
+	renderToolHeader?: ((tool: LayoutToolId) => ReactNode) | undefined;
+	unavailableTools?: readonly LayoutToolId[];
 	workspaceLocation?: ReactNode;
 	navigationActions?: ReactNode;
 	navigationFooter?: ReactNode;
@@ -598,6 +600,8 @@ export function findLayoutGroupTabs(
 }
 
 export interface SharedGroupProps {
+	renderToolHeader: WorkbenchProps["renderToolHeader"];
+	unavailableTools: readonly LayoutToolId[] | undefined;
 	workspaceId: string;
 	document: WorkspaceLayoutDocument;
 	readAttention: () => LayoutAttention;

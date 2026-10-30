@@ -62,7 +62,11 @@ export function AppearanceQuickMenu() {
 				<RiPaletteLine />
 				{t("settings.nav.appearance")}
 			</DropdownMenuSubTrigger>
-			<DropdownMenuSubContent sideOffset={12} data-testid="app-menu-appearance-content">
+			<DropdownMenuSubContent
+				sideOffset={12}
+				collisionPadding={16}
+				data-testid="app-menu-appearance-content"
+			>
 				<DropdownMenuRadioGroup value={value} onValueChange={select}>
 					{systemSupported ? (
 						<DropdownMenuRadioItem value="system" data-testid="app-menu-theme-system">
@@ -103,7 +107,11 @@ export function LanguageQuickMenu() {
 				<RiGlobalLine />
 				{t("settings.nav.language")}
 			</DropdownMenuSubTrigger>
-			<DropdownMenuSubContent sideOffset={12} data-testid="app-menu-language-content">
+			<DropdownMenuSubContent
+				sideOffset={12}
+				collisionPadding={16}
+				data-testid="app-menu-language-content"
+			>
 				<DropdownMenuRadioGroup value={preference} onValueChange={select}>
 					<DropdownMenuRadioItem value={SYSTEM_LOCALE} data-testid="app-menu-language-system">
 						<Checked selected={preference === SYSTEM_LOCALE} />

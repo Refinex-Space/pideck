@@ -43,6 +43,13 @@ test("write-capable presets name what they can change, and the stdio preset is o
 	expect(byId.playwright?.modifiesData).toBeDefined();
 });
 
+test("only the OAuth presets ask the user to sign in after adding", () => {
+	expect(MCP_PRESETS.filter((preset) => preset.signIn).map((preset) => preset.id)).toEqual([
+		"linear",
+		"sentry",
+	]);
+});
+
 test("GitHub is a pasteable read-only recipe, not a preset, whose bearer header comes from gh auth token", () => {
 	expect(MCP_PRESETS.some((preset) => preset.name === "github")).toBe(false);
 	const parsed = parseMcpServersJson(currentTranslator(), GITHUB_MCP_RECIPE_JSON);

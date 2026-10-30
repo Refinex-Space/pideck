@@ -102,6 +102,7 @@ test("a preset's failed project opt-in closes Add and retries from its row witho
 		await openMcpSettings(page);
 		await page.getByTestId("mcp-empty-add").click();
 		const dialog = page.getByTestId("mcp-add-dialog");
+		await dialog.getByTestId("mcp-add-tab-presets").click();
 		await dialog.locator('[data-preset="playwright"]').getByTestId("mcp-preset-add").click();
 		await expect(dialog.getByTestId("mcp-run-review")).toContainText("@playwright/mcp@");
 		await dialog.getByTestId("mcp-add-confirm").click();
@@ -435,4 +436,57 @@ test("a repository-defined server flags the chat, waits for approval and starts 
 	} finally {
 		rmSync(PROJECT_CONFIG_DIR, { recursive: true, force: true });
 	}
+});
+
+test("the add dialog keeps presets, the custom form and pasted JSON on separate tabs at one height", async ({
+	page,
+}) => {
+	await page.setViewportSize({ width: 1280, height: 800 });
+	rmSync(USER_CONFIG, { force: true });
+	await openFixtureProject(page);
+	await enterDefaultWorkspace(page);
+	await openMcpSettings(page);
+	await page.getByTestId("mcp-empty-add").click();
+	const dialog = page.getByTestId("mcp-add-dialog");
+	const tab = (id: string) => dialog.getByTestId(`mcp-add-tab-${id}`);
+	// offsetHeight ignores the open animation's scale, which a bounding box would include.
+	const height = () => dialog.evaluate((element) => (element as HTMLElement).offsetHeight);
+
+	await expect(tab("form")).toHaveAttribute("aria-selected", "true");
+	await expect(dialog.getByTestId("mcp-add-form")).toBeVisible();
+	await expect(dialog.getByTestId("mcp-presets")).toHaveCount(0);
+	const body = dialog.getByRole("tabpanel");
+	expect(
+		await body.evaluate((panel) => {
+			const scroller = panel.parentElement;
+			return !!scroller && scroller.scrollHeight <= scroller.clientHeight + 1;
+		}),
+	).toBe(true);
+	const fixedHeight = await height();
+	await expect(dialog.getByTestId("mcp-add-scope")).toContainText("User — all projects");
+
+	const advanced = dialog.getByTestId("mcp-form-advanced-toggle");
+	await expect(dialog.getByTestId("mcp-form-exposure")).toHaveCount(0);
+	await advanced.click();
+	await expect(advanced).toHaveAttribute("aria-expanded", "true");
+	await expect(dialog.getByTestId("mcp-form-exposure")).toBeVisible();
+	await advanced.click();
+	await expect(dialog.getByTestId("mcp-form-exposure")).toHaveCount(0);
+
+	await tab("presets").click();
+	await expect(dialog.getByTestId("mcp-preset")).toHaveCount(5);
+	await expect(dialog.getByTestId("mcp-add-scope")).toHaveCount(0);
+	expect(await height()).toBe(fixedHeight);
+
+	await dialog.getByTestId("mcp-github-recipe-use").click();
+	await expect(tab("json")).toHaveAttribute("aria-selected", "true");
+	await expect(dialog.getByTestId("mcp-json-input")).toHaveValue(/api\.githubcopilot\.com/);
+	expect(await height()).toBe(fixedHeight);
+
+	await tab("json").focus();
+	await page.keyboard.press("ArrowLeft");
+	await expect(tab("form")).toBeFocused();
+	await expect(tab("form")).toHaveAttribute("aria-selected", "true");
+	await page.keyboard.press("Home");
+	await expect(tab("presets")).toBeFocused();
 });

@@ -57,6 +57,7 @@ import { ConfirmDialog } from "./ConfirmDialog";
 import {
 	McpAddDialog,
 	type McpAddResult,
+	type McpAddTab,
 	McpApproveDialog,
 	type McpApproveTarget,
 	McpDetailsDialog,
@@ -687,7 +688,7 @@ export function McpSettings() {
 	return <McpWorkspaceSettings key={workspace.id} workspace={workspace} />;
 }
 
-type AddRequest = { tier: "form" | "json"; preset?: McpPreset; key: number };
+type AddRequest = { tab: McpAddTab; preset?: McpPreset; key: number };
 
 function McpWorkspaceSettings({ workspace }: { workspace: Workspace }) {
 	const t = useT();
@@ -930,7 +931,16 @@ function McpWorkspaceSettings({ workspace }: { workspace: Workspace }) {
 						iconLeft={Plus}
 						data-testid="mcp-add"
 						disabled={readOnly}
-						onClick={() => setAdding({ tier: "form", key: Date.now() })}
+						onClick={() =>
+							setAdding({
+								tab: MCP_PRESETS.some(
+									(preset) => !servers.some((server) => server.name === preset.name),
+								)
+									? "presets"
+									: "form",
+								key: Date.now(),
+							})
+						}
 					>
 						{t("mcp.settings.addServer")}
 					</Button>
@@ -978,9 +988,9 @@ function McpWorkspaceSettings({ workspace }: { workspace: Workspace }) {
 			) : servers.length === 0 ? (
 				<McpEmptyState
 					disabled={readOnly}
-					onAdd={() => setAdding({ tier: "form", key: Date.now() })}
-					onImport={() => setAdding({ tier: "json", key: Date.now() })}
-					onPreset={(preset) => setAdding({ tier: "form", preset, key: Date.now() })}
+					onAdd={() => setAdding({ tab: "form", key: Date.now() })}
+					onImport={() => setAdding({ tab: "json", key: Date.now() })}
+					onPreset={(preset) => setAdding({ tab: "presets", preset, key: Date.now() })}
 				/>
 			) : (
 				<ul className="flex flex-col gap-4" data-testid="mcp-server-list">
@@ -1002,7 +1012,7 @@ function McpWorkspaceSettings({ workspace }: { workspace: Workspace }) {
 				<McpAddDialog
 					key={adding.key}
 					open
-					initialTier={adding.tier}
+					initialTab={adding.tab}
 					initialPreset={adding.preset}
 					existing={servers ?? []}
 					projectScopeAvailable={trusted}

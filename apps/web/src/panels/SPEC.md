@@ -649,19 +649,26 @@ a project picker, the prompt hero, and the reused
   item naming its source file (`McpServerSummary.source`): `mcp.update` replaces the whole entry and the
   host returns no raw user entry, so Settings could only rebuild it lossily — users edit
   `~/.pi/agent/mcp.json` directly, and the switch and exposure menu keep writing this project's record
-  override. **Add** has three tiers: presets from
+  override. **Add** is one fixed-height dialog with three tabs (`mcp-add-tabs`, ARIA tablist with arrow/Home/End
+  keys) that each do one job — **Recommended**, **Custom** and **Paste JSON** — so no tab scrolls on a normal window and
+  switching never changes the dialog's height; the review step drops the fixed height. A header Add opens on Recommended
+  while any preset is not yet added (else Custom), the empty state's *Add a server* opens Custom, *Import* opens Paste JSON,
+  and an empty-state preset goes straight to its review. **Recommended** lists presets from
   `mcpPresets.ts` — five, verified and pinned (no `@latest`): Context7 and DeepWiki (`direct`, authless),
   Linear through its vendor read-only endpoint (`/mcp/readonly`) and Sentry (both OAuth — sign in after
   adding), and Playwright (`npx -y @playwright/mcp@<pinned>`), which is added as a disabled user entry plus
   this project's record override (`optInPerProject`), so it runs only where the user opted in and never
   touches the repository; `modifiesData` (Sentry, Playwright) adds the "this server can modify data in
-  <service>" acknowledgement, and a preset whose name is already configured reads **Added**. GitHub stays a
-  recipe, not a preset (`gh auth token` scopes are unverified): below the presets, *Use recipe* fills the
-  Paste JSON tier with `GITHUB_MCP_RECIPE_JSON` — GitHub's read-only endpoint (`/mcp/readonly`) and an
+  <service>" acknowledgement, and each card carries tags drawn from the preset itself (remote or local command, `signIn`, `modifiesData`); a preset whose name is
+  already configured shows a ✓ **Added** mark instead of the button. GitHub stays a
+  recipe, not a preset (`gh auth token` scopes are unverified): its card, last in the grid, tagged *JSON recipe*, has *Use recipe*, which switches to the
+  Paste JSON tab and fills it with `GITHUB_MCP_RECIPE_JSON` — GitHub's read-only endpoint (`/mcp/readonly`) and an
   `Authorization` header from `!t=$(gh auth token) && echo "Bearer $t"`, which fails rather than sending an
-  empty token while gh is logged out (the `managing-mcp-servers` skill carries the same entry); a short form (pi's name charset, per-file
+  empty token while gh is logged out (the `managing-mcp-servers` skill carries the same entry); a short **Custom** form (pi's name charset, per-file
   duplicates and `-`/`_` twins, a stdio command with one argument per line or an http(s) URL, env/header
-  rows, exposure, description, and a scope where Project needs a trusted project); and pasted `mcpServers`
+  rows whose reference rule sits in an info tooltip, and a collapsed **Advanced** disclosure holding exposure and description that opens by
+  itself when either differs from the default); the **Save to** menu in the footer, shown on Custom and Paste JSON only, picks the scope — Project is disabled with the
+  trust notice beside it until the project is trusted; and pasted `mcpServers`
   JSON (wrapper or bare map, previewed per server; valid entries are added, SSE and malformed ones are
   flagged). **Settings stores references only** (`mcpSecretIssues`: secret values from the form are never
   stored): every env/header value of the form must be a `${VAR}` / `$VAR` template or a `!command`
@@ -696,7 +703,7 @@ a project picker, the prompt hero, and the reused
   of tool chips (the host's `label`, the pi tool name as title) — the scope is spelled out because the
   row's USER chip describes the server, not the grant; each chip's × ("Ask again before <tool> in this
   project") sends `mcp.revokeToolGrant` through `requestMcpList` and is
-  disabled while the row is read-only or busy. This is the only place grants are revoked. The empty state offers presets, the form, JSON import and a
+  disabled while the row is read-only or busy. This is the only place grants are revoked. The empty state offers presets, the custom form, JSON import and a
   host notice. Live sections: **`ProvidersSettings`** (the in-app
   provider-auth surface — a header line with an in-page **Refresh** (`providers-refresh`, disabled while a
   status read is in flight) over the groups **Connected** (each row with a **Sign-out only when

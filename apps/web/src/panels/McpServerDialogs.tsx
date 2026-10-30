@@ -1,4 +1,8 @@
 import {
+	RiCheckLine as Check,
+	RiArrowDownSLine as ChevronDown,
+	RiArrowRightSLine as ChevronRight,
+	RiInformationLine as Info,
 	RiAddLine as Plus,
 	RiDeleteBin6Line as Trash2,
 	RiAlertLine as TriangleAlert,
@@ -20,10 +24,25 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@thinkrail/ui/dialog";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuRadioGroup,
+	DropdownMenuRadioItem,
+	DropdownMenuTrigger,
+} from "@thinkrail/ui/dropdown-menu";
 import { Textarea } from "@thinkrail/ui/textarea";
 import { ToggleSegment } from "@thinkrail/ui/toggle-segment";
 import { cn } from "@thinkrail/ui/utils";
-import { type ReactNode, useEffect, useMemo, useState } from "react";
+import {
+	Fragment,
+	type KeyboardEvent as ReactKeyboardEvent,
+	type ReactNode,
+	useEffect,
+	useId,
+	useMemo,
+	useState,
+} from "react";
 import { randomId } from "@/lib";
 import type { McpServerRow } from "@/store";
 import {
@@ -134,16 +153,32 @@ function Field({
 	label,
 	hint,
 	error,
+	info,
+	action,
 	children,
 }: {
 	label: string;
 	hint?: ReactNode;
 	error?: string | undefined;
+	info?: { label: string; content: ReactNode };
+	action?: ReactNode;
 	children: ReactNode;
 }) {
 	return (
 		<div className="flex flex-col gap-4">
-			<span className="tr-title-compact text-text-default">{label}</span>
+			<span className="flex items-center gap-4">
+				<span className="tr-title-compact text-text-default">{label}</span>
+				{info ? (
+					<IconButton
+						icon={Info}
+						variant="ghost"
+						size="s"
+						label={info.label}
+						tooltip={info.content}
+					/>
+				) : null}
+				{action ? <span className="ml-auto">{action}</span> : null}
+			</span>
 			{children}
 			{error ? (
 				<span role="alert" className="text-feedback-error tr-text-metadata">
@@ -241,6 +276,7 @@ function ValueRows({
 			...draft,
 			values: draft.values.map((row) => (row.id === id ? { ...row, ...patch } : row)),
 		});
+	if (draft.values.length === 0) return null;
 	return (
 		<div className="flex flex-col gap-4">
 			{draft.values.map((row) => (
@@ -270,21 +306,56 @@ function ValueRows({
 					/>
 				</div>
 			))}
-			<Button
-				variant="ghost"
-				size="m"
-				iconLeft={Plus}
-				data-testid="mcp-form-add-value"
-				className="self-start"
-				onClick={() =>
-					onChange({
-						...draft,
-						values: [...draft.values, { id: randomId("v"), name: "", value: "" }],
-					})
-				}
+		</div>
+	);
+}
+
+function AdvancedFields({
+	draft,
+	onChange,
+}: {
+	draft: McpFormDraft;
+	onChange: (draft: McpFormDraft) => void;
+}) {
+	const t = useT();
+	const [open, setOpen] = useState(
+		() => draft.exposure !== emptyMcpDraft().exposure || draft.description !== "",
+	);
+	const panelId = useId();
+	const Chevron = open ? ChevronDown : ChevronRight;
+	return (
+		<div className="flex flex-col gap-12">
+			<button
+				type="button"
+				aria-expanded={open}
+				aria-controls={open ? panelId : undefined}
+				data-testid="mcp-form-advanced-toggle"
+				onClick={() => setOpen((value) => !value)}
+				className="flex items-center gap-4 self-start rounded-sm tr-text-ui text-text-muted outline-none transition-colors hover:text-text-default focus-visible:ring-1 focus-visible:ring-focus-ring"
 			>
-				{http ? t("mcp.form.addHeader") : t("mcp.form.addVariable")}
-			</Button>
+				<Chevron className="size-16 shrink-0" aria-hidden="true" />
+				{t("mcp.form.advanced")}
+			</button>
+			{open ? (
+				<div id={panelId} className="flex flex-col gap-12">
+					<Field label={t("mcp.form.exposure")} hint={t(MCP_EXPOSURE_HINT[draft.exposure])}>
+						<Segments
+							testId="mcp-form-exposure"
+							value={draft.exposure}
+							options={MCP_EXPOSURES.map((id) => ({ id, label: mcpExposureLabel(t, id) }))}
+							onChange={(exposure) => onChange({ ...draft, exposure })}
+						/>
+					</Field>
+					<Field label={t("mcp.form.description")} hint={t("mcp.form.descriptionHint")}>
+						<input
+							data-testid="mcp-form-description"
+							value={draft.description}
+							onChange={(event) => onChange({ ...draft, description: event.currentTarget.value })}
+							className={MCP_INPUT_CLASS}
+						/>
+					</Field>
+				</div>
+			) : null}
 		</div>
 	);
 }
@@ -301,6 +372,12 @@ function McpForm({
 	onChange: (draft: McpFormDraft) => void;
 }) {
 	const t = useT();
+	const http = draft.transport === "http";
+	const addValue = () =>
+		onChange({
+			...draft,
+			values: [...draft.values, { id: randomId("v"), name: "", value: "" }],
+		});
 	return (
 		<div className="flex flex-col gap-12" data-testid="mcp-add-form">
 			<Field label={t("mcp.form.name")} error={issues?.name} hint={t("mcp.form.nameHint")}>
@@ -323,7 +400,7 @@ function McpForm({
 					onChange={(transport) => onChange({ ...draft, transport })}
 				/>
 			</Field>
-			{draft.transport === "http" ? (
+			{http ? (
 				<Field label={t("mcp.form.url")} error={issues?.url} hint={t("mcp.form.urlHint")}>
 					<input
 						data-testid="mcp-form-url"
@@ -335,11 +412,7 @@ function McpForm({
 				</Field>
 			) : (
 				<>
-					<Field
-						label={t("mcp.form.command")}
-						error={issues?.command}
-						hint={t("mcp.form.commandHint")}
-					>
+					<Field label={t("mcp.form.command")} error={issues?.command}>
 						<input
 							data-testid="mcp-form-command"
 							value={draft.command}
@@ -351,7 +424,7 @@ function McpForm({
 					<Field label={t("mcp.form.args")} hint={t("mcp.form.argsHint")}>
 						<Textarea
 							data-testid="mcp-form-args"
-							rows={3}
+							rows={2}
 							value={draft.args}
 							placeholder={PLACEHOLDER.args}
 							onChange={(event) => onChange({ ...draft, args: event.currentTarget.value })}
@@ -361,37 +434,36 @@ function McpForm({
 				</>
 			)}
 			<Field
-				label={draft.transport === "http" ? t("mcp.form.headers") : t("mcp.form.environment")}
+				label={http ? t("mcp.form.headers") : t("mcp.form.environment")}
 				error={issues?.values}
-				hint={
-					<T
-						i18nKey="mcp.form.valuesHint"
-						values={{ reference: NAME_REFERENCE }}
-						components={[
-							<code key="reference" className="tr-code-text" />,
-							<code key="command" className="tr-code-text" />,
-						]}
-					/>
+				info={{
+					label: t("mcp.form.valuesAbout"),
+					content: (
+						<T
+							i18nKey="mcp.form.valuesHint"
+							values={{ reference: NAME_REFERENCE }}
+							components={[
+								<code key="reference" className="tr-code-text" />,
+								<code key="command" className="tr-code-text" />,
+							]}
+						/>
+					),
+				}}
+				action={
+					<Button
+						variant="ghost"
+						size="m"
+						iconLeft={Plus}
+						data-testid="mcp-form-add-value"
+						onClick={addValue}
+					>
+						{http ? t("mcp.form.addHeader") : t("mcp.form.addVariable")}
+					</Button>
 				}
 			>
 				<ValueRows draft={draft} onChange={onChange} />
 			</Field>
-			<Field label={t("mcp.form.exposure")} hint={t(MCP_EXPOSURE_HINT[draft.exposure])}>
-				<Segments
-					testId="mcp-form-exposure"
-					value={draft.exposure}
-					options={MCP_EXPOSURES.map((id) => ({ id, label: mcpExposureLabel(t, id) }))}
-					onChange={(exposure) => onChange({ ...draft, exposure })}
-				/>
-			</Field>
-			<Field label={t("mcp.form.description")} hint={t("mcp.form.descriptionHint")}>
-				<input
-					data-testid="mcp-form-description"
-					value={draft.description}
-					onChange={(event) => onChange({ ...draft, description: event.currentTarget.value })}
-					className={MCP_INPUT_CLASS}
-				/>
-			</Field>
+			<AdvancedFields draft={draft} onChange={onChange} />
 			{warnings.map((warning) => (
 				<p key={warning} className="text-feedback-warning tr-text-metadata">
 					{warning}
@@ -420,7 +492,7 @@ function McpImport({
 			<Field label={t("mcp.import.label")} hint={t("mcp.import.hint")}>
 				<Textarea
 					data-testid="mcp-json-input"
-					rows={8}
+					rows={10}
 					value={text}
 					placeholder={PLACEHOLDER.json}
 					onChange={(event) => onChange(event.currentTarget.value)}
@@ -477,85 +549,289 @@ function McpImport({
 	);
 }
 
-function PresetList({
+function PresetTags({ preset }: { preset: McpPreset }) {
+	const t = useT();
+	const tags = [
+		{ text: "url" in preset.entry ? t("mcp.preset.tag.remote") : t("mcp.preset.tag.local") },
+		...(preset.signIn ? [{ text: t("mcp.preset.tag.signIn") }] : []),
+		...(preset.modifiesData ? [{ text: t("mcp.preset.tag.modifies"), warn: true }] : []),
+	];
+	return (
+		<span className="min-w-0 tr-text-metadata text-text-muted">
+			{tags.map((tag, index) => (
+				<Fragment key={tag.text}>
+					{index > 0 ? " · " : null}
+					<span className={"warn" in tag ? "text-feedback-warning" : undefined}>{tag.text}</span>
+				</Fragment>
+			))}
+		</span>
+	);
+}
+
+function AddedMark() {
+	const t = useT();
+	return (
+		<span className="flex shrink-0 items-center gap-4 tr-text-metadata text-feedback-success">
+			<Check className="size-14" aria-hidden="true" />
+			{t("mcp.presets.added")}
+		</span>
+	);
+}
+
+function AddCard({
+	testId,
+	preset,
+	plain = false,
+	title,
+	description,
+	tags,
+	action,
+}: {
+	testId: string;
+	preset?: string;
+	plain?: boolean;
+	title: ReactNode;
+	description: ReactNode;
+	tags: ReactNode;
+	action: ReactNode;
+}) {
+	return (
+		<li
+			data-testid={testId}
+			data-preset={preset}
+			className={cn(
+				"flex flex-col gap-4 rounded-sm border border-border-default px-12 py-8",
+				plain ? undefined : "bg-control-bg",
+			)}
+		>
+			<span className="tr-title-compact text-text-default">{title}</span>
+			<span className="flex-1 text-text-muted tr-text-metadata">{description}</span>
+			<span className="flex items-center justify-between gap-8 pt-4">
+				{tags}
+				{action}
+			</span>
+		</li>
+	);
+}
+
+function PresetGrid({
 	presets,
 	existing,
 	disabled,
 	onAdd,
+	onUseRecipe,
 }: {
 	presets: readonly McpPreset[];
 	existing: readonly McpServerSummary[];
 	disabled: boolean;
 	onAdd: (preset: McpPreset) => void;
+	onUseRecipe: () => void;
 }) {
 	const t = useT();
+	const has = (name: string) => existing.some((server) => server.name === name);
 	return (
-		<section className="flex flex-col gap-8" data-testid="mcp-presets">
-			<h4 className="tr-text-eyebrow text-text-muted">{t("mcp.presets.title")}</h4>
-			<ul className="flex flex-col gap-4">
-				{presets.map((preset) => (
-					<li
-						key={preset.id}
-						data-testid="mcp-preset"
-						data-preset={preset.id}
-						className="flex items-center gap-8 rounded-sm border border-border-default bg-control-bg px-12 py-8"
-					>
-						<span className="flex min-w-0 flex-1 flex-col gap-2">
-							<span className="tr-title-compact text-text-default">{t(preset.title)}</span>
-							<span className="text-text-muted tr-text-metadata">{t(preset.description)}</span>
-						</span>
-						<Button
-							variant="outline"
-							size="m"
-							iconLeft={Plus}
-							data-testid="mcp-preset-add"
-							disabled={disabled || existing.some((server) => server.name === preset.name)}
-							onClick={() => onAdd(preset)}
-						>
-							{existing.some((server) => server.name === preset.name)
-								? t("mcp.presets.added")
-								: t("common.add")}
-						</Button>
-					</li>
-				))}
-			</ul>
-		</section>
-	);
-}
-
-function GithubRecipe({
-	added,
-	disabled,
-	onUse,
-}: {
-	added: boolean;
-	disabled: boolean;
-	onUse: () => void;
-}) {
-	const t = useT();
-	return (
-		<div
-			data-testid="mcp-github-recipe"
-			className="flex items-center gap-8 rounded-sm border border-border-default px-12 py-8"
+		<ul
+			data-testid="mcp-presets"
+			className="grid grid-cols-[repeat(auto-fill,minmax(15rem,1fr))] gap-8"
 		>
-			<span className="flex min-w-0 flex-1 flex-col gap-2">
-				<span className="tr-title-compact text-text-default">{t("mcp.githubRecipe.title")}</span>
-				<span className="text-text-muted tr-text-metadata">
+			{presets.map((preset) => (
+				<AddCard
+					key={preset.id}
+					testId="mcp-preset"
+					preset={preset.id}
+					title={t(preset.title)}
+					description={t(preset.description)}
+					tags={<PresetTags preset={preset} />}
+					action={
+						has(preset.name) ? (
+							<AddedMark />
+						) : (
+							<Button
+								variant="outline"
+								size="m"
+								iconLeft={Plus}
+								data-testid="mcp-preset-add"
+								disabled={disabled}
+								onClick={() => onAdd(preset)}
+							>
+								{t("common.add")}
+							</Button>
+						)
+					}
+				/>
+			))}
+			<AddCard
+				testId="mcp-github-recipe"
+				plain
+				title={t("mcp.githubRecipe.title")}
+				description={
 					<T
 						i18nKey="mcp.githubRecipe.description"
 						components={[<code key="command" className="tr-code-text" />]}
 					/>
-				</span>
-			</span>
-			<Button
-				variant="outline"
-				size="m"
-				data-testid="mcp-github-recipe-use"
-				disabled={disabled || added}
-				onClick={onUse}
-			>
-				{added ? t("mcp.presets.added") : t("mcp.githubRecipe.use")}
-			</Button>
+				}
+				tags={
+					<span className="min-w-0 tr-text-metadata text-text-muted">
+						{t("mcp.preset.tag.recipe")}
+					</span>
+				}
+				action={
+					has("github") ? (
+						<AddedMark />
+					) : (
+						<Button
+							variant="outline"
+							size="m"
+							data-testid="mcp-github-recipe-use"
+							disabled={disabled}
+							onClick={onUseRecipe}
+						>
+							{t("mcp.githubRecipe.use")}
+						</Button>
+					)
+				}
+			/>
+		</ul>
+	);
+}
+
+const ADD_TABS = ["presets", "form", "json"] as const;
+
+export type McpAddTab = (typeof ADD_TABS)[number];
+
+function AddTabs({
+	idBase,
+	value,
+	onChange,
+}: {
+	idBase: string;
+	value: McpAddTab;
+	onChange: (tab: McpAddTab) => void;
+}) {
+	const t = useT();
+	const labels: Record<McpAddTab, string> = {
+		presets: t("mcp.addDialog.tabPresets"),
+		form: t("mcp.addDialog.tabCustom"),
+		json: t("mcp.addDialog.tabJson"),
+	};
+	const move = (event: ReactKeyboardEvent<HTMLButtonElement>, index: number) => {
+		const last = ADD_TABS.length - 1;
+		const next =
+			event.key === "ArrowRight"
+				? (index + 1) % ADD_TABS.length
+				: event.key === "ArrowLeft"
+					? (index + last) % ADD_TABS.length
+					: event.key === "Home"
+						? 0
+						: event.key === "End"
+							? last
+							: null;
+		if (next === null) return;
+		event.preventDefault();
+		const id = ADD_TABS[next];
+		if (!id) return;
+		onChange(id);
+		event.currentTarget.parentElement
+			?.querySelector<HTMLButtonElement>(`[data-tab="${id}"]`)
+			?.focus();
+	};
+	return (
+		<div
+			role="tablist"
+			aria-label={t("mcp.addDialog.tabsLabel")}
+			data-testid="mcp-add-tabs"
+			className="flex items-center gap-2 border-border-muted border-b pb-8"
+		>
+			{ADD_TABS.map((id, index) => {
+				const selected = id === value;
+				return (
+					<button
+						key={id}
+						type="button"
+						role="tab"
+						id={`${idBase}-tab-${id}`}
+						data-tab={id}
+						data-testid={`mcp-add-tab-${id}`}
+						data-active={selected}
+						aria-selected={selected}
+						aria-controls={`${idBase}-panel`}
+						tabIndex={selected ? 0 : -1}
+						onClick={() => onChange(id)}
+						onKeyDown={(event) => move(event, index)}
+						className={cn(
+							"rounded-sm px-12 py-4 tr-text-ui outline-none transition-colors focus-visible:ring-1 focus-visible:ring-focus-ring",
+							selected
+								? "bg-control-bg-selected text-text-default"
+								: "text-text-muted hover:bg-control-bg-hovered hover:text-text-default",
+						)}
+					>
+						{labels[id]}
+					</button>
+				);
+			})}
+		</div>
+	);
+}
+
+function ScopeCheck({ selected }: { selected: boolean }) {
+	return selected ? (
+		<Check aria-hidden className="size-14 text-primary" />
+	) : (
+		<span aria-hidden className="size-14" />
+	);
+}
+
+function ScopeMenu({
+	scope,
+	projectAvailable,
+	onChange,
+}: {
+	scope: McpServerScope;
+	projectAvailable: boolean;
+	onChange: (scope: McpServerScope) => void;
+}) {
+	const t = useT();
+	const label = scope === "user" ? t("mcp.addDialog.scopeUser") : t("mcp.addDialog.scopeProject");
+	return (
+		<div className="flex min-w-0 flex-col gap-2 sm:mr-auto">
+			<div className="flex min-w-0 items-center gap-8">
+				<span className="shrink-0 tr-text-ui text-text-muted">{t("mcp.addDialog.saveTo")}</span>
+				<DropdownMenu>
+					<DropdownMenuTrigger asChild>
+						<Button
+							variant="outline"
+							size="m"
+							iconRight={ChevronDown}
+							data-testid="mcp-add-scope"
+							className="min-w-0"
+						>
+							<span className="truncate">{label}</span>
+						</Button>
+					</DropdownMenuTrigger>
+					<DropdownMenuContent align="start">
+						<DropdownMenuRadioGroup
+							value={scope}
+							onValueChange={(next) => onChange(next === "project" ? "project" : "user")}
+						>
+							<DropdownMenuRadioItem value="user" data-testid="mcp-add-scope-user">
+								<ScopeCheck selected={scope === "user"} />
+								{t("mcp.addDialog.scopeUser")}
+							</DropdownMenuRadioItem>
+							<DropdownMenuRadioItem
+								value="project"
+								disabled={!projectAvailable}
+								data-testid="mcp-add-scope-project"
+							>
+								<ScopeCheck selected={scope === "project"} />
+								{t("mcp.addDialog.scopeProject")}
+							</DropdownMenuRadioItem>
+						</DropdownMenuRadioGroup>
+					</DropdownMenuContent>
+				</DropdownMenu>
+			</div>
+			{!projectAvailable ? (
+				<p className="text-text-muted tr-text-metadata">{t("mcp.addDialog.untrusted")}</p>
+			) : null}
 		</div>
 	);
 }
@@ -586,7 +862,7 @@ function presetStep(preset: McpPreset): AddStep {
 
 export function McpAddDialog({
 	open,
-	initialTier,
+	initialTab,
 	initialPreset,
 	existing,
 	projectScopeAvailable,
@@ -595,7 +871,7 @@ export function McpAddDialog({
 	onEnableInProject,
 }: {
 	open: boolean;
-	initialTier: "form" | "json";
+	initialTab: McpAddTab;
 	initialPreset?: McpPreset | undefined;
 	existing: readonly McpServerSummary[];
 	projectScopeAvailable: boolean;
@@ -604,7 +880,8 @@ export function McpAddDialog({
 	onEnableInProject: (name: string) => Promise<void>;
 }) {
 	const t = useT();
-	const [tier, setTier] = useState(initialTier);
+	const [tab, setTab] = useState<McpAddTab>(initialTab);
+	const idBase = useId();
 	const [selectedScope, setSelectedScope] = useState<McpServerScope>("user");
 	const scope: McpServerScope = projectScopeAvailable ? selectedScope : "user";
 	const [draft, setDraft] = useState<McpFormDraft>(emptyMcpDraft);
@@ -691,6 +968,7 @@ export function McpAddDialog({
 
 	const addPreset = (preset: McpPreset) => {
 		setFailures([]);
+		setTab("presets");
 		setStep(presetStep(preset));
 	};
 
@@ -699,7 +977,10 @@ export function McpAddDialog({
 		<Dialog open={open} onOpenChange={(next) => !saving && onOpenChange(next)}>
 			<DialogContent
 				data-testid="mcp-add-dialog"
-				className="flex max-h-[85vh] max-w-[36rem] flex-col"
+				className={cn(
+					"flex max-w-[40rem] flex-col",
+					reviewing ? "max-h-[85vh]" : "h-[min(38rem,85vh)]",
+				)}
 			>
 				<DialogHeader>
 					<DialogTitle>{reviewing ? t("mcp.review.title") : t("mcp.addDialog.title")}</DialogTitle>
@@ -707,6 +988,7 @@ export function McpAddDialog({
 						{reviewing ? t("mcp.addDialog.reviewDescription") : t("mcp.hostNotice")}
 					</DialogDescription>
 				</DialogHeader>
+				{reviewing ? null : <AddTabs idBase={idBase} value={tab} onChange={setTab} />}
 				<DialogBody>
 					{step.kind === "review" ? (
 						<McpRunReview
@@ -714,51 +996,24 @@ export function McpAddDialog({
 							modifiesData={step.modifiesData ? t(step.modifiesData) : undefined}
 						/>
 					) : (
-						<div className="flex flex-col gap-16">
-							{MCP_PRESETS.length > 0 ? (
-								<PresetList
+						<div
+							role="tabpanel"
+							id={`${idBase}-panel`}
+							aria-labelledby={`${idBase}-tab-${tab}`}
+							className="flex flex-col gap-12"
+						>
+							{tab === "presets" ? (
+								<PresetGrid
 									presets={MCP_PRESETS}
 									existing={existing}
 									disabled={saving}
 									onAdd={addPreset}
+									onUseRecipe={() => {
+										setTab("json");
+										setJson(GITHUB_MCP_RECIPE_JSON);
+									}}
 								/>
-							) : null}
-							<GithubRecipe
-								added={existing.some((server) => server.name === "github")}
-								disabled={saving}
-								onUse={() => {
-									setTier("json");
-									setJson(GITHUB_MCP_RECIPE_JSON);
-								}}
-							/>
-							<div className="flex flex-wrap items-center justify-between gap-8">
-								<Segments
-									testId="mcp-add-tier"
-									value={tier}
-									options={[
-										{ id: "form", label: t("mcp.addDialog.tierForm") },
-										{ id: "json", label: t("mcp.addDialog.tierJson") },
-									]}
-									onChange={setTier}
-								/>
-								<Segments
-									testId="mcp-add-scope"
-									value={scope}
-									options={[
-										{ id: "user", label: t("mcp.addDialog.scopeUser") },
-										{
-											id: "project",
-											label: t("mcp.addDialog.scopeProject"),
-											disabled: !projectScopeAvailable,
-										},
-									]}
-									onChange={setSelectedScope}
-								/>
-							</div>
-							{!projectScopeAvailable ? (
-								<p className="text-text-muted tr-text-metadata">{t("mcp.addDialog.untrusted")}</p>
-							) : null}
-							{tier === "form" ? (
+							) : tab === "form" ? (
 								<McpForm
 									draft={draft}
 									issues={submitted ? issues : null}
@@ -770,65 +1025,81 @@ export function McpAddDialog({
 							)}
 						</div>
 					)}
-					{failures.length > 0 ? (
-						<ul role="alert" data-testid="mcp-add-errors" className="flex flex-col gap-2">
-							{failures.map((failure) => (
-								<li key={failure.name} className="text-feedback-error tr-text-metadata">
-									{failure.name}: {failure.error}
-								</li>
-							))}
-						</ul>
-					) : null}
 				</DialogBody>
-				<DialogFooter>
-					{step.kind === "review" ? (
-						<>
-							<Button variant="outline" disabled={saving} onClick={() => setStep({ kind: "edit" })}>
-								{t("common.back")}
-							</Button>
-							<Button
-								data-testid="mcp-add-confirm"
-								disabled={saving}
-								onClick={() => void save(step.servers, step.scope, step.from, step.optInPerProject)}
-							>
-								{step.servers.length > 1
-									? t("mcp.addDialog.addServers")
-									: t("mcp.addDialog.addServer")}
-							</Button>
-						</>
-					) : (
-						<>
-							<Button variant="outline" disabled={saving} onClick={() => onOpenChange(false)}>
-								{t("common.cancel")}
-							</Button>
-							{tier === "form" ? (
-								<Button data-testid="mcp-add-submit" disabled={saving} onClick={submitForm}>
-									{t("mcp.addDialog.addServer")}
-								</Button>
-							) : (
+				{failures.length > 0 ? (
+					<ul role="alert" data-testid="mcp-add-errors" className="flex flex-col gap-2">
+						{failures.map((failure) => (
+							<li key={failure.name} className="text-feedback-error tr-text-metadata">
+								{failure.name}: {failure.error}
+							</li>
+						))}
+					</ul>
+				) : null}
+				<div className="flex flex-col gap-8 sm:flex-row sm:items-start sm:justify-end">
+					{!reviewing && tab !== "presets" ? (
+						<ScopeMenu
+							scope={scope}
+							projectAvailable={projectScopeAvailable}
+							onChange={setSelectedScope}
+						/>
+					) : null}
+					<DialogFooter>
+						{step.kind === "review" ? (
+							<>
 								<Button
-									data-testid="mcp-add-submit"
-									disabled={saving || importable.length === 0}
+									variant="outline"
+									disabled={saving}
+									onClick={() => setStep({ kind: "edit" })}
+								>
+									{t("common.back")}
+								</Button>
+								<Button
+									data-testid="mcp-add-confirm"
+									disabled={saving}
 									onClick={() =>
-										proceed(
-											importable.map((server) => ({ name: server.name, entry: server.entry })),
-											"json",
-										)
+										void save(step.servers, step.scope, step.from, step.optInPerProject)
 									}
 								>
-									{importable.length < parsedServers.length
-										? t("mcp.addDialog.addSome", {
-												count: importable.length,
-												total: parsedServers.length,
-											})
-										: importable.length > 1
-											? t("mcp.addDialog.addCount", { count: importable.length })
-											: t("mcp.addDialog.addServer")}
+									{step.servers.length > 1
+										? t("mcp.addDialog.addServers")
+										: t("mcp.addDialog.addServer")}
 								</Button>
-							)}
-						</>
-					)}
-				</DialogFooter>
+							</>
+						) : (
+							<>
+								<Button variant="outline" disabled={saving} onClick={() => onOpenChange(false)}>
+									{tab === "presets" ? t("common.close") : t("common.cancel")}
+								</Button>
+								{tab === "form" ? (
+									<Button data-testid="mcp-add-submit" disabled={saving} onClick={submitForm}>
+										{t("mcp.addDialog.addServer")}
+									</Button>
+								) : null}
+								{tab === "json" ? (
+									<Button
+										data-testid="mcp-add-submit"
+										disabled={saving || importable.length === 0}
+										onClick={() =>
+											proceed(
+												importable.map((server) => ({ name: server.name, entry: server.entry })),
+												"json",
+											)
+										}
+									>
+										{importable.length < parsedServers.length
+											? t("mcp.addDialog.addSome", {
+													count: importable.length,
+													total: parsedServers.length,
+												})
+											: importable.length > 1
+												? t("mcp.addDialog.addCount", { count: importable.length })
+												: t("mcp.addDialog.addServer")}
+									</Button>
+								) : null}
+							</>
+						)}
+					</DialogFooter>
+				</div>
 			</DialogContent>
 		</Dialog>
 	);

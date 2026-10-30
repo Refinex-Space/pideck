@@ -10,6 +10,8 @@ export interface McpPreset {
 	scope: McpServerScope;
 	modifiesData?: MessageKey;
 	optInPerProject?: boolean;
+	/** The endpoint uses OAuth, so the user signs in after adding. */
+	signIn?: boolean;
 }
 
 export const MCP_PRESETS: readonly McpPreset[] = [
@@ -36,6 +38,7 @@ export const MCP_PRESETS: readonly McpPreset[] = [
 		description: "mcp.preset.linear.description",
 		entry: { url: "https://mcp.linear.app/mcp/readonly" },
 		scope: "user",
+		signIn: true,
 	},
 	{
 		id: "sentry",
@@ -44,6 +47,7 @@ export const MCP_PRESETS: readonly McpPreset[] = [
 		description: "mcp.preset.sentry.description",
 		entry: { url: "https://mcp.sentry.dev/mcp" },
 		scope: "user",
+		signIn: true,
 		modifiesData: "mcp.preset.sentry.modifiesData",
 	},
 	{

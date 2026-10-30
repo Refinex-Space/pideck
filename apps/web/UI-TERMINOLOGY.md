@@ -493,7 +493,7 @@ Connection Status and the **Status Dock** beside the chat (usage, tasks, connect
 | Canonical name | Implementation | Responsibility |
 |---|---|---|
 | Providers | `panels/ProvidersSettings.tsx` → `ProvidersSettings` | In-app provider auth (+ `panels/JetBrainsAiCard.tsx` → `JetBrainsAiCard`) |
-| MCP servers | `panels/McpSettings.tsx` → `McpSettings` (+ `panels/McpServerDialogs.tsx`) | The active workspace's MCP servers (`mcp-server-row`, `mcp-add-dialog`, `mcp-approve-dialog`) |
+| MCP servers | `panels/McpSettings.tsx` → `McpSettings` (+ `panels/McpServerDialogs.tsx`) | The active workspace's MCP servers (`mcp-server-row`, `mcp-add-dialog` with `mcp-add-tab-presets` / `-form` / `-json` and `mcp-add-scope`, `mcp-approve-dialog`) |
 | GitHub | `panels/GithubSettings.tsx` → `GithubSettings` | Local GitHub connection status |
 | Appearance | `panels/AppearanceSettings.tsx` → `AppearanceSettings` | Theme picker |
 | Terminal | `panels/TerminalSettings.tsx` → `TerminalSettings` | Terminal replay budget |

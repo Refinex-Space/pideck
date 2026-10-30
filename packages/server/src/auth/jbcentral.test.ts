@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, setDefaultTimeout, spyOn, test } from "bun:test";
 import {
 	chmodSync,
 	existsSync,
@@ -36,6 +36,10 @@ import {
 	updateJbcentral,
 } from "./jbcentral";
 import { getProviderStatus } from "./providerStatus";
+
+// Every test boots a Pi runtime and drives the fake Central CLI through connect/disconnect reloads: about
+// 0.7s alone, but 5.4s measured inside the full suite's process, past Bun's default 5s per-test limit.
+setDefaultTimeout(30_000);
 
 function syntheticExtension(modelId: string): string {
 	return `

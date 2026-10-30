@@ -81,13 +81,17 @@ posix("a grandchild outliving git does not turn a finished fetch into a timeout"
 	expect(result.err).not.toContain("timed out after");
 });
 
+// The fake ssh must start before the timeout fires, so these two tests give git and `sh` a budget that a
+// loaded machine (the whole suite runs in parallel) still meets; a stall is `sleep 30`, so they stay quick.
+const STALL_TIMEOUT_MS = 3_000;
+
 posix("gitAsync ends a stalled fetch at the timeout and names the likely cause", async () => {
 	const reached = sshRemoteVia("sleep 30");
 
 	const started = Date.now();
 	const result = await gitAsync(repo, ["fetch", "origin"], {
 		network: true,
-		timeoutMs: 500,
+		timeoutMs: STALL_TIMEOUT_MS,
 	});
 	const elapsed = Date.now() - started;
 
@@ -97,7 +101,7 @@ posix("gitAsync ends a stalled fetch at the timeout and names the likely cause",
 	expect(result.err).toContain("timed out after");
 	expect(result.err).toContain("the remote never answered");
 	expect(result.err).not.toMatch(/git (is )?waiting for SSH/);
-	expect(elapsed).toBeLessThan(5_000);
+	expect(elapsed).toBeLessThan(STALL_TIMEOUT_MS + 5_000);
 });
 
 posix("a stalled local read reports only that git did not exit", async () => {
@@ -117,7 +121,7 @@ posix("a stalled fetch keeps what git actually wrote before the kill", async () 
 
 	const result = await gitAsync(repo, ["fetch", "origin"], {
 		network: true,
-		timeoutMs: 500,
+		timeoutMs: STALL_TIMEOUT_MS,
 	});
 
 	expect(result.ok).toBe(false);

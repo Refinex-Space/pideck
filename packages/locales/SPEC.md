@@ -41,7 +41,9 @@ halves) renders through, so they cannot drift onto separate instances.
     quote-aware parser pattern, and a `<` followed by `{{` is rejected so interpolation can never complete a
     tag). Values containing `$t(` nesting are dropped. Unknown keys are kept as data (a file
     may be older or newer than the app); key lookups use own properties only, so `constructor` or
-    `__proto__` are ordinary keys. The bundled English catalog passes this same validation.
+    `__proto__` are ordinary keys. The bundled English catalog passes this same validation, so literal
+    angle-bracket text (a proxy rule such as `<local>`) never lives in a string: the caller interpolates it
+    (`{{local}}`).
   - `completePlurals(tag, strings)` — for every English plural family a catalog translates, fills each
     CLDR category `tag` needs (`Intl.PluralRules`) but lacks from that family's `_other` (else any
     present form), so a partly translated counter stays in its language instead of falling back to

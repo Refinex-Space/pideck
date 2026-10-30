@@ -446,7 +446,7 @@ Windows lane into the real profile (see `module-shared`).
 
 ## Verification policy
 
-During iteration, run the affected specs and use Playwright's last-failed mode. Flake repairs replace
+During iteration, run the affected specs and use Playwright's last-failed mode. A spec whose subject is host-side git reads (`changes.spec.ts`) raises its own assertion budget to 15s and its test budget to 60s: with lanes saturating the CPU one `git.status` was measured at 4-5s, so the default 5s timed the machine, not the app; layout invariants there are polled rather than sampled once. Flake repairs replace
 irrelevant expensive setup with equivalent fixture state and wait for observable readiness; blanket retries,
 arbitrary sleeps, and assertion weakening are not synchronization policy. A race guard forces the hazardous
 interleaving (held animation frames, a held reply) rather than sampling it in a CPU-throttled loop, whose cost

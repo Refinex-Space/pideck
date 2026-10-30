@@ -97,7 +97,9 @@ test("a chat's Skills dialog names the project's Pi resources and grants them wi
 
 		const banner = page.getByTestId("skills-trust-all");
 		await expect(banner).toContainText("1 skill and its own Pi resources");
-		await expect(banner).toContainText("Trust loads its skills and prompts.");
+		// Pi gates `.agents/skills` in every ancestor of the fixture, so a machine that has one legitimately
+		// adds skills to what trust loads; the prompts the test seeded are always named.
+		await expect(banner).toContainText(/Trust loads its (skills and )?prompts\./);
 		await banner.getByRole("button", { name: "Trust project" }).click();
 		await expect(banner).toHaveCount(0);
 		expect(trustRequests.at(-1)).toMatchObject({ trusted: true, resources: true });

@@ -57,6 +57,8 @@ test("proxy form exposes applied routing and restart/override state without reve
 	expect(html).toContain('data-testid="network-override"');
 	expect(html).toMatch(/data-testid="network-password"[^>]*type="password"/);
 	expect(html).toMatch(/data-testid="network-diagnose"[^>]*disabled/);
+	// `<local>` is interpolated, because translation catalogs reject raw angle-bracket text.
+	expect(html).toContain("CIDR and &lt;local&gt; are not");
 });
 test("network settings are gated independently of older host settings", () => {
 	const available = (v: number) =>

@@ -1,6 +1,6 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { expect, type Locator, type Page, test } from "@playwright/test";
+import { expect as baseExpect, type Locator, type Page, test } from "@playwright/test";
 import {
 	createWorkspaceViaDialog,
 	openFixtureProject,
@@ -11,6 +11,13 @@ import { commitFile, gitQuiet } from "./fixtures/git";
 import { E2E_DATA_DIR, E2E_FIXTURE_REPO } from "./fixtures/paths";
 import { pierreCollapsedContext, pierreLines } from "./fixtures/pierre";
 import { largeRepetitiveMarkdownEdited } from "./fixtures/repo";
+
+// This file's subject is host-side git reads (`git.status`, scope diffs): each spawns several git processes,
+// and with the suite's lanes saturating the CPU one read measured 4-5s, so the default 5s budget times the
+// machine rather than the app. A passing assertion still returns at once; only a real failure waits longer,
+// and the per-test budget grows with it so a test chaining several such reads is not cut off mid-wait.
+const expect = baseExpect.configure({ timeout: 15_000 });
+test.setTimeout(60_000);
 
 const diffText = (page: Page, text: string) =>
 	page.getByTestId("diff-view").getByText(text, { exact: false }).last();
@@ -551,9 +558,9 @@ test("Uncommitted scope converges when HEAD moves out-of-band (a commit in a ter
 		"e2e commits the dirty edits",
 	);
 
-	await expect(page.getByTestId("change-item")).toHaveCount(0, { timeout: 10_000 });
+	await expect(page.getByTestId("change-item")).toHaveCount(0);
 	await expect(page.getByTestId("changes-empty")).toBeVisible();
-	await expect(page.getByTestId("diff-empty")).toBeVisible({ timeout: 10_000 });
+	await expect(page.getByTestId("diff-empty")).toBeVisible();
 	await expect.poll(dirtyLineCount).toBe(0);
 });
 
@@ -797,16 +804,23 @@ test("Change rows stay one aligned, fully-highlighted row — menu slot included
 	const rootRow = page.getByTestId("change-item").filter({ hasText: "AtRootLevel" });
 	await expect(rootRow).toHaveCount(1);
 
-	const rowBox = (await page.getByTestId("change-row").first().boundingBox()) ?? { x: 0, width: 0 };
-	const overflow = await longRow.evaluate((n) => n.scrollWidth - n.clientWidth);
-	expect(overflow).toBeLessThanOrEqual(1);
-	expect(await rightEdge(longRow.getByText(/^\+\d+/))).toBeLessThanOrEqual(
-		rowBox.x + rowBox.width + 1,
-	);
-	expect(await rootRow.evaluate((n) => n.scrollWidth - n.clientWidth)).toBeLessThanOrEqual(1);
-	expect(await rightEdge(rootRow.getByText(/^\+\d+/))).toBeLessThanOrEqual(
-		rowBox.x + rowBox.width + 1,
-	);
+	// Layout invariants are polled, not sampled once: rows enter with an animation, and under load a single
+	// sample can land on its first frame.
+	const rowRight = () =>
+		page
+			.getByTestId("change-row")
+			.first()
+			.evaluate((n) => n.getBoundingClientRect().right);
+	const overhang = async (row: Locator) =>
+		(await rightEdge(row.getByText(/^\+\d+/))) - (await rowRight());
+	await expect
+		.poll(() => longRow.evaluate((n) => n.scrollWidth - n.clientWidth))
+		.toBeLessThanOrEqual(1);
+	await expect.poll(() => overhang(longRow)).toBeLessThanOrEqual(1);
+	await expect
+		.poll(() => rootRow.evaluate((n) => n.scrollWidth - n.clientWidth))
+		.toBeLessThanOrEqual(1);
+	await expect.poll(() => overhang(rootRow)).toBeLessThanOrEqual(1);
 
 	const clipped = (locator: Locator) => locator.evaluate((n) => n.scrollWidth - n.clientWidth);
 	const shortNameRow = page.getByTestId("change-item").filter({ hasText: "shortName.ts" });
@@ -837,15 +851,16 @@ test("Change rows stay one aligned, fully-highlighted row — menu slot included
 		.getByTestId("change-item")
 		.filter({ hasText: "ForTheChangesPanel.ts" })
 		.getByText(/^\+\d+/);
-	const folderRight = await rightEdge(folderBadge);
-	const fileRight = await rightEdge(fileBadge);
-	expect(Math.abs(folderRight - fileRight)).toBeLessThanOrEqual(1);
+	await expect
+		.poll(async () => Math.abs((await rightEdge(folderBadge)) - (await rightEdge(fileBadge))))
+		.toBeLessThanOrEqual(1);
 });
 
+// One evaluate, not `boundingBox()` after a visibility check: a late `fsChanged` refresh can re-render the row
+// between the two calls, and `boundingBox()` answers null for a node that just left the layout.
 async function rightEdge(locator: Locator): Promise<number> {
-	const box = await locator.boundingBox();
-	if (!box) throw new Error("element has no box");
-	return box.x + box.width;
+	await expect(locator).toBeVisible();
+	return locator.evaluate((node) => node.getBoundingClientRect().right);
 }
 
 test("The diff header keeps its controls on a narrow pane, however long the file's path", async ({

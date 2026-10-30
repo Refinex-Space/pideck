@@ -14,6 +14,9 @@ import { SettingsGroup } from "./SettingsGroup";
 import { SettingsNotice } from "./SettingsNotice";
 import { SettingsRadioCards } from "./SettingsRadioCards";
 
+/** `<local>` is the proxy-bypass keyword; catalogs reject raw angle-bracket text, so it is passed in. */
+const PROXY_BYPASS_TOKENS = { local: "<local>" };
+
 const NETWORK_TEXT = {
 	"endpoint.anthropic": "network.endpoint.anthropic",
 	"endpoint.openaiApi": "network.endpoint.openaiApi",
@@ -102,7 +105,7 @@ function ProxyRoute({ route, applied = false }: { route: NetworkProxyRoute; appl
 			</dl>
 			{route.issue ? (
 				<SettingsNotice variant="warning">
-					<p>{t(NETWORK_TEXT[`issue.${route.issue}`])}</p>
+					<p>{t(NETWORK_TEXT[`issue.${route.issue}`], PROXY_BYPASS_TOKENS)}</p>
 				</SettingsNotice>
 			) : null}
 			{route.bypassWarning ? (
@@ -229,7 +232,9 @@ export function NetworkForm({
 									<p className="tr-text-metadata text-text-muted">
 										{t(status.hasPassword ? "network.passwordSaved" : "network.passwordHint")}
 									</p>
-									<p className="tr-text-metadata text-text-muted">{t("network.bypassHint")}</p>
+									<p className="tr-text-metadata text-text-muted">
+										{t("network.bypassHint", PROXY_BYPASS_TOKENS)}
+									</p>
 								</div>
 							) : null}
 							{failed ? (

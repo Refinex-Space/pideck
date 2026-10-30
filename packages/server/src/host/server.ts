@@ -1,6 +1,8 @@
 import { createHash, randomUUID } from "node:crypto";
 import { join, normalize } from "node:path";
 import type {
+	BrowserEngine,
+	BrowserHostControl,
 	HostPlatform,
 	HostUpdateNotice,
 	ServerWelcome,
@@ -36,6 +38,7 @@ import {
 	refreshSubagentConcurrency,
 	refreshSubagentTools,
 	setAgentReviewEnabledResolver,
+	setBrowserToolHost,
 	setDisabledExtensionsResolver,
 	setExtUiPublisher,
 	setMcpLoginPublisher,
@@ -75,6 +78,7 @@ import {
 	stopJbcentralRuntime,
 } from "../auth";
 import { forgetOpenBranchReview } from "../branch-review";
+import { BrowserService } from "../browser";
 import { redeliverInterview, releaseInterview, setFeedbackPublisher } from "../feedback";
 import { watchLocalLocales } from "../locales";
 import { logger, observeLoggedErrors } from "../log";
@@ -154,6 +158,7 @@ import { titleToolHost } from "./titleTool";
 import { markClientStale, reconcilePendingReviewsOnBoot } from "./todoReview";
 
 export interface CreateServerOptions {
+	browser?: BrowserEngine;
 	port?: number;
 	host?: string;
 	staticDir?: string;
@@ -186,6 +191,7 @@ export interface CreateServerOptions {
 }
 
 export interface RunningServer {
+	browser?: BrowserHostControl;
 	readonly port: number;
 	startAttributionClaim: () => void;
 	stop: () => void;
@@ -718,6 +724,19 @@ export async function createServer(options: CreateServerOptions = {}): Promise<R
 	});
 	installRequestReviewSeam();
 	setTitleToolHost(titleToolHost);
+	const browser = options.browser
+		? new BrowserService(
+				options.browser,
+				(sessionId) => {
+					const workspaceId = getSessionWorkspaceId(sessionId);
+					return workspaceId
+						? { sessionId, workspaceId, workspacePath: getWorkspace(workspaceId).worktreePath }
+						: undefined;
+				},
+				(workspaceId) => getWorkspace(workspaceId).worktreePath,
+			)
+		: null;
+	setBrowserToolHost(browser);
 	reconcilePendingReviewsOnBoot();
 
 	setSettingsPublisher((config, appliedUpdate) => {
@@ -925,6 +944,7 @@ export async function createServer(options: CreateServerOptions = {}): Promise<R
 			stopHostUpdateChecks();
 			await Promise.allSettled([settleSessionsForShutdown(), shutdownAnalytics()]);
 			await turnTracker.drain();
+			await browser?.dispose();
 			stop();
 		})();
 		return shutdownPromise;
@@ -945,6 +965,13 @@ export async function createServer(options: CreateServerOptions = {}): Promise<R
 			return server.port ?? port;
 		},
 		startAttributionClaim: startAttributionClaimWhenReady,
+		...(browser
+			? {
+					browser: {
+						execute: (workspaceId, command) => browser.executeUser(workspaceId, command),
+					} satisfies BrowserHostControl,
+				}
+			: {}),
 		stop,
 		shutdown,
 	};

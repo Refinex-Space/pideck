@@ -7,7 +7,15 @@ import {
 	RiLayout2Line,
 	RiListCheck3,
 } from "@remixicon/react";
-import { BookOpen, Folder, PanelLeft, PanelRight, SquareCheckBig, Terminal } from "lucide-react";
+import {
+	BookOpen,
+	Folder,
+	Globe,
+	PanelLeft,
+	PanelRight,
+	SquareCheckBig,
+	Terminal,
+} from "lucide-react";
 import type { ReactNode } from "react";
 import { CustomIcon } from "../../components/CustomIcon";
 import { FileTypeIcon } from "../../fileIcons";
@@ -43,6 +51,8 @@ export function tabIcon(tab: LayoutTab, active = false, cls = "size-14 shrink-0"
 					return active ? <RiDiscussFill className={cls} /> : <RiDiscussLine className={cls} />;
 				case "plan":
 					return <SquareCheckBig className={cls} />;
+				case "browser":
+					return <Globe className={cls} />;
 				default:
 					return active ? <RiLayout2Fill className={cls} /> : <RiLayout2Line className={cls} />;
 			}

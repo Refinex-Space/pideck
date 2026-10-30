@@ -1,4 +1,5 @@
 export * from "./agentSessionManager";
+export { setBrowserToolHost } from "./browserTool";
 export {
 	getSessionResources,
 	readBackgroundCommandOutput,

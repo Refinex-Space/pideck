@@ -1,3 +1,5 @@
+export type * from "./browserAutomation";
+export { isLocalBrowserUrl, normalizeBrowserUrl } from "./browserUrl";
 export type * from "./domain";
 export {
 	ACCEPTED_IMAGE_TYPES,
@@ -41,6 +43,7 @@ export {
 	THEME_MODES,
 	TODO_NUDGE_PREFIX,
 } from "./domain";
+export type * from "./nativeBrowser";
 export type * from "./nativeClient";
 export type * from "./network";
 export type * from "./piProtocol";

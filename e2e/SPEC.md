@@ -572,3 +572,42 @@ The terminal cursor query uses the fixture's Bash, without Python/termios. Windo
 DSR natively, so its live-response check inspects the consumed cursor reply; POSIX also asserts the browser
 wire reply. Both retain the no-input-on-replay check. Interrupt tests await the returned shell prompt before
 typing another command, avoiding input flushed while the foreground process is still exiting.
+
+## Native browser smoke
+
+`bun --preload ./e2e/idleSleepPreload.ts e2e/run-browser-native.ts` launches a copy of the built desktop
+artifact under a unique native identifier with temporary host, agent and desktop data. A loopback page
+fixture exercises the real CEF guest through the production native bridge: selection click suppression,
+CSS viewport/DPR, and PNG dimensions. The opt-in browser probe uses only a loopback fixture URL.
+Reports and PNGs are saved in ignored apps/desktop/artifacts/browser-native. This test uses no model
+provider. The browser-panel spec separately tests chrome with a deterministic bridge fixture.
+
+Pass `--close` to exercise actual native child-view destruction: close inactive/active/last/blank pages,
+repeat a close, reopen a page, and verify the host remains healthy with no CEF page targets retained.
+This regression failed on the original macOS 2.0.5 teardown because the first child closed its parent window.
+
+## Native browser automation probe
+
+`bun run smoke:browser --automation` copies the packaged app under a unique native identifier, supplies a
+fixture HOME/login-shell/PATH and temporary Pi/host/desktop directories, and uses only loopback fixture
+pages. It exercises production CEF/Playwright input and capture, system PNG paste, upload/download, real
+WebM pixels/playback/seeking and system-renderer playback. Download fixtures have unique generated names;
+only the newly created fixture downloads are staged/removed. The native Pi probe loads a synthetic Faux
+provider from its temporary agent directory, creates an actual host session, and verifies that Pi is offered
+and executes `browser`, including a delivered recording served by the normal workspace file route. This
+is a complete local integration test, not evidence of real-provider model behavior or Windows/Linux runtime.
+
+
+For a user-authorized real GLM acceptance only, append `--live --agent-dir <authorized Pi agent directory>`
+to the automation command. This mode reads only the selected `zai-coding-cn` API-key entry and checks that
+its source file remains unchanged. The key is injected through the isolated process environment, never
+copied into a fixture credential file or printed. Existing proxy environment variables are forwarded only
+for this live mode; loopback stays direct. Automatic retries are disabled. Raw native/provider logs are
+suppressed and error diagnostics redact the selected key. It uses the installed built-in GLM-5.3 model;
+custom provider overrides are not imported. It must not be run without explicit authorization for that
+credential and model spend. The default automation/Faux probe remains credential-free.
+
+The real provider must invoke native fill/click rather than replace them with DOM mutations, complete the
+recording, deliver `live-recording.webm`, verify the final field value and hand back its tab. The audit caps
+browser calls and blocks unrelated tools/URLs. Native clipboard tests must run separately from other OS
+clipboard writers; this isolation is needed because the clipboard is a system-wide resource.

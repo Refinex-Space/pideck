@@ -15,7 +15,8 @@
 		"@thinkrail/contracts": "workspace:*",
 		"@thinkrail/locales": "workspace:*",
 		"@thinkrail/server": "workspace:*",
-		"@thinkrail/shared": "workspace:*"
+		"@thinkrail/shared": "workspace:*",
+		"playwright-core": "catalog:"
 	},
 	"devDependencies": {
 		"@types/bun": "catalog:",

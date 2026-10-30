@@ -98,3 +98,28 @@ The network module and Settings → Network & proxy add OS static-proxy discover
 configuration, OS-store proxy credentials and credential-free diagnostics. Pi keeps authentication and
 model ownership. This is a host customization, validated by policy/parser tests, local Pi transport probes,
 browser e2e and native packaging; macOS/Linux native verification remains distinct from Windows fixtures.
+
+## 侧边浏览器定制
+
+参考 ZCode `3c5b227649371507ddc4eb46ac5133afe6db1cab` 的浏览器界面、guest 生命周期和元素选取。
+2026-10-30 用户明确批准为完整页面能力引入 CEF；主界面保留系统 WebView，Pi 仍在既有宿主内运行。
+改动集中于 web/browser、desktop/browser、原生能力契约与工作台 Browser 工具。
+Electrobun 启动器在业务 Worker 之前初始化 CEF，因此 postBuild 包装产物的 Resources/main.js，
+先分配随机 loopback CDP 端口并同步到原生环境，再加载原始启动器；不修改缓存或 SDK projection。
+移除条件：上游提供可在初始化前配置端口的正式入口，或直接提供受控 CDP/screenshot/emulation API。
+验证：URL/消息/CDP 单测、浏览器面板定向 e2e、完整无智能体 e2e、desktop build 与原生 browser smoke。
+
+macOS 的 Electrobun 2.0.5 windowed CEF 销毁会把关闭事件发给父窗口。`desktop/src/browser` 的原生适配器
+在主线程先解除子视图与容器的关系，再调用 SDK 原有销毁逻辑，防止关闭标签时退出整个应用。
+该适配器在构建时通过 Xcode Command Line Tools 编译，最低目标与上游 native wrapper 同为 macOS 14.0；
+不修改 SDK 或缓存。上游提供独立的子视图关闭实现后移除；升级 Electrobun 时构建门禁要求先复核。
+`bun run smoke:browser --close` 覆盖后台页、活动页、最后一页、空白页、重复关闭与关闭后重新打开，
+同时验证宿主存活及 CEF targets 归零。
+
+### 智能体浏览器与录屏扩展
+
+ZCode browser-use API v11 的本地 IAB 能力映射为 Pi `browser` 工具。宿主拥有真实会话归属、取消和
+工作区文件交付；桌面仅适配已存在的 CEF 页面。固定 Playwright core 1.61.0 并随包携带运行资源，
+使用 noDefaults 与 Fit 输入坐标适配；源页面 PNG 帧交由受信任的 CEF 编码页生成 WebM。截图主操作改为
+系统 PNG 剪贴板，模型剪贴板及快捷键使用聊天内文本。协议、录屏时长修补和生命周期均见 desktop/browser
+SPEC。移除本地输入/截图适配前须重验缩放坐标、CSS 输出尺寸、关闭标签、取消录制及两种渲染器的视频播放。

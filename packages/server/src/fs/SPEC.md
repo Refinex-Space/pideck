@@ -50,7 +50,7 @@ bytes are** — the one byte-level classification every content read in the host
   resource's identity on the wire (`ResourceMeta.hash`, `ReviewAnchor.contentHash`, the `change.*`
   compare-and-swap); `decodeText(bytes)` → the one UTF-8 decode (BOM retained, because the BOM is part
   of the bytes the hash covers); `mimeFromPath(path)` owns the filename fallback no byte inspection can
-  give (markdown/json/csv/yaml/html/xhtml/plain); `resourceMeta(bytes, path)` → the wire's **`ResourceMeta`**, adding that
+  give (markdown/json/csv/yaml/html/xhtml/plain/WebM); `resourceMeta(bytes, path)` → the wire's **`ResourceMeta`**, adding that
   fallback and treating
   `null` bytes as absence (`hash`/`byteLength` null, `text: true` — nothing to decode, and the empty
   string it pairs with is valid text).

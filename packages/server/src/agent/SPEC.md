@@ -1383,3 +1383,18 @@ the `/mcp` command stay pi's; ThinkRail owns what a multi-session GUI host owes 
   session's **create-time template snapshot** — a template saved mid-session is **NOT** seen by an
   already-open session's typed-through path (pi passes unknown `/name` text through verbatim). The
   composer's `/` menu path is always fresh via `template.list` (see `templates/SPEC.md` freshness rule).
+
+## Native browser tool
+
+browserTool registers `browser` through the existing parent extension factories when setBrowserToolHost
+supplies a host port. It derives the Pi session id from ExtensionContext; model arguments contain no actor
+or workspace identity. Child extension factories omit it. Structured action/locator schemas and on-demand
+help replace ZCode's Node REPL transport. Pi retains the tool loop, cancellation and event lifecycle.
+`agent_settled` cancels incomplete recordings and pending operations; `session_shutdown` releases claims.
+Canonical image blocks use the existing result-content path. A real Pi SDK/Faux-provider regression covers
+registration, schema validation, actor identity, tool dispatch and settled callbacks without model network.
+
+Provider-facing locator schemas inline the top-level object and give recursive references an explicit object
+type. GLM-5.3 produced JSON-encoded strings for a ref-only locator in the native live acceptance; runtime
+validation correctly refused them. Keep recursive validation, native-input guidance and both recording IDs
+in the help contract; do not accept arbitrary strings or substitute DOM mutation for input.

@@ -10,6 +10,7 @@ import { markdownRenderer } from "./markdown";
 import { notebookRenderer } from "./notebook";
 import { pdfRenderer } from "./pdf";
 import { svgRenderer } from "./svg";
+import { videoRenderer } from "./video";
 
 let registered = false;
 
@@ -21,6 +22,7 @@ export function registerBundledResourceRenderers(): void {
 	registerResourceRenderer(svgRenderer);
 	registerResourceRenderer(notebookRenderer);
 	registerResourceRenderer(imageRenderer);
+	registerResourceRenderer(videoRenderer);
 	registerResourceRenderer(csvRenderer);
 	registerResourceRenderer(jsonRenderer);
 	registerResourceRenderer(pdfRenderer);

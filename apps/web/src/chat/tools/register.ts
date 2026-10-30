@@ -2,6 +2,7 @@ import { strArg } from "@thinkrail/extension-api/web";
 import { projectRelativePath } from "@/lib";
 import { registerToolRenderer } from "../toolRegistry";
 import { BashCard } from "./BashCard";
+import { BrowserCard, browserToolSummary } from "./BrowserCard";
 import { EditCard } from "./EditCard";
 import { ReadCard } from "./ReadCard";
 import { RequestReviewCard, requestReviewSummary } from "./RequestReviewCard";
@@ -13,6 +14,7 @@ import "./web/register";
 import { WriteCard } from "./WriteCard";
 
 registerToolRenderer("bash", BashCard, { summary: ({ args }) => strArg(args, "command") });
+registerToolRenderer("browser", BrowserCard, { summary: browserToolSummary });
 registerToolRenderer("read", ReadCard, {
 	summary: ({ args, workspaceRoot }) => projectRelativePath(strArg(args, "path"), workspaceRoot),
 });

@@ -471,3 +471,17 @@ dependency. This keeps test process drivers outside both launchers and the serve
   `@thinkrail/shared/spawn`; bespoke bounded runners set the option directly. Exempt: spawns that inherit
   an existing terminal's stdio (the `update`/`uninstall` CLI subcommands, the build script) and shell
   probes that are no-ops on win32 (`shellEnv`).
+
+## Embedded browser capability
+
+The optional Browser surface is client-local. `apps/web/src/browser` owns the tab catalog and UI; the shell
+owns placement. Contracts define `NativeBrowserBridge`; desktop implements sandboxed CEF child views
+and main-process CDP control. The application UI keeps its native renderer and existing host/wire/Pi
+ownership. The browser does not add an agent runtime. See [[submodule-web-browser]] and
+[[submodule-desktop-browser]].
+
+The native launcher injects a typed BrowserEngine into bootHost. `server/browser` owns Pi-session claims,
+cancellation and workspace artifact commits; `agent/browserTool` registers it through Pi's existing extension
+loader for top-level chats only. Desktop adapts the owned CEF targets with Playwright/CDP and a bounded
+MediaRecorder encoder. No browser operations are added to the public WebSocket protocol. A desktop-hosted
+chat can return images and workspace videos to other clients; its native panel remains on the desktop.

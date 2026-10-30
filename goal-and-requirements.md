@@ -137,3 +137,15 @@ forbidden.
 - **A second agent runtime**, or any host-side agent loop or prompt assembly (see Principles).
 - **PiDeck accounts or a login UI.** Who may reach a host is decided by the network — Tailscale ACLs
   and device identity ([[architecture]]).
+
+## Desktop browser panel
+
+The desktop client offers a tabbed side browser for development previews and browsing, with native
+navigation, element context capture and responsive viewport/screenshot controls. Page context enters
+a chosen chat draft only through an explicit user action. Ordinary web/phone clients keep external-link
+behavior and do not advertise a native browser capability.
+
+The desktop host also exposes browser automation through the existing Pi tool loop. It operates the same
+pages with chat-scoped claims, observable activity and cancellation. Screenshots copy directly to the system
+clipboard on a human action. Manual or agent-scripted recordings produce playable, seekable WebM artifacts
+in the workspace, with preview and file-workbench access. This remains one in-process Pi runtime.

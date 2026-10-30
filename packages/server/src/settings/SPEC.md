@@ -81,3 +81,8 @@ interval (`1–3600`, default 30), because those values govern host process cade
   [[submodule-server-analytics]]; the dialog lifecycle belongs to [[submodule-web-panels]].
 - `null` clears optional `defaultModel`/`defaultEffort` and `reviewModel`/`reviewEffort` overrides; it is a wire-only sentinel and never persists.
 - Stored `favoriteModels` / `recentModels` that are not arrays fall back to `[]` on load without discarding valid siblings; a wire `favoriteModels` with any non-model member rejects the whole update.
+
+## Browser layout tool
+
+Custom layout presets may include the browser tool id. It is a client-local optional native capability;
+the settings validator does not create browser sessions or expose native browser commands over WS.

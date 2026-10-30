@@ -250,3 +250,9 @@ File tab adornments subscribe to their own dirty flag, preserving workbench rend
 close-request path invokes useFileClose for files; delayed confirmation prepares against the latest
 layout. Source-model focus is requested only after creation dialogs release focus. File paths and
 committed explicit renames remain data projections; layout placement and saved geometry are preserved.
+
+## Browser integration
+
+The shell supplies BrowserPanel as the Browser singleton tool body and BrowserTabs as its header.
+Browser tabs belong to the browser module; tool placement, collapse, resize and drag remain in the
+workbench. Capability absence supplies unavailableTools to the renderer without rewriting saved frames.

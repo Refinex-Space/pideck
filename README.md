@@ -90,6 +90,8 @@ framework's development/nightly channel suffixes.
 Desktop builds are host-native. The inherited targets are macOS 14+ on Apple Silicon/Intel, Windows
 x64, and Linux x64/ARM64. Linux needs glibc 2.38+, GTK 3, WebKitGTK 4.1, Ayatana AppIndicator 3 and
 librsvg 2. A local build does not imply validation on every target or a signed distribution.
+Building the macOS desktop app also requires Xcode Command Line Tools (`xcrun clang`) for the CEF
+child-view lifecycle adapter.
 
 ## Configuration and data
 
@@ -202,3 +204,19 @@ permissions or regional eligibility. The external login browser uses its own net
 
 Platform parsers are tested with fixtures. Native macOS/Linux behavior must be verified on those systems;
 Windows results do not establish cross-platform native acceptance.
+
+### Embedded browser (desktop)
+
+The Browser tool opens independent Chromium/CEF pages beside the chat. It provides tabs, navigation,
+page search, developer tools, clipboard screenshots, responsive viewport controls and element selection.
+Selected DOM context is reviewed before adding it to a chat draft; adding context never sends it.
+The web/phone client does not offer this native capability. CEF increases desktop bundle size.
+See [browser specification](apps/web/src/browser/SPEC.md) for scope and validation boundaries.
+
+On the desktop host, Pi's `browser` tool operates those same pages: DOM/accessible locators, frames,
+pointer/keyboard input, navigation, dialogs, upload/download and screenshots. Chats claim tabs independently.
+The camera button copies a PNG directly to the system clipboard; saving a file remains in the menu.
+The video button records a WebM, with stop/discard and playback controls. Agents can also record bounded
+action scenarios (up to 90 seconds). Completed artifacts are saved under the workspace's `.thinkrail/browser/`
+directory; recording results open in the file workbench's video player. Playwright reuses the bundled CEF instance; no second browser instance or agent
+runtime is launched. See [native browser implementation](apps/desktop/src/browser/SPEC.md).

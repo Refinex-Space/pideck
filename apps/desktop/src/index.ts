@@ -20,6 +20,14 @@ import {
 	readMenuLabels,
 } from "./applicationMenu";
 import { attributionClaimOnFirstReadiness } from "./attributionReadiness";
+import {
+	browserDebugPort,
+	createBrowserController,
+	createBrowserEngine,
+	installBrowserNativeLifecycle,
+	runBrowserAutomationProbe,
+} from "./browser";
+import { browserProbeScript, browserVideoProbeScript } from "./browserProbe";
 import { desktopError, setDesktopErrorReporter } from "./errorReporting";
 import { installExternalNavigation } from "./externalNavigation";
 import { createKeyStateReader } from "./keyState";
@@ -257,7 +265,20 @@ async function start(): Promise<void> {
 		pathToFileURL(join(runtimeDir, "server-runtime.ts")).href
 	)) as DesktopServerRuntime;
 	await shellEnv;
+	let mainWindow: BrowserWindow;
+	const browserController = createBrowserController(
+		browserDebugPort(),
+		() => mainWindow.webview.id,
+		(viewId, payload) => rpc.send.browserGuestEvent({ viewId, payload }),
+	);
+	const browserEngine = createBrowserEngine({
+		port: browserDebugPort(),
+		runtimeDir,
+		controller: browserController,
+		workbench: (request) => rpc.request.browserWorkbench(request, { maxRequestTime: 20000 }),
+	});
 	const host = await serverRuntime.startDesktopHost({
+		browser: browserEngine,
 		runtimeDir,
 		staticDir: join(PATHS.VIEWS_FOLDER, "web"),
 		appVersion: version,
@@ -268,8 +289,15 @@ async function start(): Promise<void> {
 			: {}),
 	});
 	setDesktopErrorReporter(host.reportError);
+	const disposeBrowser = async () => {
+		await browserEngine.dispose();
+		browserController.dispose();
+	};
 	const quitCoordinator = createElectrobunQuitCoordinator(
-		() => host.server.shutdown(),
+		async () => {
+			await host.server.shutdown();
+			await disposeBrowser();
+		},
 		() => dialogLabels,
 	);
 	startupQuitCoordinator = quitCoordinator;
@@ -302,7 +330,7 @@ async function start(): Promise<void> {
 		if (update.state) windowControlsProbe.state = update.state;
 		writeReady(windowControlsProbePath, windowControlsProbe);
 	};
-	let mainWindow: BrowserWindow;
+	installBrowserNativeLifecycle();
 	const handlePageZoomGesture = createPageZoomGestureHandler({
 		getPageZoom: () => mainWindow.getPageZoom(),
 		setPageZoom: (zoom) => mainWindow.setPageZoom(zoom),
@@ -312,6 +340,39 @@ async function start(): Promise<void> {
 		maxRequestTime: 5000,
 		handlers: {
 			requests: {
+				browserCommand: async ({ workspaceId, command }) => {
+					if (!host.server.browser) throw new Error("Browser control is unavailable");
+					return host.server.browser.execute(workspaceId, command);
+				},
+				browserExternal: async ({ viewId }) => {
+					Utils.openExternal(await browserController.url(viewId));
+					return undefined;
+				},
+				browserHistory: ({ viewId }) => browserController.history(viewId),
+				browserScript: async ({ viewId, script }) => {
+					await browserController.script(viewId, script);
+					return undefined;
+				},
+				browserAttach: async ({ viewId }) => {
+					await browserController.attach(viewId);
+					return undefined;
+				},
+				browserViewport: async ({ viewId, viewport }) => {
+					await browserController.viewport(viewId, viewport);
+					return undefined;
+				},
+				browserScreenshot: ({ viewId }) => browserController.screenshot(viewId),
+				browserCopyScreenshot: async ({ viewId }) => {
+					const data = await browserController.screenshot(viewId);
+					Utils.clipboardWriteImage(
+						Buffer.from(data.slice("data:image/png;base64,".length), "base64"),
+					);
+					return undefined;
+				},
+				browserDetach: ({ viewId }) => {
+					browserController.detach(viewId);
+					return undefined;
+				},
 				getUpdateState: () => updateController.getState(),
 				getWindowState: (): NativeWindowState => readNativeWindowState(mainWindow),
 				minimizeWindow: (): undefined => {
@@ -483,6 +544,97 @@ async function start(): Promise<void> {
 		},
 	);
 	mainWindow.on("close", removeNavigationListeners);
+	const browserProbePath = process.env.THINKRAIL_DESKTOP_BROWSER_PROBE_FILE;
+	const browserProbeUrl = process.env.THINKRAIL_DESKTOP_BROWSER_PROBE_URL;
+	if (browserProbePath && browserProbeUrl) {
+		const probe: Record<string, unknown> = {};
+		let automationStarted = false;
+		Electrobun.events.on(
+			`host-message-${mainWindow.webview.id}`,
+			(event: ReturnType<typeof Electrobun.events.events.webview.hostMessage>) => {
+				try {
+					const message =
+						typeof event.data.detail === "string"
+							? JSON.parse(event.data.detail)
+							: event.data.detail;
+					if (message.kind !== "pideck-browser-probe") return;
+					Object.assign(probe, message.value);
+					if (
+						probe.phase === "automation-ready" &&
+						!automationStarted &&
+						process.env.THINKRAIL_DESKTOP_BROWSER_PROBE_MODE === "automation"
+					) {
+						automationStarted = true;
+						void runBrowserAutomationProbe(
+							browserEngine,
+							dirname(browserProbePath),
+							browserProbeUrl,
+							(value) => {
+								Object.assign(probe, value);
+								writeReady(browserProbePath, probe);
+							},
+							async (viewId) => {
+								const { client } = await browserController.session(viewId);
+								await client.request("Input.dispatchKeyEvent", {
+									type: "rawKeyDown",
+									key: "v",
+									code: "KeyV",
+									windowsVirtualKeyCode: 86,
+									modifiers: process.platform === "darwin" ? 4 : 2,
+									commands: ["paste"],
+								});
+								await client.request("Input.dispatchKeyEvent", {
+									type: "keyUp",
+									key: "v",
+									code: "KeyV",
+									windowsVirtualKeyCode: 86,
+									modifiers: 0,
+								});
+							},
+						)
+							.then((value) => {
+								Object.assign(probe, value);
+								writeReady(browserProbePath, probe);
+								mainWindow.webview.executeJavascript(
+									browserVideoProbeScript(
+										`data:video/webm;base64,${readFileSync(join(dirname(browserProbePath), "demo.webm")).toString("base64")}`,
+									),
+								);
+							})
+							.catch((error) => {
+								Object.assign(probe, { error: String(error) });
+								writeReady(browserProbePath, probe);
+							});
+					}
+					if (
+						typeof probe.screenshot === "string" &&
+						probe.screenshot.startsWith("data:image/png;base64,")
+					) {
+						writeFileSync(
+							`${browserProbePath}.png`,
+							Buffer.from(probe.screenshot.slice(22), "base64"),
+						);
+						delete probe.screenshot;
+					}
+					writeReady(browserProbePath, probe);
+				} catch (error) {
+					desktopError("browser_probe", "browser probe failed", error);
+				}
+			},
+		);
+		let started = false;
+		mainWindow.webview.on("dom-ready", () => {
+			if (started) return;
+			started = true;
+			mainWindow.webview.executeJavascript(
+				browserProbeScript(
+					browserProbeUrl,
+					process.env.THINKRAIL_DESKTOP_BROWSER_PROBE_MODE === "close",
+					process.env.THINKRAIL_DESKTOP_BROWSER_PROBE_MODE === "automation",
+				),
+			);
+		});
+	}
 	const releaseStartupSplash = startupSplash
 		? handOffStartupSplash(startupSplash, mainWindow)
 		: undefined;

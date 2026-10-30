@@ -1,4 +1,9 @@
 import type {
+	BrowserCommand,
+	BrowserResult,
+	BrowserViewport,
+	BrowserWorkbenchRequest,
+	BrowserWorkbenchResult,
 	NativeCommand,
 	NativeNotificationInput,
 	NativeQuitHint,
@@ -11,6 +16,24 @@ import type { WindowChromeGeometry } from "./windowChrome";
 export type DesktopRpc = {
 	bun: {
 		requests: {
+			browserCommand: {
+				params: { workspaceId: string; command: BrowserCommand };
+				response: BrowserResult;
+			};
+			browserAttach: { params: { viewId: number }; response: undefined };
+			browserExternal: { params: { viewId: number }; response: undefined };
+			browserHistory: {
+				params: { viewId: number };
+				response: { canGoBack: boolean; canGoForward: boolean };
+			};
+			browserScript: { params: { viewId: number; script: string }; response: undefined };
+			browserViewport: {
+				params: { viewId: number; viewport: BrowserViewport | null };
+				response: undefined;
+			};
+			browserScreenshot: { params: { viewId: number }; response: string };
+			browserCopyScreenshot: { params: { viewId: number }; response: undefined };
+			browserDetach: { params: { viewId: number }; response: undefined };
 			getUpdateState: { params: undefined; response: NativeUpdateState };
 			getWindowState: { params: undefined; response: NativeWindowState };
 			minimizeWindow: { params: undefined; response: undefined };
@@ -34,9 +57,12 @@ export type DesktopRpc = {
 		};
 	};
 	webview: {
-		requests: Record<string, never>;
+		requests: {
+			browserWorkbench: { params: BrowserWorkbenchRequest; response: BrowserWorkbenchResult };
+		};
 		messages: {
 			updateStateChanged: NativeUpdateState;
+			browserGuestEvent: { viewId: number; payload: unknown };
 			windowChromeChanged: WindowChromeGeometry;
 			windowStateChanged: NativeWindowState;
 			windowFocusChanged: { focused: boolean };

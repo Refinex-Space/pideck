@@ -22,7 +22,11 @@ Six manifests ship under their existing ids: **Dark**, **Light**, **Minimal Dark
 **High Contrast Dark** and **High Contrast Light**. Their palette follows [[pideck-design-system]]:
 neutral surfaces, inverted primary controls and neutral user-message bubbles. Standard Light and Dark
 follow the actual Claude Code runtime captures: white canvas/header/content with a `#fafafa` sidebar in
-Light; `#242424` canvas/header/content, `#2a2a2a` sidebar/overlays and `#3a3a3a` input in Dark. These
+Light; in Dark (re-sampled 2026-10-31 from raw screenshot pixels) `#181818` canvas/header/content, `#242424`
+sidebar, `#303030` input and popover/menu surfaces, a `#1f1f1f` modal dialog and `#444444` hover/selected fill,
+with neutral grey text (`#ececec` / `#b8b8b8` / `#929292`). Dark's divider tiers (`border` `#404040`, `borderStrong`
+`#525252`) are deliberately a little brighter than the measured Claude hairlines, which sit near 1.2:1 against the
+canvas and read as invisible here; the pair keeps roughly the contrast the previous Dark had (≈1.7 / 2.4 on canvas). These
 observed remote-page surfaces take precedence over the different near-black surfaces found in the
 packaged CDS stylesheet. Packaged tokens are evidence of shipped resources, not proof of a remote
 page's rendered colors. Minimal retains its flatter CDS-inspired surfaces as a distinct option; High
@@ -35,8 +39,9 @@ What a palette cannot express through the manifest keys is a product decision fo
 The branded green is removed only from accent, primary-control and bubble roles. Success, error, Git diff,
 syntax and ANSI colors retain their separate meanings. The normal light family shares a deeper syntax
 comment gray for legibility on Minimal's warm surfaces; other syntax colors and all ANSI entries remain.
-Standard Dark's destructive fill is slightly lighter so its inherited 12% darker hover and the legacy
-background-derived label still meet AA on the brighter runtime canvas. Terminals keep the existing
+Standard Dark's destructive fill stays slightly lighter so its inherited 12% darker hover and the legacy
+background-derived label still meet AA. Its syntax comment grey is lifted a step (`#949ca5`) to clear 4.5 on the
+`#303030` raised surface. Terminals keep the existing
 xterm minimum-contrast floor (4.5, or 7 in High Contrast), including for extended ANSI output.
 
 The measured CDS muted color is not copied blindly: Light's hint is slightly darker so it remains
@@ -99,6 +104,11 @@ scale. The split is what lets a theme be a palette swap with no component change
 module's variables (`--elevated`, `--border-strong`, `--muted`) are internal: reaching one from a component
 bypasses the role it belongs to. See [`styles/COLOR.md`](../styles/COLOR.md).
 
+**`dialog` is the modal surface, and is optional.** Popovers, menus and toasts sit on `elevated`, while
+`DialogContent` / `DialogPanel` take `container-dialog-bg` from `dialog`; Dark needs the two apart (`#303030` vs
+`#1f1f1f`). Like `dangerHover`, it joined v2 after user files shipped, so a file that omits it gets `elevated` — its
+old modal colour — and bundled manifests set it explicitly.
+
 **One key per role that themes may vary independently.** Schema version 2 splits `header` out of
 `content`, which previously wrote both `--bg-dark` and `--surface-content` and so pinned the app header
 to the code canvas in every theme. The original split shipped `header` equal to `content` and changed no pixels. PiDeck now uses the
@@ -131,7 +141,7 @@ key added to the manifest schema and forgotten in `colors.json` cannot reach a b
 a key that does not exist fails the same gate.
 
 **A manifest must also be legible, not merely complete.** `schema.test.ts` enforces WCAG AA on every
-resting surface (`background`, `content`, `sidebar`, `header`, `elevated`, `input`) and a lower 3.0
+resting surface (`background`, `content`, `sidebar`, `header`, `elevated`, `dialog`, `input`) and a lower 3.0
 floor on the transient `hover` surface — the latter being our line rather than the standard's, so that
 a theme borrowed from elsewhere keeps its signature colours. `accent` and `success` are exempt from
 `input` alone: neither is ever rendered as text on a control. Separately, `onAccent` must clear AA on

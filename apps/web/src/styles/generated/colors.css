@@ -18,7 +18,8 @@
 	--container-terminal-bg: var(--sidebar);
 	--container-header-bg: var(--header);
 	--container-content-bg: var(--content); /* the recessed read-a-diff/read-code canvas, NOT the document canvas (that is workspace): Pierre source diffs, rendered diffs, Shiki code blocks, and the center-column backdrop behind them */
-	--container-elevated-bg: var(--elevated); /* every raised surface: dialogs, popovers, menus, toasts, cards, code blocks */
+	--container-elevated-bg: var(--elevated); /* every raised surface except the modal dialog: popovers, menus, toasts, cards, code blocks */
+	--container-dialog-bg: var(--dialog); /* the modal dialog surface (`DialogContent`, `DialogPanel` — settings and confirmations); its own manifest key, defaulting to `elevated`, so a theme can seat modals one step off the popover tone */
 	--control-bg: var(--input);
 	--control-bg-hovered: var(--hover);
 	--control-bg-selected: var(--hover);
@@ -75,7 +76,7 @@
  * these need no JavaScript — they are constants, not palette derivations. */
 :root[data-theme-appearance="dark"] {
 	--sunken: rgba(0, 0, 0, 0.12);
-	--overlay: rgba(0, 0, 0, 0.5);
+	--overlay: rgba(0, 0, 0, 0.6);
 	--shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.2);
 	--shadow-md: 0 8px 24px rgba(0, 0, 0, 0.32), 0 2px 6px rgba(0, 0, 0, 0.2);
 	--shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.24);
@@ -101,6 +102,7 @@
 	--color-container-header-bg: var(--container-header-bg);
 	--color-container-content-bg: var(--container-content-bg);
 	--color-container-elevated-bg: var(--container-elevated-bg);
+	--color-container-dialog-bg: var(--container-dialog-bg);
 	--color-control-bg: var(--control-bg);
 	--color-control-bg-hovered: var(--control-bg-hovered);
 	--color-control-bg-selected: var(--control-bg-selected);

@@ -12,6 +12,7 @@ export const THEME_COLOR_KEYS = [
 	"sidebar",
 	"input",
 	"elevated",
+	"dialog",
 	"hover",
 	"border",
 	"borderStrong",
@@ -78,7 +79,7 @@ export const NULLABLE_THEME_COLOR_KEYS = [
 	"editorSelectionForeground",
 ] as const;
 
-export const DERIVED_THEME_COLOR_KEYS = ["dangerHover", "onDanger"] as const;
+export const DERIVED_THEME_COLOR_KEYS = ["dangerHover", "onDanger", "dialog"] as const;
 
 export type ThemeColorKey = (typeof THEME_COLOR_KEYS)[number];
 export type NullableThemeColorKey = (typeof NULLABLE_THEME_COLOR_KEYS)[number];
@@ -212,6 +213,7 @@ function parseThemeColors(value: unknown, issues: string[]): ThemeColors | null 
 		);
 		if (label) palette.onDanger ??= label;
 	}
+	if (palette.elevated) palette.dialog ??= palette.elevated;
 	return Object.freeze(palette) as ThemeColors;
 }
 

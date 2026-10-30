@@ -47,7 +47,7 @@ export function splashMessage(
 
 export function splashDocument(message: string): string {
 	return `<!doctype html><html><head><meta charset="utf-8"><meta name="color-scheme" content="dark light"><title>PiDeck</title><style>
-:root{--bg:#242424;--fg:#f0efec;--muted:#c3c2b7;--accent:#f0efec;--track:#444442}
+:root{--bg:#181818;--fg:#ececec;--muted:#b8b8b8;--accent:#ececec;--track:#383838}
 @media (prefers-color-scheme: light){:root{--bg:#ffffff;--fg:#0b0b0b;--muted:#52514e;--accent:#0b0b0b;--track:#e8e7e3}}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);cursor:default;user-select:none;-webkit-user-select:none}
 body{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;font:14px/1.428571 system-ui,"Segoe UI",sans-serif}

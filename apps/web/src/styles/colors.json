@@ -64,7 +64,12 @@
 		"container-elevated-bg": {
 			"from": "elevated",
 			"publish": true,
-			"note": "every raised surface: dialogs, popovers, menus, toasts, cards, code blocks"
+			"note": "every raised surface except the modal dialog: popovers, menus, toasts, cards, code blocks"
+		},
+		"container-dialog-bg": {
+			"from": "dialog",
+			"publish": true,
+			"note": "the modal dialog surface (`DialogContent`, `DialogPanel` — settings and confirmations); its own manifest key, defaulting to `elevated`, so a theme can seat modals one step off the popover tone"
 		},
 		"control-bg": {
 			"from": "input",
@@ -326,7 +331,7 @@
 		},
 		"overlay": {
 			"note": "the scrim behind a modal",
-			"dark": "rgba(0, 0, 0, 0.5)",
+			"dark": "rgba(0, 0, 0, 0.6)",
 			"light": "rgba(0, 0, 0, 0.4)",
 			"publish": true
 		},

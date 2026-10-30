@@ -18,6 +18,7 @@
 		"sidebar": "#151515",
 		"input": "#1a1a19",
 		"elevated": "#20201f",
+		"dialog": "#20201f",
 		"hover": "#30302e",
 		"border": "#2b2b29",
 		"borderStrong": "#494944",

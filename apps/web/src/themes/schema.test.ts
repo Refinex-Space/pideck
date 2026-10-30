@@ -142,6 +142,18 @@ test("a manifest written before the destructive keys existed still parses, with 
 	}
 });
 
+test("a manifest written before the dialog surface existed still parses, with dialog following elevated", () => {
+	for (const { file, value } of bundledCandidates()) {
+		const legacy = structuredClone(value) as { colors: Record<string, string> };
+		delete legacy.colors.dialog;
+		const parsed = parseThemeManifest(legacy);
+		if (!parsed.ok) throw new Error(`${file}: ${parsed.issues.join("; ")}`);
+		expect(parsed.value.colors.dialog, `${file}: derived dialog`).toBe(
+			parsed.value.colors.elevated,
+		);
+	}
+});
+
 test("high-contrast manifests provide legible selected-text foregrounds", () => {
 	const themes = bundledThemes().filter((theme) => theme.contrast === "high");
 	expect(themes.length).toBeGreaterThan(0);
@@ -159,7 +171,15 @@ test("high-contrast manifests provide legible selected-text foregrounds", () => 
 	}
 });
 
-const RESTING = ["background", "content", "sidebar", "header", "elevated", "input"] as const;
+const RESTING = [
+	"background",
+	"content",
+	"sidebar",
+	"header",
+	"elevated",
+	"dialog",
+	"input",
+] as const;
 const FLOORS = { text: 4.5, muted: 4.5, hint: 3, accent: 4.5, success: 4.5 } as const;
 const NOT_ON_INPUT: ReadonlySet<string> = new Set(["accent", "success"]);
 const HOVER_FLOOR = 3;

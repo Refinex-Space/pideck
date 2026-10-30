@@ -97,6 +97,10 @@
 				"sidebar": { "$ref": "#/$defs/hexColor" },
 				"input": { "$ref": "#/$defs/hexColor" },
 				"elevated": { "$ref": "#/$defs/hexColor" },
+				"dialog": {
+					"$ref": "#/$defs/hexColor",
+					"description": "Modal dialog surface (settings and confirmation dialogs). Optional: defaults to elevated."
+				},
 				"hover": { "$ref": "#/$defs/hexColor" },
 				"border": { "$ref": "#/$defs/hexColor" },
 				"borderStrong": { "$ref": "#/$defs/hexColor" },

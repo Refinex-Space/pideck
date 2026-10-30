@@ -663,7 +663,9 @@ re-opened transcripts provider-valid.
     shutdown records within its budget; emergency disposal (`disposeAllSessions`) revokes the teardown
     writers together with the tombstones, so a late record can never recreate a trashed transcript, and
     records it drops are recovered when the chat is next attached. Children cannot spawn children (`RECURSION_GUARD_TOOLS`), so deltas
-    never nest. **`subagentUsage`** makes the transcript, not the event, authoritative: every attach, and
+    never nest. Each child tool start (`run-tool`) is also published on the parent's session as `subagent_activity`
+    (`publishSubagentActivity`), reduced by `subagentActivityArgs` to the one path or shell command the file tree
+    can use for the file/shell tools only, with size caps — an edit's or write's text never leaves the host this way. **`subagentUsage`** makes the transcript, not the event, authoritative: every attach, and
     a deletion rolled back after its tombstone suppressed a terminal write, asynchronously totals each
     fresh child file without a queued or running run under the parent's delegation directory and appends
     the shortfall against the parent's `subagent` entries for that child. This recovers runs a

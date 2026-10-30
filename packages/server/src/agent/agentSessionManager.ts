@@ -2516,6 +2516,58 @@ function rollBackUsageAppend(
 	return incorporated;
 }
 
+const SUBAGENT_ACTIVITY_TOOLS = new Set(["read", "edit", "write", "grep", "find", "ls", "bash"]);
+const MAX_ACTIVITY_PATH = 1_000;
+const MAX_ACTIVITY_COMMAND = 2_000;
+
+/**
+ * The one argument of a subagent's tool call the file tree can use, and nothing else: an edit's text
+ * or a write's content never leaves the host through this event.
+ */
+export function subagentActivityArgs(
+	toolName: string,
+	args: unknown,
+): { path?: string; command?: string } | null {
+	if (!SUBAGENT_ACTIVITY_TOOLS.has(toolName) || typeof args !== "object" || args === null)
+		return null;
+	const record = args as Record<string, unknown>;
+	if (toolName === "bash") {
+		const command = record.command;
+		return typeof command === "string" &&
+			command.length > 0 &&
+			command.length <= MAX_ACTIVITY_COMMAND
+			? { command }
+			: null;
+	}
+	const path = record.path;
+	return typeof path === "string" && path.length > 0 && path.length <= MAX_ACTIVITY_PATH
+		? { path }
+		: null;
+}
+
+/** Tells the parent chat's clients which file or command a subagent's tool just started on. */
+export function publishSubagentActivity(
+	parentSessionId: string,
+	activity: { childSessionId: string; roleName?: string; toolName: string; args: unknown },
+): void {
+	const args = subagentActivityArgs(activity.toolName, activity.args);
+	if (!args) return;
+	try {
+		publish({
+			sessionId: parentSessionId,
+			event: {
+				type: "subagent_activity",
+				childSessionId: activity.childSessionId,
+				toolName: activity.toolName,
+				args,
+				...(activity.roleName ? { roleName: activity.roleName } : {}),
+			},
+		});
+	} catch (error) {
+		log.warn(`subagent activity was not published for ${parentSessionId}`, error as Error);
+	}
+}
+
 /** Returns whether pi took the usage into its session totals; persisting it is best-effort. */
 export function recordSessionUsage(
 	sessionId: string,

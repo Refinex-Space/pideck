@@ -1,3 +1,4 @@
+export * from "./agentActivity";
 export * from "./appStore";
 export type { ChatResourceScope } from "./chatResources";
 export {

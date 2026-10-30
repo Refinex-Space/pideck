@@ -10,6 +10,7 @@ import { ErrorBoundary, setErrorBoundaryReporter } from "./components/ErrorBound
 import { registerWebExtensions } from "./extensions";
 import { useLocaleSync } from "./i18n";
 import { initNavigation } from "./navigation";
+import { initFileActivityPreferencesPersistence } from "./panels/fileActivityPreferences";
 import { initFilesTreePersistence } from "./panels/filesTreeState";
 import { initProjectExpansionPersistence } from "./panels/projectExpansion";
 import { AppResourceHost } from "./shell/AppResourceHost";
@@ -30,6 +31,7 @@ setErrorBoundaryReporter((error, reportId) =>
 	reportClientError(clientErrorReport("render", error, reportId)),
 );
 initChatPreferencesPersistence();
+initFileActivityPreferencesPersistence();
 initModelVisibilityPersistence();
 initProjectExpansionPersistence();
 initFilesTreePersistence();

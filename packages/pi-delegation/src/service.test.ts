@@ -317,6 +317,40 @@ test("a foreground run completes: outcome, registry, lineage storage, lifecycle 
 	expect(service.findChild(child.sessionId)).toBeUndefined();
 });
 
+test("a parented child's tool start is emitted as run-tool with its raw arguments and role", async () => {
+	writeFileSync(join(parentCwd, "seen.txt"), "seen\n");
+	faux.setResponses([
+		fauxAssistantMessage(fauxToolCall("read", { path: "seen.txt", offset: 1, limit: 5 })),
+		fauxAssistantMessage("READ_DONE"),
+	]);
+	const child = await service.createChild(
+		subagentSpec({ session: { systemPrompt: "read it", tools: ["read"] } }),
+	);
+	const tools: { toolName: string; args: unknown; roleName?: string; parent: string }[] = [];
+	child.onEvent((event) => {
+		if (event.type === "run-tool")
+			tools.push({
+				toolName: event.toolName,
+				args: event.args,
+				parent: event.parentSessionId,
+				...(event.roleName !== undefined ? { roleName: event.roleName } : {}),
+			});
+	});
+	try {
+		expect((await child.runQueued("Read seen.txt.")).status).toBe("completed");
+		expect(tools).toEqual([
+			{
+				toolName: "read",
+				args: { path: "seen.txt", offset: 1, limit: 5 },
+				roleName: "scout",
+				parent: parent.sessionId,
+			},
+		]);
+	} finally {
+		await child.dispose();
+	}
+});
+
 test("a scripted provider error becomes an error OUTCOME, not a rejection", async () => {
 	faux.setResponses([
 		fauxAssistantMessage("partial", { stopReason: "error", errorMessage: "boom" }),

@@ -2217,6 +2217,34 @@ own section. The kebab menu (`plan-menu`, a
 
 Project expansion uses Lucide folder-open/folder-closed, with aria-expanded on the existing toggle. Default workspace rows have no decorative leading icon or reserved icon column; running/attention status remains visible. A Default workspace with no chats renders no row at all — the project folder only appears through its chats, and a new one is started with the sidebar's New action or from its empty surface. Other workspace kinds retain their existing branch/external-worktree markers.
 
+## Agent file activity in the Files tree
+
+The Files tree shows what the agent does to the workspace's files, drawn from the store's
+`agentActivityByWorkspace` ([[submodule-web-store]], *Agent file activity*). **`useAgentActivity(workspaceId)`**
+is the one reader: it returns the `activityIndex` of the lit entries, the settled `recent` list and the
+preferences, and it owns the fade — a timer chain armed from the nearest expiry that prunes through the store and
+re-reads a **clock held in state**, never `Date.now()` inside render (the React Compiler would cache that read and
+a held folder would never close). **Folders the agent opens** are the union of the user's expanded folders and the
+index's `expanded` set, computed for rendering only: the persisted expansion is never written, so a folder the
+user opened stays open and one the agent opened closes again 12 s after its last activity (no flapping while the
+agent moves between files). A file row with activity gets its wrapper's `data-agent-activity` (`read|search|list|write`),
+`data-agent-phase` and `data-agent-source`, a tinted fill with a 2px edge bar (a slow breathing pulse while
+running, `motion-safe` only) and a badge — `file-agent-badge`, `Reading · L3–12`, `Matched ×2`, `Edited ×2`,
+`Subagent explorer · Read` — also its tooltip (`agentActivityLabel`); a folder with a lit path below it gets a quiet
+`within` fill. Colours are the semantic feedback tokens (info for reads, warning for writes, neutral for searches).
+**Follow** scrolls the newest lit row into view as it appears (`scrollIntoView` nearest, smooth unless the user
+prefers reduced motion) and stands down for 4 s after the user's own wheel or pointer input in the tree.
+
+**`AgentActivityList`** sits under the tree (and under Changed mode too): the last eight settled entries, newest
+first — kind icon, file name and folder, the same label, a coarse age from `useNow` — collapsible, clearable
+(`clearAgentActivityRecent`), and a row shows the file in the tree and opens it as a preview tab (a folder only
+shows). It renders nothing when the feature, the list preference or the history is off or empty.
+**`FileActivitySettings`** is a group of **Settings › Chat**: a master switch and switches for follow, automatic
+folders, reads, writes, subagents (disabled with a note on a host older than `AGENT_ACTIVITY_PROTOCOL_VERSION`),
+shell reads (off by default — a command can only be guessed at), the list, and opening Files when the agent
+starts. They persist per host in `localStorage` (`panels/fileActivityPreferences`, or the native stable adapter),
+follow another tab's change, and never touch the host config.
+
 ## File explorer icon identity
 
 All-files rows and both Changed view modes use `fileIcons` for filename/extension-specific artwork.

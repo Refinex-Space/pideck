@@ -151,7 +151,15 @@ export type PiEvent =
 			reason: "manual" | "threshold" | "overflow";
 	  }
 	| { type: "summarization_retry_finished" }
-	| { type: "bash_execution_update"; id?: string; delta: string };
+	| { type: "bash_execution_update"; id?: string; delta: string }
+	| {
+			/** A subagent of this chat started a tool: only the path or shell command the file tree can use. */
+			type: "subagent_activity";
+			childSessionId: string;
+			roleName?: string;
+			toolName: string;
+			args: { path?: string; command?: string };
+	  };
 
 export interface CompactionEndResult {
 	tokensBefore: number;

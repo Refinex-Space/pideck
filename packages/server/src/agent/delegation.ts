@@ -26,6 +26,7 @@ import {
 	buildSessionSettings,
 	canUseSessionResources,
 	liveParentContext,
+	publishSubagentActivity,
 	recordSessionUsage,
 	scheduleSessionStatePublish,
 } from "./agentSessionManager";
@@ -104,6 +105,16 @@ export function delegationServiceFor(workspaceId: string): DelegationService {
 			buildChildSettings: buildSessionSettings,
 		});
 		service.onLifecycle((event) => {
+			if (event.type === "run-tool") {
+				if (canUseSessionResources(event.parentSessionId, workspaceId))
+					publishSubagentActivity(event.parentSessionId, {
+						childSessionId: event.sessionId,
+						toolName: event.toolName,
+						args: event.args,
+						...(event.roleName !== undefined ? { roleName: event.roleName } : {}),
+					});
+				return;
+			}
 			if (event.type === "run-progress") {
 				runUsage.progress(event.parentSessionId, event.sessionId, event.details);
 				return;

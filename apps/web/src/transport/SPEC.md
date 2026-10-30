@@ -69,7 +69,8 @@ batches high-frequency Pi events without allowing later wire messages to overtak
   `provider.status`), each valid `server.welcome` first clearing any popup projection left by a host restart,
   then `feedback.interview` via the idempotent `showInterviewPrompt()` (a surviving host claim re-delivers the
   addressed event immediately after welcome),
-  `workspace.fsChanged` via `noteFsChanged(payload)`, **`mcp.status`** via the generation-guarded
+  `workspace.fsChanged` via `noteFsChanged(payload)` and then `noteFsActivity(payload)` (the file tree's agent-activity fold),
+  **`mcp.status`** via the generation-guarded
   `applyMcpStatus(snapshot)`, and **`settings.changed`** via `applyConfig(config)` — the post-startup server-synced app config broadcast;
   welcome config lands in the atomic install above.
 

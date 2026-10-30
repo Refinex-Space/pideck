@@ -71,6 +71,18 @@
 		}
 	}
 
+	/* The edge of a file-tree row the agent is still working on: a slow breath, never a blink. */
+	--animate-agent-pulse: agent-pulse 1.4s ease-in-out infinite;
+	@keyframes agent-pulse {
+		0%,
+		100% {
+			opacity: 1;
+		}
+		50% {
+			opacity: 0.35;
+		}
+	}
+
 	/* Dialogs ease in: the card grows from 96% (the centring uses the separate `translate` property,
 	   so `scale` never fights it) while the backdrop fades. */
 	--animate-dialog-in: dialog-in 220ms cubic-bezier(0.165, 0.84, 0.44, 1);

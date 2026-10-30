@@ -513,6 +513,20 @@ export function createDelegationService(bindings: DelegationBindings): Delegatio
 			if (event.type === "tool_execution_start") {
 				activity = event.toolName;
 				pushUpdate("running");
+				if ("parentSessionId" in entry.record)
+					emit(
+						{
+							type: "run-tool",
+							sessionId: entry.record.sessionId,
+							parentSessionId: entry.record.parentSessionId,
+							toolName: event.toolName,
+							args: event.args,
+							...(entry.record.info.roleName !== undefined
+								? { roleName: entry.record.info.roleName }
+								: {}),
+						},
+						entry,
+					);
 			} else if (event.type === "turn_end") {
 				turns++;
 				const continues =

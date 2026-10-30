@@ -15,6 +15,8 @@ export function TreeRow({
 	path = label,
 	labelClassName,
 	trailing,
+	agentBadge,
+	title,
 	highlight = "self",
 	onClick,
 	onDoubleClick,
@@ -34,6 +36,9 @@ export function TreeRow({
 	path?: string;
 	labelClassName?: string;
 	trailing?: ReactNode;
+	/** What the agent is doing to this row, drawn before the status mark. */
+	agentBadge?: ReactNode;
+	title?: string | undefined;
 	highlight?: "self" | "wrapper";
 	onClick?: ((event: MouseEvent) => void) | undefined;
 	onDoubleClick?: (() => void) | undefined;
@@ -53,6 +58,7 @@ export function TreeRow({
 			data-active={active ? true : undefined}
 			data-status={dataStatus}
 			data-viewed={dataViewed ? true : undefined}
+			title={title}
 			onClick={onClick}
 			onDoubleClick={onDoubleClick}
 			onContextMenu={onContextMenu}
@@ -78,6 +84,7 @@ export function TreeRow({
 				)}
 				<span className={`min-w-0 flex-1 truncate ${labelClassName ?? ""}`}>{label}</span>
 			</span>
+			{agentBadge}
 			{trailing}
 		</button>
 	);

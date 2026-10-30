@@ -215,7 +215,7 @@ when it lands). Entering `queued` initializes matching `RunSnapshot.status` and
 contradictory in-flight status surfaces. While a parented run is running, every in-run update (child
 `tool_execution_start` and `turn_end`) is also emitted as `run-progress` with the details object the
 snapshot just stored, so an embedder can follow live usage without owning the run's `onUpdate`; a
-queued run that never starts emits none, and resource-owned children emit no lifecycle events.
+queued run that never starts emits none, and resource-owned children emit no lifecycle events. Each child `tool_execution_start` of a parented run is also emitted as `run-tool` (tool name, the raw arguments and the child's role name), the one place an embedder can see *where* a child works rather than only that it does; consumers must treat the arguments as untrusted and forward only what they need.
 
 ```mermaid
 stateDiagram-v2

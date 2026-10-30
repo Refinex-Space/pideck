@@ -65,6 +65,33 @@ first and disabled/replaced rows last. `selectMcpWorkspaceStarting` drives the b
 re-read while a server starts. The state vocabulary and the attention/active predicates live in `lib`
 (`mcpState`) because the props-only chat resources module shares them.
 
+## Agent file activity
+
+`agentActivity.ts` is the pure model of what the agent is doing to the workspace's files, and
+`agentActivityFold.ts` folds Pi events into it. **`agentActivityByWorkspace`** holds, per workspace,
+`{ active, recent, pending }`: `active` entries (path, kind `read|search|list|write`, phase
+`running|done`, source `agent|subagent|shell|watch`, optional subagent role, line range or count, expiry)
+light a tree row until they fade; `recent` is the settled history (bounded, deduped, not faded) the activity
+list shows; `pending` remembers the path of a grep/find in flight because its end event repeats none.
+
+`handlePiEvents` folds `tool_execution_start` (targets from the call's arguments alone: `read`, `edit`,
+`write`, `grep`/`find`/`ls` with a path, and `bash` only when the shell preference is on, through a short
+read-only command list that never guesses past a variable, glob, substitution or `sed -i`),
+`tool_execution_end` (settles the entries, or drops them when the call failed, and names the files a grep or
+find matched), `agent_settled` (forgets that chat's unfinished work) and `subagent_activity` (settled work
+attributed to the subagent's role). A chat's workspace is found through its chat tab; paths are resolved
+against the workspace's worktree and anything outside it, or the root itself, is dropped. `noteFsActivity`
+(called after `noteFsChanged`) counts changed files as the working chat's `watch` writes — a shell command's
+output has no path of its own — but only while a chat in that workspace is streaming, never for a file a tool's
+own edit just lit, and capped per batch. The fold returns `null` when nothing changed, so the store keeps its
+identity. **`fileActivityPreferences`** (`enabled`, `follow`, `expand`, `reads`, `writes`, `subagents`, `shell`,
+`timeline`, `openFiles`) is client-local viewing state persisted by `panels/fileActivityPreferences`;
+`openFiles` appends a `reveal-tool files` layout intent when a workspace's activity goes from idle to busy.
+`pruneAgentActivity` and `clearAgentActivityRecent` are the only timers' effects; the store holds none.
+`activityIndex(active, preferences)` is the pure view the tree reads: the best entry per path (a write outranks
+a read outranks a search outranks a listing, running outranks settled), the directories with a lit path below
+them, the directories to open, and the newest path to follow.
+
 ## Boundary
 
 - **Owns:** `appStore.ts` — connection/projects/workspaces state + setters. Connection state has two

@@ -516,6 +516,8 @@ real turn rather than accepting another provider or a fake agent.
 
 ## Interactive file workbench
 
+`file-activity.spec.ts` drives the Files tree's agent activity with Pi events pushed down the intercepted app wire (reads, edits, a failed edit, a grep's matches, a subagent's tool, shell reads, the activity list, the preferences, follow-scrolling and open-Files-on-start) over a nested fixture folder it creates and removes, so no real model runs.
+
 `file-workbench.spec.ts` exercises real contained create/save/move/search paths, dirty-close and reload
 recovery, conflict refusal, independent browser drafts, reference insertion without prompts, menus,
 source controls and old-host gating. Editor cases align userAgent with the local browser OS because

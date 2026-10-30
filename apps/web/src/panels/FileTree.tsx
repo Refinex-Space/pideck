@@ -5,18 +5,44 @@ import { LoadingRegion } from "@thinkrail/ui/skeleton";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { statusLetter } from "../chat/planView";
 import { firstClickOnly } from "../lib";
-import { selectFilesTreeView, type TabIntent, useAppStore } from "../store";
+import { type ActivityIndex, selectFilesTreeView, type TabIntent, useAppStore } from "../store";
 import { getTransport } from "../transport";
+import { agentActivityLabel } from "./agentActivityLabels";
 import { type ChangeMarks, statusMarkClass } from "./changesModel";
 import { holdEditorWarm, useEditorWarm, warmOnHover } from "./editorWarm";
 import { FileEntryActions } from "./FileEntryActions";
 import { type ResolvedFolderChain, resolveFolderChain } from "./folderChains";
 import { openFileInTab } from "./openTabs";
 import { TreeRow } from "./TreeRow";
+import { useAgentActivity } from "./useAgentActivity";
 import { useWorkspaceRead } from "./useWorkspaceRead";
 
 type SetPathsExpanded = (paths: readonly string[], expanded: boolean) => void;
 type WarmFile = ((path: string) => void) | undefined;
+
+/** What the agent is doing in the tree, and whether the tree may scroll to follow it. */
+interface AgentTree {
+	index: ActivityIndex;
+	follow: boolean;
+	paused: () => boolean;
+}
+
+/** After the user scrolls the tree themself, the agent stops pulling it along for this long. */
+const FOLLOW_PAUSE_MS = 4_000;
+
+const AGENT_ROW =
+	"relative motion-safe:transition-colors motion-safe:duration-500 before:absolute before:inset-y-2 before:left-0 before:w-2 before:rounded-full before:bg-transparent data-[agent-activity=read]:bg-feedback-info-subtle data-[agent-activity=read]:before:bg-feedback-info data-[agent-activity=search]:bg-control-bg-selected data-[agent-activity=search]:before:bg-text-muted data-[agent-activity=list]:bg-control-bg-selected data-[agent-activity=list]:before:bg-text-muted data-[agent-activity=write]:bg-feedback-warning-subtle data-[agent-activity=write]:before:bg-feedback-warning data-[agent-activity=within]:bg-control-bg motion-safe:data-[agent-phase=running]:before:animate-agent-pulse";
+
+const AGENT_BADGE: Record<string, string> = {
+	read: "bg-feedback-info-subtle text-feedback-info",
+	search: "bg-control-bg-selected text-text-muted",
+	list: "bg-control-bg-selected text-text-muted",
+	write: "bg-feedback-warning-subtle text-feedback-warning",
+};
+
+function scrollBehavior(): ScrollBehavior {
+	return window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+}
 
 interface TreeFocus {
 	activePath: string | null;
@@ -32,7 +58,20 @@ export function FileTree({
 	const t = useT();
 	const [nodes, setNodes] = useState<FileNode[] | null>(null);
 	const expanded = useAppStore((s) => selectFilesTreeView(s, workspaceId).expanded);
-	const expandedPaths = useMemo(() => new Set(expanded), [expanded]);
+	const { index, preferences } = useAgentActivity(workspaceId);
+	const expandedPaths = useMemo(
+		() => new Set([...expanded, ...index.expanded]),
+		[expanded, index.expanded],
+	);
+	const userScrolledAt = useRef(0);
+	const agent = useMemo<AgentTree>(
+		() => ({
+			index,
+			follow: preferences.enabled && preferences.follow,
+			paused: () => Date.now() - userScrolledAt.current < FOLLOW_PAUSE_MS,
+		}),
+		[index, preferences],
+	);
 	const warm = useEditorWarm();
 	const warmFile: WarmFile = warm
 		? (path) => warm(describeResource(workspaceId, path, PENDING_TEXT_META))
@@ -62,6 +101,12 @@ export function FileTree({
 	return (
 		<ul
 			data-testid="file-tree"
+			onWheel={() => {
+				userScrolledAt.current = Date.now();
+			}}
+			onPointerDown={() => {
+				userScrolledAt.current = Date.now();
+			}}
 			ref={(node) => {
 				if (node && focus.revealTarget === ".") {
 					node.scrollIntoView({ block: "start" });
@@ -80,6 +125,7 @@ export function FileTree({
 					expandedPaths={expandedPaths}
 					setPathsExpanded={setPathsExpanded}
 					warmFile={warmFile}
+					agent={agent}
 				/>
 			))}
 		</ul>
@@ -94,6 +140,7 @@ function FileNodeRow({
 	expandedPaths,
 	setPathsExpanded,
 	warmFile,
+	agent,
 }: {
 	node: FileNode;
 	workspaceId: string;
@@ -102,8 +149,11 @@ function FileNodeRow({
 	expandedPaths: ReadonlySet<string>;
 	setPathsExpanded: SetPathsExpanded;
 	warmFile: WarmFile;
+	agent: AgentTree;
 }) {
+	const t = useT();
 	const isDir = node.kind === "dir";
+	const rowRef = useRef<HTMLButtonElement | null>(null);
 	const [directory, setDirectory] = useState<ResolvedFolderChain<FileNode> | null>(null);
 	const pendingExpand = useRef(false);
 
@@ -151,6 +201,21 @@ function FileNodeRow({
 				}
 			: undefined;
 
+	const activity =
+		(isDir
+			? representedPaths.map((path) => agent.index.byPath.get(path)).find((entry) => entry)
+			: agent.index.byPath.get(node.path)) ?? null;
+	const within =
+		isDir && !activity && representedPaths.some((path) => agent.index.litDirs.has(path));
+	const newest =
+		agent.index.newest !== null &&
+		(isDir ? representedPaths.includes(agent.index.newest) : agent.index.newest === node.path);
+	const followRow = newest && activity !== null && agent.follow;
+	useEffect(() => {
+		if (!followRow || agent.paused()) return;
+		rowRef.current?.scrollIntoView({ block: "nearest", behavior: scrollBehavior() });
+	}, [followRow, agent]);
+
 	return (
 		<li>
 			<FileEntryActions
@@ -160,9 +225,17 @@ function FileNodeRow({
 				onOpen={isDir ? toggleDirectory : () => open("keep")}
 			>
 				{({ onContextMenu, onKeyDown, trigger }) => (
-					<div className="group/entry flex min-w-0 items-center rounded-sm hover:bg-control-bg-hovered has-[[data-active=true]]:bg-control-bg-selected [[data-file-menu-open=true]_&]:bg-control-bg-selected">
+					<div
+						data-agent-activity={activity?.kind ?? (within ? "within" : undefined)}
+						data-agent-phase={activity?.phase}
+						data-agent-source={activity?.source}
+						className={`group/entry flex min-w-0 items-center rounded-sm hover:bg-control-bg-hovered has-[[data-active=true]]:bg-control-bg-selected [[data-file-menu-open=true]_&]:bg-control-bg-selected ${AGENT_ROW}`}
+					>
 						<TreeRow
-							ref={revealRow}
+							ref={(row) => {
+								rowRef.current = row;
+								revealRow?.(row);
+							}}
 							testid="file-node"
 							highlight="wrapper"
 							onContextMenu={onContextMenu}
@@ -214,6 +287,17 @@ function FileNodeRow({
 								}
 							}}
 							kind={isDir ? "dir" : "file"}
+							title={activity ? agentActivityLabel(t, activity) : undefined}
+							agentBadge={
+								activity ? (
+									<span
+										data-testid="file-agent-badge"
+										className={`max-w-[60%] shrink-0 truncate rounded-sm px-4 tr-text-metadata ${AGENT_BADGE[activity.kind] ?? ""}`}
+									>
+										{agentActivityLabel(t, activity)}
+									</span>
+								) : undefined
+							}
 							active={!isDir && focus.activePath === node.path}
 							subtle={ignored}
 							dataStatus={ignored ? "ignored" : undefined}
@@ -271,6 +355,7 @@ function FileNodeRow({
 							expandedPaths={expandedPaths}
 							setPathsExpanded={setPathsExpanded}
 							warmFile={warmFile}
+							agent={agent}
 						/>
 					))}
 				</ul>

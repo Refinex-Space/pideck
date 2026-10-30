@@ -124,6 +124,15 @@ export type LifecycleEvent =
 			parentSessionId: string;
 			details: DelegationRunDetails;
 	  }
+	| {
+			/** A child began a tool: its name and raw arguments, for hosts that show where it works. */
+			type: "run-tool";
+			sessionId: string;
+			parentSessionId: string;
+			toolName: string;
+			args: unknown;
+			roleName?: string;
+	  }
 	| { type: "run-terminal"; sessionId: string; parentSessionId: string; outcome: RunOutcome }
 	| { type: "child-disposed"; sessionId: string; parentSessionId: string };
 

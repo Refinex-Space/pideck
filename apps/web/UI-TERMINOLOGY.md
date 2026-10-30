@@ -629,6 +629,7 @@ its alternatives in parentheses.
 - **Left Side**, **Right Side**, **Side Group**, **Hidden-Side Rail**.
 - Singleton tools: **Projects**, **Specs**, **Files**, **Review**.
 - **Specs Panel**, **Files Panel** (alt: File Tree; its **Changed** mode renders the **Changes Panel**), **Review Panel**.
+- **Agent Activity** — the Files tree's live marks for what the agent does to files: an **Activity Mark** (the tinted row with its edge bar and **Activity Badge**, `data-agent-activity`), **Held Folders** (opened by the agent, closed again after it moves on), **Follow** (scrolling to the newest lit row), the **Activity List** under the tree (`agent-activity-list`), and **File Activity Settings** (a group of Settings › Chat).
 - **Changes Header** (no component): **Changes Scope Menu** (with **Last Turn** / **Agent Turns**),
   **Branch Picker**, **Changes View Toggle**.
 - **Changes List** / **Changes Tree**, **Change-Row Actions**, **Tree Row**, **Viewed Mark**,

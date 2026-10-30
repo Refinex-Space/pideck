@@ -6,6 +6,7 @@ import { ToggleSegment } from "@thinkrail/ui/toggle-segment";
 import { RefreshCw, Search, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { selectActiveFilePath, selectFilesTreeView, useAppStore } from "../store";
+import { AgentActivityList } from "./AgentActivityList";
 import { ChangesPanel } from "./ChangesPanel";
 import {
 	buildChangeMarks,
@@ -149,6 +150,7 @@ export function FilesPanel({ workspaceId }: { workspaceId: string }) {
 					<ChangesPanel workspaceId={workspaceId} status={status} error={error} reload={reload} />
 				</div>
 			)}
+			<AgentActivityList workspaceId={workspaceId} />
 		</div>
 	);
 }

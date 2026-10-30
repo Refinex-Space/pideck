@@ -129,6 +129,11 @@ default, narrow cross-ring guards, and the quit-confirmation rule both clients d
     `session_info_changed` / `thinking_level_changed` / host-projected `entry_appended { entryType }`
     members, plus `bash_execution_update` — mirrored
     for union fidelity only; the host never calls `executeBash`, so the UI never receives it).
+    **`subagent_activity`** (v96, `AGENT_ACTIVITY_PROTOCOL_VERSION`) is the one host-synthesized member the UI does
+    receive: a subagent of the chat started a tool, carried on the *parent* chat's session as
+    `{ childSessionId, roleName?, toolName, args: { path? | command? } }`. `args` is the single argument a file tree
+    can use (`path` for read/edit/write/grep/find/ls, `command` for bash) and never an edit's text or a write's
+    content; an older host never sends it.
     Every message an event carries (`message_*`, `turn_end`, `agent_end.messages`) is typed as
     **`WireAgentMessage`** — `TranscriptMessage` plus the `WireBranchSummary` / `WireBashExecution`
     mirrors — never pi-agent-core's `AgentMessage`. That type is `Message` plus whatever

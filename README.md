@@ -28,7 +28,7 @@ it is not a PiDeck release. Signing, notarization and a PiDeck automatic-update 
 - **Connect tools through MCP.** Configure servers and review the host's permission prompts. PiDeck
   retains the upstream engine, extension boundaries and tool behavior.
 - **Choose your environment.** Use the native desktop shell or the same UI in a browser, with English,
-  Japanese, Simplified Chinese and Spanish interface catalogs, themes and custom layouts.
+  Japanese, Simplified Chinese and Spanish interface catalogs and themes.
 
 ## A quieter workbench
 
@@ -37,8 +37,8 @@ review and terminals one action away. Neutral light/dark themes, system UI typog
 restrained motion and searchable Settings follow a Claude Desktop-inspired visual direction.
 The continuous left navigation keeps application settings in its bottom menu; workspace, branch and
 delivery controls stay with the active workspace. Back/Forward buttons follow local navigation history,
-and the primary navigation tools use Lucide icons. Existing layouts, the other built-in presets,
-high-contrast modes and custom themes remain available.
+and the primary navigation tools use Lucide icons. High-contrast modes and custom themes remain
+available.
 The evidence, design decisions and cross-platform requirements live in [design-system.md](design-system.md).
 File and directory menus can insert references into the current chat draft without sending it.
 
@@ -53,6 +53,10 @@ explicit text editing and hash-checked saves, and confirmed file/folder operatio
 survive tab switches and reloads within the current browser or native window session, subject to its
 storage quota; save before closing the window. Copy paths, reveal files or open an installed editor from the same menu. See
 [file-workbench.md](file-workbench.md) for behavior, limits and verification.
+
+While the agent works, the file tree lights up the files it reads, searches and edits, subagents'
+included, opens the folders it is in and closes them again afterwards, and keeps a short activity list
+under the tree. Settings › Chat chooses what shows; reads inferred from shell commands are off by default.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset=".github/readme-assets/pideck-studio-dark.png">

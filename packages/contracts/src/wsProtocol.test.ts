@@ -9,6 +9,7 @@ import {
 	SUBAGENT_MAX_CONCURRENT,
 } from "./domain";
 import {
+	AGENT_ACTIVITY_PROTOCOL_VERSION,
 	AGENT_REVIEW_SETTING_PROTOCOL_VERSION,
 	ANALYTICS_CONSENT_PROTOCOL_VERSION,
 	BRANCH_STATUS_PROTOCOL_VERSION,
@@ -237,6 +238,11 @@ test("user theme files are pinned to v92", () => {
 	expect(WS_METHODS.themesList).toBe("themes.list");
 	expect(WS_METHODS.themesReveal).toBe("themes.reveal");
 	expect(WS_CHANNELS.themesChanged).toBe("themes.changed");
+});
+
+test("subagent file activity rides the Pi event channel from v96", () => {
+	expect(AGENT_ACTIVITY_PROTOCOL_VERSION).toBe(96);
+	expect(PROTOCOL_VERSION).toBeGreaterThanOrEqual(AGENT_ACTIVITY_PROTOCOL_VERSION);
 });
 
 test("private network settings are pinned to v95", () => {

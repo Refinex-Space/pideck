@@ -10,6 +10,7 @@ import {
 } from "@/chat/chatPreferences";
 import { selectActiveWorkspace, toast, useAppStore } from "@/store";
 import { errorText, getTransport } from "@/transport";
+import { FileActivitySettings } from "./FileActivitySettings";
 import { LineWidthControl } from "./LineWidthSettings";
 import { SegmentedControl, type SegmentedControlOption } from "./SegmentedControl";
 import { SettingsGroup, SettingsPageContainer } from "./SettingsGroup";
@@ -237,6 +238,8 @@ export function ChatSettings() {
 				}
 				onWorkspaceLimitChange={setWorkspaceSubagentLimit}
 			/>
+
+			<FileActivitySettings />
 		</SettingsPageContainer>
 	);
 }

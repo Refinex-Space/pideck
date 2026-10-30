@@ -379,6 +379,7 @@ export function initTransport(): WsTransport {
 
 	transport.subscribe(WS_CHANNELS.workspaceFsChanged, (data) => {
 		useAppStore.getState().noteFsChanged(data as WorkspaceFsChangedPayload);
+		useAppStore.getState().noteFsActivity(data as WorkspaceFsChangedPayload);
 	});
 
 	transport.subscribe(WS_CHANNELS.turnChanged, (data) => {

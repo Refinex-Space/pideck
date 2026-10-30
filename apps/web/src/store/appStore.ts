@@ -96,6 +96,15 @@ import type {
 } from "../shell/layout";
 import type { ConnectionStatus } from "../transport";
 import {
+	type AgentActivityState,
+	clearRecentActivity,
+	DEFAULT_FILE_ACTIVITY_PREFERENCES,
+	type FileActivityPreferences,
+	pruneActivity,
+	sameFileActivityPreferences,
+} from "./agentActivity";
+import { foldAgentActivity, foldFsChangeActivity } from "./agentActivityFold";
+import {
 	type ChatResourceRead,
 	type ChatResourceScope,
 	type ChatResourceSnapshots,
@@ -988,6 +997,12 @@ interface AppState {
 	installChatResources: (read: ChatResourceRead, snapshot: SessionResources) => void;
 	failChatResources: (read: ChatResourceRead, error: string) => void;
 	clearChatResources: (scope: ChatResourceScope) => void;
+	agentActivityByWorkspace: Record<string, AgentActivityState>;
+	fileActivityPreferences: FileActivityPreferences;
+	setFileActivityPreferences: (preferences: FileActivityPreferences) => void;
+	noteFsActivity: (payload: WorkspaceFsChangedPayload) => void;
+	pruneAgentActivity: (workspaceId: string, now: number) => void;
+	clearAgentActivityRecent: (workspaceId: string) => void;
 	mcpByWorkspace: Record<string, McpWorkspaceProjection>;
 	mcpRevision: number;
 	installMcpList: (read: McpRead, result: McpListResult) => void;
@@ -2426,6 +2441,35 @@ export const useAppStore = create<AppState>((set, get) => ({
 	toasts: [],
 	resourceSnapshots: {},
 	resourceRevision: 0,
+	agentActivityByWorkspace: {},
+	fileActivityPreferences: { ...DEFAULT_FILE_ACTIVITY_PREFERENCES },
+	setFileActivityPreferences: (fileActivityPreferences) =>
+		set((s) =>
+			sameFileActivityPreferences(s.fileActivityPreferences, fileActivityPreferences)
+				? {}
+				: { fileActivityPreferences },
+		),
+	noteFsActivity: (payload) =>
+		set((s) => {
+			const next = foldFsChangeActivity(s, payload, Date.now());
+			return next ? { agentActivityByWorkspace: next } : {};
+		}),
+	pruneAgentActivity: (workspaceId, now) =>
+		set((s) => {
+			const current = s.agentActivityByWorkspace[workspaceId];
+			const pruned = current ? pruneActivity(current, now) : current;
+			return current && pruned && pruned !== current
+				? { agentActivityByWorkspace: { ...s.agentActivityByWorkspace, [workspaceId]: pruned } }
+				: {};
+		}),
+	clearAgentActivityRecent: (workspaceId) =>
+		set((s) => {
+			const current = s.agentActivityByWorkspace[workspaceId];
+			const cleared = current ? clearRecentActivity(current) : current;
+			return current && cleared && cleared !== current
+				? { agentActivityByWorkspace: { ...s.agentActivityByWorkspace, [workspaceId]: cleared } }
+				: {};
+		}),
 	mcpByWorkspace: {},
 	mcpRevision: 0,
 	installMcpList: (read, result) =>
@@ -2683,6 +2727,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 				turnsByWorkspace: omitKey(state.turnsByWorkspace, workspaceId),
 				resourceSnapshots: omitKey(state.resourceSnapshots, workspaceId),
 				mcpByWorkspace: omitKey(state.mcpByWorkspace, workspaceId),
+				agentActivityByWorkspace: omitKey(state.agentActivityByWorkspace, workspaceId),
 				activeLogin:
 					state.activeLogin?.target?.workspaceId === workspaceId ? null : state.activeLogin,
 				sessionStateByWorkspace: omitKey(state.sessionStateByWorkspace, workspaceId),
@@ -4312,6 +4357,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 					const renamed = renameChat(state, sessionId, title);
 					if (renamed && Object.keys(renamed).length > 0) state = { ...state, ...renamed };
 				}
+				if (event.type === "subagent_activity") continue;
 				const runtime = sessions[sessionId];
 				if (!runtime) continue;
 				if (sessions === s.sessions) sessions = { ...sessions };
@@ -4323,7 +4369,22 @@ export const useAppStore = create<AppState>((set, get) => ({
 				};
 			}
 			if (sessions !== s.sessions) state = { ...state, sessions };
-			return state;
+			const activity = foldAgentActivity(state, payloads, Date.now());
+			if (!activity) return state;
+			let layoutIntents = state.layoutIntents;
+			if (state.fileActivityPreferences.openFiles) {
+				for (const [workspaceId, next] of Object.entries(activity)) {
+					const before = state.agentActivityByWorkspace[workspaceId];
+					if (next === before || (before?.active.length ?? 0) > 0 || next.active.length === 0)
+						continue;
+					layoutIntents = appendLayoutIntent(layoutIntents, {
+						kind: "reveal-tool",
+						workspaceId,
+						tool: "files",
+					});
+				}
+			}
+			return { ...state, agentActivityByWorkspace: activity, layoutIntents };
 		}),
 	setModelsForProviderVersion: (providerVersion, models) =>
 		set((s) => (s.providerVersion === providerVersion ? { models, modelsFresh: false } : s)),

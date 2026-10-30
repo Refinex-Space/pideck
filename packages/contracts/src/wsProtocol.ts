@@ -123,7 +123,8 @@ export type TemplateReadLocation =
 	| { projectId: string; workspaceId?: never }
 	| { workspaceId?: never; projectId?: never };
 
-export const PROTOCOL_VERSION = 95;
+export const PROTOCOL_VERSION = 96;
+export const AGENT_ACTIVITY_PROTOCOL_VERSION = 96;
 export const NETWORK_PROXY_PROTOCOL_VERSION = 95;
 export const FILE_WORKBENCH_PROTOCOL_VERSION = 94;
 export const TOOL_RESPONSE_PROTOCOL_VERSION = 93;

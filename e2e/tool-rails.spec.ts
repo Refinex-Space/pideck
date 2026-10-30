@@ -1,10 +1,10 @@
 import { expect, type Locator, type Page, test } from "@playwright/test";
 import {
-	applyWorkbenchPreset,
 	createWorkspaceViaDialog,
 	defaultWorkspaceRow,
 	enterDefaultWorkspace,
 	openFixtureProject,
+	openWorkbenchPanels,
 	openWorkspaceChat,
 	pressPlatformShortcut,
 	revealWorkbenchTool,
@@ -18,7 +18,7 @@ async function openDefaultWorkbench(page: Page, opts?: { withChat?: boolean }): 
 	await openFixtureProject(page);
 	if (opts?.withChat) await seedDefaultWorkspaceChat(page, "rail drag");
 	await enterDefaultWorkspace(page);
-	await applyWorkbenchPreset(page, "Balanced");
+	await openWorkbenchPanels(page);
 	await waitTerminalReady(page);
 }
 
@@ -104,7 +104,7 @@ test("folding, hiding, and showing regions keep the center and the other panes m
 test("edge tools hide only their pane while terminal sessions stay grouped", async ({ page }) => {
 	await openFixtureProject(page);
 	await enterDefaultWorkspace(page);
-	await applyWorkbenchPreset(page, "Balanced");
+	await openWorkbenchPanels(page);
 	await waitTerminalReady(page);
 	await expect(page.getByTestId("left-layout-rail")).toBeVisible();
 	await expect(page.getByTestId("right-layout-rail")).toBeVisible();

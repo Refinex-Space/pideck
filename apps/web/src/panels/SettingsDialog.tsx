@@ -23,13 +23,7 @@ import { TemplatesSettings } from "./TemplatesSettings";
 import { TerminalSettings } from "./TerminalSettings";
 import { WorkspacesSettings } from "./WorkspacesSettings";
 
-export function SettingsDialog({
-	layoutSettings,
-	updateSettings,
-}: {
-	layoutSettings: ReactNode;
-	updateSettings?: ReactNode;
-}) {
+export function SettingsDialog({ updateSettings }: { updateSettings?: ReactNode }) {
 	const t = useT();
 	const [query, setQuery] = useState("");
 	const open = useAppStore((s) => s.settingsOpen);
@@ -175,8 +169,6 @@ export function SettingsDialog({
 							<AppearanceSettings />
 						) : selectedSection === SettingsSection.Language ? (
 							<LanguageSettings />
-						) : selectedSection === SettingsSection.Layout ? (
-							layoutSettings
 						) : selectedSection === SettingsSection.Terminal ? (
 							<TerminalSettings />
 						) : selectedSection === SettingsSection.Workspaces ? (

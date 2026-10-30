@@ -2,12 +2,12 @@ import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test } from "@playwright/test";
 import {
-	applyWorkbenchPreset,
 	createWorkspaceViaDialog,
 	openAppFresh,
 	openAppSettings,
 	openFixtureProject,
 	openSettingsSection,
+	openWorkbenchPanels,
 	openWorkspaceChat,
 	openWorkspaceMenu,
 	revealWorkbenchTool,
@@ -101,7 +101,7 @@ test("entity rows, branch metadata and eyebrows are proportional", async ({ page
 test("Monaco and xterm render the generated code family and size", async ({ page }) => {
 	await openFixtureProject(page);
 	await createWorkspaceViaDialog(page);
-	await applyWorkbenchPreset(page, "Balanced");
+	await openWorkbenchPanels(page);
 	await revealWorkbenchTool(page, "files");
 	await page.getByTestId("file-node").filter({ hasText: "notes.txt" }).first().dblclick();
 	const editor = page.locator(".monaco-editor .view-lines").first();

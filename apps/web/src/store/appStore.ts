@@ -418,7 +418,6 @@ export const SettingsSection = {
 	Language: "language",
 	LineWidth: "line-width",
 	Chat: "chat",
-	Layout: "layout",
 	Updates: "updates",
 	Terminal: "terminal",
 	Workspaces: "workspaces",

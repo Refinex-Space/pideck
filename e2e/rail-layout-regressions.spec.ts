@@ -1,11 +1,11 @@
 import { expect, type Locator, type Page, test } from "@playwright/test";
 import {
 	activateDefaultWorkspace,
-	applyWorkbenchPreset,
 	createWorkspaceViaDialog,
 	enterDefaultWorkspace,
 	openCenterTerminal,
 	openFixtureProject,
+	openWorkbenchPanels,
 	pressPlatformShortcut,
 	revealWorkbenchTool,
 	waitTerminalReady,
@@ -16,7 +16,7 @@ async function openDefault(page: Page): Promise<void> {
 	await page.setViewportSize({ width: 1440, height: 900 });
 	await openFixtureProject(page);
 	await enterDefaultWorkspace(page);
-	await applyWorkbenchPreset(page, "Balanced");
+	await openWorkbenchPanels(page);
 	await waitTerminalReady(page);
 }
 

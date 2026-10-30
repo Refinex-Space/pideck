@@ -561,7 +561,7 @@ a project picker, the prompt hero, and the reused
   so the dialog only renders it. `settingsOpen`/`settingsSection` live in the store so the gear AND the
   Welcome banner can open it deep-linked to a section. Escape closes the dialog except while focus is in an
   input carrying `data-settings-draft-input`, where Escape reverts that draft instead.
-  **Shared Settings primitives** keep every page one shape (shell's injected Layout section reuses them):
+  **Shared Settings primitives** keep every page one shape:
   `SettingsPageContainer` stacks a page's groups with spacing and a divider drawn only between children
   that actually render (each child keeps its element key, so a conditional group never remounts its
   siblings); `SettingsGroup` is a titled block of `SettingsRow`s — label, optional description, one
@@ -823,19 +823,7 @@ a project picker, the prompt hero, and the reused
   global limit stays editable even when global is off, because workspaces forced on still inherit it.
   Global mutations converge through `settings.changed`, workspace ones through `workspace.updated`; none
   is optimistic);
-  the
-  **shell-owned injected Layout
-  section** (Balanced/Focus/Review
-  plus named custom preset cards. The card whose preset matches the live frame reads as applied — derived
-  by comparing geometry, since no current layout is published — and its Apply is disabled. The effective
-  default carries a **Default** badge (**Fallback** when the stored default no longer exists) whose tooltip
-  says Reset uses it and that it is remembered per window. An **Add new layout** card opens a popover (name
-  + Save preset) that captures the live frame. Custom capture/rename/delete updates the host-synchronized
-  catalog and converges through `settings.changed`; default selection and the independent side/bottom group
-  limits are frontend-local, the limits auto-saved inside a collapsed **Advanced** disclosure. With an
-  active workspace each card's **Apply now…** and the **Reset to default** row (`layout-reset-default`) go
-  through one confirm, then ask shell to replace this window's frame and atomically preserve/reflow open
-  resource identities in every retained workspace view); the optional **shell-owned injected Update section**
+  the optional **shell-owned injected Update section**
   (the Settings shell includes its row only when content is provided; `panels` neither discovers native nor
   host update capabilities. If a later welcome removes injected content while Updates is selected, Appearance
   is rendered and highlighted rather than leaving no active row);
@@ -1018,7 +1006,7 @@ a project picker, the prompt hero, and the reused
   fixed Calendar anchor with `Schedule an interview`, `Not now`, and `Never show again` actions. Primary and
   middle-button booking activation open Calendar immediately and record `book`; close, Escape, and backdrop record `postpone`; permanent
   dismissal records `never`. The controlled dialog closes only after the host acks, and reports a rejected
-  action without discarding the still-open choice. `SettingsDialog` receives the Layout section from the
+  action without discarding the still-open choice. `SettingsDialog` receives the optional Update section from the
   shell composition root so no panel reaches sideways into shell, and the `LoginDialog` stays presentational
   (`auth` module).
 

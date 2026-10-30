@@ -1,9 +1,8 @@
 import { expect, type Locator, type Page, test } from "@playwright/test";
 import {
-	applyWorkbenchPreset,
 	createWorkspaceViaDialog,
-	openAppSettings,
 	openFixtureProject,
+	openWorkbenchPanels,
 	revealWorkbenchTool,
 	runInTerminal,
 	visibleTerminalScreen,
@@ -31,7 +30,7 @@ function savedLeftRatio(page: Page): Promise<number | null> {
 	});
 }
 
-test("Studio starts with a bounded navigation width and reapplies it only on explicit choice", async ({
+test("Studio starts with a bounded navigation width that survives a resize and a reload", async ({
 	page,
 }) => {
 	await page.setViewportSize({ width: 2316, height: 1325 });
@@ -61,16 +60,6 @@ test("Studio starts with a bounded navigation width and reapplies it only on exp
 	await expect
 		.poll(async () => Math.abs((await navigationWidth(pane, rail)) - (288 * 1440) / 2316))
 		.toBeLessThan(2);
-	await applyWorkbenchPreset(page, "Studio");
-	await expect.poll(() => savedLeftRatio(page)).toBeCloseTo(288 / 1440, 10);
-	await expect
-		.poll(async () => Math.abs((await navigationWidth(pane, rail)) - 288))
-		.toBeLessThan(2);
-	await openAppSettings(page);
-	await page.getByTestId("settings-nav-layout").click();
-	await expect(
-		page.getByTestId("layout-preset").filter({ has: page.getByText("Studio", { exact: true }) }),
-	).toHaveAttribute("data-applied", "true");
 });
 
 test("Studio keeps tools and the reserved terminal available without opening them", async ({
@@ -119,21 +108,17 @@ test("Studio keeps tools and the reserved terminal available without opening the
 	await expect(visibleTerminalScreen(page)).toContainText("STUDIO_RESTORED_preserved");
 });
 
-test("a saved Balanced frame survives reload instead of being replaced by Studio", async ({
+test("a revealed right column and bottom pane survive reload instead of being replaced by Studio", async ({
 	page,
 }) => {
 	await openFixtureProject(page);
 	await createWorkspaceViaDialog(page);
-	await applyWorkbenchPreset(page, "Balanced");
+	await openWorkbenchPanels(page);
 	await waitTerminalReady(page);
 	await expect(page.getByTestId("right-stack")).toBeVisible();
 	await page.reload();
 	await expect(page.getByTestId("connection-status")).toHaveAttribute("data-status", "connected");
 	await expect(page.getByTestId("right-stack")).toBeVisible();
+	await expect(page.getByTestId("bottom-panel")).toBeVisible();
 	await waitTerminalReady(page);
-	await openAppSettings(page);
-	await page.getByTestId("settings-nav-layout").click();
-	await expect(
-		page.getByTestId("layout-preset").filter({ has: page.getByText("Balanced", { exact: true }) }),
-	).toHaveAttribute("data-applied", "true");
 });

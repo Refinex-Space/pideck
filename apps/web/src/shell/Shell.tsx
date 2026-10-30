@@ -28,7 +28,6 @@ import { UpdateInstallSurfaces, UpdateReadyButton, UpdateSettings, useUpdates } 
 import { ApplicationMenu, ApplicationMenuItems } from "./ApplicationMenu";
 import { AppShortcuts } from "./AppShortcuts";
 import { JbcentralQuotaTopbar } from "./JbcentralQuotaTopbar";
-import { LayoutSettings } from "./LayoutSettings";
 import { useLocalLayoutState } from "./layoutState";
 import { LocationBar, LocationDetails } from "./locationBar";
 import { NativeWindowControls } from "./NativeWindowControls";
@@ -224,7 +223,6 @@ export function Shell() {
 					/>
 				) : null}
 				<SettingsDialog
-					layoutSettings={<LayoutSettings />}
 					updateSettings={updates ? <UpdateSettings updates={updates} /> : undefined}
 				/>
 				{analyticsConsentOpen ? <AnalyticsConsentDialog /> : <InterviewPromptDialog />}

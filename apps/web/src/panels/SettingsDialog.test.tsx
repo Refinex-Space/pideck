@@ -68,15 +68,7 @@ describe("settingsNavGroups", () => {
 					SettingsSection.Templates,
 				],
 			],
-			[
-				"Interface",
-				[
-					SettingsSection.Chat,
-					SettingsSection.Appearance,
-					SettingsSection.Layout,
-					SettingsSection.Terminal,
-				],
-			],
+			["Interface", [SettingsSection.Chat, SettingsSection.Appearance, SettingsSection.Terminal]],
 			[
 				"System",
 				[

@@ -346,24 +346,15 @@ export async function activateDefaultWorkspace(page: Page): Promise<void> {
 	await enterDefaultWorkspace(page);
 }
 
-export async function applyWorkbenchPreset(page: Page, name: string): Promise<void> {
+/** Shows both right-column panes and the bottom terminal pane the way a user does, through the top-bar tools. */
+export async function openWorkbenchPanels(page: Page): Promise<void> {
 	await expect(page.getByTestId("workspace-workbench")).toBeVisible();
-	await openAppSettings(page);
-	await page.getByTestId("settings-nav-layout").click();
-	const preset = page
-		.getByTestId("layout-preset")
-		.filter({ has: page.getByText(name, { exact: true }) });
-	await preset.getByRole("button", { name: "Apply now…" }).click();
-	const confirm = page.getByTestId("layout-apply-confirm");
-	await confirm.click();
-	await expect(confirm).toBeHidden();
-	await page
-		.getByTestId("settings-dialog")
-		.getByRole("button", { name: "Close", exact: true })
-		.click();
-	await expect(page.getByTestId("settings-dialog")).toBeHidden();
-	const notice = page.getByTestId("toast").filter({ hasText: `${name} layout applied` });
-	if (await notice.isVisible()) await notice.getByRole("button", { name: "Dismiss" }).click();
+	await revealWorkbenchTool(page, "specs");
+	await revealWorkbenchTool(page, "review");
+	const terminalRail = page.getByTestId("terminal-rail-group");
+	if ((await terminalRail.getAttribute("aria-pressed")) !== "true") await terminalRail.click();
+	await expect(terminalRail).toHaveAttribute("aria-pressed", "true");
+	await expect(page.getByTestId("bottom-panel")).toBeVisible();
 }
 
 // Use this helper when a pane must be visible; rail controls toggle on each click. "files" means Files in All mode, "changes" Files in Changed mode.

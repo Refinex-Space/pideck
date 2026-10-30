@@ -496,7 +496,6 @@ Connection Status and the **Status Dock** beside the chat (usage, tasks, connect
 | MCP servers | `panels/McpSettings.tsx` → `McpSettings` (+ `panels/McpServerDialogs.tsx`) | The active workspace's MCP servers (`mcp-server-row`, `mcp-add-dialog`, `mcp-approve-dialog`) |
 | GitHub | `panels/GithubSettings.tsx` → `GithubSettings` | Local GitHub connection status |
 | Appearance | `panels/AppearanceSettings.tsx` → `AppearanceSettings` | Theme picker |
-| Layout | `shell/LayoutSettings.tsx` → `LayoutSettings` (injected into the dialog) | Default/apply/capture workbench presets and side-group limit |
 | Terminal | `panels/TerminalSettings.tsx` → `TerminalSettings` | Terminal replay budget |
 | Templates | `panels/TemplatesSettings.tsx` → `TemplatesSettings` | Global / project prompt templates (`template-row`, `template-starters`) |
 | Privacy | `panels/PrivacySettings.tsx` → `PrivacySettings` | Anonymous-usage-analytics toggle |
@@ -642,7 +641,7 @@ its alternatives in parentheses.
 
 **Settings**
 
-- **Settings Dialog** with sections: **Providers**, **GitHub**, **Appearance**, **Layout**,
+- **Settings Dialog** with sections: **Providers**, **GitHub**, **Appearance**,
   **Terminal**, **Templates**, **Privacy**.
 
 **Shared primitives**

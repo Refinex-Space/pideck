@@ -3,10 +3,10 @@ import { join } from "node:path";
 import { expect, type Locator, type Page, test } from "@playwright/test";
 import {
 	activateDefaultWorkspace,
-	applyWorkbenchPreset,
 	enterDefaultWorkspace,
 	openAppSettings,
 	openFixtureProject,
+	openWorkbenchPanels,
 	pressPlatformShortcut,
 	revealFirstProjectWorkspaces,
 	revealWorkbenchTool,
@@ -20,7 +20,7 @@ import { E2E_DATA_DIR } from "./fixtures/paths";
 async function openDefaultWorkbench(page: Page): Promise<void> {
 	await openFixtureProject(page);
 	await enterDefaultWorkspace(page);
-	await applyWorkbenchPreset(page, "Balanced");
+	await openWorkbenchPanels(page);
 	await waitTerminalReady(page);
 	await expect(page.getByTestId("workspace-workbench")).toHaveAttribute(
 		"data-layout-status",
@@ -263,16 +263,10 @@ test("a hidden local frame keeps the host terminal reserved without attaching un
 	context,
 }) => {
 	await openDefaultWorkbench(page);
-	await openAppSettings(page);
-	await page.getByTestId("settings-nav-layout").click();
-	const focusPreset = page.getByTestId("layout-preset").filter({ hasText: "Focus" });
-	await focusPreset.getByRole("button", { name: "Apply now…" }).click();
-	await page.getByTestId("layout-apply-confirm").click();
-	await page.getByRole("dialog").getByRole("button", { name: "Close" }).click();
+	await pressPlatformShortcut(page, "Shift+j");
 	await expect(page.getByTestId("bottom-panel")).toHaveCount(0);
 
 	const workspace = await createWorkspaceWithoutOpening(page);
-	await pressPlatformShortcut(page, "b");
 	const workspaceRow = page.getByTestId("workspace-item").filter({ hasText: workspace.name });
 	await workspaceRow.getByRole("button").first().click();
 	await expect(page.getByTestId("bottom-panel")).toHaveCount(0);
@@ -289,7 +283,7 @@ test("a hidden local frame keeps the host terminal reserved without attaching un
 	await expect(peer.getByTestId("connection-status")).toHaveAttribute("data-status", "connected");
 	await revealFirstProjectWorkspaces(peer);
 	await peer.getByTestId("workspace-item").filter({ hasText: workspace.name }).click();
-	await applyWorkbenchPreset(peer, "Balanced");
+	await openWorkbenchPanels(peer);
 	await expect(peer.getByTestId("bottom-panel")).toBeVisible();
 	await expect(peer.getByTestId("terminal-tab")).toHaveCount(1);
 	await waitTerminalReady(peer);
@@ -614,7 +608,7 @@ test("bottom visibility stays local to each window and survives its reload", asy
 	await expect(peer.getByTestId("connection-status")).toHaveAttribute("data-status", "connected");
 	await revealFirstProjectWorkspaces(peer);
 	await activateDefaultWorkspace(peer);
-	await applyWorkbenchPreset(peer, "Balanced");
+	await openWorkbenchPanels(peer);
 	await expect(peer.getByTestId("bottom-panel")).toBeVisible();
 
 	await pressPlatformShortcut(page, "Shift+j");

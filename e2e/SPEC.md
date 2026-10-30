@@ -310,7 +310,7 @@ geometry/tool placement survives workspace switches while resource tabs and atte
 resource retains its empty group; explicit group removal rehomes hidden-workspace resources; reload restores
 endpoint/surface-qualified local state; a tab initialized with cloned session storage remints its live surface
 id and both tabs retain independent frames through reload; a simultaneous second page neither adopts peer
-file/terminal/chat placement nor misses the peer-created chat's history-only domain event; custom preset CRUD synchronizes, the local default drives explicit frame Reset, and Apply affects only its page. A pristine or invalid local document starts directly from Balanced, and the suite asserts that no current-layout request exists.
+file/terminal/chat placement nor misses the peer-created chat's history-only domain event; A pristine or invalid local document starts directly from Balanced, and the suite asserts that no current-layout request exists.
 
 Bottom-workbench coverage retains all four alignments with real side-stack ownership of excluded lower
 corners, live alignment during side resizing and narrow-width compression, pointer/keyboard persistence of

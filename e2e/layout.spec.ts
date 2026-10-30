@@ -2,15 +2,13 @@ import { realpathSync, rmSync } from "node:fs";
 import { expect, type Locator, type Page, test, type WebSocketRoute } from "@playwright/test";
 import {
 	activateDefaultWorkspace,
-	applyWorkbenchPreset,
 	closeTabViaMenu,
 	createWorkspaceViaDialog,
 	enterDefaultWorkspace,
-	expandDisclosure,
-	openAppSettings,
 	openCenterTerminal,
 	openFixtureProject,
 	openPersistedChat,
+	openWorkbenchPanels,
 	pressPlatformShortcut,
 	pseudoBackgroundColor,
 	revealFirstProjectWorkspaces,
@@ -27,26 +25,8 @@ test.use({ viewport: { width: 1440, height: 900 } });
 async function openDefaultWorkbench(page: Page): Promise<void> {
 	await openFixtureProject(page);
 	await enterDefaultWorkspace(page);
-	await applyWorkbenchPreset(page, "Balanced");
+	await openWorkbenchPanels(page);
 	await waitTerminalReady(page);
-}
-
-/** A preset card by its exact name; descriptions may mention other presets' names ("review panels"). */
-function layoutPreset(page: Page, name: string): Locator {
-	return page.getByTestId("layout-preset").filter({ has: page.getByText(name, { exact: true }) });
-}
-
-/**
- * Group limits sit under the collapsed Advanced disclosure and save on Enter. Escape then drops the
- * draft back to the saved limit, so the value reads `value` only once it was committed.
- */
-async function saveGroupLimit(page: Page, name: string, value: number): Promise<void> {
-	await expandDisclosure(page.getByTestId("layout-advanced-toggle"));
-	const input = page.getByRole("spinbutton", { name });
-	await input.fill(String(value));
-	await input.press("Enter");
-	await input.press("Escape");
-	await expect(input).toHaveValue(String(value));
 }
 
 async function waitForLayoutSettled(page: Page): Promise<void> {
@@ -200,7 +180,7 @@ test("workbench strips and feature toolbars keep one-row geometry with ARIA tabs
 });
 
 test("overflow uses directional fades without changing tab-strip geometry", async ({ page }) => {
-	await page.setViewportSize({ width: 800, height: 720 });
+	await page.setViewportSize({ width: 1000, height: 720 });
 	await openDefaultWorkbench(page);
 	await collapseToOneCenterGroup(page);
 	await openKeptFiles(page, [
@@ -711,7 +691,7 @@ test("hiding a side or the bottom keeps focus outside it and recovers focus from
 	});
 	try {
 		await enterDefaultWorkspace(page);
-		await applyWorkbenchPreset(page, "Balanced");
+		await openWorkbenchPanels(page);
 		await waitTerminalReady(page);
 		await openPersistedChat(page, "focus keeper");
 		const composer = page.getByTestId("chat-input");
@@ -1005,184 +985,6 @@ test("pointer drag exposes deterministic split targets and moves one tab", async
 	await expect(page.getByTestId("center-group").filter({ has: dragged })).toHaveCount(1);
 });
 
-test("applying the Review preset preserves resources and installs its vertical center topology", async ({
-	page,
-}) => {
-	await openDefaultWorkbench(page);
-	await openKeptFiles(page, ["README.md", "notes.txt"]);
-
-	await openAppSettings(page);
-	await page.getByTestId("settings-nav-layout").click();
-	const reviewPreset = layoutPreset(page, "Review");
-	await reviewPreset.getByRole("button", { name: "Apply now…" }).click();
-	await page.getByTestId("layout-apply-confirm").click();
-
-	await expect(page.getByTestId("center-group")).toHaveCount(2);
-	await expect(page.getByTestId("editor-tab")).toHaveCount(2);
-	await expect(page.getByTestId("terminal-tab")).toHaveCount(1);
-	await expect(sideGroups(page, "left")).toHaveCount(1);
-	await expect(sideGroups(page, "right")).toHaveCount(2);
-	await expect(page.getByTestId("bottom-group")).toHaveCount(1);
-	await expect(page.getByTestId("bottom-group")).toContainText("Terminal 1");
-	await page.keyboard.press("Escape");
-	await expect(page.getByRole("heading", { name: "Layout" })).toBeHidden();
-	await expect
-		.poll(async () => {
-			const workbench = await page.getByTestId("workbench").boundingBox();
-			const right = await page.getByTestId("right-stack").boundingBox();
-			return workbench && right ? right.width / workbench.width : 0;
-		})
-		.toBeGreaterThan(0.3);
-	await expect(page.getByTestId("center-split-resize")).toHaveAttribute(
-		"aria-orientation",
-		"horizontal",
-	);
-});
-
-test("the local default preset drives an explicit frame reset", async ({ page }) => {
-	await openDefaultWorkbench(page);
-	await openAppSettings(page);
-	await page.getByTestId("settings-nav-layout").click();
-	const reviewPreset = layoutPreset(page, "Review");
-	await reviewPreset.getByRole("button", { name: "Set default" }).click();
-	await expect(reviewPreset).toHaveAttribute("data-default", "true");
-	await page.getByTestId("layout-reset-default").click();
-	await page.getByTestId("layout-apply-confirm").click();
-	await page.getByRole("dialog").getByRole("button", { name: "Close" }).click();
-	await expect(page.getByTestId("center-group")).toHaveCount(2);
-	await expect(page.getByTestId("center-split-resize")).toHaveAttribute(
-		"aria-orientation",
-		"horizontal",
-	);
-
-	await reloadDefaultWorkbench(page);
-	await expect(page.getByTestId("center-group")).toHaveCount(2);
-	await openAppSettings(page);
-	await page.getByTestId("settings-nav-layout").click();
-	await expect(layoutPreset(page, "Review")).toHaveAttribute("data-default", "true");
-});
-
-test("custom presets synchronize while defaults and group limits remain window-local", async ({
-	page,
-	context,
-}) => {
-	await openDefaultWorkbench(page);
-	await openAppSettings(page);
-	await page.getByTestId("settings-nav-layout").click();
-
-	await page.getByTestId("layout-add-new").click();
-	await page.getByRole("textbox", { name: "Custom preset name" }).fill("My workbench");
-	await page.getByRole("button", { name: "Save preset" }).click();
-	await expect(page.getByTestId("layout-preset-save-row")).toHaveCount(0);
-	let custom = page.getByTestId("layout-preset").filter({ hasText: "My workbench" });
-	await expect(custom).toBeVisible();
-	await custom.getByRole("button", { name: "Rename My workbench" }).click();
-	await page.getByRole("textbox", { name: "Rename My workbench" }).fill("My renamed workbench");
-	await page.getByRole("button", { name: "Save My workbench name" }).click();
-	custom = page.getByTestId("layout-preset").filter({ hasText: "My renamed workbench" });
-	await expect(custom).toBeVisible();
-	await custom.getByRole("button", { name: "Set default" }).click();
-	await expect(custom).toHaveAttribute("data-default", "true");
-
-	await saveGroupLimit(page, "Maximum side groups", 7);
-	await saveGroupLimit(page, "Maximum bottom groups", 4);
-	// Remounting the limits re-reads them from the saved window preferences, not the drafts.
-	const advanced = page.getByTestId("layout-advanced-toggle");
-	await advanced.click();
-	await expect(advanced).toHaveAttribute("aria-expanded", "false");
-	await expandDisclosure(advanced);
-	await expect(page.getByRole("spinbutton", { name: "Maximum side groups" })).toHaveValue("7");
-	await expect(page.getByRole("spinbutton", { name: "Maximum bottom groups" })).toHaveValue("4");
-
-	const peer = await context.newPage();
-	await peer.goto("/");
-	await expect(peer.getByTestId("connection-status")).toHaveAttribute("data-status", "connected");
-	await openAppSettings(peer);
-	await peer.getByTestId("settings-nav-layout").click();
-	const peerCustom = peer.getByTestId("layout-preset").filter({ hasText: "My renamed workbench" });
-	await expect(peerCustom).toBeVisible();
-	await expect(peerCustom).not.toHaveAttribute("data-default", "true");
-	await expandDisclosure(peer.getByTestId("layout-advanced-toggle"));
-	await expect(peer.getByRole("spinbutton", { name: "Maximum side groups" })).toHaveValue("6");
-
-	await custom.getByRole("button", { name: "Delete My renamed workbench" }).click();
-	await expect(custom).toHaveCount(0);
-	await expect(peerCustom).toHaveCount(0);
-	await peer.close();
-	await expect(page.getByTestId("layout-preset").filter({ hasText: "Studio" })).toHaveAttribute(
-		"data-default",
-		"true",
-	);
-});
-
-test("preset-card actions wrap inside their card in a longer language", async ({ page }) => {
-	await openFixtureProject(page);
-	await openAppSettings(page);
-	await page.getByTestId("settings-nav-language").click();
-	await page.getByTestId("language-es").click();
-	await expect(page.locator("html")).toHaveAttribute("lang", "es");
-
-	await page.getByTestId("settings-nav-layout").click();
-	const cards = page.getByTestId("layout-preset");
-	await expect(cards.first()).toBeVisible();
-	for (let index = 0; index < (await cards.count()); index += 1) {
-		const card = cards.nth(index);
-		const cardBox = await card.boundingBox();
-		expect(cardBox).not.toBeNull();
-		if (!cardBox) continue;
-		const buttons = card.getByRole("button");
-		for (let buttonIndex = 0; buttonIndex < (await buttons.count()); buttonIndex += 1) {
-			const buttonBox = await buttons.nth(buttonIndex).boundingBox();
-			expect(buttonBox).not.toBeNull();
-			if (!buttonBox) continue;
-			expect(buttonBox.x).toBeGreaterThanOrEqual(cardBox.x - 1);
-			expect(buttonBox.x + buttonBox.width).toBeLessThanOrEqual(cardBox.x + cardBox.width + 1);
-		}
-	}
-
-	await page.getByTestId("settings-nav-language").click();
-	await page.getByTestId("settings-language").getByTestId("language-system").click();
-	await expect(page.locator("html")).toHaveAttribute("lang", "en");
-});
-
-test("an accepted side-group overage is grandfathered without allowing further growth", async ({
-	page,
-}) => {
-	await openDefaultWorkbench(page);
-	await openAppSettings(page);
-	await page.getByTestId("settings-nav-layout").click();
-	await saveGroupLimit(page, "Maximum side groups", 3);
-	await page.getByRole("dialog").getByRole("button", { name: "Close" }).click();
-
-	await page.getByTestId("terminal-tab").click({ button: "right" });
-	await page.getByRole("menuitem", { name: "New right group at bottom", exact: true }).click();
-	await expect(sideGroups(page, "right")).toHaveCount(3);
-
-	await createWorkspaceViaDialog(page);
-	await openAppSettings(page);
-	await page.getByTestId("settings-nav-layout").click();
-	await saveGroupLimit(page, "Maximum side groups", 2);
-	await page.getByRole("dialog").getByRole("button", { name: "Close" }).click();
-
-	await activateDefaultWorkspace(page);
-	await expect(page.getByTestId("center-tabs")).toBeVisible();
-	await expect(sideGroups(page, "right")).toHaveCount(3);
-	await page.getByTestId("tab-files").click({ button: "right" });
-	await expect(page.getByRole("menuitem", { name: /^New right group at top/ })).toBeDisabled();
-	await expect(page.getByRole("menuitem", { name: /^New right group at bottom/ })).toBeDisabled();
-	await page.keyboard.press("Escape");
-
-	await page.getByTestId("terminal-tab").click({ button: "right" });
-	await expect(
-		page.getByRole("menuitem", { name: /New right group at bottom — limited to 2/ }),
-	).toBeDisabled();
-	await expect(
-		page.getByRole("menuitem", { name: /New right group at top — limited to 2/ }),
-	).toBeDisabled();
-	await page.keyboard.press("Escape");
-	await expect(sideGroups(page, "right")).toHaveCount(3);
-});
-
 test("a narrow viewport compresses locally without rewriting recursive topology", async ({
 	page,
 }) => {
@@ -1223,7 +1025,7 @@ test("frontend windows keep chat and file placement independent", async ({ page,
 	await expect(peer.getByTestId("connection-status")).toHaveAttribute("data-status", "connected");
 	await revealFirstProjectWorkspaces(peer);
 	await activateDefaultWorkspace(peer);
-	await applyWorkbenchPreset(peer, "Balanced");
+	await openWorkbenchPanels(peer);
 	await expect(page.getByTestId("terminal-tab")).toHaveCount(1);
 	await expect(peer.getByTestId("terminal-tab")).toHaveCount(1);
 	const peerChat = peer.locator('[data-testid="editor-tab"][data-kind="chat"]');

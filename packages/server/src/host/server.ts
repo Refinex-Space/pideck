@@ -129,7 +129,7 @@ import {
 } from "../workspaces";
 import { BLOB_PREFIX, FILES_PREFIX, serveBlob, serveWorktreeFile } from "./fileRoutes";
 import { setFsNudgePublisher } from "./fsNudge";
-import { handleRequest, requestMethodDiagnostic } from "./handlers";
+import { handleRequest, requestErrorReport, requestMethodDiagnostic } from "./handlers";
 import { provisionInitialTerminal } from "./initialTerminal";
 import { trackLoginOutcome } from "./loginAnalytics";
 import { publishLspStatus } from "./lspHost";
@@ -141,7 +141,12 @@ import {
 	observeCurrentSetup,
 	setupObservation,
 } from "./productAnalytics";
-import { RequestReplayCache } from "./requestReplayCache";
+import {
+	heaviestReplayMethod,
+	type ReplayLoad,
+	RequestReplayCache,
+	RequestReplayOverflowError,
+} from "./requestReplayCache";
 import {
 	installRequestReviewSeam,
 	maybeAutoReReview,
@@ -215,6 +220,13 @@ const RECENT_FOLDER_CHECK_BUDGET_MS = 250;
 const log = logger("host");
 
 const isRequestId = (id: unknown): id is string => typeof id === "string";
+
+function formatReplayLoad(load: ReplayLoad): string {
+	return Object.entries(load)
+		.sort(([, a], [, b]) => b.pending + b.settled - (a.pending + a.settled))
+		.map(([method, { pending, settled }]) => `${method} ${pending} pending/${settled} settled`)
+		.join(", ");
+}
 
 function clientProtocolVersion(value: string | null): number {
 	const parsed = Number(value);
@@ -448,11 +460,7 @@ export async function createServer(options: CreateServerOptions = {}): Promise<R
 							} catch (err) {
 								const error = err instanceof Error ? err.message : String(err);
 								log.debug(`ws ${methodDiagnostic} failed`);
-								reportError(err, {
-									source: "request",
-									handled: true,
-									...(methodDiagnostic === method ? { requestMethod: method } : {}),
-								});
+								reportError(err, requestErrorReport(method));
 								const code = errorCodeOf(err);
 								return JSON.stringify({
 									id: requestId,
@@ -462,11 +470,23 @@ export async function createServer(options: CreateServerOptions = {}): Promise<R
 								});
 							}
 						},
+						methodDiagnostic,
 					);
 					if (ws.send(response) === 0) ws.close();
 				} catch (err) {
 					const error = err instanceof Error ? err.message : String(err);
-					if (ws.send(JSON.stringify({ id: requestId, ok: false, error })) === 0) ws.close();
+					if (err instanceof RequestReplayOverflowError && err.load) {
+						log.warn(`replay namespace full; held requests: ${formatReplayLoad(err.load)}`);
+						reportError(err, requestErrorReport(heaviestReplayMethod(err.load) ?? method));
+					}
+					const code = errorCodeOf(err);
+					const reply = JSON.stringify({
+						id: requestId,
+						ok: false,
+						error,
+						...(code ? { errorCode: code } : {}),
+					});
+					if (ws.send(reply) === 0) ws.close();
 				}
 			},
 			drain(ws) {

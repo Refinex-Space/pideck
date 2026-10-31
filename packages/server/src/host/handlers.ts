@@ -80,6 +80,7 @@ import {
 } from "../agent";
 import {
 	type AdditionalAnalyticsCapture,
+	type ErrorReport,
 	reportClientError,
 	type SendMode,
 	track,
@@ -1481,6 +1482,14 @@ function dispatch<M extends WsMethodName>(method: M, params: WsParams<M>, ctx: R
 
 export function requestMethodDiagnostic(method: string): string {
 	return isWsMethod(method) ? method : "unknown method";
+}
+
+export function requestErrorReport(method: string): ErrorReport {
+	return {
+		source: "request",
+		handled: true,
+		...(isWsMethod(method) ? { requestMethod: method } : {}),
+	};
 }
 
 function supportsBranchStatus(protocolVersion: number | undefined): boolean {

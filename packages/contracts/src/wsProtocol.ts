@@ -1203,7 +1203,8 @@ export type WsErrorCode =
 	| "SPEECH_BUSY"
 	| "SPEECH_DICTATION_UNKNOWN"
 	| "INSTRUCTIONS_CONFLICT"
-	| "INSTRUCTIONS_TOO_LARGE";
+	| "INSTRUCTIONS_TOO_LARGE"
+	| "REQUEST_REPLAY_OVERFLOW";
 
 export interface WsResponse {
 	id: string;

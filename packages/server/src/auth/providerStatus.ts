@@ -4,10 +4,12 @@ import {
 	type JbcentralStatus,
 	type ProviderStatus,
 	type ProviderStatusReport,
+	type ProviderWarning,
 } from "@thinkrail/contracts";
 import { jbcentralInstall } from "@thinkrail/shared/jbcentral";
 import {
 	describeProviderAuth,
+	globalProviderWarnings,
 	type ProviderAuthFacts,
 	settledAvailableModels,
 	usePiRuntime,
@@ -27,6 +29,7 @@ export interface ProviderStatusSources {
 	hasAuth: (id: string) => boolean;
 	jbcentral: JbcentralStatus;
 	jbcentralInstall: JbcentralInstall;
+	warnings: Record<ProviderWarning, boolean>;
 }
 
 export function buildProviderReport(sources: ProviderStatusSources): ProviderStatusReport {
@@ -72,6 +75,7 @@ export function buildProviderReport(sources: ProviderStatusSources): ProviderSta
 		providers,
 		jbcentral: sources.jbcentral,
 		jbcentralInstall: sources.jbcentralInstall,
+		warnings: sources.warnings,
 	};
 }
 
@@ -141,6 +145,7 @@ export async function getProviderStatus(): Promise<ProviderStatusReport> {
 			hasAuth: (id) => runtime.getProviderAuthStatus(id).configured,
 			jbcentral,
 			jbcentralInstall: install,
+			warnings: globalProviderWarnings(),
 		});
 	});
 }

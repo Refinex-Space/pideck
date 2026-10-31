@@ -30,6 +30,7 @@ import {
 	compactSession,
 	createSession,
 	deleteSession,
+	disableAnthropicExtraUsageWarning,
 	ensureSessionAttached,
 	followUpSession,
 	getSessionCommands,
@@ -1319,6 +1320,10 @@ const handlers: WsHandlers = {
 	},
 	"provider.logout": async (params) => {
 		await logoutProvider(params.providerId);
+		return { ok: true } as const;
+	},
+	"provider.disableWarning": async () => {
+		await disableAnthropicExtraUsageWarning();
 		return { ok: true } as const;
 	},
 	"provider.jbcentralConnect": () =>

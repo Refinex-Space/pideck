@@ -16,10 +16,12 @@ import { Button } from "@thinkrail/ui/button";
 import { SkeletonRows } from "@thinkrail/ui/skeleton";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { LoginDialog } from "@/auth";
+import { ExtraUsageNotice } from "@/chat/ExtraUsageNotice";
 import { AUTH_KIND_LABEL } from "@/chat/modelPicker";
 import { selectLoginBusy, toast, useAppStore } from "@/store";
 import { errorText, getTransport } from "@/transport";
 import { CustomEndpointsSettings, useCustomEndpoints } from "./CustomEndpointsSettings";
+import { warnsExtraUsageOnSignIn } from "./extraUsageWarning";
 import { JetBrainsAiCard } from "./JetBrainsAiCard";
 import { SettingsGroup, SettingsPageContainer } from "./SettingsGroup";
 
@@ -80,7 +82,7 @@ export function ProvidersSettings() {
 		setBusyProvider(providerId);
 		const start = async () => {
 			const { loginId } = await getTransport().request("provider.loginStart", { providerId, type });
-			useAppStore.getState().beginLogin(loginId, providerId);
+			useAppStore.getState().beginLogin(loginId, providerId, undefined, type);
 		};
 		await start()
 			.catch((err: unknown) =>
@@ -267,6 +269,9 @@ export function ProvidersSettings() {
 					key={activeLogin.loginId}
 					state={activeLogin}
 					providerName={loginProviderName}
+					{...(warnsExtraUsageOnSignIn(activeLogin, report)
+						? { notice: <ExtraUsageNotice context="signIn" /> }
+						: {})}
 					onReply={(value) => {
 						getTransport()
 							.request("provider.loginReply", { loginId: activeLogin.loginId, value })

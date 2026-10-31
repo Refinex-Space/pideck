@@ -26,6 +26,7 @@ function sources(overrides: Partial<ProviderStatusSources> = {}): ProviderStatus
 		hasAuth: () => false,
 		jbcentral: { state: "absent" },
 		jbcentralInstall: INSTALL,
+		warnings: { anthropicExtraUsage: true },
 		...overrides,
 	};
 }
@@ -48,6 +49,7 @@ describe("buildProviderReport", () => {
 			providers: [],
 			jbcentral: { state: "absent" },
 			jbcentralInstall: INSTALL,
+			warnings: { anthropicExtraUsage: true },
 		});
 	});
 

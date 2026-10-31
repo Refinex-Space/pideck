@@ -211,3 +211,107 @@ export function toPrDescription(raw: string): string | null {
 		.trim();
 	return hasTitleContent(text) ? text : null;
 }
+
+const NEXT_PROMPT_SYSTEM =
+	"You predict the next message a user will type in a coding-agent chat. You see their recent messages and " +
+	"the assistant's latest reply. Output ONE short message the user would plausibly send next: the natural " +
+	"follow-up step, the answer to a question the assistant just asked, or the request that continues their " +
+	"workflow. Write it as the user, in the same language and tone as their latest message, 2 to 12 words " +
+	"(or about 30 characters in Chinese or Japanese). Never write as the assistant, never explain, no quotes, " +
+	"no markdown, nothing the user did not hint at, and never propose deleting, force-pushing, deploying or " +
+	"spending. If the next step is not obvious, output exactly NONE.";
+
+const NEXT_PROMPT_TIMEOUT_MS = 15_000;
+const NEXT_PROMPT_MAX_TOKENS = 200;
+const NEXT_PROMPT_MAX_LENGTH = 120;
+const NEXT_PROMPT_MAX_PROMPTS = 4;
+const NEXT_PROMPT_PROMPT_LENGTH = 400;
+const NEXT_PROMPT_REPLY_LENGTH = 1800;
+const NEXT_PROMPT_MAX_TOOLS = 12;
+
+export interface NextPromptInput {
+	/** The user's recent messages, oldest first; the last one started the run that just finished. */
+	prompts: string[];
+	/** The assistant's closing reply of that run, text only. */
+	reply: string;
+	/** Names of the tools the run called. */
+	tools: string[];
+	/** The chat's own model: the call stays on its provider. */
+	model: { provider: string; id: string };
+}
+
+/**
+ * Guess the user's next message after a finished run — best-effort, time-boxed, tool-free, on the chat's own
+ * provider. Returns one short line or `null` (never throws) when there is no obvious next step, the model is
+ * unavailable, it times out, or the output is unusable. The caller decides whether the run is worth guessing for.
+ */
+export async function suggestNextPrompt(input: NextPromptInput): Promise<string | null> {
+	const prompt = buildNextPromptPrompt(input);
+	if (!prompt) return null;
+	try {
+		const { text } = await runOneShot({
+			system: NEXT_PROMPT_SYSTEM,
+			prompt,
+			tier: "cheap",
+			within: { provider: input.model.provider, modelId: input.model.id },
+			maxTokens: NEXT_PROMPT_MAX_TOKENS,
+			temperature: 0.3,
+			signal: AbortSignal.timeout(NEXT_PROMPT_TIMEOUT_MS),
+		});
+		return toNextPrompt(text, input.prompts.at(-1));
+	} catch {
+		return null;
+	}
+}
+
+function buildNextPromptPrompt(input: NextPromptInput): string | null {
+	const prompts = input.prompts
+		.map((text) => text.trim())
+		.filter(Boolean)
+		.slice(-NEXT_PROMPT_MAX_PROMPTS);
+	const reply = input.reply.trim();
+	if (prompts.length === 0 || !reply) return null;
+	const tools = [...new Set(input.tools)].slice(0, NEXT_PROMPT_MAX_TOOLS);
+	const parts = [
+		`Recent user messages (oldest first):\n${prompts
+			.map((text, index) => `${index + 1}. ${clip(text, NEXT_PROMPT_PROMPT_LENGTH)}`)
+			.join("\n")}`,
+		`Assistant's latest reply:\n${clipTail(reply, NEXT_PROMPT_REPLY_LENGTH)}`,
+	];
+	if (tools.length > 0) parts.push(`Tools the run used: ${tools.join(", ")}`);
+	return parts.join("\n\n");
+}
+
+const ASSISTANT_VOICE =
+	/^(?:i['’]ll\b|i will\b|i can\b|i['’]ve\b|sure\b|certainly\b|of course\b|let me\b|here(?:['’]s| is)\b|好的|当然|我来|我将|我可以|让我)/i;
+const WRAPPING_QUOTES: ReadonlyArray<readonly [string, string]> = [
+	['"', '"'],
+	["'", "'"],
+	["`", "`"],
+	["“", "”"],
+	["「", "」"],
+];
+
+/** The output guard: one plain line the user could have typed, or `null`. Never truncates a half-sentence. */
+export function toNextPrompt(raw: string, lastPrompt?: string): string | null {
+	const lines = raw
+		.trim()
+		.split(/\r?\n/)
+		.map((line) => line.trim())
+		.filter(Boolean);
+	if (lines.length !== 1) return null;
+	let text = (lines[0] ?? "").replace(/^(?:[-*>]\s+|(?:user|you)\s*:\s*)/i, "").trim();
+	for (const [open, close] of WRAPPING_QUOTES) {
+		if (text.length > 2 && text.startsWith(open) && text.endsWith(close)) {
+			text = text.slice(open.length, text.length - close.length).trim();
+		}
+	}
+	if (!hasTitleContent(text) || /^none\.?$/i.test(text)) return null;
+	if (text.length > NEXT_PROMPT_MAX_LENGTH || ASSISTANT_VOICE.test(text)) return null;
+	if (lastPrompt && text.toLowerCase() === lastPrompt.trim().toLowerCase()) return null;
+	return text;
+}
+
+function clipTail(text: string, max: number): string {
+	return text.length <= max ? text : `…${text.slice(text.length - max)}`;
+}

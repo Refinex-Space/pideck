@@ -83,6 +83,7 @@ export {
 	preparePiRuntimeGeneration,
 	settledAvailableModels,
 } from "./piRuntime";
+export type { PredictionSource } from "./predictionSource";
 export { piTrustsProjectPath, projectTrustSummary } from "./projectTrust";
 export { describeProviderAuth, type ProviderAuthFacts } from "./providerAuth";
 export {

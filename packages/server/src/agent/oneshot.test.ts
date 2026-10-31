@@ -61,6 +61,32 @@ test("pickModel(default) returns the first available model; empty set → null",
 	expect(await pickModel("default")).toBeNull();
 });
 
+test("pickModel confined to a provider takes its known small model and never another provider's", async () => {
+	stubAvailable([
+		withProvider("anthropic", "claude-opus-faux", 15),
+		withProvider("anthropic", "claude-haiku-faux", 1),
+		withProvider("openai", "gpt-5-mini", 1),
+	]);
+	const within = { provider: "anthropic", modelId: "claude-opus-faux" };
+	expect((await pickModel("cheap", within))?.id).toBe("claude-haiku-faux");
+	expect((await pickModel("default", within))?.id).toBe("claude-haiku-faux");
+});
+
+test("pickModel confined to a provider without a known small model uses the chat's own model", async () => {
+	stubAvailable([
+		withProvider("gateway", "big-1", 5),
+		withProvider("gateway", "tiny-1", 1),
+		withProvider("anthropic", "claude-haiku-faux", 1),
+	]);
+	const within = { provider: "gateway", modelId: "big-1" };
+	expect((await pickModel("cheap", within))?.id).toBe("big-1");
+});
+
+test("pickModel confined to a provider is null when that provider has nothing available", async () => {
+	stubAvailable([withProvider("anthropic", "claude-haiku-faux", 1)]);
+	expect(await pickModel("cheap", { provider: "gateway", modelId: "big-1" })).toBeNull();
+});
+
 test("completeOnce throws 'no-model' when nothing is authenticated", async () => {
 	stubAvailable([]);
 	await expect(completeOnce({ prompt: "hi" })).rejects.toThrow("no-model");

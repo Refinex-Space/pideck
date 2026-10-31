@@ -52,6 +52,7 @@ import { TemplateEditorDialog } from "./TemplateEditorDialog";
 import { useMentionSource } from "./useMentionSource";
 import { useModelCatalog } from "./useModelCatalog";
 import { useModelPreferences } from "./useModelPreferences";
+import { usePromptPrediction } from "./usePromptPrediction";
 import { useSessionStats } from "./useSessionStats";
 import "./tools/register";
 import type { ChatAttachment } from "./types";
@@ -160,6 +161,7 @@ export default function ChatView({
 	useEffect(() => {
 		if (isCurrentChat) useAppStore.getState().rememberChatTarget(workspaceId, sessionId);
 	}, [isCurrentChat, sessionId, workspaceId]);
+	const prediction = usePromptPrediction(sessionId, isCurrentChat, draft);
 	const composerInsertion = useAppStore((s) => s.sessions[sessionId]?.composerInsertion);
 	useEffect(() => {
 		if (!composerInsertion) return;
@@ -682,6 +684,8 @@ export default function ChatView({
 							.rememberComposerCursor(workspaceId, sessionId, { draft, start, end })
 					}
 					isStreaming={isStreaming}
+					prediction={prediction.text}
+					onPredictionDismiss={prediction.dismiss}
 					growthLimit={composerGrowthLimit}
 					commands={mergedCommands}
 					templatePending={templatePending}

@@ -2,8 +2,10 @@ import { afterEach, expect, test } from "bun:test";
 import {
 	type OneShotRunner,
 	setOneShotRunner,
+	suggestNextPrompt,
 	suggestPlanSummary,
 	suggestPrDescription,
+	toNextPrompt,
 	toPrDescription,
 } from "./assist";
 
@@ -152,4 +154,90 @@ test("suggestPrDescription is best-effort: nothing to describe, a throw, or empt
 	expect(calls).toBe(1);
 	expect(toPrDescription("```\n\n```")).toBeNull();
 	expect(toPrDescription("  ## Summary\n\nDone. ")).toBe("## Summary\n\nDone.");
+});
+
+const nextPromptInput = {
+	prompts: ["Add a retry to the upload client", "Now cover it with a test"],
+	reply: "Added the retry and a test. Want me to run the whole suite?",
+	tools: ["edit", "bash", "edit"],
+	model: { provider: "anthropic", id: "claude-opus-faux" },
+};
+
+test("suggestNextPrompt stays on the chat's provider and feeds the runner the recent exchange", async () => {
+	let request: Parameters<OneShotRunner>[0] | undefined;
+	fakeRunner(async (req) => {
+		request = req;
+		return { text: "yes, run the whole suite", model: { provider: "anthropic", id: "m" } };
+	});
+	expect(await suggestNextPrompt(nextPromptInput)).toBe("yes, run the whole suite");
+	expect(request?.within).toEqual({ provider: "anthropic", modelId: "claude-opus-faux" });
+	expect(request?.tier).toBe("cheap");
+	expect(request?.prompt).toContain("1. Add a retry to the upload client");
+	expect(request?.prompt).toContain("2. Now cover it with a test");
+	expect(request?.prompt).toContain("Want me to run the whole suite?");
+	expect(request?.prompt).toContain("Tools the run used: edit, bash");
+});
+
+test("suggestNextPrompt degrades to null on a runner failure, an empty exchange or an unusable answer", async () => {
+	fakeRunner(async () => {
+		throw new Error("no-model");
+	});
+	expect(await suggestNextPrompt(nextPromptInput)).toBeNull();
+	let called = false;
+	fakeRunner(async () => {
+		called = true;
+		return { text: "go on", model: { provider: "p", id: "m" } };
+	});
+	expect(await suggestNextPrompt({ ...nextPromptInput, reply: "  " })).toBeNull();
+	expect(await suggestNextPrompt({ ...nextPromptInput, prompts: [] })).toBeNull();
+	expect(called).toBe(false);
+	fakeRunner(async () => ({ text: "NONE", model: { provider: "p", id: "m" } }));
+	expect(await suggestNextPrompt(nextPromptInput)).toBeNull();
+});
+
+test("suggestNextPrompt keeps the end of a long reply, where the question usually is", async () => {
+	let seen = "";
+	fakeRunner(async (req) => {
+		seen = req.prompt;
+		return { text: "go ahead", model: { provider: "p", id: "m" } };
+	});
+	await suggestNextPrompt({ ...nextPromptInput, reply: `${"x".repeat(5000)} Shall I continue?` });
+	expect(seen).toContain("Shall I continue?");
+	expect(seen).toContain("\u2026xxx");
+	expect(seen.length).toBeLessThan(3000);
+});
+
+test("toNextPrompt accepts one plain line and strips list markers, labels and wrapping quotes", () => {
+	expect(toNextPrompt("run the tests")).toBe("run the tests");
+	expect(toNextPrompt('  "run the tests"  ')).toBe("run the tests");
+	expect(toNextPrompt("`commit this`")).toBe("commit this");
+	expect(toNextPrompt("\u300c\u8dd1\u4e00\u4e0b\u6d4b\u8bd5\u300d")).toBe(
+		"\u8dd1\u4e00\u4e0b\u6d4b\u8bd5",
+	);
+	expect(toNextPrompt("- fix the lint errors")).toBe("fix the lint errors");
+	expect(toNextPrompt("User: fix the lint errors")).toBe("fix the lint errors");
+});
+
+test("toNextPrompt rejects NONE, empty, multi-line, over-long and assistant-voiced output", () => {
+	for (const raw of [
+		"NONE",
+		"none.",
+		"",
+		"   ",
+		"...",
+		"run the tests\nthen commit",
+		"I'll run the tests for you",
+		"Sure, here you go",
+		"\u597d\u7684\uff0c\u6211\u6765\u8dd1\u6d4b\u8bd5",
+		"x".repeat(121),
+	]) {
+		expect(toNextPrompt(raw)).toBeNull();
+	}
+});
+
+test("toNextPrompt drops a guess that only repeats the previous message", () => {
+	expect(toNextPrompt("Now cover it with a test", " now cover it with a test ")).toBeNull();
+	expect(toNextPrompt("Now cover it with a test", "something else")).toBe(
+		"Now cover it with a test",
+	);
 });

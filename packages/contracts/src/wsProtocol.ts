@@ -129,7 +129,8 @@ export type TemplateReadLocation =
 
 // PiDeck-owned feature versions sit above every thinkrail one (the fork syncs up to 102), so a version number
 // never means two features and upstream's constants keep their numbers when it is merged or cherry-picked.
-export const PROTOCOL_VERSION = 108;
+export const PROTOCOL_VERSION = 109;
+export const PREDICTION_PROTOCOL_VERSION = 109;
 export const INSTRUCTIONS_PROTOCOL_VERSION = 108;
 export const SPEECH_PROTOCOL_VERSION = 107;
 export const LSP_PROTOCOL_VERSION = 106;
@@ -380,6 +381,7 @@ export const WS_METHODS = {
 	instructionsSave: "instructions.save",
 	instructionsApply: "instructions.apply",
 	instructionsReveal: "instructions.reveal",
+	predictionRequest: "prediction.request",
 	lspGet: "lsp.get",
 	lspUpdate: "lsp.update",
 	lspRestart: "lsp.restart",
@@ -1111,6 +1113,15 @@ export interface WsMethodMap {
 	"instructions.apply": { params: Record<string, never>; result: InstructionsApplyResult };
 	/** Shows the file in the OS file manager, or its folder when it does not exist yet. */
 	"instructions.reveal": { params: { kind: InstructionKind }; result: Ack };
+	/**
+	 * One grey next-prompt suggestion for a finished run, or `text: null` when the host declines (stale run,
+	 * not idle, run did not succeed, nothing obvious to suggest, no model). `completionId` is the
+	 * `SessionState.completion` the client saw; a host whose state moved on answers `null`.
+	 */
+	"prediction.request": {
+		params: { sessionId: string; completionId: string };
+		result: { text: string | null };
+	};
 	"environment.update": {
 		params: { environment: HostEnvironment };
 		result: HostEnvironmentUpdateResult;

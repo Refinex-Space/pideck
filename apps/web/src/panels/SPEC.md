@@ -846,7 +846,8 @@ a project picker, the prompt hero, and the reused
   toast without changing geometry); **`ChatSettings`** (one **Appearance and behavior** group of rows —
   **Message order** segmented over `store.chatMessageOrder` (Oldest first, the compatibility default /
   Newest first, the opt-in), **Composer size** segmented over the composer-growth limit (Compact / Roomy /
-  Half chat), the chat `LineWidthControl`, and the **Streaming response movement** row, a two-handle range
+  Half chat), the **Suggest the next message** switch (`composer-predictions-toggle`, over
+  `AppConfig.composerPredictions`, shown only on a host at `PREDICTION_PROTOCOL_VERSION`), the chat `LineWidthControl`, and the **Streaming response movement** row, a two-handle range
   over `store.streamingResponseMovement`. The movement row's
   copy is “When the chat moves while an answer grows, and where its newest edge lands”; one axis runs
   Top → Message box, Settle is 25–90, Trigger is 35–100, both step by 5 with a 10-point minimum gap, and

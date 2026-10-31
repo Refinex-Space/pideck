@@ -5,10 +5,18 @@ import { type AvailableModelsRuntime, settledAvailableModels } from "./piRuntime
 
 export type ModelTier = "cheap" | "default";
 
+/** The chat's own model: a call made on its behalf must not leave its provider. */
+export interface OneShotProvider {
+	provider: string;
+	modelId: string;
+}
+
 export interface OneShotRequest {
 	system?: string;
 	prompt: string;
 	tier?: ModelTier;
+	/** Confine the pick to this provider: its known small model, else this very model. Overrides `tier`. */
+	within?: OneShotProvider;
 	maxTokens?: number;
 	temperature?: number;
 	signal?: AbortSignal;
@@ -29,9 +37,27 @@ const CHEAP_MODELS: ReadonlyArray<readonly [provider: string, idPrefix: string]>
 	["xai", "grok-build"],
 ];
 
-function pickModelFromRuntime(runtime: AvailableModelsRuntime, tier: ModelTier): Model<Api> | null {
+function pickWithinProvider(
+	available: readonly Model<Api>[],
+	within: OneShotProvider,
+): Model<Api> | null {
+	const sameProvider = available.filter((model) => String(model.provider) === within.provider);
+	for (const [provider, prefix] of CHEAP_MODELS) {
+		if (provider !== within.provider) continue;
+		const hit = sameProvider.find((model) => model.id.startsWith(prefix));
+		if (hit) return hit;
+	}
+	return sameProvider.find((model) => model.id === within.modelId) ?? null;
+}
+
+function pickModelFromRuntime(
+	runtime: AvailableModelsRuntime,
+	tier: ModelTier,
+	within?: OneShotProvider,
+): Model<Api> | null {
 	const available = settledAvailableModels(runtime);
 	if (available.length === 0) return null;
+	if (within) return pickWithinProvider(available, within);
 	if (tier === "default") return preferredDefaultModel(available) ?? null;
 	for (const [provider, prefix] of CHEAP_MODELS) {
 		const hit = available.find(
@@ -53,13 +79,16 @@ function tokenCost(model: Model<Api>): number {
 	return model.cost.input + model.cost.output;
 }
 
-export function pickModel(tier: ModelTier = "cheap"): Promise<Model<Api> | null> {
-	return usePiRuntime((runtime) => pickModelFromRuntime(runtime, tier));
+export function pickModel(
+	tier: ModelTier = "cheap",
+	within?: OneShotProvider,
+): Promise<Model<Api> | null> {
+	return usePiRuntime((runtime) => pickModelFromRuntime(runtime, tier, within));
 }
 
 export function completeOnce(req: OneShotRequest): Promise<OneShotResult> {
 	return usePiRuntime(async (runtime) => {
-		const model = pickModelFromRuntime(runtime, req.tier ?? "cheap");
+		const model = pickModelFromRuntime(runtime, req.tier ?? "cheap", req.within);
 		if (!model) throw new Error("no-model");
 
 		const context: Context = {

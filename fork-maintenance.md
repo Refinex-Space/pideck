@@ -149,6 +149,23 @@ sherpa-onnx WebAssembly 做流式识别；浏览器或桌面 webview 只采集�
 `instructions.*`、`apps/web/src/panels/InstructionsSettings.tsx`。无新增依赖。移除条件：Pi 或上游提供等价的官方设置界面。
 验证：`files.test.ts`、`injection.test.ts`（PiDeck 会话 loader 注入并在 reload 后更新）、`e2e/instructions-settings.spec.ts`。
 
+## 下一条消息建议定制
+
+输入框在一次运行成功结束后显示一句灰色的下一条消息建议，Tab 或 → 填入、Esc 忽略，绝不自动发送。参考了 Claude Code 的
+prompt suggestions 与 Codex 桌面端的 composer predictions（Codex 开源仓库只含 `thread/sample` 的分叉采样基础设施，
+`thread/prediction/request` 尚未实现，预测提示词不在仓库里）。PiDeck 不复刻它们「同模型、同上下文、复用提示缓存」的做法：
+要还原与真实请求逐字节一致的前缀（系统提示、工具定义、思考档位），而 Anthropic 在思考参数不同时会让消息缓存失效，缓存只有
+5 分钟寿命，还要兼容多提供方与自定义服务器。改为由宿主用**该聊天所属提供方**的小模型（没有就用聊天自己的模型）读一小段
+压缩过的对话（最近 4 条用户消息、结尾回复、用过的工具），工具为空、200 token、15 秒超时，输出经 `toNextPrompt` 清洗，
+拿不准就是 `NONE`。请求由前端对当前聊天、每次成功的运行发一次（`prediction.request`，协议 v109），宿主按 `completionId`
+校验仍是最新一次成功运行并缓存答案；从磁盘重新打开的旧聊天没有宿主见证过的运行（完成态为 `interrupted`），不会产生建议。
+改动集中于 `packages/server/src/assist`（`suggestNextPrompt`）、`agent/oneshot.ts`（`within`）、`agent/predictionSource.ts`、
+`host/predictions.ts`、`apps/web/src/chat/{promptPrediction,usePromptPrediction,Composer}`、设置 → 聊天的开关
+（`AppConfig.composerPredictions`，默认开）。无新增依赖；预测请求不计入会话费用（Pi 拥有会话费用）。
+移除条件：Pi 或上游提供官方的下一条消息建议。后续可做：新聊天的首条占位（来自 git 历史）、建议被连续忽略后降频、复用缓存的生成方式。
+验证：`assist.test.ts`、`oneshot.test.ts`、`predictionSource.test.ts`、`predictions.test.ts`、`promptPrediction.test.ts`、
+`e2e/composer-predictions.spec.ts`（连线层呈现一次成功运行并代答 `prediction.request`；真实模型的建议质量未经验证）。
+
 ## 语言服务（LSP）定制
 
 参考 OpenCode 已移除的 LSP 引擎（提交 `44b6938b2a^`）：按文件首次触达惰性启动、就近项目根、推送诊断带短防抖、

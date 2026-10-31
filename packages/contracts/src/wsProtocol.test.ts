@@ -40,6 +40,7 @@ import {
 	normalizeSessionTitle,
 	PLAN_REVIEW_SUBAGENT_PROTOCOL_VERSION,
 	PLAN_SUMMARY_GENERATION_PROTOCOL_VERSION,
+	PREDICTION_PROTOCOL_VERSION,
 	PROJECT_RENAME_PROTOCOL_VERSION,
 	PROJECT_TEMPLATE_PREVIEW_PROTOCOL_VERSION,
 	PROJECT_TRUST_PROTOCOL_VERSION,
@@ -267,6 +268,12 @@ test("private network settings are pinned to v104", () => {
 	expect(WS_METHODS.networkGet).toBe("network.get");
 	expect(WS_METHODS.networkUpdate).toBe("network.update");
 	expect(WS_METHODS.networkDiagnose).toBe("network.diagnose");
+});
+
+test("composer predictions are pinned to v109", () => {
+	expect(PROTOCOL_VERSION).toBeGreaterThanOrEqual(PREDICTION_PROTOCOL_VERSION);
+	expect(PREDICTION_PROTOCOL_VERSION).toBe(109);
+	expect(WS_METHODS.predictionRequest).toBe("prediction.request");
 });
 
 test("global instruction files are pinned to v108", () => {

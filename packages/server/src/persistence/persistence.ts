@@ -361,6 +361,10 @@ export function loadConfig(): AppConfig {
 		composerGrowthLimit: isComposerGrowthLimit(value.composerGrowthLimit)
 			? value.composerGrowthLimit
 			: DEFAULT_CONFIG.composerGrowthLimit,
+		composerPredictions:
+			typeof value.composerPredictions === "boolean"
+				? value.composerPredictions
+				: DEFAULT_CONFIG.composerPredictions,
 		chatLineWidth: isLineWidth(value.chatLineWidth)
 			? value.chatLineWidth
 			: DEFAULT_CONFIG.chatLineWidth,

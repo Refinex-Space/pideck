@@ -139,6 +139,9 @@ interface ComposerProps {
 	onOpenFile?: ((path: string) => void) | undefined;
 	onManageTemplates?: () => void;
 	templatesEmpty?: boolean;
+	/** A grey guess at the next message, offered while the draft is empty; Tab or → fills it in, Esc waves it away. */
+	prediction?: string | null;
+	onPredictionDismiss?: () => void;
 }
 
 export interface ComposerHandle {
@@ -179,6 +182,8 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 		onOpenFile,
 		onManageTemplates,
 		templatesEmpty,
+		prediction = null,
+		onPredictionDismiss,
 	},
 	handleRef,
 ) {
@@ -261,6 +266,12 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 	};
 	const dictation = useDictation(insertSpoken, speechStatus?.activeModelId != null);
 	const dictating = dictation.phase === "listening" || dictation.phase === "starting";
+	const ghost = prediction && value === "" && !dictating && !isStreaming ? prediction : null;
+	const acceptGhost = () => {
+		if (!ghost) return;
+		replaceDraft(ghost);
+		onPredictionDismiss?.();
+	};
 
 	const canSubmit = (raw: string) =>
 		!templatePending && pendingImages === 0 && (!!raw.trim() || images.length > 0);
@@ -404,6 +415,18 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 		}
 		if (mentionCompletion.handleKeyDown(e)) return;
 		if (slashCompletion.handleKeyDown(e)) return;
+		if (ghost && !e.shiftKey && !e.altKey && !e.metaKey && !e.ctrlKey) {
+			if (e.key === "Tab" || e.key === "ArrowRight") {
+				e.preventDefault();
+				acceptGhost();
+				return;
+			}
+			if (e.key === "Escape") {
+				e.preventDefault();
+				onPredictionDismiss?.();
+				return;
+			}
+		}
 		const recallAt = recallIdxRef.current;
 		if (e.key === "ArrowUp" && (value === "" || recallAt !== null) && recentPrompts.length > 0) {
 			e.preventDefault();
@@ -626,11 +649,12 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 										: undefined
 								}
 								placeholder={
-									isStreaming
+									ghost ??
+									(isStreaming
 										? t("chat.composer.placeholderStreaming")
 										: expanded
 											? t("chat.composer.placeholderExpanded")
-											: t("chat.composer.placeholder")
+											: t("chat.composer.placeholder"))
 								}
 							>
 								<div
@@ -659,6 +683,20 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 										onClick={onAbort}
 										className="text-primary"
 									/>
+								) : null}
+								{ghost ? (
+									<button
+										type="button"
+										tabIndex={-1}
+										data-testid="chat-prediction-accept"
+										aria-label={t("chat.composer.prediction.accept")}
+										title={t("chat.composer.prediction.accept")}
+										onMouseDown={(event) => event.preventDefault()}
+										onClick={acceptGhost}
+										className="inline-flex h-20 min-w-20 shrink-0 items-center justify-center rounded-sm border border-border-default px-4 text-text-muted tr-text-metadata hover:bg-control-bg-hovered"
+									>
+										{t("chat.composer.prediction.key")}
+									</button>
 								) : null}
 								{dictating ? (
 									<Waveform levels={dictation.levels} className="max-sm:hidden" />

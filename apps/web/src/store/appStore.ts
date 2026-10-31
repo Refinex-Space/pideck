@@ -1120,6 +1120,7 @@ interface AppState {
 	terminalReplayKb: number;
 	terminalWindowsShell: TerminalWindowsShell;
 	composerGrowthLimit: ComposerGrowthLimit;
+	composerPredictions: boolean;
 	chatLineWidth: number;
 	fileLineWidth: number;
 	chatLineWidthBounded: boolean;
@@ -1503,6 +1504,10 @@ function configPatch(config: AppConfig) {
 			? config.terminalWindowsShell
 			: DEFAULT_CONFIG.terminalWindowsShell,
 		composerGrowthLimit: config.composerGrowthLimit ?? DEFAULT_CONFIG.composerGrowthLimit,
+		composerPredictions:
+			typeof config.composerPredictions === "boolean"
+				? config.composerPredictions
+				: DEFAULT_CONFIG.composerPredictions,
 		chatLineWidth: isLineWidth(config.chatLineWidth)
 			? config.chatLineWidth
 			: DEFAULT_CONFIG.chatLineWidth,
@@ -2438,6 +2443,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 	terminalReplayKb: DEFAULT_CONFIG.terminalReplayKb,
 	terminalWindowsShell: DEFAULT_CONFIG.terminalWindowsShell,
 	composerGrowthLimit: DEFAULT_CONFIG.composerGrowthLimit,
+	composerPredictions: DEFAULT_CONFIG.composerPredictions,
 	chatLineWidth: DEFAULT_CONFIG.chatLineWidth,
 	fileLineWidth: DEFAULT_CONFIG.fileLineWidth,
 	chatLineWidthBounded: DEFAULT_CONFIG.chatLineWidthBounded,

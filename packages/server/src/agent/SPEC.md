@@ -479,8 +479,19 @@ re-opened transcripts provider-valid.
     `streamSimple` (extension-registered ones). `pickModel(tier)` = the model choice: `cheap` prefers a
     curated small/fast allowlist ∩ the authenticated set, else the cheapest priced model by per-token cost (an unpriced catalog entry is a free, preview,
     or stealth tier that rate-limits or disappears), else the `default` pick; `default`
-    = `preferredDefaultModel`; `null` when nothing is authenticated. This is the primitive the `assist` tasks
-    (plan summaries, PR drafting) run on — the only place model **dispatch** happens outside a session.
+    = `preferredDefaultModel`; `null` when nothing is authenticated. `OneShotRequest.within` (`{ provider,
+    modelId }`) confines the pick to one provider and overrides the tier: that provider's entry in the same
+    allowlist, else exactly `modelId`, else `null` — never another provider, never "the cheapest priced model"
+    of a gateway whose catalog is hundreds of unknown ones. Work done unprompted on a chat's content uses it.
+    This is the primitive the `assist` tasks (plan summaries, PR drafting, next-prompt guesses) run on — the
+    only place model **dispatch** happens outside a session.
+  - `predictionSource` — `predictionSourceOf(entries, model, now)` is the pure builder of what a next-prompt guess
+    is made from: the last four user messages, the closing assistant reply's text, and the tool names the run
+    called. `null` without a user message, without closing text, or when that reply is older than
+    `PREDICTION_FRESH_MS` (5 min: the provider's prompt cache is cold and the user has moved on).
+    `getPredictionSource(sessionId, completionId)` (manager) is the gate in front of it: the chat must be idle,
+    nothing queued or waiting on the user, no background work, and `completionId` must still be the latest
+    `SessionState.completion` with outcome `succeeded` — a stale or failed run never costs a model call.
   - `webUiContext` — `createWebUiContext(sessionId, currentToolCall?)` builds the `ExtensionUIContext` pi
     calls (dialogs round-trip to the browser, fire-and-forget methods push). A dialog names the tool call
     it is about (`toolCallId`) so the web asks on that call's card: the manager passes pi's own

@@ -739,6 +739,17 @@ beside the other publishers, subscribes a client to `lsp.status` only when its p
 disposes every server; `workspace.remove` disposes that workspace's servers. No method here starts a server:
 that happens only when the agent touches a file.
 
+## Composer predictions
+
+`prediction.request` (`PREDICTION_PROTOCOL_VERSION`, v109) answers the composer's grey next-message suggestion.
+`predictions.ts` (`createPredictions`) holds the policy: nothing when `AppConfig.composerPredictions` is off;
+otherwise `agent.getPredictionSource` gates the run and `assist.suggestNextPrompt` guesses. The answer —
+including "nothing to suggest" — is remembered per chat's latest `completionId` (64 chats), so a remounted view or
+a second window never costs a second call. A request is client-initiated, once per finished run of the chat in
+front; the host never pushes guesses for chats nobody is looking at. The call is not counted in the chat's cost
+(Pi owns session cost; this is a side request like the assist tasks) and its text is never logged or sent to
+analytics.
+
 ## Native browser composition
 
 `CreateServerOptions.browser` and `BootHostOptions.browser` accept the contracts BrowserEngine. Host

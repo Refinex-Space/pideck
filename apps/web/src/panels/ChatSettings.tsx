@@ -1,4 +1,9 @@
-import type { AppConfigUpdate, ComposerGrowthLimit, SubagentOverride } from "@thinkrail/contracts";
+import {
+	type AppConfigUpdate,
+	type ComposerGrowthLimit,
+	PREDICTION_PROTOCOL_VERSION,
+	type SubagentOverride,
+} from "@thinkrail/contracts";
 import type { MessageKey } from "@thinkrail/locales";
 import { T, useT } from "@thinkrail/locales/react";
 import { cn } from "@thinkrail/ui/utils";
@@ -15,6 +20,7 @@ import { LineWidthControl } from "./LineWidthSettings";
 import { SegmentedControl, type SegmentedControlOption } from "./SegmentedControl";
 import { SettingsGroup, SettingsPageContainer } from "./SettingsGroup";
 import { SettingsRow } from "./SettingsRow";
+import { SettingsSwitch } from "./SettingsSwitch";
 import { SubagentSettings } from "./SubagentSettings";
 
 type OptionSpec<T extends string> = SegmentedControlOption<T> & { label: MessageKey };
@@ -147,6 +153,7 @@ export function ChatSettings() {
 	const t = useT();
 	const messageOrder = useAppStore((state) => state.chatMessageOrder);
 	const growthLimit = useAppStore((state) => state.composerGrowthLimit);
+	const predictions = useAppStore((state) => state.composerPredictions);
 	const streamingResponseMovement = useAppStore((state) => state.streamingResponseMovement);
 	const protocolVersion = useAppStore((state) => state.protocolVersion);
 	const subagentsEnabled = useAppStore((state) => state.subagentsEnabled);
@@ -217,6 +224,22 @@ export function ChatSettings() {
 						/>
 					}
 				/>
+				{protocolVersion !== null && protocolVersion >= PREDICTION_PROTOCOL_VERSION ? (
+					<SettingsRow
+						label={t("settings.chat.predictions")}
+						description={t("settings.chat.predictionsDescription")}
+						control={
+							<SettingsSwitch
+								checked={predictions}
+								label={t("settings.chat.predictionsToggle")}
+								testId="composer-predictions-toggle"
+								onChange={(composerPredictions) =>
+									saveSetting({ composerPredictions }, t("settings.chat.predictionsFailed"))
+								}
+							/>
+						}
+					/>
+				) : null}
 				<LineWidthControl kind="chat" />
 				<StreamingResponseMovementControl
 					value={streamingResponseMovement}

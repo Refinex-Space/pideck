@@ -326,6 +326,18 @@ test("empty and multi-key valid updates persist and publish", () => {
 	expect(published).toEqual([DEFAULT_CONFIG, next]);
 });
 
+test("composer predictions default on, can be switched off, and an invalid stored value falls back to on", () => {
+	expect(getConfig().composerPredictions).toBe(true);
+	expect(updateConfig({ composerPredictions: false }).composerPredictions).toBe(false);
+	expect(updateConfig({ composerPredictions: true }).composerPredictions).toBe(true);
+	writeFileSync(
+		join(dataDir, "config.json"),
+		JSON.stringify({ ...DEFAULT_CONFIG, composerPredictions: "no" }),
+	);
+	resetConfigCache();
+	expect(getConfig().composerPredictions).toBe(true);
+});
+
 test("loadConfig replaces an invalid composer growth preset with the default", () => {
 	writeFileSync(
 		join(dataDir, "config.json"),
@@ -485,6 +497,11 @@ test("replay budget and composer growth updates reject malformed values before p
 	for (const composerGrowthLimit of ["enormous", 3, { kind: "roomy" }, null]) {
 		expect(() => updateConfig({ composerGrowthLimit } as unknown as AppConfigUpdate)).toThrow(
 			"composerGrowthLimit must be one of compact, roomy, half-chat",
+		);
+	}
+	for (const composerPredictions of ["false", 0, null, {}]) {
+		expect(() => updateConfig({ composerPredictions } as unknown as AppConfigUpdate)).toThrow(
+			"composerPredictions must be a boolean",
 		);
 	}
 	expect(getConfig()).toEqual(before);

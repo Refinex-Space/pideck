@@ -406,7 +406,7 @@ default, narrow cross-ring guards, and the quit-confirmation rule both clients d
   since the review has no chat to carry it. An older client reads the dropped fields as absent, so the pin
   is what lets a client tell "this host has no reviewer chat" from "this host is older" rather than inferring it;
   **`AppConfig`** (`{ theme, themeMode, systemThemePair?, analyticsEnabled, analyticsConsentConfirmed, terminalReplayKb,
-  terminalWindowsShell, composerGrowthLimit, chatLineWidth, fileLineWidth, chatLineWidthBounded,
+  terminalWindowsShell, composerGrowthLimit, composerPredictions, chatLineWidth, fileLineWidth, chatLineWidthBounded,
   fileLineWidthBounded, customLayoutPresets, defaultModel?, defaultEffort?, reviewModel?, reviewEffort?,
   favoriteModels, recentModels, reviewAutoFix, agentReviewEnabled, subagentsEnabled, subagentMaxConcurrent,
   jbcentralQuotaEnabled, jbcentralQuotaRefreshSeconds, disabledExtensions }` — an extensible bag; the line-width fields join
@@ -1139,6 +1139,16 @@ and an overriding `SYSTEM.md`) and `InstructionsApplyResult`. Requests carry a k
 the `expectedPath` and `expectedRevision` it loaded; a mismatch is `INSTRUCTIONS_CONFLICT`, and text over
 `INSTRUCTIONS_MAX_BYTES` is `INSTRUCTIONS_TOO_LARGE`. An older host has none of these, and the Instructions
 section is hidden. Owner: [[submodule-server-instructions]].
+
+## Composer predictions (v109)
+
+`PREDICTION_PROTOCOL_VERSION` (v109) gates `prediction.request` (`{ sessionId, completionId }` → `{ text: string | null }`)
+and the `AppConfig.composerPredictions` switch (default on). `completionId` is the `SessionState.completion` the
+client saw; the host answers `null` — never an error — when that run is no longer the chat's latest finished,
+successful one, when the chat is busy or waiting on the user, when nothing obvious follows, or when no model is
+available. The text is one plain line the composer shows as grey placeholder text; it is never a message until the
+user fills it in and sends it. An older host has neither, and the settings row and the request are absent.
+Owners: [[submodule-server-host]] (policy and cache), [[submodule-server-assist]] (the guess).
 
 ## Native browser contract
 

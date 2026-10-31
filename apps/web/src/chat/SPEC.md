@@ -952,6 +952,21 @@ both message orders. *Rejected:* keeping the modal for non-MCP extensions — ev
   (`send-menu`, streaming only) is a second ghost hit area; spacing, not a divider, separates them.
   **Compact mode** needs no special case now that the send is icon-only at every width. Labels use
   `ui.action`.
+- **Next-message suggestion** (`promptPrediction.ts`, `usePromptPrediction.ts`, `Composer`) — after the run of the
+  chat in front succeeds, the composer offers one grey guess at what the user types next. `predictionTarget` is
+  the gate (setting on, host at `PREDICTION_PROTOCOL_VERSION`, this chat is the current one, `hostState` idle with
+  nothing waiting on the user and a `succeeded` completion) and yields that run's `completionId`; the hook asks
+  the host **once per target** (`prediction.request`, failures swallowed) and keeps the answer with the run it
+  belongs to, so a new run, a failed run or a chat that needs input hides it with no bookkeeping, and an answer
+  that arrives after a newer run was asked about is dropped. `visiblePrediction` shows it only while the draft is
+  empty and it was not dismissed for that run. `Composer` renders it as the textarea's **placeholder** — no
+  overlay to keep aligned with the caret, wrapping or IME — plus a small `Tab` keycap button
+  (`chat-prediction-accept`, `tabIndex -1`, click = accept) in the trailing cluster. **Tab** or **→** on the empty
+  draft fills it in (through `replaceDraft`, caret at the end) and dismisses it for that run; **Esc** dismisses
+  without filling; typing hides it and clearing the draft brings it back until it is taken or dismissed. It sits
+  after the mention/slash/slot handlers in `onKeyDown`, so none of their Tab uses change, and it never submits:
+  Enter on an empty draft still does nothing. Streaming and dictation hide it. Why a request rather than a push:
+  the host guesses only for the chat somebody is looking at, so a background chat never costs a call.
 - **Queued messages: the pending strip** (`QueueStrip.tsx`, props-driven: `queue` + `onEdit`/`onRemove`)
   — the web mirror of pi's interactive-mode pending-messages area. A **streaming send never renders an
   optimistic transcript bubble** (see the store SPEC's echo contract): `ChatView.onSubmit` skips

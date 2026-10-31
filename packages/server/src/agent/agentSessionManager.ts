@@ -121,6 +121,7 @@ import {
 	refreshCatalogs,
 	settledAvailableModels,
 } from "./piRuntime";
+import { type PredictionSource, predictionSourceOf } from "./predictionSource";
 import { catalogProviderAuth } from "./providerAuth";
 import { REQUEST_REVIEW_TOOL_NAME } from "./requestReviewTool";
 import { projectSessionEvent } from "./sessionEventProjection";
@@ -830,6 +831,36 @@ function mustGet(sessionId: string): AgentSession {
 
 export function hasSession(sessionId: string): boolean {
 	return sessions.has(sessionId) && !hasDeletionTombstone(sessionId);
+}
+
+/**
+ * The exchange to guess a next message from, only while `completionId` is still this chat's latest finished
+ * run: idle, succeeded, nothing queued, nothing waiting on the user, no background work. Anything else is
+ * `null`; a stale request must never cost a model call.
+ */
+export function getPredictionSource(
+	sessionId: string,
+	completionId: string,
+): PredictionSource | null {
+	const entry = sessions.get(sessionId);
+	if (!entry || hasDeletionTombstone(sessionId) || !entry.session.model) return null;
+	const state = stateFromEntry(entry);
+	if (
+		state.execution !== "idle" ||
+		state.needsInput !== null ||
+		state.queuedCount > 0 ||
+		state.backgroundWork ||
+		state.completion?.completionId !== completionId ||
+		state.completion.outcome !== "succeeded"
+	) {
+		return null;
+	}
+	const { provider, id } = entry.session.model;
+	return predictionSourceOf(
+		entry.session.sessionManager.getBranch(),
+		{ provider: String(provider), id },
+		Date.now(),
+	);
 }
 
 export function getSessionWorkspaceId(sessionId: string): string | undefined {

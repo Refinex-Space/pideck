@@ -276,6 +276,7 @@ import {
 } from "./mcp";
 import { resolveNewChatModel } from "./newChatModel";
 import { planReviewRunning } from "./planReviewQueue";
+import { requestPrediction } from "./predictions";
 import {
 	additionalCapture,
 	captureAdditional,
@@ -1372,6 +1373,9 @@ const handlers: WsHandlers = {
 	"instructions.save": ({ workspaceId, ...request }) =>
 		saveInstruction(request, instructionsScope(workspaceId)),
 	"instructions.apply": () => reloadOpenSessions(),
+	"prediction.request": async ({ sessionId, completionId }) => ({
+		text: await requestPrediction(sessionId, completionId),
+	}),
 	"instructions.reveal": ({ kind }) => {
 		const { path, exists } = instructionTarget(kind);
 		if (!exists) mkdirSync(path, { recursive: true });

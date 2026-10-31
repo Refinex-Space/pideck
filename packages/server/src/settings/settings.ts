@@ -36,6 +36,7 @@ const ACCEPTED_UPDATE_KEYS = {
 	terminalReplayKb: true,
 	terminalWindowsShell: true,
 	composerGrowthLimit: true,
+	composerPredictions: true,
 	chatLineWidth: true,
 	fileLineWidth: true,
 	chatLineWidthBounded: true,
@@ -186,6 +187,12 @@ export function updateConfig(partial: AppConfigUpdate): AppConfig {
 		!isSubagentMaxConcurrent(runtimeUpdate.subagentMaxConcurrent)
 	) {
 		throw new Error("subagentMaxConcurrent must be a whole number from 1 to 16");
+	}
+	if (
+		runtimeUpdate.composerPredictions !== undefined &&
+		typeof runtimeUpdate.composerPredictions !== "boolean"
+	) {
+		throw new Error("composerPredictions must be a boolean");
 	}
 	if (jbcentralQuotaEnabled !== undefined && typeof jbcentralQuotaEnabled !== "boolean") {
 		throw new Error("jbcentralQuotaEnabled must be a boolean");

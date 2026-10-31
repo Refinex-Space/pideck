@@ -41,6 +41,10 @@ it is not a PiDeck release. Signing, notarization and a PiDeck automatic-update 
 - **Dictate your prompt.** Optional: download a voice model in Settings → Voice input, then use the
   microphone beside Send. Speech is recognized on the PiDeck host with a model you download; no cloud speech
   service is used. Desktop microphone permission is still being verified.
+- **Get a suggested next message.** When a run finishes, the empty message box can show a grey suggestion of
+  what you might type next; Tab fills it in and nothing is sent until you press Enter. The guess is made by a
+  small model of the chat's own provider from a short excerpt of the conversation, and Settings → Chat can
+  turn it off.
 - **Set rules for every chat.** Settings → Instructions edits Pi's global `AGENTS.md` (and an optional extra
   system prompt) in the Pi agent folder, shows which instruction files each project's chats load, and applies
   changes to open chats on request. The Pi CLI reads the same files.

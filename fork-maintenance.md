@@ -99,6 +99,37 @@ configuration, OS-store proxy credentials and credential-free diagnostics. Pi ke
 model ownership. This is a host customization, validated by policy/parser tests, local Pi transport probes,
 browser e2e and native packaging; macOS/Linux native verification remains distinct from Windows fixtures.
 
+## 上游挑拣记录（2026-10-31，thinkrail main 至 ec2f2db5）
+
+基线之后上游有 37 个提交；按「不破坏 PiDeck 既有 UI 规范、配色、布局与协议编号」的原则逐个挑拣，未整体合并。
+PiDeck 自有协议版本号已移到 103–108，上游 94–102 保持原编号，之后整体升级时只需处理常量行。
+
+| 已合入（commit 信息里写有来源） | 说明与适配 |
+| --- | --- |
+| #963 `ef3d5b63` | pi-ai 补丁：CRLF 切开的 SSE、截断流重试；移除条件见 `pi-compatibility.md` |
+| #861 `940d15ca` | 终端 shell 用用户环境与真实账户名；`bun-pty` 0.4.10→0.5.1（原生扩展，发布前需桌面包/二进制 smoke） |
+| #1027 `88a79e6c` | 子代理加载注册其 provider 的扩展 |
+| #873 `012e4c0a` | 压缩后重新附上已加载的 skill 正文 |
+| #1014 `d093d675` | 读取单飞；PiDeck 的 `onFailure` 并入 `createTabReader` |
+| #987 `851251c5` 宿主部分、#988 `cfa4c1c9` | 重放缓存写满的带码错误、放弃请求不占槽；#987 的 Resources 面板部分未合入 |
+| #1084 `1da024c5` | 设置里连接自带 OpenAI 兼容服务器；图标换 lucide，补 ja/es；上游写入的占位 key `thinkrail-no-key` 保留以便互通 |
+| #975 `7b07d5c5` | 克隆仓库；只取克隆，不带引导（#808）里的 `project.create` 等 |
+| #1073 `cd4ecc57`、#1077 `59613605` | Claude 订阅额外用量提示；登录提示接在 PiDeck 的提供方设置，不用其引导的 `useProviderAuth` |
+| #1076 `5574ffd8` | `noExplicitAny`、`noNonNullAssertion` 升为错误 |
+
+| 未合入 | 原因 |
+| --- | --- |
+| #1004 `25ac7921`、#987 的 UI 部分 | Resources 历史持久化与重试提示改的是 Dock/Inspector，PiDeck 已并入状态面板，需单独设计 |
+| #1025 `f7801ff3` Pi 包安装与切换 | 6800 行，与扩展设置、协议重叠大，另做 |
+| #1092 `252be93b` 界面与代码字体 | 与 PiDeck 的 `typography.json` 与阅读排版冲突，需按本地体系重接 |
+| #808 `9066aa9f` 首次启动引导及其后续 #978/#979 | 文案与埋点同意步骤依赖上游基础设施，需裁剪 |
+| #965 `d2e707f3` 联网搜索扩展 | 改动二进制与桌面打包脚本，需打包验证 |
+| #998 俄语 | PiDeck 内置语言为 en/ja/es/zh-CN，且缺 PiDeck 新增文案的俄语 |
+| #997/#1033/#1034 应用内问卷、博客、官网、CI、发布文档、#1022、#1063/#1064/#1069–#1072 | 依赖 PostHog 或属于上游自己的流水线；#1022 在 PiDeck 的设置标题栏已居中；类型检查批次待功能合完后再评估 |
+
+验证：服务端、web、contracts 单测与全部静态门禁通过；完整 `bun run e2e` 两次，仅 `terminals.spec.ts` 的
+「closing an idle tab does not ask」在并行压力下偶发失败（单跑通过；撤掉 #861 后同样压力下仍失败，属既有竞态）。
+
 ## 语音输入定制
 
 消息输入框的听写：宿主下载并保存识别模型（`~/.pideck/models/speech`，固定目录、体积与 SHA-256），在宿主进程内用

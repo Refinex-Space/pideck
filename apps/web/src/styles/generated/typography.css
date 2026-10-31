@@ -542,6 +542,6 @@
 }
 /* Bold: weight only — every other property inherits from the parent element. */
 .tr-prose-doc :is(strong, b) {
-	font-weight: var(--tr-font-weight-medium);
+	font-weight: var(--tr-font-weight-semibold);
 }
 }

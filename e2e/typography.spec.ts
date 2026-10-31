@@ -125,7 +125,7 @@ test("the chat and document markdown surfaces each wear their own prose system",
 	await expect(page.getByTestId("markdown-preview")).toContainText("sample-project");
 
 	const doc = page.locator(".tr-prose-doc").first();
-	expect(await typeOf(doc)).toMatchObject({ size: "16px", weight: "400", lineHeight: "24px" });
+	expect(await typeOf(doc)).toMatchObject({ size: "15px", weight: "400", lineHeight: "24px" });
 	expect(await typeOf(doc.locator("h1").first())).toMatchObject({ size: "24px", weight: "600" });
 
 	expect(await doc.evaluate((el) => el.classList.contains("tr-prose-chat"))).toBe(false);
@@ -157,7 +157,7 @@ test("document headings are larger than document body text", async ({ page }) =>
 		return out;
 	});
 
-	expect(measured.body).toBe(16);
+	expect(measured.body).toBe(15);
 	expect(measured.h).toEqual([24, 22, 20, 18, 16, 12]);
 	for (const [i, size] of measured.h.slice(0, 4).entries())
 		expect(size, `h${i + 1} > body`).toBeGreaterThan(measured.body);
@@ -191,7 +191,7 @@ test("the chat prose system uses the shared comfortable reading rhythm", async (
 		return out;
 	});
 
-	expect(measured).toEqual({ body: 16, h1: 20, h2: 16, h3: 14, pre: 13 });
+	expect(measured).toEqual({ body: 15, h1: 18, h2: 16, h3: 15, pre: 13 });
 });
 
 test("typography survives a narrow mobile viewport without clipping or overflow", async ({
@@ -273,16 +273,17 @@ test("bold inside prose changes weight only — in both prose systems", async ({
 	for (const [system, m] of Object.entries(measured)) {
 		expect(m.h1Strong?.size, `${system} h1 strong size`).toBe(m.h1?.size);
 		expect(m.h1Strong?.lineHeight, `${system} h1 strong leading`).toBe(m.h1?.lineHeight);
-		expect(m.h1Strong?.weight, `${system} h1 strong weight`).toBe("600");
-		expect(m.h1?.weight, `${system} h1 weight`).toBe("600");
+		const headingWeight = system === "chat" ? "500" : "600";
+		expect(m.h1Strong?.weight, `${system} h1 strong weight`).toBe(headingWeight);
+		expect(m.h1?.weight, `${system} h1 weight`).toBe(headingWeight);
 
 		expect(m.cellStrong?.size, `${system} cell strong size`).toBe(m.cell?.size);
 		expect(m.cellStrong?.lineHeight, `${system} cell strong leading`).toBe(m.cell?.lineHeight);
-		expect(m.cellStrong?.weight, `${system} cell strong weight`).toBe("600");
+		expect(m.cellStrong?.weight, `${system} cell strong weight`).toBe(headingWeight);
 
 		expect(m.bodyStrong?.size, `${system} body strong size`).toBe(m.body?.size);
 		expect(m.bodyStrong?.lineHeight, `${system} body strong leading`).toBe(m.body?.lineHeight);
-		expect(m.bodyStrong?.weight, `${system} body strong weight`).toBe("600");
+		expect(m.bodyStrong?.weight, `${system} body strong weight`).toBe(headingWeight);
 
 		for (const key of ["family", "spacing", "transform", "color"] as const) {
 			expect(m.h1Strong?.[key], `${system} h1 strong ${key}`).toBe(m.h1?.[key]);

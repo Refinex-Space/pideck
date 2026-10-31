@@ -128,7 +128,10 @@ export function proseRootClassName(t: Typography, system: string): string {
 	return `${t.metadata.classPrefix}-prose-${kebab(system)}`;
 }
 
-export const PROSE_STRONG_WEIGHT = "medium";
+/** Bold in a prose system is its heading weight, so a bold word never reads lighter than the heading around it. */
+export function proseStrongWeight(t: Typography, system: string): string {
+	return resolveStyle(t, `${system}.h1`).fontWeight;
+}
 
 export const PROSE_SELECTORS: Record<string, string> = {
 	body: "",
@@ -370,9 +373,6 @@ export function validate(t: Typography): string[] {
 			fail("rootStyle: the document base must be proportional");
 	}
 
-	if (!(PROSE_STRONG_WEIGHT in (t.fontWeights ?? {})))
-		fail(`fontWeights.${PROSE_STRONG_WEIGHT}: missing — the prose <strong> rule references it`);
-
 	for (const [system, styles] of Object.entries(t.proseSystems ?? {})) {
 		for (const id of Object.keys(PROSE_SELECTORS))
 			if (!(id in styles)) fail(`proseSystems.${system}.${id}: missing (the element set is fixed)`);
@@ -492,7 +492,7 @@ export function renderCss(t: Typography): string {
 		}
 		out.push(`/* Bold: weight only — every other property inherits from the parent element. */`);
 		out.push(`.${root} :is(strong, b) {`);
-		out.push(`\tfont-weight: var(${cssVarName(t, "font-weight", PROSE_STRONG_WEIGHT)});`);
+		out.push(`\tfont-weight: var(${cssVarName(t, "font-weight", proseStrongWeight(t, system))});`);
 		out.push("}");
 	}
 	out.push("}");

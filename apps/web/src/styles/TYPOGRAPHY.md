@@ -94,7 +94,7 @@ entry per markdown surface, mostly aliases into these roles. References remain d
 values are never duplicated.
 
 One prose rule is deliberately *not* a semantic style: `<strong>` / `<b>` gets **weight only**
-(`--tr-font-weight-medium`), emitted by the generator into each prose system. A complete style there
+(the system's own heading weight: `medium` in chat, `semibold` in documents), emitted by the generator into each prose system. A complete style there
 would override the size and line-height of whatever element the bold text sits inside.
 
 The JSON holds **no** CSS selectors, class strings, component paths, usage lists, rationale or audit
@@ -189,7 +189,7 @@ naming its own type. Two exist:
 | fenced code | 13 mono / 19px | 13 mono / 19px |
 | table body / header | 15 / 400 · 14 / 500 | 15 / 400 · 16 / 600 |
 | table cell inline code | 13 mono (`code.text`) | 13 mono (`code.text`) |
-| `strong` / `b` | weight 500 only | weight 500 only |
+| `strong` / `b` | weight 500 only | weight 600 only |
 
 Chat headings separate a stream of messages; document headings expose nested structure. Both share
 comfortable reading text, while document h1–h4 stay larger than the body and the h1→h6 ladder never
@@ -197,7 +197,7 @@ inverts. The validator keeps these requirements. Neither surface forces uppercas
 `doc.h3` references `heading.md`; body copy references `body.reading`; chat h1–h3 are their own medium-weight
 styles. Only four of the 28 prose entries define independent styles; every other prose role names a canonical definition.
 
-`strong` / `b` gets **weight 500 only** in both systems — family, size, line-height, tracking, transform
+`strong` / `b` gets **weight only** — its system's heading weight (500 in chat, 600 in documents), so a bold word never reads lighter than the heading it sits in — family, size, line-height, tracking, transform
 and colour inherit from the enclosing element, so bold in a heading keeps the heading's size and bold in
 a cell keeps the table's.
 
@@ -236,8 +236,8 @@ those are proportional. Validation enforces this: a monospace family on a non-co
 ## Weight policy
 
 - **400** — ordinary UI, reading, entity, metadata, status, code and brand-heading text.
-- **500** — action and button labels, section/compact titles, restrained labels, chat h1–h6, chat table headers and prose strong (CJK at 600 reads heavy in long answers).
-- **600** — dialog/card titles, heading roles, document headings and document table headers.
+- **500** — action and button labels, section/compact titles, restrained labels, chat h1–h6, chat table headers and chat prose strong (CJK at 600 reads heavy in long answers).
+- **600** — dialog/card titles, heading roles, document headings, document table headers and document prose strong.
 
 Disabled control colors come from `control-disabled-bg` / `control-disabled-text`; disabled non-control
 text uses `text-disabled`. Typography does not encode disabled state, and controls do not use opacity to

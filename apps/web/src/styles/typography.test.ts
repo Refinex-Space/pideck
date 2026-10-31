@@ -415,7 +415,8 @@ describe("generated CSS", () => {
 				.split(";")
 				.map((d) => d.trim())
 				.filter(Boolean);
-			expect(declarations, system).toEqual(["font-weight: var(--tr-font-weight-medium)"]);
+			const heading = resolveStyle(typography, `${system}.h1`).fontWeight;
+			expect(declarations, system).toEqual([`font-weight: var(--tr-font-weight-${heading})`]);
 			expect(typography.proseSystems[system]).not.toHaveProperty("strong");
 		}
 		expect(PROSE_SELECTORS).not.toHaveProperty("strong");

@@ -603,6 +603,16 @@ Shared/remote backend profiles, profile selection, multi-window/deep-link routin
 `user32` style-bit shim once blackboardsh/electrobun#558 ships. The update feed publication described above
 remains release-owned.
 
+## Voice input
+
+Dictation captures the microphone in the web client ([[submodule-web-speech]]); the desktop shell adds no
+audio code. The bundled CEF webview needs the platform to allow microphone use, which this build does not yet
+declare: the macOS bundle has no microphone usage description or `com.apple.security.device.audio-input`
+entitlement, and no CEF media-permission handling is configured. Desktop microphone access is therefore
+**unverified** (no signed build or real microphone was used); it must be settled before claiming desktop voice
+input, together with Windows WebView/CEF behavior. Recognition runs in the embedded host, which needs the
+sherpa-onnx WASM resource in `.stage/runtime` — also not yet packaged.
+
 ## Embedded browser
 
 See [[submodule-desktop-browser]] for CEF guests, bootstrap ordering, CDP identity checks and native

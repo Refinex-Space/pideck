@@ -23,11 +23,12 @@ import {
 	LSP_PROTOCOL_VERSION,
 	MCP_PROTOCOL_VERSION,
 	NETWORK_PROXY_PROTOCOL_VERSION,
+	SPEECH_PROTOCOL_VERSION,
 	WORKSPACE_SETTLE_PROTOCOL_VERSION,
 } from "@thinkrail/contracts";
 import type { MessageKey } from "@thinkrail/locales";
 import type { Translator } from "@thinkrail/locales/react";
-import { Blocks, Braces, Network } from "lucide-react";
+import { Blocks, Braces, Mic, Network } from "lucide-react";
 import type { ComponentType } from "react";
 import { SettingsSection } from "@/store";
 
@@ -89,6 +90,12 @@ const NAV_GROUPS: SettingsNavGroup[] = [
 				requiresProtocolVersion: LOCALES_PROTOCOL_VERSION,
 			},
 			{ id: SettingsSection.Terminal, label: "settings.nav.terminal", icon: RiTerminalBoxLine },
+			{
+				id: SettingsSection.Speech,
+				label: "settings.nav.speech",
+				icon: Mic,
+				requiresProtocolVersion: SPEECH_PROTOCOL_VERSION,
+			},
 		],
 	},
 	{

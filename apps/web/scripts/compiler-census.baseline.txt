@@ -22,3 +22,4 @@ src/panels/useWorkspaceRead.ts useWorkspaceRead
 src/prompt/pendingSelection.ts usePendingSelection
 src/prompt/templatePick.ts useTemplateCommandPicker
 src/shell/layout/workbenchRails.tsx AuxiliaryRegionRail
+src/speech/speechStatus.ts useSpeechStatus

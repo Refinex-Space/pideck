@@ -19,6 +19,7 @@ import { NotificationsSettings } from "./NotificationsSettings";
 import { PrivacySettings } from "./PrivacySettings";
 import { ProvidersSettings } from "./ProvidersSettings";
 import { SkillsSettings } from "./SkillsSettings";
+import { SpeechSettings } from "./SpeechSettings";
 import { resolveSettingsSection, searchSettingsNavGroups, settingsNavGroups } from "./settingsNav";
 import { TemplatesSettings } from "./TemplatesSettings";
 import { TerminalSettings } from "./TerminalSettings";
@@ -174,6 +175,8 @@ export function SettingsDialog({ updateSettings }: { updateSettings?: ReactNode 
 							<LanguageSettings />
 						) : selectedSection === SettingsSection.Terminal ? (
 							<TerminalSettings />
+						) : selectedSection === SettingsSection.Speech ? (
+							<SpeechSettings />
 						) : selectedSection === SettingsSection.Workspaces ? (
 							<WorkspacesSettings />
 						) : selectedSection === SettingsSection.Github ? (

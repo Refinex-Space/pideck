@@ -99,6 +99,16 @@ configuration, OS-store proxy credentials and credential-free diagnostics. Pi ke
 model ownership. This is a host customization, validated by policy/parser tests, local Pi transport probes,
 browser e2e and native packaging; macOS/Linux native verification remains distinct from Windows fixtures.
 
+## 语音输入定制
+
+消息输入框的听写：宿主下载并保存识别模型（`~/.pideck/models/speech`，固定目录、体积与 SHA-256），在宿主进程内用
+sherpa-onnx WebAssembly 做流式识别；浏览器或桌面 webview 只采集麦克风并发送 16 kHz PCM。参考仓库 DeepSeek Harness
+（`cd5ef81481`，MIT）经检查不含语音或桌面代码，未借用任何实现。改动集中于 `packages/server/src/speech`、协议 v98
+的 `speech.*`、`apps/web/src/speech`、Composer 麦克风与波形、设置页 Voice input。新增依赖 `sherpa-onnx@2.0.1`（Apache-2.0，
+纯 WASM，无原生扩展）。模型由用户主机按需下载，PiDeck 不再分发。移除条件：Pi 或上游提供官方听写能力。
+验证：服务端对假目录/假下载/假识别器的单测、真实 WASM 运行时加载测试、`e2e/speech-dictation.spec.ts`（Chromium 假麦克风）；
+桌面端麦克风权限、编译二进制与桌面包中的 WASM 资源尚未验证，见 desktop SPEC。
+
 ## 语言服务（LSP）定制
 
 参考 OpenCode 已移除的 LSP 引擎（提交 `44b6938b2a^`）：按文件首次触达惰性启动、就近项目根、推送诊断带短防抖、

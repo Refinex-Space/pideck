@@ -90,6 +90,7 @@ import type {
 	WireCustomMessage,
 	WireModel,
 } from "./piProtocol";
+import type { DictationResult, DictationStarted, SpeechStatus } from "./speech";
 
 export interface TerminalDataPush {
 	id: string;
@@ -124,7 +125,8 @@ export type TemplateReadLocation =
 	| { projectId: string; workspaceId?: never }
 	| { workspaceId?: never; projectId?: never };
 
-export const PROTOCOL_VERSION = 97;
+export const PROTOCOL_VERSION = 98;
+export const SPEECH_PROTOCOL_VERSION = 98;
 export const LSP_PROTOCOL_VERSION = 97;
 export const AGENT_ACTIVITY_PROTOCOL_VERSION = 96;
 export const NETWORK_PROXY_PROTOCOL_VERSION = 95;
@@ -349,6 +351,15 @@ export const WS_METHODS = {
 	networkGet: "network.get",
 	networkUpdate: "network.update",
 	networkDiagnose: "network.diagnose",
+	speechGet: "speech.get",
+	speechDownload: "speech.download",
+	speechCancelDownload: "speech.cancelDownload",
+	speechDelete: "speech.delete",
+	speechSelect: "speech.select",
+	speechDictationStart: "speech.dictationStart",
+	speechDictationAudio: "speech.dictationAudio",
+	speechDictationStop: "speech.dictationStop",
+	speechDictationCancel: "speech.dictationCancel",
 	lspGet: "lsp.get",
 	lspUpdate: "lsp.update",
 	lspRestart: "lsp.restart",
@@ -412,6 +423,7 @@ export const WS_CHANNELS = {
 	turnChanged: "turn.changed",
 	mcpStatus: "mcp.status",
 	lspStatus: "lsp.status",
+	speechStatus: "speech.status",
 	localesChanged: "locales.changed",
 	themesChanged: "themes.changed",
 } as const;
@@ -984,6 +996,15 @@ export interface WsMethodMap {
 	"network.get": { params: { refresh?: boolean }; result: NetworkProxyStatus };
 	"network.update": { params: NetworkProxyUpdate; result: NetworkProxyStatus };
 	"network.diagnose": { params: { provider: "openai" | "anthropic" }; result: NetworkDiagnostic[] };
+	"speech.get": { params: Record<string, never>; result: SpeechStatus };
+	"speech.download": { params: { modelId: string }; result: SpeechStatus };
+	"speech.cancelDownload": { params: { modelId: string }; result: SpeechStatus };
+	"speech.delete": { params: { modelId: string }; result: SpeechStatus };
+	"speech.select": { params: { modelId: string }; result: SpeechStatus };
+	"speech.dictationStart": { params: Record<string, never>; result: DictationStarted };
+	"speech.dictationAudio": { params: { dictationId: string; pcm16: string }; result: Ack };
+	"speech.dictationStop": { params: { dictationId: string }; result: DictationResult };
+	"speech.dictationCancel": { params: { dictationId: string }; result: Ack };
 	"environment.update": {
 		params: { environment: HostEnvironment };
 		result: HostEnvironmentUpdateResult;
@@ -1152,7 +1173,11 @@ export type WsErrorCode =
 	| "LOGIN_NOT_OWNER"
 	| "MCP_CONFIG_INVALID"
 	| "MCP_PATH_UNSAFE"
-	| "MCP_HANDLED_ELSEWHERE";
+	| "MCP_HANDLED_ELSEWHERE"
+	| "SPEECH_MODEL_MISSING"
+	| "SPEECH_ENGINE_UNAVAILABLE"
+	| "SPEECH_BUSY"
+	| "SPEECH_DICTATION_UNKNOWN";
 
 export interface WsResponse {
 	id: string;

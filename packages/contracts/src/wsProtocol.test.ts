@@ -47,6 +47,7 @@ import {
 	SESSION_RENAME_PROTOCOL_VERSION,
 	SESSION_STATE_PROTOCOL_VERSION,
 	SESSION_TITLE_MAX_LENGTH,
+	SPEECH_PROTOCOL_VERSION,
 	SUBAGENT_CONCURRENCY_PROTOCOL_VERSION,
 	SUBAGENT_SETTINGS_PROTOCOL_VERSION,
 	THEME_SYSTEM_PROTOCOL_VERSION,
@@ -261,6 +262,21 @@ test("private network settings are pinned to v95", () => {
 	expect(WS_METHODS.networkGet).toBe("network.get");
 	expect(WS_METHODS.networkUpdate).toBe("network.update");
 	expect(WS_METHODS.networkDiagnose).toBe("network.diagnose");
+});
+
+test("local speech dictation is pinned to v98", () => {
+	expect(PROTOCOL_VERSION).toBeGreaterThanOrEqual(SPEECH_PROTOCOL_VERSION);
+	expect(SPEECH_PROTOCOL_VERSION).toBe(98);
+	expect(WS_METHODS.speechGet).toBe("speech.get");
+	expect(WS_METHODS.speechDownload).toBe("speech.download");
+	expect(WS_METHODS.speechCancelDownload).toBe("speech.cancelDownload");
+	expect(WS_METHODS.speechDelete).toBe("speech.delete");
+	expect(WS_METHODS.speechSelect).toBe("speech.select");
+	expect(WS_METHODS.speechDictationStart).toBe("speech.dictationStart");
+	expect(WS_METHODS.speechDictationAudio).toBe("speech.dictationAudio");
+	expect(WS_METHODS.speechDictationStop).toBe("speech.dictationStop");
+	expect(WS_METHODS.speechDictationCancel).toBe("speech.dictationCancel");
+	expect(WS_CHANNELS.speechStatus).toBe("speech.status");
 });
 
 test("the stored host environment is pinned to v91", () => {

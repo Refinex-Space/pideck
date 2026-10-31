@@ -18,6 +18,7 @@ import {
 	LSP_PROTOCOL_VERSION,
 	MCP_PROTOCOL_VERSION,
 	PROTOCOL_VERSION,
+	SPEECH_PROTOCOL_VERSION,
 	USER_THEMES_PROTOCOL_VERSION,
 	WS_CHANNELS,
 } from "@thinkrail/contracts";
@@ -99,6 +100,7 @@ import {
 } from "../projects";
 import { reanchorWorkspace, resolveCommentFromAgent, setReviewPublisher } from "../reviews";
 import { getConfig, setSettingsPublisher } from "../settings";
+import { speechService } from "../speech";
 import {
 	clearTerminalClient,
 	closeAllTerminals,
@@ -359,6 +361,8 @@ export async function createServer(options: CreateServerOptions = {}): Promise<R
 				ws.subscribe(WS_CHANNELS.turnChanged);
 				if (ws.data.protocolVersion >= MCP_PROTOCOL_VERSION) ws.subscribe(WS_CHANNELS.mcpStatus);
 				if (ws.data.protocolVersion >= LSP_PROTOCOL_VERSION) ws.subscribe(WS_CHANNELS.lspStatus);
+				if (ws.data.protocolVersion >= SPEECH_PROTOCOL_VERSION)
+					ws.subscribe(WS_CHANNELS.speechStatus);
 				if (ws.data.protocolVersion >= LOCALES_PROTOCOL_VERSION)
 					ws.subscribe(WS_CHANNELS.localesChanged);
 				if (ws.data.protocolVersion >= USER_THEMES_PROTOCOL_VERSION)
@@ -634,6 +638,13 @@ export async function createServer(options: CreateServerOptions = {}): Promise<R
 		server.publish(
 			WS_CHANNELS.lspStatus,
 			JSON.stringify({ channel: WS_CHANNELS.lspStatus, data: payload }),
+		),
+	);
+
+	speechService().setPublisher((status) =>
+		server.publish(
+			WS_CHANNELS.speechStatus,
+			JSON.stringify({ channel: WS_CHANNELS.speechStatus, data: status }),
 		),
 	);
 
@@ -937,6 +948,7 @@ export async function createServer(options: CreateServerOptions = {}): Promise<R
 		stopLocalesWatch();
 		stopThemesWatch();
 		lspStatus.stop();
+		speechService().dispose();
 		void lspManager.disposeAll();
 		disposeAllSessions();
 		for (const timer of reapTimers.values()) clearTimeout(timer);

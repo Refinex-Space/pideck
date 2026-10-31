@@ -13,7 +13,7 @@ export type ButtonVariant =
 	| "row"
 	| "destructive";
 export type ButtonSize = "s" | "m" | "l";
-export type ButtonTone = "warning" | "danger";
+export type ButtonTone = "warning" | "danger" | "info";
 export type ButtonIcon = React.ElementType<{
 	className?: string | undefined;
 	"aria-hidden"?: React.AriaAttributes["aria-hidden"];
@@ -59,6 +59,7 @@ const variantClasses = cva(
 				neutral: "",
 				warning: "",
 				danger: "",
+				info: "",
 			},
 		},
 		compoundVariants: [
@@ -83,6 +84,12 @@ const variantClasses = cva(
 				tone: "danger",
 				className:
 					"text-feedback-error hover:text-feedback-error focus-visible:text-feedback-error data-[selected=true]:text-feedback-error active:text-feedback-error",
+			},
+			{
+				variant: "ghost",
+				tone: "info",
+				className:
+					"bg-feedback-info-subtle text-feedback-info hover:bg-feedback-info-muted hover:text-feedback-info focus-visible:bg-feedback-info-muted focus-visible:text-feedback-info active:bg-feedback-info-muted active:text-feedback-info",
 			},
 			{ variant: "outline", tone: "warning", className: "text-feedback-warning" },
 			{ variant: "outline", tone: "danger", className: "text-feedback-error" },

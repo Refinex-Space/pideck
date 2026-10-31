@@ -2,6 +2,9 @@ import type { Provider } from "@earendil-works/pi-ai";
 import type { OAuthCredentials, OAuthLoginCallbacks } from "@earendil-works/pi-ai/oauth";
 import { configurePiRuntimeGenerationInitializer } from "./agent";
 import { bootHost } from "./host";
+import { dataDir } from "./persistence";
+import { setSpeechService } from "./speech";
+import { createFakeSpeechService } from "./speech/fake";
 
 if (process.env.THINKRAIL_E2E_FAKE_OAUTH === "1") {
 	const fakeOauth = {
@@ -89,6 +92,10 @@ if (process.env.THINKRAIL_E2E_FAKE_OAUTH === "1") {
 		runtime.registerNativeProvider(fakeApiKeyProvider);
 	});
 }
+
+// Deterministic in-process speech models and recognizer so dictation is drivable without a real model download.
+if (process.env.THINKRAIL_E2E_FAKE_SPEECH === "1")
+	setSpeechService(createFakeSpeechService(dataDir()));
 
 const host = process.env.THINKRAIL_HOST ?? "localhost";
 const staticDir = process.env.THINKRAIL_STATIC_DIR;

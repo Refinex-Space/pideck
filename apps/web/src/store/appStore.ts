@@ -442,6 +442,7 @@ export const SettingsSection = {
 	Extensions: "extensions",
 	Environment: "environment",
 	Network: "network",
+	Speech: "speech",
 } as const;
 export type SettingsSection = (typeof SettingsSection)[keyof typeof SettingsSection];
 

@@ -5,7 +5,7 @@ import { useT } from "@thinkrail/locales/react";
 import { IconButton } from "@thinkrail/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@thinkrail/ui/popover";
 import { cn } from "@thinkrail/ui/utils";
-import { ArrowUp, ChevronDown } from "lucide-react";
+import { ChevronDown, CornerDownLeft, Mic } from "lucide-react";
 import {
 	forwardRef,
 	type KeyboardEvent,
@@ -42,6 +42,13 @@ import {
 	usePendingSelection,
 	useSlashCommandCompletion,
 } from "@/prompt";
+import {
+	insertDictation,
+	useDictation,
+	useSpeechStatus,
+	useSpeechSupported,
+	Waveform,
+} from "@/speech";
 import {
 	type MentionCandidate,
 	mentionCompletionItems,
@@ -224,6 +231,12 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 	useEffect(() => onSlashActive(slashActive), [slashActive, onSlashActive]);
 
 	const focusSelection = usePendingSelection(ref, setCaret);
+	const speechSupported = useSpeechSupported();
+	const speechStatus = useSpeechStatus();
+	const draftRef = useRef({ value, slotSession });
+	useEffect(() => {
+		draftRef.current = { value, slotSession };
+	});
 
 	const replaceDraft = useCallback(
 		(text: string, caret?: number) => {
@@ -235,6 +248,19 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 		},
 		[onChange, focusSelection],
 	);
+
+	const insertSpoken = (text: string) => {
+		const { value: draft, slotSession: session } = draftRef.current;
+		const next = insertDictation(draft, ref.current?.selectionEnd ?? draft.length, text);
+		if (next.value === draft) return;
+		recallIdxRef.current = null;
+		setSubmitError(null);
+		if (session) setSlotSession(applyTemplateSlotEdit(draft, next.value, next.caret, session));
+		onChange(next.value);
+		focusSelection(next.caret);
+	};
+	const dictation = useDictation(insertSpoken, speechStatus?.activeModelId != null);
+	const dictating = dictation.phase === "listening" || dictation.phase === "starting";
 
 	const canSubmit = (raw: string) =>
 		!templatePending && pendingImages === 0 && (!!raw.trim() || images.length > 0);
@@ -263,6 +289,7 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 			return;
 		}
 		setSubmitError(null);
+		dictation.cancel();
 		onChange("");
 		attachedImages.reset();
 		recallIdxRef.current = null;
@@ -358,6 +385,11 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 
 	const onKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
 		if (isPromptKeyEventComposing(e.nativeEvent)) return;
+		if (e.key === "Escape" && dictating) {
+			e.preventDefault();
+			dictation.cancel();
+			return;
+		}
 		if (slots && !menuOpen) {
 			if (e.key === "Tab") {
 				e.preventDefault();
@@ -628,6 +660,9 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 										className="text-primary"
 									/>
 								) : null}
+								{dictating ? (
+									<Waveform levels={dictation.levels} className="max-sm:hidden" />
+								) : null}
 								<div
 									data-testid="chat-send-pill"
 									data-armed={canSend}
@@ -641,13 +676,17 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 										)}
 									>
 										<IconButton
-											variant="primary"
+											variant="ghost"
 											size="m"
-											icon={ArrowUp}
+											icon={CornerDownLeft}
 											data-testid="chat-send"
 											label={isStreaming ? t("chat.composer.steer") : t("chat.composer.send")}
 											onClick={() => submit(isStreaming ? "steer" : "send")}
 											disabled={!canSend}
+											className={cn(
+												"button-disabled:pointer-events-auto",
+												canSend && "text-text-default",
+											)}
 										/>
 									</span>
 									{isStreaming ? (
@@ -692,6 +731,29 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 										</Popover>
 									) : null}
 								</div>
+								{speechSupported ? (
+									<IconButton
+										variant="ghost"
+										size="m"
+										icon={Mic}
+										data-testid="chat-dictate"
+										data-phase={dictation.phase}
+										aria-pressed={dictating}
+										label={
+											dictating
+												? t("chat.composer.dictate.stop")
+												: dictation.phase === "transcribing"
+													? t("chat.composer.dictate.transcribing")
+													: t("chat.composer.dictate.start")
+										}
+										loading={dictation.phase === "transcribing"}
+										onClick={dictation.toggle}
+										tone={dictating ? "info" : undefined}
+									/>
+								) : null}
+								<span role="status" className="sr-only">
+									{dictating ? t("chat.composer.dictate.listening") : ""}
+								</span>
 							</div>
 						</div>
 					</div>

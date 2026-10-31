@@ -60,7 +60,7 @@ test's documented specialized list names it.
   `ghost` (no surface, muted text, neutral hover fill — the default for `IconButton`),
   `row` (transparent in every pointer state; the surrounding row owns its highlight), `destructive` (danger
   fill; confirms irreversible actions). A call site picks the variant that matches the action's existing
-  look; there is no `soft-default` and no colour override at a call site. `tone` (`warning` | `danger`)
+  look; there is no `soft-default` and no colour override at a call site. `tone` (`warning` | `danger` | `info`; `info` is the lit state of the composer microphone)
   is the one sanctioned label colour: on `ghost` and `outline` it keeps the feedback colour in every state
   (rest, hover, focus-visible, pressed, selected — disabled still wins), because a colour set at the call
   site loses to ghost's own state text in focus and pressed, exactly when the control is used.

@@ -31,6 +31,9 @@ it is not a PiDeck release. Signing, notarization and a PiDeck automatic-update 
   already installed on your machine (TypeScript, Java, Python, Go, Rust and more, or your own) in projects you
   have trusted, so the agent can follow definitions and references and sees a file's errors right after
   editing it. PiDeck never installs servers; see Settings → Language servers and the Status panel.
+- **Dictate your prompt.** Optional: download a voice model in Settings → Voice input, then use the
+  microphone beside Send. Speech is recognized on the PiDeck host with a model you download; no cloud speech
+  service is used. Desktop microphone permission is still being verified.
 - **Choose your environment.** Use the native desktop shell or the same UI in a browser, with English,
   Japanese, Simplified Chinese and Spanish interface catalogs and themes.
 

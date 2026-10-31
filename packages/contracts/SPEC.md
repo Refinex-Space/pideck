@@ -1084,6 +1084,19 @@ when the master switch or a server table entry changes (every workspace) and whe
 Updates are validated whole by the host and refused with a readable message. An older host has none of these and
 the UI hides the settings page and says so in the status block.
 
+## Voice input (v98)
+
+`SPEECH_PROTOCOL_VERSION` (v98) gates `speech.get`, `speech.download`, `speech.cancelDownload`,
+`speech.delete`, `speech.select`, `speech.dictationStart`, `speech.dictationAudio`, `speech.dictationStop`,
+`speech.dictationCancel` and the `speech.status` push. `speech.ts` defines `SpeechModel` (catalog id, name,
+languages, size, source host, `absent|downloading|ready|failed` state, downloaded bytes, closed
+`network|integrity|disk` failure), `SpeechStatus` (runtime `ready|unavailable`, models, the active model id),
+`DictationStarted` (id + the 16 kHz sample rate the host expects) and `DictationResult`. Model methods take a
+catalog id only, never a URL or path, and return the new status; `speech.status` repeats it with download
+progress. `speech.dictationAudio` carries base64 mono PCM16LE. Errors use `SPEECH_MODEL_MISSING`,
+`SPEECH_ENGINE_UNAVAILABLE`, `SPEECH_BUSY` and `SPEECH_DICTATION_UNKNOWN`. An older host has none of these, and
+the UI hides every voice affordance. Owner: [[submodule-server-speech]].
+
 ## Native browser contract
 
 `nativeBrowser` adds type-only BrowserPageState, BrowserSelection, BrowserViewport, BrowserPickerLabels,

@@ -118,6 +118,8 @@ export default defineConfig({
 			// Register a deterministic fake OAuth provider (`e2e-oauth`) so the in-app login flow is drivable
 			// end-to-end without a real provider/browser (see packages/server/src/dev.ts).
 			THINKRAIL_E2E_FAKE_OAUTH: centralMode ? "0" : "1",
+			// In-process speech models and recognizer, so dictation is drivable without a model download.
+			THINKRAIL_E2E_FAKE_SPEECH: "1",
 			CI: "1",
 		},
 	},

@@ -935,19 +935,16 @@ both message orders. *Rejected:* keeping the modal for non-MCP extensions — ev
   overflow then scrolls inside the textarea. Attachment chips, completion menus, slot hints, and QueueStrip
   keep their existing separate chrome. The slot-highlight backdrop must follow every dynamic textarea box
   change with the exact box-model and scroll-sync invariants under Template slots below.
-- **Composer trailing controls** (`Composer`) — the footer's right-hand cluster is **one solid object and
-  ghosts**, no borders: History is `IconButton ghost m` (its `label` supplies the tooltip), Stop is
-  `Button ghost m` (`■ Stop`, muted text lifting on a hover wash), and the send a single
-  `rounded-full` accent pill (`chat-send-pill`, `data-armed`) whose main segment (`chat-send`) carries the
-  verb plus an `↩` keycap and whose chevron segment (`send-menu`, streaming only) is a second hit area
-  with its own hover — spacing, not a divider, separates them. The earlier cluster was four equal bordered
-  32px squares, which gave a utility (history) the same weight as the primary action and read as
-  form-era chrome. **Inert send**: with nothing to send the pill rests on `control-bg-selected` +
-  `control-disabled-text` rather than the 60% primary pair — a dark accent block pulls the eye to a control
-  that cannot act, and the switch to the accent fill is the "ready" signal (the exception is recorded in
-  `styles/COLOR.md`). **Compact mode**: below the chat column's `@md` container width (phones, narrow
-  splits) labels and keycap hide and the send pill collapses to an icon, so the model pill keeps its room.
-  Labels use `ui.action`.
+- **Composer trailing controls** (`Composer`) — the footer's right-hand cluster is **ghosts only**, no
+  borders and no solid fill: History is `IconButton ghost m` (its `label` supplies the tooltip), Stop is
+  `Button ghost m` (`■ Stop`, muted text lifting on a hover wash), and Send (`chat-send`, inside
+  `chat-send-pill` with `data-armed`) is an `IconButton ghost m` carrying the `CornerDownLeft` (↵) glyph,
+  the same line weight as the dictation `Mic` beside it. A solid accent arrow next to the outline mic read as
+  two unrelated styles, so the primary action is signalled by tone instead of fill: **inert send** rests
+  at `control-disabled-text`, and **armed** lifts to `text-default` with the 90%→100% scale ramp. The chevron
+  (`send-menu`, streaming only) is a second ghost hit area; spacing, not a divider, separates them.
+  **Compact mode** needs no special case now that the send is icon-only at every width. Labels use
+  `ui.action`.
 - **Queued messages: the pending strip** (`QueueStrip.tsx`, props-driven: `queue` + `onEdit`/`onRemove`)
   — the web mirror of pi's interactive-mode pending-messages area. A **streaming send never renders an
   optimistic transcript bubble** (see the store SPEC's echo contract): `ChatView.onSubmit` skips
@@ -968,6 +965,14 @@ both message orders. *Rejected:* keeping the modal for non-MCP extensions — ev
   conservative `hasImages` aggregate — no image bytes — so a queued image shows no chip in the strip; the
   canonical transcript turn later renders its image blocks with hydrated fallback labels. E2e:
   `queue.live.spec.ts` (@agent).
+- **Dictation** (`Composer` + [[submodule-web-speech]]) — the microphone (`chat-dictate`, a ghost `IconButton`) is the
+  rightmost control, after the send pill; while listening it takes the `feedback-info` wash/colour and a rolling
+  `Waveform` (`dictation-waveform`) sits left of the send pill (hidden below `sm`; the lit button and status line
+  remain). Its tooltip/name reads "Stop dictation" while listening; transcribing shows a spinner. Text is inserted
+  after the selection end through the normal edit path (`insertDictation`, slot-session aware) and never replaces
+  the draft; Escape or a successful send cancels the utterance; unmounting cancels it. Without a ready model the
+  button opens Settings → Voice input. Hosts without `SPEECH_PROTOCOL_VERSION` render no microphone. The draft,
+  IME, Enter/Shift+Enter, history recall and completion menus are unchanged.
 - **Streaming send modes: split send + interrupt** (`Composer`) — steer/queue semantics are pi's loop
   design (steer = injected at the next turn boundary, after the current assistant message + its tool
   calls; queue = runs after the agent settles; only abort halts an in-flight response) and proved

@@ -176,6 +176,7 @@ import {
 } from "../reviews";
 import { getConfig, noteRecentModel, updateConfig } from "../settings";
 import { evictSpecIndex, projectHasSpecs, specGraph } from "../spec";
+import { speechService } from "../speech";
 import {
 	deleteTemplate,
 	getTemplate,
@@ -1311,6 +1312,21 @@ const handlers: WsHandlers = {
 	"network.get": (params) => networkProxyStatus(params.refresh === true),
 	"network.update": (params) => updateNetworkProxy(params),
 	"network.diagnose": (params) => diagnoseNetwork(params.provider),
+	"speech.get": () => speechService().status(),
+	"speech.download": (params) => speechService().download(params.modelId),
+	"speech.cancelDownload": (params) => speechService().cancelDownload(params.modelId),
+	"speech.delete": (params) => speechService().delete(params.modelId),
+	"speech.select": (params) => speechService().select(params.modelId),
+	"speech.dictationStart": () => speechService().dictationStart(),
+	"speech.dictationAudio": (params) => {
+		speechService().dictationAudio(params.dictationId, params.pcm16);
+		return { ok: true } as const;
+	},
+	"speech.dictationStop": (params) => speechService().dictationStop(params.dictationId),
+	"speech.dictationCancel": (params) => {
+		speechService().dictationCancel(params.dictationId);
+		return { ok: true } as const;
+	},
 	"environment.update": (params) => updateHostEnvironment(params.environment),
 	"feedback.respond": (params) => {
 		respondToInterview(params.action);

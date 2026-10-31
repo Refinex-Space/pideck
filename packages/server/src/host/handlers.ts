@@ -42,6 +42,7 @@ import {
 	isMcpLoginId,
 	isPiSessionId,
 	listAvailableModels,
+	listCustomEndpoints,
 	listModelContextSettings,
 	listProjectAliasSkillNames,
 	listSessionStates,
@@ -52,6 +53,7 @@ import {
 	markWorkspaceUnread,
 	notifyExtUi,
 	nudgeSession,
+	probeCustomEndpoint,
 	projectTrustSummary,
 	promptSession,
 	readBackgroundCommandOutput,
@@ -61,6 +63,7 @@ import {
 	refreshSubagentTools,
 	reloadOpenSessions,
 	reloadSessionResources,
+	removeCustomEndpoint,
 	removeQueuedSession,
 	removeSession,
 	removeWorkspaceSessions,
@@ -68,6 +71,7 @@ import {
 	replyMcpProbe,
 	resolveExtUi,
 	respondToTool,
+	saveCustomEndpoint,
 	sendReviewFixToSession,
 	setModelContextWindow,
 	setSessionModel,
@@ -1267,6 +1271,10 @@ const handlers: WsHandlers = {
 	"model.setContextWindow": (p) => {
 		return setModelContextWindow(p.target, p.contextWindow);
 	},
+	"customEndpoints.list": () => listCustomEndpoints(),
+	"customEndpoints.probe": (p) => probeCustomEndpoint(p),
+	"customEndpoints.save": (p) => saveCustomEndpoint(p),
+	"customEndpoints.remove": (p) => removeCustomEndpoint(p.id),
 	"model.default": () =>
 		observeSetupRead(
 			() => resolveNewChatModel({}),

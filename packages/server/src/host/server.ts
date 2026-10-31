@@ -48,8 +48,8 @@ import {
 	setMcpPolicyResolver,
 	setMcpStatusPublisher,
 	setMcpToolGrantWriter,
-	setModelContextPublisher,
 	setModelListingPublisher,
+	setModelsFilePublisher,
 	setReviewCommentHandler,
 	setSessionCreatedPublisher,
 	setSessionDeletedPublisher,
@@ -949,7 +949,7 @@ export async function createServer(options: CreateServerOptions = {}): Promise<R
 		);
 	};
 	setJbcentralChangedPublisher(publishProviderChanged);
-	setModelContextPublisher(publishProviderChanged);
+	setModelsFilePublisher(publishProviderChanged);
 	setModelListingPublisher(publishProviderChanged);
 
 	const initialConfig = getConfig();
@@ -1005,7 +1005,7 @@ export async function createServer(options: CreateServerOptions = {}): Promise<R
 		closeAllTerminals();
 		setFeedbackPublisher(null);
 		setSettingsPublisher(null);
-		setModelContextPublisher(null);
+		setModelsFilePublisher(null);
 		setModelListingPublisher(null);
 		setJbcentralAppliedPublisher(() => {});
 		setJbcentralChangedPublisher(() => {});

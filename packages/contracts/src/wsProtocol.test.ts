@@ -17,6 +17,8 @@ import {
 	CHAT_RESOURCES_PROTOCOL_VERSION,
 	CLIENT_ERROR_REPORT_PROTOCOL_VERSION,
 	CONTEXT_WINDOW_SETTINGS_PROTOCOL_VERSION,
+	CUSTOM_ENDPOINT_ID_PREFIX,
+	CUSTOM_ENDPOINTS_PROTOCOL_VERSION,
 	completionDelivery,
 	customMessageText,
 	DEFAULT_MODEL_PROTOCOL_VERSION,
@@ -25,6 +27,7 @@ import {
 	HOST_UPDATE_RUN_PROTOCOL_VERSION,
 	INSTRUCTIONS_PROTOCOL_VERSION,
 	isBackgroundCommandCompletionMessage,
+	isCustomEndpointId,
 	isTodoReviewFixMessage,
 	isToolResponsePending,
 	JBCENTRAL_QUOTA_PROTOCOL_VERSION,
@@ -547,4 +550,12 @@ test("interactive file management has one versioned protocol surface", () => {
 		"fs.reveal",
 	] as const)
 		expect(Object.values(WS_METHODS)).toContain(method);
+});
+
+test("custom endpoints are pinned to v101 and own only custom-* providers", () => {
+	expect(CUSTOM_ENDPOINTS_PROTOCOL_VERSION).toBe(101);
+	expect(PROTOCOL_VERSION).toBeGreaterThanOrEqual(CUSTOM_ENDPOINTS_PROTOCOL_VERSION);
+	expect(WS_METHODS.customEndpointsProbe).toBe("customEndpoints.probe");
+	expect(isCustomEndpointId(`${CUSTOM_ENDPOINT_ID_PREFIX}gateway`)).toBe(true);
+	expect(isCustomEndpointId("ollama")).toBe(false);
 });

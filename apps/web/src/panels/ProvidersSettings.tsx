@@ -19,6 +19,7 @@ import { LoginDialog } from "@/auth";
 import { AUTH_KIND_LABEL } from "@/chat/modelPicker";
 import { selectLoginBusy, toast, useAppStore } from "@/store";
 import { errorText, getTransport } from "@/transport";
+import { CustomEndpointsSettings, useCustomEndpoints } from "./CustomEndpointsSettings";
 import { JetBrainsAiCard } from "./JetBrainsAiCard";
 import { SettingsGroup, SettingsPageContainer } from "./SettingsGroup";
 
@@ -130,7 +131,9 @@ export function ProvidersSettings() {
 						saveQuotaSetting({ jbcentralQuotaRefreshSeconds: seconds }),
 				}
 			: null;
-	const providers = report?.providers ?? [];
+	const customEndpoints = useCustomEndpoints();
+	const shownElsewhere = new Set(customEndpoints?.endpoints?.map((endpoint) => endpoint.id));
+	const providers = (report?.providers ?? []).filter((p) => !shownElsewhere.has(p.id));
 	const configured = providers.filter((p) => p.configured);
 	const unconfigured = providers.filter((p) => !p.configured);
 	const subscriptionRows = unconfigured.filter((p) => p.canOAuth);
@@ -154,7 +157,10 @@ export function ProvidersSettings() {
 					spinIcon
 					data-testid="providers-refresh"
 					aria-label={t("settings.providers.refreshLabel")}
-					onClick={() => void load()}
+					onClick={() => {
+						void load();
+						void customEndpoints?.load();
+					}}
 				>
 					{t("settings.providers.refresh")}
 				</Button>
@@ -189,6 +195,8 @@ export function ProvidersSettings() {
 							{...(quotaSettings ? { quotaSettings } : {})}
 						/>
 					) : null}
+
+					{customEndpoints ? <CustomEndpointsSettings state={customEndpoints} /> : null}
 
 					{subscriptionRows.length > 0 ? (
 						<SettingsGroup

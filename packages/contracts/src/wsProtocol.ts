@@ -135,6 +135,7 @@ export const LSP_PROTOCOL_VERSION = 106;
 export const AGENT_ACTIVITY_PROTOCOL_VERSION = 105;
 export const NETWORK_PROXY_PROTOCOL_VERSION = 104;
 export const FILE_WORKBENCH_PROTOCOL_VERSION = 103;
+export const CUSTOM_ENDPOINTS_PROTOCOL_VERSION = 101;
 export const TOOL_RESPONSE_PROTOCOL_VERSION = 93;
 export const USER_THEMES_PROTOCOL_VERSION = 92;
 export const HOST_ENVIRONMENT_PROTOCOL_VERSION = 91;
@@ -337,6 +338,10 @@ export const WS_METHODS = {
 	modelDefault: "model.default",
 	modelContextSettings: "model.contextSettings",
 	modelSetContextWindow: "model.setContextWindow",
+	customEndpointsList: "customEndpoints.list",
+	customEndpointsProbe: "customEndpoints.probe",
+	customEndpointsSave: "customEndpoints.save",
+	customEndpointsRemove: "customEndpoints.remove",
 	modelClampThinking: "model.clampThinking",
 	providerStatus: "provider.status",
 	providerLoginStart: "provider.loginStart",
@@ -612,6 +617,62 @@ export type ModelContextTarget = "available" | Pick<WireModel, "provider" | "id"
 export interface ModelContextSetting
 	extends Pick<WireModel, "provider" | "id" | "name" | "contextWindow"> {
 	override: number | null;
+}
+
+/** Provider ids the custom-endpoint form owns in pi's `models.json`; every other provider is left alone. */
+export const CUSTOM_ENDPOINT_ID_PREFIX = "custom-";
+
+export function isCustomEndpointId(id: string): boolean {
+	return id.startsWith(CUSTOM_ENDPOINT_ID_PREFIX);
+}
+
+/** What the server reported about a model; `null` means it did not say, so pi's default applies. */
+export interface CustomEndpointModel {
+	id: string;
+	contextWindow: number | null;
+	maxTokens: number | null;
+	reasoning: boolean | null;
+	vision: boolean | null;
+	/** Whether the server says the model takes tool calls; never saved, so a listed endpoint reports null. */
+	tools: boolean | null;
+}
+
+/** An OpenAI-compatible `custom-*` provider in pi's `models.json`. The key itself never crosses the wire. */
+export interface CustomEndpoint {
+	id: string;
+	name: string;
+	baseUrl: string;
+	hasApiKey: boolean;
+	models: CustomEndpointModel[];
+}
+
+export interface CustomEndpointProbeRequest {
+	baseUrl: string;
+	/** Omitted together with `endpointId` to reuse that endpoint's saved key for its unchanged address. */
+	apiKey?: string;
+	endpointId?: string;
+}
+
+export type CustomEndpointProbeFailure =
+	| "invalid-url"
+	| "unauthorized"
+	| "timeout"
+	| "unreachable"
+	| "not-openai"
+	| "no-models";
+
+export type CustomEndpointProbe =
+	| { ok: true; baseUrl: string; models: CustomEndpointModel[] }
+	| { ok: false; reason: CustomEndpointProbeFailure; status?: number };
+
+export interface CustomEndpointDraft {
+	/** Present to replace an existing endpoint; absent to add a new one. */
+	id?: string;
+	name: string;
+	baseUrl: string;
+	/** Omitted to keep the saved key; an empty string removes it. */
+	apiKey?: string;
+	models: CustomEndpointModel[];
 }
 
 export function isSharedModelContextTarget(
@@ -981,6 +1042,10 @@ export interface WsMethodMap {
 		params: { target: ModelContextTarget; contextWindow: number | null };
 		result: ModelContextSetting[];
 	};
+	"customEndpoints.list": { params: Record<string, never>; result: CustomEndpoint[] };
+	"customEndpoints.probe": { params: CustomEndpointProbeRequest; result: CustomEndpointProbe };
+	"customEndpoints.save": { params: CustomEndpointDraft; result: CustomEndpoint[] };
+	"customEndpoints.remove": { params: { id: string }; result: CustomEndpoint[] };
 	"provider.status": { params: Record<string, never>; result: ProviderStatusReport };
 	"provider.loginStart": {
 		params: { providerId: string; type?: "oauth" | "api_key" };

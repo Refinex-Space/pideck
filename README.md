@@ -31,6 +31,10 @@ it is not a PiDeck release. Signing, notarization and a PiDeck automatic-update 
   already installed on your machine (TypeScript, Java, Python, Go, Rust and more, or your own) in projects you
   have trusted, so the agent can follow definitions and references and sees a file's errors right after
   editing it. PiDeck never installs servers; see Settings → Language servers and the Status panel.
+- **Use your own model servers.** Settings → Providers → Custom servers connects a company LLM gateway or a
+  model on your own machine — any OpenAI-compatible server such as LiteLLM, vLLM, Ollama, LM Studio or
+  llama.cpp. Find models lists what the server serves, and the server is saved to Pi's `models.json`, so
+  its models appear in the model picker and in the Pi CLI alike.
 - **Dictate your prompt.** Optional: download a voice model in Settings → Voice input, then use the
   microphone beside Send. Speech is recognized on the PiDeck host with a model you download; no cloud speech
   service is used. Desktop microphone permission is still being verified.

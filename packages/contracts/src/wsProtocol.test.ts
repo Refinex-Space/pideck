@@ -329,6 +329,12 @@ test("review details and the GitHub review actions are pinned to v88", () => {
 	expect(WS_METHODS.workspaceDeleteRemoteBranch).toBe("workspace.deleteRemoteBranch");
 });
 
+test("repository cloning and cancellation are registered", () => {
+	expect(WS_METHODS.projectClone).toBe("project.clone");
+	expect(WS_METHODS.projectCancelClone).toBe("project.cancelClone");
+	expect(WS_METHODS.projectCloneDestination).toBe("project.cloneDestination");
+});
+
 test("MCP server management, status and chat resources are pinned to v83", () => {
 	expect(MCP_PROTOCOL_VERSION).toBe(83);
 	expect(PROTOCOL_VERSION).toBeGreaterThanOrEqual(MCP_PROTOCOL_VERSION);

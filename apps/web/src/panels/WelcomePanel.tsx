@@ -60,8 +60,8 @@ export function WelcomePanel() {
 		};
 	}, [project?.id]);
 
-	const { openProject, pickAndOpen, enterHostPath, dialogs } = useOpenProject((opened) =>
-		useAppStore.getState().selectProject(opened.id, { reveal: true }),
+	const { openProject, pickAndOpen, enterHostPath, cloneRepository, dialogs } = useOpenProject(
+		(opened) => useAppStore.getState().selectProject(opened.id, { reveal: true }),
 	);
 	const noProjects = project == null;
 
@@ -79,6 +79,7 @@ export function WelcomePanel() {
 			recentProjects={recentProjects}
 			onOpen={() => void pickAndOpen()}
 			onEnterHostPath={enterHostPath}
+			onClone={cloneRepository}
 			onOpenRecent={(path) => void openProject(path)}
 			align="start"
 		>

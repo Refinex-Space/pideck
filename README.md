@@ -31,6 +31,9 @@ it is not a PiDeck release. Signing, notarization and a PiDeck automatic-update 
   already installed on your machine (TypeScript, Java, Python, Go, Rust and more, or your own) in projects you
   have trusted, so the agent can follow definitions and references and sees a file's errors right after
   editing it. PiDeck never installs servers; see Settings → Language servers and the Status panel.
+- **Clone a repository from the app.** The add-project menu can clone a Git repository into a folder you
+  choose on the PiDeck host, preview the destination, cancel a running clone, and open the result as a
+  project. It uses the host's Git credentials and SSH keys.
 - **Use your own model servers.** Settings → Providers → Custom servers connects a company LLM gateway or a
   model on your own machine — any OpenAI-compatible server such as LiteLLM, vLLM, Ollama, LM Studio or
   llama.cpp. Find models lists what the server serves, and the server is saved to Pi's `models.json`, so

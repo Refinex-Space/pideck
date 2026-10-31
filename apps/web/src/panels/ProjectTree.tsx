@@ -245,8 +245,8 @@ export function ProjectTree() {
 		if (willExpand) void loadWorkspaces(projectId);
 	};
 
-	const { openProject, pickAndOpen, enterHostPath, dialogs } = useOpenProject((project) =>
-		selectProject(project.id),
+	const { openProject, pickAndOpen, enterHostPath, cloneRepository, dialogs } = useOpenProject(
+		(project) => selectProject(project.id),
 	);
 
 	const onExistingWorktreeOpened = async (workspace: Workspace) => {
@@ -331,6 +331,7 @@ export function ProjectTree() {
 						recentProjects={recentProjects}
 						onOpen={() => void pickAndOpen()}
 						onEnterHostPath={enterHostPath}
+						onClone={cloneRepository}
 						onOpenRecent={(p) => void openProject(p)}
 					>
 						{newSessionRow}
@@ -391,6 +392,7 @@ export function ProjectTree() {
 						recentProjects={recentProjects}
 						onOpen={() => void pickAndOpen()}
 						onEnterHostPath={enterHostPath}
+						onClone={cloneRepository}
 						onOpenRecent={(p) => void openProject(p)}
 					>
 						<IconButton

@@ -11,6 +11,7 @@ import {
 	MCP_PROTOCOL_VERSION,
 	type McpServerResourceSummary,
 	MODEL_PICKER_PROTOCOL_VERSION,
+	PROJECT_CLONE_PROTOCOL_VERSION,
 	PROJECT_TRUST_PROTOCOL_VERSION,
 	type Project,
 	SESSION_RENAME_PROTOCOL_VERSION,
@@ -116,6 +117,10 @@ export function selectSupportsProjectTrust(state: ProtocolState): boolean {
 
 export function selectSupportsLsp(state: ProtocolState): boolean {
 	return state.protocolVersion !== null && state.protocolVersion >= LSP_PROTOCOL_VERSION;
+}
+
+export function selectSupportsProjectClone(state: ProtocolState): boolean {
+	return state.protocolVersion !== null && state.protocolVersion >= PROJECT_CLONE_PROTOCOL_VERSION;
 }
 
 export function selectSupportsMcp(state: ProtocolState): boolean {

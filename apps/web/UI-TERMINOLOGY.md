@@ -95,7 +95,7 @@ Children:
 | New-Session Row | header row in `ProjectTree` | `new-session` | Starts a session for the context project (`Mod+N`, hover-only hint); with no project it opens the Add-Project Menu |
 | Projects Heading | header row above the project list in `ProjectTree` | `projects-heading` | "Projects" label; hover-revealed Projects Menu and Add-Project Button |
 | — Projects Menu | "⋯" on the heading | `projects-menu` | Collapse all / Expand all projects (`projects-collapse-all` / `projects-expand-all`) |
-| Add-Project Button / Menu | `panels/AddProjectMenu.tsx` → `AddProjectMenu` (the "+" on the Projects heading) | `add-project-menu` | Open project / Open GitHub (soon) / Recents dropdown |
+| Add-Project Button / Menu | `panels/AddProjectMenu.tsx` → `AddProjectMenu` (the "+" on the Projects heading) | `add-project-menu` | Open project / Enter host path… / Clone repository… / Open GitHub (soon) / Recents dropdown |
 | Project Row | inline row in `ProjectTree` | `project-item` | A project (git repo); clicking selects it (project home) |
 | — Project Expander | chevron control | `project-expand` | Expands/collapses the project's workspace list |
 | — Project Name | inline `<button>` | `project-name` | Selects the project (project home) |

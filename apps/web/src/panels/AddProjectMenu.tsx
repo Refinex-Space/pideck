@@ -21,10 +21,12 @@ export function AddProjectMenu({
 	onOpen,
 	onEnterHostPath,
 	onOpenRecent,
+	onClone,
 	align = "end",
 	children,
 }: {
 	recentProjects: Project[];
+	onClone?: (() => void) | undefined;
 	onOpen: () => void;
 	onEnterHostPath: () => void;
 	onOpenRecent: (path: string) => void;
@@ -44,10 +46,12 @@ export function AddProjectMenu({
 					<Edit />
 					<span>{t("panels.addProject.enterHostPath")}</span>
 				</DropdownMenuItem>
-				<DropdownMenuItem disabled>
-					<Globe />
-					<span>{t("panels.addProject.openGitHub")}</span>
-				</DropdownMenuItem>
+				{onClone ? (
+					<DropdownMenuItem data-testid="menu-clone-project" onSelect={onClone}>
+						<Globe />
+						<span>{t("panels.addProject.clone")}</span>
+					</DropdownMenuItem>
+				) : null}
 				{recentProjects.length > 0 && (
 					<>
 						<DropdownMenuSeparator />

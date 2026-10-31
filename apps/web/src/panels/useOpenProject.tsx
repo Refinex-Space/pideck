@@ -1,8 +1,9 @@
 import type { Project } from "@thinkrail/contracts";
 import { T, useT } from "@thinkrail/locales/react";
 import { type ReactNode, useState } from "react";
-import { useAppStore } from "../store";
+import { selectSupportsProjectClone, useAppStore } from "../store";
 import { errorText, getTransport } from "../transport";
+import { CloneProjectDialog } from "./CloneProjectDialog";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { createLatestOperation } from "./latestOperation";
 import { NoticeDialog } from "./NoticeDialog";
@@ -15,9 +16,12 @@ export function useOpenProject(onOpened: (project: Project) => void | Promise<vo
 	openProject: (rawPath: string) => Promise<void>;
 	pickAndOpen: () => Promise<void>;
 	enterHostPath: () => void;
+	cloneRepository: (() => void) | undefined;
 	dialogs: ReactNode;
 } {
 	const t = useT();
+	const supportsClone = useAppStore(selectSupportsProjectClone);
+	const [cloneIntent, setCloneIntent] = useState<{ isCurrent: () => boolean } | null>(null);
 	const [initTarget, setInitTarget] = useState<string | null>(null);
 	const [openError, setOpenError] = useState<string | null>(null);
 	const [pathEntry, setPathEntry] = useState<{ reason: string | null } | null>(null);
@@ -68,6 +72,12 @@ export function useOpenProject(onOpened: (project: Project) => void | Promise<vo
 		}
 	};
 
+	const cloneRepository = supportsClone
+		? () => {
+				setCloneIntent({ isCurrent: projectOpenIntents.begin() });
+			}
+		: undefined;
+
 	const enterHostPath = () => {
 		projectOpenIntents.begin();
 		setPathEntry({ reason: null });
@@ -112,6 +122,12 @@ export function useOpenProject(onOpened: (project: Project) => void | Promise<vo
 					if (initTarget) void initProject(initTarget);
 				}}
 			/>
+			{cloneIntent ? (
+				<CloneProjectDialog
+					onClose={() => setCloneIntent(null)}
+					onCloned={(project) => void adopt(project, cloneIntent.isCurrent)}
+				/>
+			) : null}
 			<OpenProjectPathDialog
 				open={pathEntry !== null}
 				reason={pathEntry?.reason ?? null}
@@ -132,5 +148,5 @@ export function useOpenProject(onOpened: (project: Project) => void | Promise<vo
 		</>
 	);
 
-	return { openProject, pickAndOpen, enterHostPath, dialogs };
+	return { openProject, pickAndOpen, enterHostPath, cloneRepository, dialogs };
 }

@@ -22,6 +22,7 @@ import {
 import type {
 	AgentSettlement,
 	ImageContent,
+	InstructionsApplyResult,
 	Model,
 	PiEvent,
 	QueuedMessageContent,
@@ -982,6 +983,24 @@ export function buildSessionSettings(cwd: string, projectTrusted: boolean): Sett
 	};
 	settings.applyOverrides(SESSION_SETTINGS_OVERRIDES);
 	return settings;
+}
+
+export function workspacePiResourcesTrusted(workspaceId: string): boolean {
+	return piResourceTrustFor(workspaceId);
+}
+
+/** Reloads every live chat so it re-reads context files; a busy chat reloads once it is idle. */
+export async function reloadOpenSessions(): Promise<InstructionsApplyResult> {
+	const live = [...sessions].filter(([, entry]) => !entry.disposed && !entry.resourcesClosing);
+	const outcomes = await Promise.allSettled(
+		live.map(([sessionId]) => requestSessionReload(sessionId)),
+	);
+	const result: InstructionsApplyResult = { reloaded: 0, deferred: 0, failed: 0 };
+	for (const outcome of outcomes) {
+		if (outcome.status === "rejected") result.failed++;
+		else result[outcome.value]++;
+	}
+	return result;
 }
 
 export type TrustReloadDisposition = SessionReloadDisposition | "failed";

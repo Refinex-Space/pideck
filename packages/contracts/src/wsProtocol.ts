@@ -70,6 +70,7 @@ import type {
 	Workspace,
 } from "./domain";
 import { isDelegationRunDetails } from "./domain";
+import type { InstructionKind, InstructionsApplyResult, InstructionsState } from "./instructions";
 import type { LspConfigUpdate, LspOverview } from "./lsp";
 import type { NetworkDiagnostic, NetworkProxyStatus, NetworkProxyUpdate } from "./network";
 import type {
@@ -125,7 +126,8 @@ export type TemplateReadLocation =
 	| { projectId: string; workspaceId?: never }
 	| { workspaceId?: never; projectId?: never };
 
-export const PROTOCOL_VERSION = 98;
+export const PROTOCOL_VERSION = 99;
+export const INSTRUCTIONS_PROTOCOL_VERSION = 99;
 export const SPEECH_PROTOCOL_VERSION = 98;
 export const LSP_PROTOCOL_VERSION = 97;
 export const AGENT_ACTIVITY_PROTOCOL_VERSION = 96;
@@ -360,6 +362,10 @@ export const WS_METHODS = {
 	speechDictationAudio: "speech.dictationAudio",
 	speechDictationStop: "speech.dictationStop",
 	speechDictationCancel: "speech.dictationCancel",
+	instructionsGet: "instructions.get",
+	instructionsSave: "instructions.save",
+	instructionsApply: "instructions.apply",
+	instructionsReveal: "instructions.reveal",
 	lspGet: "lsp.get",
 	lspUpdate: "lsp.update",
 	lspRestart: "lsp.restart",
@@ -1005,6 +1011,22 @@ export interface WsMethodMap {
 	"speech.dictationAudio": { params: { dictationId: string; pcm16: string }; result: Ack };
 	"speech.dictationStop": { params: { dictationId: string }; result: DictationResult };
 	"speech.dictationCancel": { params: { dictationId: string }; result: Ack };
+	"instructions.get": { params: { workspaceId?: string }; result: InstructionsState };
+	"instructions.save": {
+		params: {
+			/** Also report this workspace's loaded files in the result. */
+			workspaceId?: string;
+			kind: InstructionKind;
+			content: string;
+			/** What the editor loaded; a save against a changed file fails with `INSTRUCTIONS_CONFLICT`. */
+			expectedPath: string;
+			expectedRevision: string;
+		};
+		result: InstructionsState;
+	};
+	"instructions.apply": { params: Record<string, never>; result: InstructionsApplyResult };
+	/** Shows the file in the OS file manager, or its folder when it does not exist yet. */
+	"instructions.reveal": { params: { kind: InstructionKind }; result: Ack };
 	"environment.update": {
 		params: { environment: HostEnvironment };
 		result: HostEnvironmentUpdateResult;
@@ -1177,7 +1199,9 @@ export type WsErrorCode =
 	| "SPEECH_MODEL_MISSING"
 	| "SPEECH_ENGINE_UNAVAILABLE"
 	| "SPEECH_BUSY"
-	| "SPEECH_DICTATION_UNKNOWN";
+	| "SPEECH_DICTATION_UNKNOWN"
+	| "INSTRUCTIONS_CONFLICT"
+	| "INSTRUCTIONS_TOO_LARGE";
 
 export interface WsResponse {
 	id: string;

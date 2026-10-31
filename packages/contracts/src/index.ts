@@ -43,6 +43,7 @@ export {
 	THEME_MODES,
 	TODO_NUDGE_PREFIX,
 } from "./domain";
+export * from "./instructions";
 export * from "./lsp";
 export type * from "./nativeBrowser";
 export type * from "./nativeClient";

@@ -75,6 +75,7 @@ internals**. The edges between them are owned here (see the dependency graph), n
 | `log` | explicit leveled diagnostics → pretty stderr + agent-oriented JSONL under `<dataDir>/logs` (pino-roll daily/10 MB rotation, 14 rotated + active); arbitrary console output stays terminal-only | [log/SPEC.md](src/log/SPEC.md) |
 | `settings` | server-synced app config, including the shared custom-layout-preset catalog and Central quota preferences (never current/default layout) | [settings/SPEC.md](src/settings/SPEC.md) |
 | `network` | host HTTP/HTTPS proxy policy, OS detection, credential storage and diagnostics | [network/SPEC.md](src/network/SPEC.md) |
+| `instructions` | Pi's global `AGENTS.md` / `APPEND_SYSTEM.md` in the agent dir: read, conflict-checked atomic save, workspace load order | [instructions/SPEC.md](src/instructions/SPEC.md) |
 | `speech` | host-local voice models (closed catalog, verified download, storage) and one live dictation over a WASM recognizer | [speech/SPEC.md](src/speech/SPEC.md) |
 | `environment` | the stored host environment (pi config folder + variables) applied to `process.env` at boot | [environment/SPEC.md](src/environment/SPEC.md) |
 | `locales` | the user's local language files in `<dataDir>/locales/`: validate, watch, `locales.list`/`changed` | [locales/SPEC.md](src/locales/SPEC.md) |
@@ -114,7 +115,7 @@ the host from env via `bootHost` for dev/e2e.
 
 `host` is the **only composition root** — it wires each feature's handlers into the WS registry.
 
-- `host` → `projects`, `workspaces`, `git`, `github`, `branch-review`, `pr`, `fs`, `spec`, `todos`, `reviews`, `changes`, `turns`, `watch`, `terminal`, `dialog`, `editors`, `agent`, `auth`, `assist`, `settings`, `environment`, `network`, `speech`, `locales`, `themes`, `history`, `templates`, `analytics`, `feedback`, `log`, `persistence` (`dataDir`, for the crash report)
+- `host` → `projects`, `workspaces`, `git`, `github`, `branch-review`, `pr`, `fs`, `spec`, `todos`, `reviews`, `changes`, `turns`, `watch`, `terminal`, `dialog`, `editors`, `agent`, `auth`, `assist`, `settings`, `environment`, `network`, `speech`, `instructions`, `locales`, `themes`, `history`, `templates`, `analytics`, `feedback`, `log`, `persistence` (`dataDir`, for the crash report)
 - `workspaces` → `projects`, `git`, `persistence`
 - `branch-review` → `git`, `subprocess`
 - `pr` → `workspaces`, `git`, `todos`, `branch-review` (provider detection + gh-output parsing + the shared CLI runner), `github` (`ghSetupProblem` — the named compare-fallback reason)
@@ -138,6 +139,7 @@ the host from env via `bootHost` for dev/e2e.
   `reviewLock`, and re-attaches the review's persisted chat via `agent.ensureSessionAttached`), and the
   agent-side `resolve_comment` tool delegates back through a seam
   `host` installs (`agent.setReviewCommentHandler` → `reviews.resolveCommentFromAgent`)
+- `instructions` → `contracts`, `shared` (`CodedError`), pi's `getAgentDir` / `loadProjectContextFiles` (external); host composes the `instructions.*` handlers and calls `agent.reloadOpenSessions` for apply
 - `speech` → `persistence` (`dataDir`), `log`, `contracts`, `shared` (`CodedError`), `sherpa-onnx`; host composes the `speech.*` handlers and `speech.status` channel, and only `dev.ts` imports its fake
 - `network` → `persistence` (private proxy record), `subprocess` (bounded OS detection); host applies it before Pi initialization.
 - `environment` → `persistence` (`environment.json`), `log` (+ `@thinkrail/shared/shellEnv` for the launch keys and pi's `getAgentDir`, external); never `settings`

@@ -109,6 +109,15 @@ sherpa-onnx WebAssembly 做流式识别；浏览器或桌面 webview 只采集�
 验证：服务端对假目录/假下载/假识别器的单测、真实 WASM 运行时加载测试、`e2e/speech-dictation.spec.ts`（Chromium 假麦克风）；
 桌面端麦克风权限、编译二进制与桌面包中的 WASM 资源尚未验证，见 desktop SPEC。
 
+## 全局指令定制
+
+设置页「指令」维护 Pi 原生读取的全局文件：智能体目录（`getAgentDir()`，默认 `~/.pi/agent`）里的 `AGENTS.md`（按 Pi 的候选顺序
+编辑实际生效的那个）与 `APPEND_SYSTEM.md`；不提供 `SYSTEM.md`，因为它会让 Pi 丢掉自带的工具与规则区段。不新增注入逻辑，
+会话本来就用 Pi 的 resource loader；保存带路径与内容哈希的冲突检查，空内容删除文件，写入穿过符号链接。已打开会话通过
+`requestSessionReload` 按需重载（会重启扩展与 MCP，故不在保存时自动执行）。改动集中于 `packages/server/src/instructions`、协议 v99 的
+`instructions.*`、`apps/web/src/panels/InstructionsSettings.tsx`。无新增依赖。移除条件：Pi 或上游提供等价的官方设置界面。
+验证：`files.test.ts`、`injection.test.ts`（PiDeck 会话 loader 注入并在 reload 后更新）、`e2e/instructions-settings.spec.ts`。
+
 ## 语言服务（LSP）定制
 
 参考 OpenCode 已移除的 LSP 引擎（提交 `44b6938b2a^`）：按文件首次触达惰性启动、就近项目根、推送诊断带短防抖、

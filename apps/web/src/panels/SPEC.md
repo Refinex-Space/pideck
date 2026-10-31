@@ -441,6 +441,25 @@ card with a header row — name, count, group switch — above its skill rows, w
 between the regular groups and the plugin cards, so the groups read as separate units. There is no Skills
 button in the chat or on the New Workspace page any more.
 
+  **Instructions** (`panels/InstructionsSettings`, Agent group after Skills; gated on `INSTRUCTIONS_PROTOCOL_VERSION`) edits
+  Pi's own global rule files through `instructions.*` ([[submodule-server-instructions]]). The page keeps
+  prose off the surface: each group's explanation sits behind an info icon (`SettingsHint`, a popover that opens
+  on mouse hover or focus, pins on click and closes on Escape or an outside click; `SettingsGroup`'s `titleAddon`
+  places it beside the title), and the "created on save / empty deletes" rule is one line inside that hint rather
+  than a caption under the editor. *Global rules* (`AGENTS.md`, or whichever candidate Pi already reads) is the
+  main editor; *Extra system prompt* (`APPEND_SYSTEM.md`) sits behind a full-width disclosure row, chevron at the
+  right edge, open by default only when the file exists. An editor is one bordered card: a header with the file
+  path as an info-blue link that reveals the file in the OS file manager (`instructions.reveal`; the folder when
+  the file does not exist yet), the path ellipsised at its start so the file name stays readable, and a
+  *Markdown source* / *Preview* icon pair; the body is a plain textarea or the app's own `Markdown` renderer on
+  the same draft, so switching modes never loses edits. `Mod+S` saves. Each editor saves with the path and
+  revision it loaded, and on `INSTRUCTIONS_CONFLICT` offers *Load from disk* or *Overwrite* instead of clobbering a
+  file the Pi CLI or an editor changed. Below the editors, the active workspace's loaded files are a bordered,
+  numbered list in injection order with a scope label and size, with warnings when a trusted project's
+  `.pi/APPEND_SYSTEM.md` replaces the global extra prompt or a `SYSTEM.md` replaces Pi's default prompt. Saving
+  never reloads chats (a reload restarts MCP servers); the *Apply to open chats* button does, and busy chats
+  reload when idle. Handlers are promise chains rather than `try/finally` so React Compiler still compiles the components.
+
 **`NewSessionPage`** (`panels/NewSessionPage.tsx`) is the start-working surface. It is a page in the
 Project Home main panel, **not a dialog**: the sidebar *New session* row, a project's `+` and `Mod+N` call the store's
 `openNewSession` with the project's remembered target (`newSessionTarget.ts`: per project, first time worktree, kept in the

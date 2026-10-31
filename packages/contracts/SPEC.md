@@ -1097,6 +1097,17 @@ progress. `speech.dictationAudio` carries base64 mono PCM16LE. Errors use `SPEEC
 `SPEECH_ENGINE_UNAVAILABLE`, `SPEECH_BUSY` and `SPEECH_DICTATION_UNKNOWN`. An older host has none of these, and
 the UI hides every voice affordance. Owner: [[submodule-server-speech]].
 
+## Global instructions (v99)
+
+`INSTRUCTIONS_PROTOCOL_VERSION` (v99) gates `instructions.get`, `instructions.save`, `instructions.apply` and `instructions.reveal`.
+`instructions.ts` defines `InstructionDoc` (kind `agents|append`, the file Pi reads, `exists`, `content`, a content
+`revision`, and the lower-priority `ignored` candidates), `InstructionsState` (agent dir, both docs, and — when a
+`workspaceId` is given — the context files the workspace loads, a project append file that replaces the global one,
+and an overriding `SYSTEM.md`) and `InstructionsApplyResult`. Requests carry a kind, never a path; `reveal` shows the file in the OS file manager, or the agent directory while it does not exist yet. `save` echoes
+the `expectedPath` and `expectedRevision` it loaded; a mismatch is `INSTRUCTIONS_CONFLICT`, and text over
+`INSTRUCTIONS_MAX_BYTES` is `INSTRUCTIONS_TOO_LARGE`. An older host has none of these, and the Instructions
+section is hidden. Owner: [[submodule-server-instructions]].
+
 ## Native browser contract
 
 `nativeBrowser` adds type-only BrowserPageState, BrowserSelection, BrowserViewport, BrowserPickerLabels,

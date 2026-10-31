@@ -23,6 +23,7 @@ import {
 	EXTENSION_CATALOG_PROTOCOL_VERSION,
 	HOST_ENVIRONMENT_PROTOCOL_VERSION,
 	HOST_UPDATE_RUN_PROTOCOL_VERSION,
+	INSTRUCTIONS_PROTOCOL_VERSION,
 	isBackgroundCommandCompletionMessage,
 	isTodoReviewFixMessage,
 	isToolResponsePending,
@@ -262,6 +263,15 @@ test("private network settings are pinned to v95", () => {
 	expect(WS_METHODS.networkGet).toBe("network.get");
 	expect(WS_METHODS.networkUpdate).toBe("network.update");
 	expect(WS_METHODS.networkDiagnose).toBe("network.diagnose");
+});
+
+test("global instruction files are pinned to v99", () => {
+	expect(PROTOCOL_VERSION).toBeGreaterThanOrEqual(INSTRUCTIONS_PROTOCOL_VERSION);
+	expect(INSTRUCTIONS_PROTOCOL_VERSION).toBe(99);
+	expect(WS_METHODS.instructionsGet).toBe("instructions.get");
+	expect(WS_METHODS.instructionsSave).toBe("instructions.save");
+	expect(WS_METHODS.instructionsApply).toBe("instructions.apply");
+	expect(WS_METHODS.instructionsReveal).toBe("instructions.reveal");
 });
 
 test("local speech dictation is pinned to v98", () => {

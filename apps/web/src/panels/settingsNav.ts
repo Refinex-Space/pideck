@@ -19,6 +19,7 @@ import {
 	DEFAULT_MODEL_PROTOCOL_VERSION,
 	EXTENSION_CATALOG_PROTOCOL_VERSION,
 	HOST_ENVIRONMENT_PROTOCOL_VERSION,
+	INSTRUCTIONS_PROTOCOL_VERSION,
 	LOCALES_PROTOCOL_VERSION,
 	LSP_PROTOCOL_VERSION,
 	MCP_PROTOCOL_VERSION,
@@ -28,7 +29,7 @@ import {
 } from "@thinkrail/contracts";
 import type { MessageKey } from "@thinkrail/locales";
 import type { Translator } from "@thinkrail/locales/react";
-import { Blocks, Braces, Mic, Network } from "lucide-react";
+import { Blocks, Braces, Mic, Network, ScrollText } from "lucide-react";
 import type { ComponentType } from "react";
 import { SettingsSection } from "@/store";
 
@@ -69,6 +70,12 @@ const NAV_GROUPS: SettingsNavGroup[] = [
 				requiresProtocolVersion: LSP_PROTOCOL_VERSION,
 			},
 			{ id: SettingsSection.Skills, label: "settings.nav.skills", icon: Blocks },
+			{
+				id: SettingsSection.Instructions,
+				label: "settings.nav.instructions",
+				icon: ScrollText,
+				requiresProtocolVersion: INSTRUCTIONS_PROTOCOL_VERSION,
+			},
 			{ id: SettingsSection.Templates, label: "settings.nav.templates", icon: RiLayoutGridLine },
 			{
 				id: SettingsSection.Environment,

@@ -10,6 +10,7 @@ import { EnvironmentSettings } from "./EnvironmentSettings";
 import { ExtensionsSettings } from "./ExtensionsSettings";
 import { FeedbackSettings } from "./FeedbackSettings";
 import { GithubSettings } from "./GithubSettings";
+import { InstructionsSettings } from "./InstructionsSettings";
 import { LanguageSettings } from "./LanguageSettings";
 import { LspSettings } from "./LspSettings";
 import { McpSettings } from "./McpSettings";
@@ -159,6 +160,8 @@ export function SettingsDialog({ updateSettings }: { updateSettings?: ReactNode 
 							<LspSettings />
 						) : selectedSection === SettingsSection.Skills ? (
 							<SkillsSettings />
+						) : selectedSection === SettingsSection.Instructions ? (
+							<InstructionsSettings />
 						) : selectedSection === SettingsSection.Templates ? (
 							<TemplatesSettings />
 						) : selectedSection === SettingsSection.Environment ? (

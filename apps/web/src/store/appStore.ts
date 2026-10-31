@@ -443,6 +443,7 @@ export const SettingsSection = {
 	Environment: "environment",
 	Network: "network",
 	Speech: "speech",
+	Instructions: "instructions",
 } as const;
 export type SettingsSection = (typeof SettingsSection)[keyof typeof SettingsSection];
 

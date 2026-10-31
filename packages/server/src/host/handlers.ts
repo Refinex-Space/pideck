@@ -59,6 +59,7 @@ import {
 	refreshAvailableModels,
 	refreshSubagentConcurrency,
 	refreshSubagentTools,
+	reloadOpenSessions,
 	reloadSessionResources,
 	removeQueuedSession,
 	removeSession,
@@ -75,6 +76,7 @@ import {
 	stopAllSubagents,
 	stopBackgroundCommand,
 	stopSubagent,
+	workspacePiResourcesTrusted,
 } from "../agent";
 import {
 	type AdditionalAnalyticsCapture,
@@ -130,6 +132,12 @@ import {
 } from "../git";
 import { githubAuthStatus, githubRefresh } from "../github";
 import { clampLimit, getHistoryIndex } from "../history";
+import {
+	instructionTarget,
+	readInstructions,
+	saveInstruction,
+	type WorkspaceScope,
+} from "../instructions";
 import { localesDir, readLocalLocales } from "../locales";
 import { logger } from "../log";
 import { lspManager, lspOverview, restartLsp, updateLspConfig } from "../lsp";
@@ -504,6 +512,14 @@ async function deliverToolResponse(
 	if (response === undefined) throw new Error("A tool response must carry a value");
 	await ackSend(respondToTool(sessionId, toolCallId, response));
 	return { ok: true };
+}
+
+function instructionsScope(workspaceId: string | undefined): WorkspaceScope | undefined {
+	if (workspaceId === undefined) return undefined;
+	return {
+		cwd: getWorkspace(workspaceId).worktreePath,
+		trusted: workspacePiResourcesTrusted(workspaceId),
+	};
 }
 
 const handlers: WsHandlers = {
@@ -1325,6 +1341,16 @@ const handlers: WsHandlers = {
 	"speech.dictationStop": (params) => speechService().dictationStop(params.dictationId),
 	"speech.dictationCancel": (params) => {
 		speechService().dictationCancel(params.dictationId);
+		return { ok: true } as const;
+	},
+	"instructions.get": (params) => readInstructions(instructionsScope(params.workspaceId)),
+	"instructions.save": ({ workspaceId, ...request }) =>
+		saveInstruction(request, instructionsScope(workspaceId)),
+	"instructions.apply": () => reloadOpenSessions(),
+	"instructions.reveal": ({ kind }) => {
+		const { path, exists } = instructionTarget(kind);
+		if (!exists) mkdirSync(path, { recursive: true });
+		revealInFileManager(path, undefined, undefined, exists);
 		return { ok: true } as const;
 	},
 	"environment.update": (params) => updateHostEnvironment(params.environment),

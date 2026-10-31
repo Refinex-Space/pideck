@@ -784,6 +784,15 @@ re-opened transcripts provider-valid.
     `buildSessionSettings` bullet). Web-access reaches the child set via a **named bundled-seam
     field** (`BundledExtensions.webAccessFactory`) in the binary and a Bun `require` in dev — its raw
     third-party `.ts` must stay out of the strict tsc graph.
+    A child on an extension-registered provider's model also loads that provider's **owning
+    extension** (core decision #32: such a provider may serve only sessions its extension observed):
+    `liveParentContext.providerExtensionPaths(provider)` answers from a process-wide owner map that
+    `buildResourceLoader`'s `extensionsOverride` fills from pi's load-time registration queues
+    (provenance: [[pi-compatibility]]), intersected with the parent's own loaded extensions. Process-wide
+    because an extension may register its provider only on its first load in a process; the intersection
+    keeps a child from loading an extension its parent lacks. Inline factories are never owners. While the
+    child's trust (the same `isProjectTrusted`) is false, project-scoped owners are left out too: a revoke
+    deferred on a busy parent leaves them in its loader, and an explicit path would load them anyway.
   - `extensions` — Pi resource wiring. Candidate generation loads the reviewed external Central path once
     through a headless `DefaultResourceLoader` to apply provider registrations, without inspecting it.
     `buildResourceLoader(cwd, settingsManager, getAdmission, excludedPaths, extraFactories?)` then resolves

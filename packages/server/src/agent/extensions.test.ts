@@ -16,6 +16,7 @@ import {
 } from "./extensions";
 import { oversizedImageGuard } from "./imageGuard";
 import type { SkillAdmissionContext } from "./skillAdmission";
+import { skillCarryover } from "./skillCarryover";
 
 function ctx(trusted: boolean, acknowledged: string[] = []): SkillAdmissionContext {
 	return {
@@ -537,8 +538,9 @@ describe("registry extensions", () => {
 		expect(children.slice(3)).toEqual(registryInlineExtensions("childExtensions"));
 	});
 
-	it("guards every child's images from the base set, not the opt-in curated set", () => {
-		expect(childBaseExtensionFactories()).toEqual([oversizedImageGuard]);
+	it("guards every child's images and compacted skills from the base set, not the opt-in curated set", () => {
+		expect(childBaseExtensionFactories()).toEqual([oversizedImageGuard, skillCarryover]);
 		expect(childExtensionFactories()).not.toContain(oversizedImageGuard);
+		expect(childExtensionFactories()).not.toContain(skillCarryover);
 	});
 });

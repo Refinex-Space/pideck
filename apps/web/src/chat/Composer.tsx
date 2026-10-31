@@ -683,10 +683,7 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 											label={isStreaming ? t("chat.composer.steer") : t("chat.composer.send")}
 											onClick={() => submit(isStreaming ? "steer" : "send")}
 											disabled={!canSend}
-											className={cn(
-												"button-disabled:pointer-events-auto",
-												canSend && "text-text-default",
-											)}
+											className="button-disabled:pointer-events-auto"
 										/>
 									</span>
 									{isStreaming ? (

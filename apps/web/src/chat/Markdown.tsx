@@ -3,6 +3,7 @@ import { type ComponentProps, memo, type ReactNode, useEffect, useMemo, useState
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useHighlightedCode } from "@/lib/highlightCode";
+import { CodeFrame } from "./CodeFrame";
 import { createMarkdownSplitter } from "./markdownBlocks";
 
 const CHAT_PROSE =
@@ -114,9 +115,17 @@ function CodeBlock({
 		if (!code.includes("\n")) {
 			return <code className="rounded-xs bg-container-elevated-bg px-4 py-2">{children}</code>;
 		}
-		return <pre className="overflow-auto rounded-sm bg-container-elevated-bg p-8">{code}</pre>;
+		return (
+			<CodeFrame code={code}>
+				<pre className="overflow-auto p-8">{code}</pre>
+			</CodeFrame>
+		);
 	}
-	return <ShikiBlock code={code} lang={lang} />;
+	return (
+		<CodeFrame code={code} lang={lang}>
+			<ShikiCode code={code} lang={lang} />
+		</CodeFrame>
+	);
 }
 
 function MermaidBlock({ code }: { code: string }) {
@@ -126,28 +135,30 @@ function MermaidBlock({ code }: { code: string }) {
 		return () => clearTimeout(timer);
 	}, [code]);
 
-	const source = <ShikiBlock code={code} lang="mermaid" />;
-	if (settled !== code) return source;
+	const source = <ShikiCode code={code} lang="mermaid" />;
+	if (settled !== code) {
+		return (
+			<CodeFrame code={code} lang="mermaid">
+				{source}
+			</CodeFrame>
+		);
+	}
 	return (
 		<div className="whitespace-normal">
-			<MermaidView source={code} fallback={source} />
+			<MermaidView source={code} fallback={source} className="my-8" />
 		</div>
 	);
 }
 
-function ShikiBlock({ code, lang }: { code: string; lang: string }) {
+function ShikiCode({ code, lang }: { code: string; lang: string }) {
 	const html = useHighlightedCode(code, lang);
 
 	if (html === null) {
-		return (
-			<pre className="overflow-auto rounded-sm bg-container-elevated-bg p-8 text-text-default">
-				{code}
-			</pre>
-		);
+		return <pre className="overflow-auto p-8 text-text-default">{code}</pre>;
 	}
 	return (
 		<div
-			className="overflow-auto rounded-sm [&_pre]:!m-0 [&_pre]:!bg-container-elevated-bg [&_pre]:p-8"
+			className="overflow-auto [&_pre]:!m-0 [&_pre]:!bg-transparent [&_pre]:p-8"
 			dangerouslySetInnerHTML={{ __html: html }}
 		/>
 	);

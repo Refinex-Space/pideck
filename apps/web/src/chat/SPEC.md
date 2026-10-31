@@ -129,6 +129,12 @@ blocks in order into rows; `ChatTurnView` dispatches on row kind:
   pan-zoom, error → source fallback) — uniform across every `Markdown` surface (chat, file/specs
   preview); until mounted it renders as highlighted source, so static contexts (`RenderedDiff`'s
   `renderToStaticMarkup`) degrade to code exactly like shiki blocks do.
+  **Block chrome**: every fenced block (`CodeFrame`) and every rendered diagram is a `BlockFrame`
+  (`@thinkrail/ui/block-frame`) — a 1px `border-muted` hairline, `rounded-md` like tables — whose toolbar
+  stays invisible until the block is hovered or focused (always shown on touch screens). A code block's
+  toolbar names its language and copies the raw code; the label lives in the hover toolbar rather than a
+  permanent header strip so a resting block costs no extra row. A diagram's toolbar holds source/diagram
+  toggle, copy source, download image and full screen (see `thinkrail-extensions/visualize/SPEC.md`).
   Assistant text renders per top-level block (`BlockMarkdown`): `markdownBlocks` splits it with the `marked`
   block lexer, and each block is a memoized react-markdown render, so a streamed delta re-parses only the
   tail. Blocks are direct children of the prose `div`, separated by the same `"\n"` the whole-document
@@ -941,7 +947,8 @@ both message orders. *Rejected:* keeping the modal for non-MCP extensions — ev
   `chat-send-pill` with `data-armed`) is an `IconButton ghost m` carrying the `CornerDownLeft` (↵) glyph,
   the same line weight as the dictation `Mic` beside it. A solid accent arrow next to the outline mic read as
   two unrelated styles, so the primary action is signalled by tone instead of fill: **inert send** rests
-  at `control-disabled-text`, and **armed** lifts to `text-default` with the 90%→100% scale ramp. The chevron
+  at `control-disabled-text`, and **armed** returns to the muted ghost tone with the 90%→100% scale ramp;
+  the disabled button keeps pointer events so its hover wash matches the always-live mic. The chevron
   (`send-menu`, streaming only) is a second ghost hit area; spacing, not a divider, separates them.
   **Compact mode** needs no special case now that the send is icon-only at every width. Labels use
   `ui.action`.

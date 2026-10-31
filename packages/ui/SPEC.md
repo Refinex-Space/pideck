@@ -163,6 +163,11 @@ and remain app-local until a second extension requires that seam.
 The context-menu surface also exports styled Label/Sub/SubTrigger/SubContent primitives, sharing
 menu-styles with dropdown menus and retaining Radix collision handling and keyboard navigation.
 
+block-frame provides `BlockFrame`, a hairline-bordered, rounded block (code, diagram) whose `toolbar` slot (mounted client-side only: static renders have no tooltip provider and no hover)
+fades in at the top-right on hover or focus-within (pinned visible under `pointer-coarse`), and
+`useCopyFeedback`, which writes to the clipboard and flips `copied` for ~1.2s so a button can swap in a
+check. It owns no icons or labels; callers pass both.
+
 resource-toolbar provides an optional React portal target so a layout can host resource actions in
 its tab strip; without a provider, actions remain inline. It owns no domain state.
 

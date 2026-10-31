@@ -22,9 +22,20 @@ Two entrypoints and no root barrel. `@thinkrail/ext-visualize/server` default-ex
 `mermaid`, `linkedom`, and `node:fs`/`node:path`. `@thinkrail/ext-visualize/web` default-exports a `defineWebExtension` descriptor plus
 named `MermaidView` for fenced mermaid in chat markdown, and consumes `extension-api/web`, per-file UI
 primitives, `@thinkrail/resource-renderers` (`ResourcePreview` and the host seam), contracts,
-`@thinkrail/locales/react` for its strings (`visualize.*` keys), React and
-Remix Icon. Neither half imports the other, app/host internals, or (web)
+`@thinkrail/locales/react` for its strings (`visualize.*` keys), React,
+Lucide (new controls) and Remix Icon (older views). Neither half imports the other, app/host internals, or (web)
 any pi package; the browser loads `mermaid` lazily inside the renderer, never in the eager entry chunk.
+
+## Diagram frame (web)
+
+`MermaidView` renders inside `@thinkrail/ui/block-frame`'s `BlockFrame` (hairline border, hover toolbar).
+Toolbar, left to right: **source/diagram toggle** (`Code`/`Workflow`; the highlighted source is the host's
+`fallback`, a plain `<pre>` otherwise), **copy source**, **download as image** (`ImageDown`) and **full
+screen**. The toggle is disabled until the SVG exists; download and full screen are disabled in source mode.
+While rendering, the frame shows the source view. Download rasterises the SVG to a 2x PNG on the workspace
+colour (`exportSvg.ts`: root `viewBox` → pixel size, `<img>` → canvas); where the browser taints the canvas
+(foreignObject labels in some engines) it saves the `.svg` instead, never nothing. The diagram surface is
+`container-workspace-bg` (node fills are `elevated`); source mode uses `elevated`.
 
 ## Strict validation (server)
 

@@ -19,6 +19,7 @@
 		"@thinkrail/resource-renderers": "workspace:*",
 		"@thinkrail/ui": "workspace:*",
 		"linkedom": "0.18.14",
+		"lucide-react": "catalog:",
 		"mermaid": "catalog:",
 		"react": "catalog:"
 	},

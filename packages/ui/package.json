@@ -5,6 +5,7 @@
 	"type": "module",
 	"exports": {
 		"./attention-line": "./attention-line.tsx",
+		"./block-frame": "./block-frame.tsx",
 		"./button": "./button.tsx",
 		"./command": "./command.tsx",
 		"./context-menu": "./context-menu.tsx",

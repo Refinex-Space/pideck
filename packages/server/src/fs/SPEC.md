@@ -70,7 +70,7 @@ bytes are** — the one byte-level classification every content read in the host
   filename is consulted only when the bytes say nothing, so a mislabelled resource cannot talk a
   renderer into parsing it as text.
 
-## Interactive file workbench (v94)
+## Interactive file workbench (v103)
 
 `operations.ts` adds UTF-8 text save with the loaded sha-256 (`STALE_VIEW` on conflict), exclusive create,
 non-overwriting rename/move, and confirmed-by-UI trash. Mutations reject the workspace root, `.git`,

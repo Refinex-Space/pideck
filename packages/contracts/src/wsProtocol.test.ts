@@ -243,13 +243,13 @@ test("user theme files are pinned to v92", () => {
 	expect(WS_CHANNELS.themesChanged).toBe("themes.changed");
 });
 
-test("subagent file activity rides the Pi event channel from v96", () => {
-	expect(AGENT_ACTIVITY_PROTOCOL_VERSION).toBe(96);
+test("subagent file activity rides the Pi event channel from v105", () => {
+	expect(AGENT_ACTIVITY_PROTOCOL_VERSION).toBe(105);
 	expect(PROTOCOL_VERSION).toBeGreaterThanOrEqual(AGENT_ACTIVITY_PROTOCOL_VERSION);
 });
 
-test("language servers are pinned to v97 with their own methods and push channel", () => {
-	expect(LSP_PROTOCOL_VERSION).toBe(97);
+test("language servers are pinned to v106 with their own methods and push channel", () => {
+	expect(LSP_PROTOCOL_VERSION).toBe(106);
 	expect(PROTOCOL_VERSION).toBeGreaterThanOrEqual(LSP_PROTOCOL_VERSION);
 	expect(WS_METHODS.lspGet).toBe("lsp.get");
 	expect(WS_METHODS.lspUpdate).toBe("lsp.update");
@@ -257,26 +257,26 @@ test("language servers are pinned to v97 with their own methods and push channel
 	expect(WS_CHANNELS.lspStatus).toBe("lsp.status");
 });
 
-test("private network settings are pinned to v95", () => {
+test("private network settings are pinned to v104", () => {
 	expect(PROTOCOL_VERSION).toBeGreaterThanOrEqual(NETWORK_PROXY_PROTOCOL_VERSION);
-	expect(NETWORK_PROXY_PROTOCOL_VERSION).toBe(95);
+	expect(NETWORK_PROXY_PROTOCOL_VERSION).toBe(104);
 	expect(WS_METHODS.networkGet).toBe("network.get");
 	expect(WS_METHODS.networkUpdate).toBe("network.update");
 	expect(WS_METHODS.networkDiagnose).toBe("network.diagnose");
 });
 
-test("global instruction files are pinned to v99", () => {
+test("global instruction files are pinned to v108", () => {
 	expect(PROTOCOL_VERSION).toBeGreaterThanOrEqual(INSTRUCTIONS_PROTOCOL_VERSION);
-	expect(INSTRUCTIONS_PROTOCOL_VERSION).toBe(99);
+	expect(INSTRUCTIONS_PROTOCOL_VERSION).toBe(108);
 	expect(WS_METHODS.instructionsGet).toBe("instructions.get");
 	expect(WS_METHODS.instructionsSave).toBe("instructions.save");
 	expect(WS_METHODS.instructionsApply).toBe("instructions.apply");
 	expect(WS_METHODS.instructionsReveal).toBe("instructions.reveal");
 });
 
-test("local speech dictation is pinned to v98", () => {
+test("local speech dictation is pinned to v107", () => {
 	expect(PROTOCOL_VERSION).toBeGreaterThanOrEqual(SPEECH_PROTOCOL_VERSION);
-	expect(SPEECH_PROTOCOL_VERSION).toBe(98);
+	expect(SPEECH_PROTOCOL_VERSION).toBe(107);
 	expect(WS_METHODS.speechGet).toBe("speech.get");
 	expect(WS_METHODS.speechDownload).toBe("speech.download");
 	expect(WS_METHODS.speechCancelDownload).toBe("speech.cancelDownload");

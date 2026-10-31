@@ -129,7 +129,7 @@ default, narrow cross-ring guards, and the quit-confirmation rule both clients d
     `session_info_changed` / `thinking_level_changed` / host-projected `entry_appended { entryType }`
     members, plus `bash_execution_update` — mirrored
     for union fidelity only; the host never calls `executeBash`, so the UI never receives it).
-    **`subagent_activity`** (v96, `AGENT_ACTIVITY_PROTOCOL_VERSION`) is the one host-synthesized member the UI does
+    **`subagent_activity`** (v105, `AGENT_ACTIVITY_PROTOCOL_VERSION`) is the one host-synthesized member the UI does
     receive: a subagent of the chat started a tool, carried on the *parent* chat's session as
     `{ childSessionId, roleName?, toolName, args: { path? | command? } }`. `args` is the single argument a file tree
     can use (`path` for read/edit/write/grep/find/ls, `command` for bash) and never an edit's text or a write's
@@ -1059,11 +1059,11 @@ shell panels need `domain` + `wsProtocol`; the `pi` types + `PiEvent` are the wi
 
 ## Interactive file workbench
 
-`FILE_WORKBENCH_PROTOCOL_VERSION` (v94) gates `fs.search/create/writeFile/move/trash/openIn/reveal`.
+`FILE_WORKBENCH_PROTOCOL_VERSION` (v103) gates `fs.search/create/writeFile/move/trash/openIn/reveal`.
 Save requires the loaded hash; existing STALE_VIEW distinguishes conflicts. Explicit move/trash
 metadata optionally accompanies `workspace.fsChanged`; legacy clients ignore it and still refresh.
 
-## Host network configuration (v95)
+## Host network configuration (v104)
 
 `NETWORK_PROXY_PROTOCOL_VERSION` gates `network.get`, `network.update` and `network.diagnose`.
 `network.ts` defines private request/reply config, applied/detected routes, restart/override state and
@@ -1071,9 +1071,9 @@ closed diagnostic outcomes. Reads redact proxy userinfo and expose only password
 carry a replacement password or null to clear; it never enters AppConfig or broadcasts. Diagnostics use
 a closed provider selector, not an arbitrary URL. Older clients retain all existing methods.
 
-## Language servers (v97)
+## Language servers (v106)
 
-`LSP_PROTOCOL_VERSION` (v97) gates `lsp.get`, `lsp.update`, `lsp.restart` and the `lsp.status` push. `lsp.ts`
+`LSP_PROTOCOL_VERSION` (v106) gates `lsp.get`, `lsp.update`, `lsp.restart` and the `lsp.status` push. `lsp.ts`
 defines `LspConfig` (`enabled`, `diagnostics`, `tool`, `idleMinutes` within `LSP_IDLE_MINUTES`, `servers`),
 `LspServerOverride`, `LspCatalogEntry` (with the host-detected `available` and an install hint),
 `LspServerStatus` (`starting|ready|error|missing`, counts of errors and warnings), `LspWorkspaceStatus`,
@@ -1084,9 +1084,9 @@ when the master switch or a server table entry changes (every workspace) and whe
 Updates are validated whole by the host and refused with a readable message. An older host has none of these and
 the UI hides the settings page and says so in the status block.
 
-## Voice input (v98)
+## Voice input (v107)
 
-`SPEECH_PROTOCOL_VERSION` (v98) gates `speech.get`, `speech.download`, `speech.cancelDownload`,
+`SPEECH_PROTOCOL_VERSION` (v107) gates `speech.get`, `speech.download`, `speech.cancelDownload`,
 `speech.delete`, `speech.select`, `speech.dictationStart`, `speech.dictationAudio`, `speech.dictationStop`,
 `speech.dictationCancel` and the `speech.status` push. `speech.ts` defines `SpeechModel` (catalog id, name,
 languages, size, source host, `absent|downloading|ready|failed` state, downloaded bytes, closed
@@ -1097,9 +1097,9 @@ progress. `speech.dictationAudio` carries base64 mono PCM16LE. Errors use `SPEEC
 `SPEECH_ENGINE_UNAVAILABLE`, `SPEECH_BUSY` and `SPEECH_DICTATION_UNKNOWN`. An older host has none of these, and
 the UI hides every voice affordance. Owner: [[submodule-server-speech]].
 
-## Global instructions (v99)
+## Global instructions (v108)
 
-`INSTRUCTIONS_PROTOCOL_VERSION` (v99) gates `instructions.get`, `instructions.save`, `instructions.apply` and `instructions.reveal`.
+`INSTRUCTIONS_PROTOCOL_VERSION` (v108) gates `instructions.get`, `instructions.save`, `instructions.apply` and `instructions.reveal`.
 `instructions.ts` defines `InstructionDoc` (kind `agents|append`, the file Pi reads, `exists`, `content`, a content
 `revision`, and the lower-priority `ignored` candidates), `InstructionsState` (agent dir, both docs, and — when a
 `workspaceId` is given — the context files the workspace loads, a project append file that replaces the global one,

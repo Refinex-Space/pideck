@@ -103,7 +103,7 @@ browser e2e and native packaging; macOS/Linux native verification remains distin
 
 消息输入框的听写：宿主下载并保存识别模型（`~/.pideck/models/speech`，固定目录、体积与 SHA-256），在宿主进程内用
 sherpa-onnx WebAssembly 做流式识别；浏览器或桌面 webview 只采集麦克风并发送 16 kHz PCM。参考仓库 DeepSeek Harness
-（`cd5ef81481`，MIT）经检查不含语音或桌面代码，未借用任何实现。改动集中于 `packages/server/src/speech`、协议 v98
+（`cd5ef81481`，MIT）经检查不含语音或桌面代码，未借用任何实现。改动集中于 `packages/server/src/speech`、协议 v107
 的 `speech.*`、`apps/web/src/speech`、Composer 麦克风与波形、设置页 Voice input。新增依赖 `sherpa-onnx@2.0.1`（Apache-2.0，
 纯 WASM，无原生扩展）。模型由用户主机按需下载，PiDeck 不再分发。移除条件：Pi 或上游提供官方听写能力。
 验证：服务端对假目录/假下载/假识别器的单测、真实 WASM 运行时加载测试、`e2e/speech-dictation.spec.ts`（Chromium 假麦克风）；
@@ -114,7 +114,7 @@ sherpa-onnx WebAssembly 做流式识别；浏览器或桌面 webview 只采集�
 设置页「指令」维护 Pi 原生读取的全局文件：智能体目录（`getAgentDir()`，默认 `~/.pi/agent`）里的 `AGENTS.md`（按 Pi 的候选顺序
 编辑实际生效的那个）与 `APPEND_SYSTEM.md`；不提供 `SYSTEM.md`，因为它会让 Pi 丢掉自带的工具与规则区段。不新增注入逻辑，
 会话本来就用 Pi 的 resource loader；保存带路径与内容哈希的冲突检查，空内容删除文件，写入穿过符号链接。已打开会话通过
-`requestSessionReload` 按需重载（会重启扩展与 MCP，故不在保存时自动执行）。改动集中于 `packages/server/src/instructions`、协议 v99 的
+`requestSessionReload` 按需重载（会重启扩展与 MCP，故不在保存时自动执行）。改动集中于 `packages/server/src/instructions`、协议 v108 的
 `instructions.*`、`apps/web/src/panels/InstructionsSettings.tsx`。无新增依赖。移除条件：Pi 或上游提供等价的官方设置界面。
 验证：`files.test.ts`、`injection.test.ts`（PiDeck 会话 loader 注入并在 reload 后更新）、`e2e/instructions-settings.spec.ts`。
 
@@ -124,7 +124,7 @@ sherpa-onnx WebAssembly 做流式识别；浏览器或桌面 webview 只采集�
 编辑结果只回灌错误。PiDeck 的版本更小、更保守：默认关闭；只使用本机已有的服务器、绝不自动安装；仅在 Pi 已信任的
 项目里启动（项目的 `node_modules/.bin` 是仓库选择的代码）；配置归宿主所有（`lsp.json`），项目不能改写；
 JSON-RPC 成帧手写，不新增依赖。改动集中于 `packages/server/src/lsp`、`agent/lspTool.ts`、`host/lspHost.ts`、
-协议 v97 的 `lsp.*`、状态面板 Language servers 块与设置页。ZCode 没有对应设计。
+协议 v106 的 `lsp.*`、状态面板 Language servers 块与设置页。ZCode 没有对应设计。
 移除条件：Pi 或上游提供官方 LSP 工具与诊断反馈。验证：服务端对假服务器的单测与集成测试、`e2e/lsp.spec.ts`。
 
 ## 侧边浏览器定制

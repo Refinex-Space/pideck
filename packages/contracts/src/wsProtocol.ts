@@ -126,13 +126,15 @@ export type TemplateReadLocation =
 	| { projectId: string; workspaceId?: never }
 	| { workspaceId?: never; projectId?: never };
 
-export const PROTOCOL_VERSION = 99;
-export const INSTRUCTIONS_PROTOCOL_VERSION = 99;
-export const SPEECH_PROTOCOL_VERSION = 98;
-export const LSP_PROTOCOL_VERSION = 97;
-export const AGENT_ACTIVITY_PROTOCOL_VERSION = 96;
-export const NETWORK_PROXY_PROTOCOL_VERSION = 95;
-export const FILE_WORKBENCH_PROTOCOL_VERSION = 94;
+// PiDeck-owned feature versions sit above every thinkrail one (the fork syncs up to 102), so a version number
+// never means two features and upstream's constants keep their numbers when it is merged or cherry-picked.
+export const PROTOCOL_VERSION = 108;
+export const INSTRUCTIONS_PROTOCOL_VERSION = 108;
+export const SPEECH_PROTOCOL_VERSION = 107;
+export const LSP_PROTOCOL_VERSION = 106;
+export const AGENT_ACTIVITY_PROTOCOL_VERSION = 105;
+export const NETWORK_PROXY_PROTOCOL_VERSION = 104;
+export const FILE_WORKBENCH_PROTOCOL_VERSION = 103;
 export const TOOL_RESPONSE_PROTOCOL_VERSION = 93;
 export const USER_THEMES_PROTOCOL_VERSION = 92;
 export const HOST_ENVIRONMENT_PROTOCOL_VERSION = 91;

@@ -64,12 +64,15 @@ test("zoomed history keeps the full chat width above the measured composer", asy
 	await expect(page.getByTestId("chat-input")).toBeFocused();
 });
 
-test("idle composer keeps one message line above a stable controls row", async ({ page }) => {
+test("idle composer keeps one message line above a stable toolbar inside the card", async ({
+	page,
+}) => {
 	await openWorkspaceChat(page);
 
 	const composer = page.getByTestId("chat-composer");
 	const shell = page.getByTestId("chat-composer-shell");
 	const surface = page.getByTestId("chat-input-surface");
+	const toolbar = page.getByTestId("chat-composer-toolbar");
 	const input = page.getByTestId("chat-input");
 	const model = page.getByTestId("model-selector");
 	const send = page.getByTestId("chat-send");
@@ -77,17 +80,20 @@ test("idle composer keeps one message line above a stable controls row", async (
 	const compactShell = await box(shell);
 	const compactSurface = await box(surface);
 	const compactInput = await box(input);
+	const compactToolbar = await box(toolbar);
 	const compactWrapMeasure = await box(page.getByTestId("chat-input-sizer"));
-	const compactModel = await box(model);
 	expect(compactInput.height).toBeGreaterThanOrEqual(32);
 	expect(compactInput.height).toBeLessThanOrEqual(48);
 	await expect(composer).toHaveAttribute("data-expanded", "false");
-	expect(compactShell.height).toBeGreaterThanOrEqual(compactInput.height + compactModel.height);
-	// The send button lives inside the card, so the card may be a few px taller than the text row.
-	expect(compactSurface.height).toBeGreaterThanOrEqual(compactInput.height);
-	expect(compactSurface.height - compactInput.height).toBeLessThanOrEqual(12);
+	// The card is the message line plus its toolbar; the shell around it adds nothing.
+	expect(compactSurface.height).toBeGreaterThanOrEqual(
+		compactInput.height + compactToolbar.height - 1,
+	);
+	expect(compactSurface.height - compactInput.height - compactToolbar.height).toBeLessThanOrEqual(
+		4,
+	);
 	expect(Math.abs(compactSurface.width - compactShell.width)).toBeLessThanOrEqual(0.5);
-	expect(compactSurface.height).toBeLessThan(compactShell.height - compactModel.height);
+	expect(Math.abs(compactSurface.height - compactShell.height)).toBeLessThanOrEqual(0.5);
 	const paint = await shell.evaluate((element) => {
 		const inputSurface = element.querySelector<HTMLElement>('[data-testid="chat-input-surface"]');
 		if (!inputSurface) throw new Error("input surface missing");
@@ -98,50 +104,66 @@ test("idle composer keeps one message line above a stable controls row", async (
 			outerShadow: outer.boxShadow,
 			outerBorder: outer.borderTopWidth,
 			inputFill: inner.backgroundColor,
-			inputShadow: inner.boxShadow,
+			inputRing: inner.boxShadow,
 		};
 	});
 	expect(paint.outerFill).toBe("rgba(0, 0, 0, 0)");
 	expect(paint.outerShadow).toBe("none");
 	expect(paint.outerBorder).toBe("0px");
 	expect(paint.inputFill).not.toBe("rgba(0, 0, 0, 0)");
-	expect(paint.inputShadow).not.toBe("none");
+	// The card's outline is a 1px inset ring, not a cast shadow.
+	expect(paint.inputRing).toMatch(/inset/);
+	const blurs = [...paint.inputRing.matchAll(/(-?[\d.]+)px (-?[\d.]+)px (-?[\d.]+)px/g)].map(
+		(match) => Number(match[3]),
+	);
+	expect(blurs.length).toBeGreaterThan(0);
+	expect(blurs.every((blur) => blur === 0)).toBe(true);
 	expect(compactInput.x).toBeLessThanOrEqual(compactShell.x + 8);
 	expect(compactSurface.x + compactSurface.width).toBeGreaterThanOrEqual(
 		compactShell.x + compactShell.width - 8,
 	);
 	const compactSend = await box(send);
-	expect(compactSend.x).toBeGreaterThanOrEqual(compactInput.x + compactInput.width - 1);
+	const compactModel = await box(model);
+	expect(compactSend.x).toBeGreaterThanOrEqual(compactModel.x + compactModel.width - 1);
 	expect(compactSend.x + compactSend.width).toBeLessThanOrEqual(
 		compactSurface.x + compactSurface.width,
 	);
-	expect(compactSend.y).toBeGreaterThanOrEqual(compactSurface.y);
+	expect(compactSend.y).toBeGreaterThanOrEqual(compactToolbar.y);
 	expect(compactSend.y + compactSend.height).toBeLessThanOrEqual(
-		compactSurface.y + compactSurface.height,
+		compactToolbar.y + compactToolbar.height,
 	);
 	expect(Math.abs(compactWrapMeasure.x - compactInput.x)).toBeLessThanOrEqual(0.5);
 	expect(Math.abs(compactWrapMeasure.width - compactInput.width)).toBeLessThanOrEqual(0.5);
-
-	const compactFooterBottom = compactModel.y + compactModel.height;
-	for (const control of [model]) {
-		const controlBox = await box(control);
-		expect(controlBox.y).toBeGreaterThanOrEqual(compactSurface.y + compactSurface.height);
-		expect(controlBox.y).toBeGreaterThanOrEqual(compactInput.y + compactInput.height);
-		expect(Math.abs(controlBox.y + controlBox.height - compactFooterBottom)).toBeLessThanOrEqual(4);
-	}
+	expect(compactToolbar.y).toBeGreaterThanOrEqual(compactInput.y + compactInput.height - 1);
+	const footerGap =
+		compactSurface.y + compactSurface.height - (compactModel.y + compactModel.height);
 
 	await input.fill("Inspect the retry flow.\nThen add focused coverage.");
 	await expect(composer).toHaveAttribute("data-expanded", "true");
 	const expandedInput = await box(input);
 	const expandedModel = await box(model);
+	const expandedSurface = await box(surface);
 	expect(expandedInput.height).toBeGreaterThan(compactInput.height);
-	expect(expandedModel.y).toBeGreaterThanOrEqual(expandedInput.y + expandedInput.height);
-	expect(Math.abs(expandedModel.y - compactModel.y)).toBeLessThanOrEqual(2);
+	expect(expandedModel.y).toBeGreaterThanOrEqual(expandedInput.y + expandedInput.height - 1);
+	// The toolbar keeps its place against the card's bottom edge while the text grows above it.
+	expect(
+		Math.abs(
+			expandedSurface.y +
+				expandedSurface.height -
+				(expandedModel.y + expandedModel.height) -
+				footerGap,
+		),
+	).toBeLessThanOrEqual(2);
 
 	await input.fill("Short follow-up");
 	await expect(composer).toHaveAttribute("data-expanded", "false");
 	expect((await box(input)).height).toBeLessThanOrEqual(48);
-	expect(Math.abs((await box(model)).y - compactModel.y)).toBeLessThanOrEqual(2);
+	const settled = await box(surface);
+	expect(
+		Math.abs(
+			settled.y + settled.height - ((await box(model)).y + (await box(model)).height) - footerGap,
+		),
+	).toBeLessThanOrEqual(2);
 });
 
 test("panel width changes expand and collapse the same textarea", async ({ page }) => {

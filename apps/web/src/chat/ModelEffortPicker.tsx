@@ -98,6 +98,9 @@ export interface ModelEffortPickerProps {
 	defaultOption?: DefaultPairOption;
 	container?: HTMLElement | null;
 	className?: string;
+	/** Where the list opens from the trigger; the composer's trigger sits at the right edge and opens upward. */
+	side?: "top" | "bottom";
+	align?: "start" | "end";
 }
 
 function rowKeywords(model: WireModel): string[] {
@@ -297,6 +300,8 @@ export const ModelEffortPicker = forwardRef<ModelEffortPickerHandle, ModelEffort
 			defaultOption,
 			container,
 			className,
+			side,
+			align = "start",
 		},
 		handleRef,
 	) {
@@ -515,7 +520,8 @@ export const ModelEffortPicker = forwardRef<ModelEffortPickerHandle, ModelEffort
 				</PopoverTrigger>
 				<PopoverContent
 					ref={contentRef}
-					align="start"
+					{...(side ? { side } : {})}
+					align={align}
 					container={container}
 					className="flex max-h-[var(--radix-popover-content-available-height)] w-[min(360px,calc(100vw-16px))] flex-col p-0"
 				>

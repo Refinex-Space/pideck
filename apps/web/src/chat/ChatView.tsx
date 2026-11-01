@@ -35,6 +35,7 @@ import {
 	type ComposerSubmitDisposition,
 	type SubmitBehavior,
 } from "./Composer";
+import { summarizeContext } from "./contextUsage";
 import { ExtraUsageNotice } from "./ExtraUsageNotice";
 import { HistoryOverlay } from "./HistoryOverlay";
 import { parseModelRef } from "./ModelEffortLabel";
@@ -140,6 +141,8 @@ export default function ChatView({
 	}, [t, workspaces]);
 
 	const currentModel = selectCatalogModel(models, sessionModel) ?? sessionModel;
+	const contextStats = useAppStore((s) => s.sessions[sessionId]?.stats ?? null);
+	const contextSummary = useMemo(() => summarizeContext(contextStats), [contextStats]);
 	const refreshStats = useSessionStats({
 		sessionId,
 		statsRefreshTick,
@@ -710,6 +713,9 @@ export default function ChatView({
 					onOpenFile={onOpenFile}
 					onManageTemplates={onManageTemplates}
 					templatesEmpty={templatesEmpty}
+					contextSummary={contextSummary}
+					onOpenStatus={openStatus}
+					showMcp={supportsMcp}
 				/>
 			</div>
 			<TemplateEditorDialog

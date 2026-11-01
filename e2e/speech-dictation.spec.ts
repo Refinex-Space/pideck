@@ -133,11 +133,12 @@ test.describe("composer dictation", () => {
 			const sendBox = await page.getByTestId("chat-send").boundingBox();
 			const micBox = await mic.boundingBox();
 			const waveBox = await wave.boundingBox();
-			expect(micBox && sendBox && micBox.x).toBeGreaterThan(
-				(sendBox?.x ?? 0) + (sendBox?.width ?? 0) - 1,
-			);
-			expect(waveBox && sendBox && waveBox.x + waveBox.width).toBeLessThanOrEqual(
+			// Toolbar order: waveform, then the mic, then Send at the far right.
+			expect(micBox && sendBox && micBox.x + micBox.width).toBeLessThanOrEqual(
 				(sendBox?.x ?? 0) + 1,
+			);
+			expect(waveBox && micBox && waveBox.x + waveBox.width).toBeLessThanOrEqual(
+				(micBox?.x ?? 0) + 1,
 			);
 			mkdirSync(SCREENSHOTS, { recursive: true });
 			await page

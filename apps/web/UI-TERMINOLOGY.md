@@ -317,7 +317,10 @@ Children / associated surfaces:
 
 | Canonical name | Implementation | `data-testid` | Responsibility |
 |---|---|---|---|
-| Model Selector | `chat/ModelSelector.tsx` → `ModelSelector` | — | Model picker (+ Refresh catalog) |
+| Composer Toolbar | inline row | `chat-composer-toolbar` | The card's bottom row: `+` on the left; model, context ring, mic and Send on the right |
+| Add Menu | `chat/ComposerAddMenu.tsx` → `ComposerAddMenu` | `composer-add`, `composer-add-menu`, `composer-add-<action>` | `+`: add images, `@` files and folders, `/` skills, templates, commands, MCP servers |
+| Context Ring | `chat/ContextRing.tsx` → `ContextRing` | `context-ring` | Context-window usage as a ring; hover names the numbers, click opens the status dock |
+| Model Selector | `chat/ModelEffortPicker.tsx` → `ModelEffortPicker` | `model-selector` | Model + effort picker in the toolbar (+ Refresh catalog) |
 | Thinking Selector | `chat/ThinkingSelector.tsx` → `ThinkingSelector` | — | Thinking/effort level picker |
 | Slash-Command Menu | `chat/SlashCommandCompletion.tsx` → `SlashCommandMenu` | `slash-templates-empty` (footer) | `/` command + template completion |
 | Send Button | inline (`ArrowUp` / `Square` abort) | — | Send / steer / follow-up / abort |

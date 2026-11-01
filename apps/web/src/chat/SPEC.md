@@ -928,30 +928,50 @@ both message orders. *Rejected:* keeping the modal for non-MCP extensions — ev
   collapse to one read, and a response superseded by a newer session revision, host generation, or unmount
   is ignored. Text deltas do not trigger reads because Pi itself cannot finalize new usage until the message
   boundary; transient read failure keeps the last good snapshot rather than replacing it with guessed state.
-- **Adaptive composer geometry** (`Composer`) — an idle draft that fits one visual line renders as a
-  shared two-tier shell: a full-width, one-visual-line message row above a stable action footer. The
-  model · effort pill is the footer's one left-hand trigger; History and Send remain explicit on the right. A wrap, explicit
-  newline, or width change that makes the draft exceed one visual line grows the message row without moving
-  the footer; fitting one line again shrinks only the message row. This is one persistent textarea, never
-  conditional twins — the transition cannot lose focus, caret/selection, recall, draft, or a template-slot
-  session. Streaming deliberately uses the expanded message row even with an empty draft, because Stop +
-  send options join the footer. `ChatView` passes the server-synced
-  `ComposerGrowthLimit` prop: `compact` caps at 6 visual lines, `roomy` at 10, and the default `half-chat`
-  caps the **editor shell** (textarea + footer) at 50% of the mounted chat panel, never the browser viewport;
-  overflow then scrolls inside the textarea. Attachment chips, completion menus, slot hints, and QueueStrip
+- **Composer layout** (`Composer`) — one outlined card (`chat-input-surface`, a 1px inset ring, no shadow) holds two rows:
+  the message row on top and a **toolbar** (`chat-composer-toolbar`, 32px controls, 8px side and bottom padding)
+  underneath. Nothing hangs below the card. The toolbar reads left to right: the `+` menu (`composer-add`), then — pushed
+  to the right edge — the model · effort pill (`model-selector`, which opens upward and right-aligned), the context ring
+  (`context-ring`), the dictation mic, and Send. This is the order Codex-style composers use, and it keeps the model
+  next to the action it configures. While streaming, Stop (`chat-abort`) and the send-options chevron
+  (`send-menu`) join the cluster next to Send; the mic's waveform sits left of the mic.
+  An idle draft that fits one visual line keeps the message row one line tall; a wrap, explicit newline or width
+  change that makes the draft exceed it grows the message row without moving the toolbar, and fitting one line again
+  shrinks only the message row. This is one persistent textarea, never conditional twins — the transition cannot lose
+  focus, caret/selection, recall, draft, or a template-slot session. `data-expanded` on `chat-composer` still
+  reports whether the draft needs more than one line (and is true while streaming). `ChatView` passes the
+  server-synced `ComposerGrowthLimit` prop: `compact` caps the message row at 6 visual lines, `roomy` at 10, and the
+  default `half-chat` caps the **card** (message row + toolbar) at 50% of the mounted chat panel, never the browser
+  viewport; overflow then scrolls inside the textarea. Attachment chips, completion menus, slot hints, and QueueStrip
   keep their existing separate chrome. The slot-highlight backdrop must follow every dynamic textarea box
   change with the exact box-model and scroll-sync invariants under Template slots below.
-- **Composer trailing controls** (`Composer`) — the footer's right-hand cluster is **ghosts only**, no
-  borders and no solid fill: History is `IconButton ghost m` (its `label` supplies the tooltip), Stop is
-  `Button ghost m` (`■ Stop`, muted text lifting on a hover wash), and Send (`chat-send`, inside
-  `chat-send-pill` with `data-armed`) is an `IconButton ghost m` carrying the `CornerDownLeft` (↵) glyph,
-  the same line weight as the dictation `Mic` beside it. A solid accent arrow next to the outline mic read as
-  two unrelated styles, so the primary action is signalled by tone instead of fill: **inert send** rests
-  at `control-disabled-text`, and **armed** returns to the muted ghost tone with the 90%→100% scale ramp;
-  the disabled button keeps pointer events so its hover wash matches the always-live mic. The chevron
-  (`send-menu`, streaming only) is a second ghost hit area; spacing, not a divider, separates them.
-  **Compact mode** needs no special case now that the send is icon-only at every width. Labels use
-  `ui.action`.
+- **Composer toolbar controls** (`Composer`) — every control in the toolbar is a **ghost**, no borders and no solid
+  fill: `+`, the context ring, the mic and Send are `IconButton ghost l` (their `label` supplies the tooltip), Stop is
+  the running monogram, and Send (`chat-send`, inside `chat-send-pill` with `data-armed`) carries the
+  `CornerDownLeft` (↵) glyph. The primary action is signalled by tone instead of fill: **inert send** rests at
+  `control-disabled-text`, and **armed** returns to the muted ghost tone with the 90%→100% scale ramp; the disabled
+  button keeps pointer events so its hover wash matches the always-live mic. The model pill keeps its own hover
+  wash and truncates (`max-w` 40vw on phones, 280px from `sm`) before it can push Send out of the card.
+- **Add menu** (`ComposerAddMenu`, `composer-add` / `composer-add-menu`) — the `+` puts something into the message, and
+  each row hands the draft to the picker that already exists rather than inventing a second one: **Add images**
+  (`composer-add-images`) clicks the hidden `composer-file-input` (`ACCEPTED_IMAGE_TYPES`, multiple) and feeds
+  `usePromptImages().addFiles`, the same path as paste and drop; **Files and folders** (`composer-add-files`) inserts `@`
+  at the caret, which opens the mention menu; **Skills** inserts `/` scoped to skills; **Prompt templates** inserts `/`
+  scoped to templates (or opens the template manager when there are none); **Commands** inserts `/` scoped to built-in and
+  extension commands; **MCP servers** (`composer-add-mcp`, only when the host supports MCP) reveals the status dock,
+  where each server's per-chat toggle lives. A sigil is preceded by a space when it would otherwise glue onto a word,
+  so the trigger always starts a token. The `/` scope (`slashScope`) lasts for exactly one token: it clears once the token has been
+  seen and is gone. Pi dispatches a command or template only from the start of a message, so **Prompt templates** and
+  **Commands** are disabled (`data-disabled`, "New message only") while the draft has text; **Skills** hoist out of mid-text
+  and are disabled only when the chat has none (`composerAddAvailability`). Closing the menu returns focus to the textarea
+  (`onCloseAutoFocus`), not the `+`, because the next keystroke belongs to the draft.
+- **Context ring** (`ContextRing`, `context-ring`) — the engine's context usage (`SessionStats.contextUsage`, summarized by
+  `chat/contextUsage.ts`, which the status dock shares) as a 16px ring: a `border-default` track and an arc whose length is the
+  used share, in `text-default` (so dark-on-light and light-on-dark), `feedback-warning` from 80% and `feedback-error` from 95%.
+  Hover or keyboard focus names it — `57% (474k / 828k) context used` — and a click reveals the status dock for the full
+  ledger (the ring stays a button even without an estimate, then showing an empty track and the "unknown until the next
+  response" text). The ring only renders what the engine reported; it never estimates tokens itself. Hooks:
+  `data-percent` (rounded), `data-tone`, and `context-ring-progress` on the arc.
 - **Automatic skill reload** (`skillAutoReload.ts`, `useSkillAutoReload.ts`, mounted by `ChatView`) — a chat whose
   skills are older than what is on disk (`selectSkillsStale`) applies them by itself instead of waiting for a click
   on Reload. `skillAutoReloadReady` is the gate: the chat is the current one, connected, its session exists, and it

@@ -1,5 +1,10 @@
 import { RiSparkling2Line as Sparkles } from "@remixicon/react";
-import type { ComposerGrowthLimit, ThinkingLevel, WireModel } from "@thinkrail/contracts";
+import {
+	ACCEPTED_IMAGE_TYPES,
+	type ComposerGrowthLimit,
+	type ThinkingLevel,
+	type WireModel,
+} from "@thinkrail/contracts";
 import type { MessageKey } from "@thinkrail/locales";
 import { useT } from "@thinkrail/locales/react";
 import { IconButton } from "@thinkrail/ui/button";
@@ -49,11 +54,14 @@ import {
 	useSpeechSupported,
 	Waveform,
 } from "@/speech";
+import { type ComposerAddAction, ComposerAddMenu } from "./ComposerAddMenu";
+import { ContextRing } from "./ContextRing";
 import {
 	type MentionCandidate,
 	mentionCompletionItems,
 	slashCompletionItems,
 } from "./completionItems";
+import type { ContextSummary } from "./contextUsage";
 import { FileChip } from "./FileChip";
 import {
 	ModelEffortPicker,
@@ -74,8 +82,7 @@ export type ComposerSubmitDisposition = { accepted: true } | { accepted: false; 
 const COMPOSER_EDITOR_LIMIT_CLASS = {
 	compact: "max-h-[calc(6lh+var(--space-12)+var(--space-12))]",
 	roomy: "max-h-[calc(10lh+var(--space-12)+var(--space-12))]",
-	"half-chat":
-		"max-h-[calc(50cqh-var(--space-16)-var(--space-16)-var(--space-4)-var(--space-4)-var(--space-4)-var(--space-4))]",
+	"half-chat": "max-h-[calc(50cqh-var(--space-16)-var(--space-16)-var(--space-32)-var(--space-8))]",
 } satisfies Record<ComposerGrowthLimit, string>;
 
 const STREAMING_SEND_MODES = [
@@ -142,7 +149,14 @@ interface ComposerProps {
 	/** A grey guess at the next message, offered while the draft is empty; Tab or → fills it in, Esc waves it away. */
 	prediction?: string | null;
 	onPredictionDismiss?: () => void;
+	/** The chat's context window as the engine reports it; null until the first estimate. */
+	contextSummary?: ContextSummary | null;
+	/** Reveals the status dock, where the context ledger and the MCP servers live. */
+	onOpenStatus?: () => void;
+	showMcp?: boolean;
 }
+
+type SlashSource = SlashCommandItem["source"];
 
 export interface ComposerHandle {
 	insertText: (text: string) => void;
@@ -184,12 +198,18 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 		templatesEmpty,
 		prediction = null,
 		onPredictionDismiss,
+		contextSummary = null,
+		onOpenStatus,
+		showMcp = false,
 	},
 	handleRef,
 ) {
 	const t = useT();
 	const ref = useRef<HTMLTextAreaElement>(null);
 	const pickerRef = useRef<ModelEffortPickerHandle>(null);
+	const fileInputRef = useRef<HTMLInputElement>(null);
+	const [slashScope, setSlashScope] = useState<readonly SlashSource[] | null>(null);
+	const slashSeenRef = useRef(false);
 	const [caret, setCaret] = useState(0);
 	const attachedImages = usePromptImages();
 	const { images } = attachedImages;
@@ -234,6 +254,14 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 
 	useEffect(() => onMentionQuery(mentionQuery), [mentionQuery, onMentionQuery]);
 	useEffect(() => onSlashActive(slashActive), [slashActive, onSlashActive]);
+	// A scope picked from “+” lasts for one `/` token: it clears once that token has been seen and is gone.
+	useEffect(() => {
+		if (slashActive) slashSeenRef.current = true;
+		else if (slashSeenRef.current) {
+			slashSeenRef.current = false;
+			setSlashScope(null);
+		}
+	}, [slashActive]);
 
 	const focusSelection = usePendingSelection(ref, setCaret);
 	const speechSupported = useSpeechSupported();
@@ -325,9 +353,12 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 		onSelect: pickMention,
 	});
 
+	const scopedCommands = slashScope
+		? commands.filter((command) => slashScope.includes(command.source))
+		: commands;
 	const slashCompletion = useSlashCommandCompletion({
 		trigger,
-		commands,
+		commands: scopedCommands,
 		onSelect: (command) => {
 			if (isModelCommand(command)) openModelPicker("");
 			else if (command.source === "prompt" && onPickTemplate) onPickTemplate(command.name);
@@ -337,6 +368,40 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 			}
 		},
 	});
+
+	const insertSigil = (sigil: "@" | "/", scope: readonly SlashSource[] | null) => {
+		const textarea = ref.current;
+		const start = textarea?.selectionStart ?? value.length;
+		const end = textarea?.selectionEnd ?? value.length;
+		const before = value.slice(0, start);
+		const gap = before !== "" && !/\s$/.test(before) ? " " : "";
+		slashSeenRef.current = false;
+		setSlashScope(sigil === "/" ? scope : null);
+		replaceDraft(`${before}${gap}${sigil}${value.slice(end)}`, before.length + gap.length + 1);
+	};
+	const onAddAction = (action: ComposerAddAction) => {
+		switch (action) {
+			case "images":
+				fileInputRef.current?.click();
+				return;
+			case "files":
+				insertSigil("@", null);
+				return;
+			case "skills":
+				insertSigil("/", ["skill"]);
+				return;
+			case "templates":
+				if (templatesEmpty && onManageTemplates) onManageTemplates();
+				else insertSigil("/", ["prompt"]);
+				return;
+			case "commands":
+				insertSigil("/", ["builtin", "extension"]);
+				return;
+			case "mcp":
+				onOpenStatus?.();
+				return;
+		}
+	};
 
 	const mentionOpen = mentionCompletion.open;
 	const menuOpen = mentionOpen || slashCompletion.open;
@@ -560,13 +625,10 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 			) : null}
 
 			<div className="p-chat-gutter">
-				<div
-					data-testid="chat-composer-shell"
-					className="relative grid grid-cols-[minmax(0,1fr)_auto] grid-rows-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-4"
-				>
+				<div data-testid="chat-composer-shell" className="relative">
 					<div
 						data-testid="chat-input-surface"
-						className="relative col-span-2 col-start-1 row-start-1 flex min-h-0 flex-col overflow-hidden rounded-xl bg-control-bg ring-1 ring-inset ring-control-border-default transition-shadow duration-[var(--motion-duration-normal)] focus-within:ring-control-border-active tr-text-ui"
+						className="relative flex min-h-0 flex-col overflow-hidden rounded-xl bg-control-bg ring-1 ring-inset ring-control-border-default transition-shadow duration-[var(--motion-duration-normal)] focus-within:ring-control-border-active tr-text-ui"
 					>
 						<PromptImageStrip
 							controller={attachedImages}
@@ -584,7 +646,7 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 						/>
 						<div
 							className={cn(
-								"flex min-h-0 items-end overflow-hidden",
+								"flex min-h-0 overflow-hidden",
 								expanded && growthLimit === "half-chat" && "max-h-[50cqh]",
 								COMPOSER_EDITOR_LIMIT_CLASS[growthLimit],
 							)}
@@ -666,24 +728,50 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 									{`${value}\u200b`}
 								</div>
 							</PromptField>
-							<div
-								className={cn(
-									"flex shrink-0 items-center gap-4 pr-8",
-									expanded ? "self-end pb-8" : "self-center",
-								)}
-							>
-								{/* One slot: Stop while the agent runs with nothing to send, Send otherwise. */}
-								{showStop ? (
-									<IconButton
-										variant="ghost"
-										size="m"
-										icon={RunningIcon}
-										data-testid="chat-abort"
-										label={t("chat.composer.stop")}
-										onClick={onAbort}
-										className="text-primary"
-									/>
-								) : null}
+						</div>
+						<div
+							data-testid="chat-composer-toolbar"
+							className="flex shrink-0 items-center gap-4 px-8 pb-8"
+						>
+							<ComposerAddMenu
+								draftEmpty={value.trim() === ""}
+								skillCount={commands.filter((command) => command.source === "skill").length}
+								showMcp={showMcp && onOpenStatus !== undefined}
+								onAction={onAddAction}
+								onCloseAutoFocus={(event) => {
+									event.preventDefault();
+									ref.current?.focus({ preventScroll: true });
+								}}
+							/>
+							<input
+								ref={fileInputRef}
+								type="file"
+								hidden
+								multiple
+								tabIndex={-1}
+								accept={ACCEPTED_IMAGE_TYPES.join(",")}
+								data-testid="composer-file-input"
+								onChange={(event) => {
+									attachedImages.addFiles([...(event.target.files ?? [])]);
+									event.target.value = "";
+								}}
+							/>
+							<div className="ml-auto flex min-w-0 items-center gap-4">
+								<ModelEffortPicker
+									ref={pickerRef}
+									models={models}
+									current={currentModel}
+									level={thinkingLevel}
+									refreshing={modelsRefreshing}
+									onRefresh={onRefreshModels}
+									onSelect={onSelectModel}
+									onSelectLevel={onSelectThinking}
+									preferences={modelPreferences}
+									side="top"
+									align="end"
+									className="max-w-[40vw] sm:max-w-[280px]"
+								/>
+								<ContextRing summary={contextSummary} onOpen={onOpenStatus} />
 								{ghost ? (
 									<button
 										type="button"
@@ -701,6 +789,41 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 								{dictating ? (
 									<Waveform levels={dictation.levels} className="max-sm:hidden" />
 								) : null}
+								{speechSupported ? (
+									<IconButton
+										variant="ghost"
+										size="l"
+										icon={Mic}
+										data-testid="chat-dictate"
+										data-phase={dictation.phase}
+										aria-pressed={dictating}
+										label={
+											dictating
+												? t("chat.composer.dictate.stop")
+												: dictation.phase === "transcribing"
+													? t("chat.composer.dictate.transcribing")
+													: t("chat.composer.dictate.start")
+										}
+										loading={dictation.phase === "transcribing"}
+										onClick={dictation.toggle}
+										tone={dictating ? "info" : undefined}
+									/>
+								) : null}
+								<span role="status" className="sr-only">
+									{dictating ? t("chat.composer.dictate.listening") : ""}
+								</span>
+								{/* One slot: Stop while the agent runs with nothing to send, Send otherwise. */}
+								{showStop ? (
+									<IconButton
+										variant="ghost"
+										size="l"
+										icon={RunningIcon}
+										data-testid="chat-abort"
+										label={t("chat.composer.stop")}
+										onClick={onAbort}
+										className="text-primary"
+									/>
+								) : null}
 								<div
 									data-testid="chat-send-pill"
 									data-armed={canSend}
@@ -715,7 +838,7 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 									>
 										<IconButton
 											variant="ghost"
-											size="m"
+											size="l"
 											icon={CornerDownLeft}
 											data-testid="chat-send"
 											label={isStreaming ? t("chat.composer.steer") : t("chat.composer.send")}
@@ -728,7 +851,7 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 										<Popover open={sendMenuOpen} onOpenChange={setSendMenuOpen}>
 											<PopoverTrigger asChild>
 												<IconButton
-													size="m"
+													size="l"
 													icon={ChevronDown}
 													data-testid="send-menu"
 													label={t("chat.composer.sendOptions")}
@@ -766,45 +889,8 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 										</Popover>
 									) : null}
 								</div>
-								{speechSupported ? (
-									<IconButton
-										variant="ghost"
-										size="m"
-										icon={Mic}
-										data-testid="chat-dictate"
-										data-phase={dictation.phase}
-										aria-pressed={dictating}
-										label={
-											dictating
-												? t("chat.composer.dictate.stop")
-												: dictation.phase === "transcribing"
-													? t("chat.composer.dictate.transcribing")
-													: t("chat.composer.dictate.start")
-										}
-										loading={dictation.phase === "transcribing"}
-										onClick={dictation.toggle}
-										tone={dictating ? "info" : undefined}
-									/>
-								) : null}
-								<span role="status" className="sr-only">
-									{dictating ? t("chat.composer.dictate.listening") : ""}
-								</span>
 							</div>
 						</div>
-					</div>
-					<div className="col-start-1 row-start-2 flex min-w-0 items-center self-end">
-						<ModelEffortPicker
-							ref={pickerRef}
-							models={models}
-							current={currentModel}
-							level={thinkingLevel}
-							refreshing={modelsRefreshing}
-							onRefresh={onRefreshModels}
-							onSelect={onSelectModel}
-							onSelectLevel={onSelectThinking}
-							preferences={modelPreferences}
-							className="max-w-[60vw] px-4 sm:max-w-[320px]"
-						/>
 					</div>
 				</div>
 			</div>

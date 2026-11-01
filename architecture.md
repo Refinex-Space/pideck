@@ -13,9 +13,9 @@ tags: [architecture]
 PiDeck is maintained by Refinex-Space from ThinkRail `main`
 (`6cd6f9054dc566f8080db1d338cb21bff0c2b7cc`). Product names, launchers, native identity,
 icons and the default host data directory are independent of upstream. Internal `@thinkrail/*`
-packages, `THINKRAIL_*` environment variables, wire/native bridge names and repository-local
-`.thinkrail` workflow paths retain their upstream contracts. This is intentional compatibility,
-not a second product identity. See [fork-maintenance.md](fork-maintenance.md) for branch ownership,
+packages, `THINKRAIL_*` environment variables and wire/native bridge names retain their upstream
+contracts. This is intentional compatibility, not a second product identity. On-disk locations
+(`~/.pideck`, repository-local `.pideck/`) are PiDeck's own. See [fork-maintenance.md](fork-maintenance.md) for branch ownership,
 upgrade procedure and the customization register. Upstream release infrastructure described below
 is historical context; it is not a PiDeck signing or publication service.
 
@@ -119,7 +119,7 @@ dependency. This keeps test process drivers outside both launchers and the serve
    project the same panels differently; desktop docking does not define that projection. Detail:
    [[submodule-web-shell-layout]].
 6. **Workspaces are git worktrees.** project (git repo) → workspace (`git worktree` on its own
-   branch/cwd, under `~/.thinkrail/worktrees`) → {chats, files, terminals}. **Two deliberate
+   branch/cwd, under `~/.pideck/worktrees`) → {chats, files, terminals}. **Two deliberate
    exceptions, both `kind`-marked on the wire and both *user-owned* — never renamed or reclaimed by
    ThinkRail:** every project carries exactly one built-in **Default workspace** (`kind: "default"`)
    whose cwd is the project folder itself (git's *main working tree*) — non-removable, non-renamable,
@@ -423,7 +423,7 @@ dependency. This keeps test process drivers outside both launchers and the serve
     each comparison (every future comparison must remember; the first patch missed nine of twelve sites);
     `realpath` as the canonical form (diverges from headers already on disk wherever a stored path crosses a
     symlink or 8.3 name); folding case (pi's own cwd identity is case-sensitive, and git and `resolve` both
-    keep on-disk case). Accepted cost: an older ThinkRail sharing `~/.thinkrail` fails reopen-from-Recent
+    keep on-disk case). Accepted cost: an older PiDeck sharing `~/.pideck` fails reopen-from-Recent
     (`ALREADY_OPEN`) for a healed project until it updates.
 
 23. **UI strings are keyed catalogs; local language files are runtime data, not code.** Every
@@ -434,7 +434,7 @@ dependency. This keeps test process drivers outside both launchers and the serve
     `placeholder`, `alt`, `label`) in those trees, so a new string cannot ship without a key. ThinkRail
     ships bundled catalogs (English plus translations held to `en.json` by a test); a user
     adds or overrides a language by dropping a flat i18next-JSON file into the **global** data dir
-    (`~/.thinkrail/locales/<tag>.json`) — never a workspace, so a cloned repo cannot rewrite the UI.
+    (`~/.pideck/locales/<tag>.json`) — never a workspace, so a cloned repo cannot rewrite the UI.
     The host validates and watches those files ([[submodule-server-locales]]) and serves them over the
     wire; the web merges them over the bundled
     catalogs ([[submodule-web-i18n]]) with per-string fallback *local exact → bundled exact → bundled
@@ -443,7 +443,7 @@ dependency. This keeps test process drivers outside both launchers and the serve
     data never carry translated text: defaults ThinkRail writes (untitled chats, default terminals, the
     host-named default workspace, chat round notices) are worded at render, so a switch re-words all of
     them, while names set by the user or the agent show verbatim. Theme manifests are the one other
-    runtime-loaded user resource, on the same model (`~/.thinkrail/themes/*.theme.json`, read by
+    runtime-loaded user resource, on the same model (`~/.pideck/themes/*.theme.json`, read by
     [[submodule-server-themes]], validated by [[submodule-web-themes]]): a manifest is colour data only
     and is written as CSS custom-property values, never CSS or code. Code extensions stay compiled in
     (Decision 21) because a string map or a palette carries no executable surface and an extension does.

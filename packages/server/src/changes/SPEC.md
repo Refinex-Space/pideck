@@ -66,9 +66,9 @@ The platform decision behind it is [[architecture]] decision #19; the rules belo
   The rename occurs in the synchronous verify pass, so a later agent write recreates the real path and
   cannot become the object an awaited trash helper removes. If trash fails, the claim is restored only
   while the destination is absent; a concurrent recreation wins, and the original claim is preserved as
-  `.thinkrail-recovery-<ulid>` beside it with that absolute recovery path in the thrown error.
+  `.pideck-recovery-<ulid>` beside it with that absolute recovery path in the thrown error.
   `receipt.trashed` is the helper's absolute input path, so the file appears in the OS trash under its
-  `.thinkrail-revert-<ulid>` temporary name. Absent on both sides is not a change and is refused. A
+  `.pideck-revert-<ulid>` temporary name. Absent on both sides is not a change and is refused. A
   *renamed* file reverts as its two halves — the new path trashes, the old path restores — because that
   is what the two sides of each path actually say.
 - **Symlinks and mode-only changes are refused as `UNSUPPORTED_CHANGE`.** Worktree identity is read with

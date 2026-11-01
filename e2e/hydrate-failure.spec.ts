@@ -16,7 +16,7 @@ const BASE_TS = 1_700_400_000_000;
 const repoCwd = () => realpathSync(E2E_FIXTURE_REPO);
 
 function seedOpenTodo(sessionId: string, title: string): void {
-	const contextDir = join(repoCwd(), ".thinkrail", "context");
+	const contextDir = join(repoCwd(), ".pideck", "context");
 	mkdirSync(contextDir, { recursive: true });
 	writeFileSync(join(contextDir, ".gitignore"), "*\n");
 	new TodoStore(repoCwd(), sessionId).add({ title });
@@ -49,7 +49,7 @@ async function failGetMessagesFor(page: Page, sessionId: () => string): Promise<
 }
 
 test.afterEach(() => {
-	rmSync(join(E2E_FIXTURE_REPO, ".thinkrail"), { recursive: true, force: true });
+	rmSync(join(E2E_FIXTURE_REPO, ".pideck"), { recursive: true, force: true });
 });
 
 test("a transcript that fails to load says so and stays in history", async ({ page }) => {

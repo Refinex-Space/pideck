@@ -51,7 +51,7 @@ test("turn-divider counts a scratch task-spec as a spec and opens it from the Sp
 	await page
 		.getByTestId("chat-input")
 		.fill(
-			"Use the spec_create tool to create a spec at path .thinkrail/context/TASK-divider-demo.md " +
+			"Use the spec_create tool to create a spec at path .pideck/context/TASK-divider-demo.md " +
 				"with id task-divider-demo, type task-spec, title Divider demo, status draft. " +
 				"Then stop — do not edit any other file.",
 		);

@@ -135,7 +135,7 @@ function writeAtomic(abs: string, state: FileState): void {
 		throw new Error("Cannot write an absent file state");
 	const dir = dirname(abs);
 	mkdirSync(dir, { recursive: true });
-	const tmp = join(dir, `.thinkrail-revert-${process.pid}-${randomUUID().slice(0, 8)}.tmp`);
+	const tmp = join(dir, `.pideck-revert-${process.pid}-${randomUUID().slice(0, 8)}.tmp`);
 	try {
 		writeFileSync(tmp, state.bytes);
 		chmodSync(tmp, state.mode);
@@ -147,7 +147,7 @@ function writeAtomic(abs: string, state: FileState): void {
 }
 
 function claimForTrash(abs: string): string {
-	const claimed = join(dirname(abs), `.thinkrail-revert-${receiptId()}`);
+	const claimed = join(dirname(abs), `.pideck-revert-${receiptId()}`);
 	renameSync(abs, claimed);
 	return claimed;
 }
@@ -164,7 +164,7 @@ async function trashClaim(claimed: string, abs: string): Promise<void> {
 		try {
 			linkSync(claimed, abs);
 		} catch {
-			const recovery = join(dirname(abs), `.thinkrail-recovery-${receiptId()}`);
+			const recovery = join(dirname(abs), `.pideck-recovery-${receiptId()}`);
 			renameSync(claimed, recovery);
 			throw recoveryError(error, recovery);
 		}

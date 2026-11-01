@@ -743,7 +743,7 @@ test("specPathMatcher recognizes a spec by graph membership, in either reported 
 			id: "task-x",
 			type: "task-spec",
 			title: "X",
-			path: ".thinkrail/context/TASK-x.md",
+			path: ".pideck/context/TASK-x.md",
 			dependsOn: [],
 			references: [],
 			implements: [],
@@ -752,10 +752,10 @@ test("specPathMatcher recognizes a spec by graph membership, in either reported 
 	];
 	const isSpec = specPathMatcher(nodes);
 
-	expect(isSpec(".thinkrail/context/TASK-x.md")).toBe(true);
-	expect(isSpec("/wt/ws/.thinkrail/context/TASK-x.md")).toBe(true);
+	expect(isSpec(".pideck/context/TASK-x.md")).toBe(true);
+	expect(isSpec("/wt/ws/.pideck/context/TASK-x.md")).toBe(true);
 	expect(isSpec("packages/server/src/todos/todos.ts")).toBe(false);
-	expect(specPathMatcher([])(".thinkrail/context/TASK-x.md")).toBe(false);
+	expect(specPathMatcher([])(".pideck/context/TASK-x.md")).toBe(false);
 });
 
 const catalogModel = (

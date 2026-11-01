@@ -509,7 +509,7 @@ test.skipIf(process.platform === "win32")(
 			const uid = process.getuid?.();
 			await waitForTerminalOutput(
 				attached.id,
-				`TR_ENV=${uid}|${uid}|ThinkRail|unset|/configured/pi-agent`,
+				`TR_ENV=${uid}|${uid}|PiDeck|unset|/configured/pi-agent`,
 			);
 		} finally {
 			for (const [name, value] of Object.entries(saved)) {

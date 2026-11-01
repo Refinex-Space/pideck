@@ -526,7 +526,7 @@ channel fan-out, and the process-boot wrapper both launchers share.
   forking the conversation.
 - **Scratch-dir seeding on chat start:** the `session.create` handler calls `workspaces`'
   `ensureWorkspaceScratchDir` before creating the session — the Default workspace's gitignored
-  `.thinkrail/context/` lands in the user's repo only when a chat actually starts there (and a
+  `.pideck/context/` lands in the user's repo only when a chat actually starts there (and a
   worktree's deleted scratch dir self-heals). Host-composed — no new module edges.
 - **Project lifecycle fan-out:** `createServer` installs the `projects` module's publisher and maps every
   authoritative open/reopen/close snapshot to **`project.updated`**. The WS `open` handler subscribes to

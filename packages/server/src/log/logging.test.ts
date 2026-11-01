@@ -96,7 +96,7 @@ describe("destinations", () => {
 	test("configures pino-roll as the file lifecycle owner", () => {
 		expect(createPinoRollOptions("/tmp/logs")).toEqual({
 			dateFormat: "yyyy-MM-dd",
-			file: join("/tmp/logs", "thinkrail.jsonl"),
+			file: join("/tmp/logs", "pideck.jsonl"),
 			frequency: "daily",
 			limit: { count: LOG_TOTAL_FILES, removeOtherLogFiles: true },
 			mkdir: true,
@@ -106,11 +106,11 @@ describe("destinations", () => {
 	});
 
 	test("enforces the file bound when a new process opens", async () => {
-		const directory = await mkdtemp(join(tmpdir(), "thinkrail-log-retention-"));
+		const directory = await mkdtemp(join(tmpdir(), "pideck-log-retention-"));
 		try {
 			for (let day = 1; day <= LOG_TOTAL_FILES + 2; day += 1) {
 				const date = `2026-08-${String(day).padStart(2, "0")}`;
-				await writeFile(join(directory, `thinkrail.${date}.1.jsonl`), date);
+				await writeFile(join(directory, `pideck.${date}.1.jsonl`), date);
 			}
 			await writeFile(join(directory, "crash.log"), "unrelated");
 			await writeFile(join(directory, "other.jsonl"), "unrelated");
@@ -118,11 +118,11 @@ describe("destinations", () => {
 			await cleanManagedLogs(directory);
 
 			const files = await readdir(directory);
-			const managed = files.filter((file) => file.startsWith("thinkrail.")).sort();
+			const managed = files.filter((file) => file.startsWith("pideck.")).sort();
 			expect(managed).toHaveLength(LOG_RETENTION_FILES + 1);
-			expect(managed).not.toContain("thinkrail.2026-08-01.1.jsonl");
-			expect(managed).not.toContain("thinkrail.2026-08-02.1.jsonl");
-			expect(managed).toContain("thinkrail.2026-08-17.1.jsonl");
+			expect(managed).not.toContain("pideck.2026-08-01.1.jsonl");
+			expect(managed).not.toContain("pideck.2026-08-02.1.jsonl");
+			expect(managed).toContain("pideck.2026-08-17.1.jsonl");
 			expect(files).toContain("crash.log");
 			expect(files).toContain("other.jsonl");
 		} finally {

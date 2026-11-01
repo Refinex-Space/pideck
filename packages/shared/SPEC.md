@@ -147,7 +147,7 @@ bundled into `apps/web`. Exposed through explicit subpath exports, not a barrel.
   caller trade patience for speed.
 - **/paths** — the worktree-relative path conventions ThinkRail owns, named once so current and future
   consumers agree (today: `workspaces` *creates* the scratch dir and git *ignores* it):
-  `WORKSPACE_INTERNAL_DIR` (`.thinkrail` — the repo-local host-managed dir, today holding the ephemeral
+  `WORKSPACE_INTERNAL_DIR` (`.pideck` — the repo-local host-managed dir, today holding the ephemeral
   scratch, the intended home for future host files like a cached spec index; **not** hidden from the file
   tree), `WORKSPACE_CONTEXT_DIR` (its `context/` scratch dir for temp docs), and `WORKSPACE_TODOS_DIR`
   (`context/todos/` — the chat TODO plans, one JSON per session, so they're ephemeral with the rest of

@@ -114,7 +114,7 @@ blocks in order into rows; `ChatTurnView` dispatches on row kind:
   validation; drive-rooted containment compares case-insensitively while preserving the linked path's casing.
   Ahead of that transform, an assistant-only remark transformer (`remarkWrittenPathDestinations`) restores a
   link or definition destination exactly as written when it contains a backslash and has no URL scheme.
-  CommonMark would otherwise read `\.` or `\_` as escapes and turn `C:\repo\.thinkrail\x.md` into a dead link;
+  CommonMark would otherwise read `\.` or `\_` as escapes and turn `C:\repo\.pideck\x.md` into a dead link;
   in an agent-written path a backslash is a separator (architecture Decision 22). It reads the source from the
   parse's own file, because `BlockMarkdown` parses each block separately and positions are block-local. Repo
   Markdown in the file viewer keeps CommonMark semantics, matching GitHub's rendering.
@@ -277,7 +277,7 @@ blocks in order into rows; `ChatTurnView` dispatches on row kind:
   one side, never counted twice) computed in the deriver from the injected `isSpec` predicate — the store's
   `specPathMatcher` over the workspace's spec graph, plus `spec_create`'s target, which is a spec by
   construction even before the graph snapshot catches up. Why it matters: a spec is often **gitignored**
-  scratch (`.thinkrail/context/`), so counting it as a "changed file" deep-linked the user to a Changes view
+  scratch (`.pideck/context/`), so counting it as a "changed file" deep-linked the user to a Changes view
   that structurally cannot show it. Each chip now routes to the panel that owns the artifact.
   **One artifact → the chip is a direct deep link; several → it is a disclosure** that expands the round's
   set as a list right here in the transcript (`ArtifactChip` + `ArtifactList`), each row deep-linking one

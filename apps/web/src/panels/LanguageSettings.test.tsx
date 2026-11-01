@@ -18,7 +18,7 @@ const render = (preference: string, snapshot: LocalLocalesSnapshot | null) =>
 
 test("lists System, built-in, local, and broken languages with the folder helpers", () => {
 	const markup = render("de", {
-		dir: "/home/me/.thinkrail/locales",
+		dir: "/home/me/.pideck/locales",
 		files: [
 			{ fileName: "de.json", tag: "de", ok: true, strings: {} },
 			{ fileName: "notes.json", tag: null, ok: false, error: "invalid-name" },
@@ -31,7 +31,7 @@ test("lists System, built-in, local, and broken languages with the folder helper
 	expect(markup).toContain("Local file");
 	expect(markup).toContain('data-testid="language-broken-notes.json"');
 	expect(markup).toContain("isn&#x27;t a language code");
-	expect(markup).toContain("/home/me/.thinkrail/locales");
+	expect(markup).toContain("/home/me/.pideck/locales");
 	expect(markup).toContain('data-testid="language-open-folder"');
 	expect(markup).toContain('data-testid="language-english-source"');
 	expect(markup).toContain('data-testid="language-contribute"');

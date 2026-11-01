@@ -69,13 +69,13 @@ function hash(content: string | Uint8Array | null): string | null {
 function expectTrashClaim(path: string | undefined): string {
 	if (path === undefined) throw new Error("missing trash claim");
 	expect(dirname(path)).toBe(repo);
-	expect(basename(path)).toMatch(/^\.thinkrail-revert-[0-7][0-9A-HJKMNP-TV-Z]{25}$/);
+	expect(basename(path)).toMatch(/^\.pideck-revert-[0-7][0-9A-HJKMNP-TV-Z]{25}$/);
 	return path;
 }
 
 function recoveryFiles(): string[] {
 	return readdirSync(repo)
-		.filter((name) => /^\.thinkrail-recovery-[0-7][0-9A-HJKMNP-TV-Z]{25}$/.test(name))
+		.filter((name) => /^\.pideck-recovery-[0-7][0-9A-HJKMNP-TV-Z]{25}$/.test(name))
 		.map((name) => join(repo, name));
 }
 

@@ -7,7 +7,7 @@ import { E2E_BINARY_CACHE, E2E_BINARY_PORT } from "./e2e/fixtures/paths";
 const rootDir = fileURLToPath(new URL(".", import.meta.url));
 const binary =
 	process.env.THINKRAIL_E2E_BINARY ??
-	fileURLToPath(new URL("./apps/cli/dist/thinkrail", import.meta.url));
+	fileURLToPath(new URL("./apps/cli/dist/pideck", import.meta.url));
 if (!existsSync(binary)) {
 	throw new Error(`binary not found at ${binary} — run \`bun run build:binary\` first.`);
 }

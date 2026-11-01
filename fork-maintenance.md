@@ -55,6 +55,7 @@ git switch refinex/dev
 | --- | --- | --- |
 | 产品名、CLI、原生安装身份 | `apps/desktop`、`apps/cli`、`packages/shared`、安装脚本 | 单元测试、build 与 artifact smoke；必须与官方版可区分 |
 | 默认宿主目录 `~/.pideck` | `packages/server/src/persistence` | 默认路径与 override 测试；不自动迁移官方状态 |
+| 项目内目录 `.pideck/` 及落盘命名 | `packages/shared/src/paths.ts`、`pi-todos/core/store.ts`、`thinkrail-extensions/visualize/server/files.ts`、`server` 的 `browser/service.ts`、`changes/changes.ts`、`log/logging.ts`、`git/snapshot.ts`、`pi-thinkrail-workflow` skills | 路径常量与相关单测、e2e；不读取旧 `.thinkrail/`。合并上游时这些字面量会冲突，需重新替换并核对 `rg '\.thinkrail'` 只剩有意保留项 |
 | PiDeck 界面、Pi 图标和反馈入口 | `apps/web`、`packages/locales`、shared assets | 文案检查、组件测试、完整 e2e；不得留下上游团队的服务承诺 |
 | PiDeck 产物与更新边界 | 桌面 config、CLI update、`.github/actions/build-binary` | 产物收集与 updater 测试；默认空 feed，更新代码仅指向 fork |
 | Claude Desktop 风格的共享 UI | `design-system.md`、web shell/themes/styles、共享 UI | 单测、无智能体 e2e、截图与原生产物验证；保留 PiDeck 行为与独立品牌，Windows 真机待验收 |
@@ -66,8 +67,9 @@ git switch refinex/dev
 ## 有意保留的上游标识
 
 - `@thinkrail/*` workspace 包、`thinkrail-extensions/`、可发布 Pi 包名和 spec id：避免无功能收益的依赖迁移。
-- `THINKRAIL_*` 环境变量、`__THINKRAIL_*` 原生桥、协议/renderer id 及诊断日志文件名：保留已测试契约。
-- 项目内 `.thinkrail/` 路径：属于既有工作流存储，与宿主默认目录 `~/.pideck` 不同。
+- `THINKRAIL_*` 环境变量、`__THINKRAIL_*` 原生桥、协议/renderer id：保留已测试契约。
+- 磁盘位置与文件命名不在保留之列：项目内目录为 `.pideck/`，日志为 `pideck.jsonl`，临时/恢复文件前缀为 `pideck`，
+  详见下方定制清单。已有仓库里 ThinkRail 留下的 `.thinkrail/` 不会被读取或迁移，可手动删除。
 - `~/.pi/agent`：由 Pi 管理，未自动复制；可通过 `PI_CODING_AGENT_DIR` 独立配置。
 - `apps/website`、上游发布说明、历史截图及 portable package 文档：保留来源内容，不作为 PiDeck 官网或发布记录。
   PiDeck README 不展示未经核验的上游产品截图。

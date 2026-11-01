@@ -383,7 +383,7 @@ export function initProject(inputPath: string): Project {
 		const identity: string[] = [];
 		if (!git(path, ["config", "user.name"]).out) identity.push("-c", "user.name=PiDeck");
 		if (!git(path, ["config", "user.email"]).out)
-			identity.push("-c", "user.email=thinkrail@localhost");
+			identity.push("-c", "user.email=pideck@localhost");
 		const commit = git(path, [...identity, "commit", "--allow-empty", "-m", "Initial commit"]);
 		if (!commit.ok) throw new Error(`git commit failed: ${path}`);
 	} catch (err) {

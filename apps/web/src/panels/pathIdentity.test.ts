@@ -14,7 +14,7 @@ const WORKSPACE_RELATIVE = [
 	"dir\\sub\\a.html",
 	".\\dir\\a.html",
 	"..draft.html",
-	".thinkrail/context/mockups/after.html",
+	".pideck/context/mockups/after.html",
 ];
 
 test("a file preview and an opened tab name a workspace-relative file the same way", () => {

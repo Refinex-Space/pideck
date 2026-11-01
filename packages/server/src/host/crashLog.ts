@@ -18,7 +18,7 @@ export function formatCrashRecord(
 	appVersion?: string,
 ): string {
 	const build = appVersion ?? "source";
-	return `[${at.toISOString()}] ${kind} (thinkrail ${build}, up ${Math.round(uptimeSeconds)}s)\n${describeError(error)}\n\n`;
+	return `[${at.toISOString()}] ${kind} (pideck ${build}, up ${Math.round(uptimeSeconds)}s)\n${describeError(error)}\n\n`;
 }
 
 let installed = false;
@@ -29,14 +29,14 @@ export function installCrashLog(appVersion?: string): void {
 	let crashing = false;
 	const report = (kind: CrashKind, error: unknown): void => {
 		const record = formatCrashRecord(kind, error, new Date(), process.uptime(), appVersion);
-		process.stderr.write(`\nthinkrail host: fatal ${kind}\n${record}`);
+		process.stderr.write(`\npideck host: fatal ${kind}\n${record}`);
 		try {
 			const path = crashLogPath();
 			mkdirSync(join(path, ".."), { recursive: true });
 			appendFileSync(path, record);
-			process.stderr.write(`thinkrail host: wrote crash report to ${path}\n`);
+			process.stderr.write(`pideck host: wrote crash report to ${path}\n`);
 		} catch (writeError) {
-			process.stderr.write(`thinkrail host: could not write the crash report: ${writeError}\n`);
+			process.stderr.write(`pideck host: could not write the crash report: ${writeError}\n`);
 		}
 		if (crashing) return;
 		crashing = true;

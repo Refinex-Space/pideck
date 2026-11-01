@@ -289,7 +289,7 @@ themselves.
   only nullable color slots (`null` retains the consumer default). A build-time glob validates the set at
   bootstrap (our files — a bad one fails loudly), so adding a theme changes only that file — never
   contracts, a label map, CSS selectors, editor imports, tests, or specs — and appears after a rebuild.
-  A user adds a theme the same way at runtime: the same manifest in `~/.thinkrail/themes`, served by
+  A user adds a theme the same way at runtime: the same manifest in `~/.pideck/themes`, served by
   [[submodule-server-themes]] and validated here, where an unusable file is reported, not fatal.
   Manifests are self-contained (no inheritance), contain canonical color data only, and cannot alter
   layout/type/motion or inject CSS/code. The engine derives repetitive tints/effects and atomically

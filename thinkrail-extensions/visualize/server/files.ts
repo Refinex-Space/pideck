@@ -2,7 +2,7 @@ import { realpathSync, statSync } from "node:fs";
 import { isAbsolute, relative, resolve, sep } from "node:path";
 import type { FileChecker } from "@thinkrail/pi-visualize";
 
-export const MOCKUP_DIR = ".thinkrail/context/mockups/";
+export const MOCKUP_DIR = ".pideck/context/mockups/";
 
 function inside(root: string, candidate: string): string | null {
 	const rel = relative(root, candidate);

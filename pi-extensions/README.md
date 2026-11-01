@@ -41,7 +41,7 @@ checklist.
   ```bash
   node_modules/.bin/pi -e pi-extensions/<name>/index.ts
   ```
-- No `~/.thinkrail` paths, no host wire, no `@thinkrail/*` imports except sibling `pi-extensions/*`.
+- No `~/.pideck` paths, no host wire, no `@thinkrail/*` imports except sibling `pi-extensions/*`.
 
 ## Release a version
 

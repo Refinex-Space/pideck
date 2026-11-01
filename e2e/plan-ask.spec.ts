@@ -144,7 +144,7 @@ test("the plan shows the agent's latest message when it isn't asking or on a ste
 			},
 		],
 	});
-	const todosDir = join(repo, ".thinkrail", "context", "todos");
+	const todosDir = join(repo, ".pideck", "context", "todos");
 	mkdirSync(todosDir, { recursive: true });
 	const todosPath = join(todosDir, `${session.id}.json`);
 	writeFileSync(

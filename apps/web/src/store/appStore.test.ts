@@ -3442,7 +3442,7 @@ test("requestChangesView / requestSpecView pair independent path requests with r
 	useAppStore.setState({ changesRequest: null, specRequest: null, layoutIntents: [] });
 
 	useAppStore.getState().requestChangesView("w1", "src/a.ts");
-	useAppStore.getState().requestSpecView("w1", ".thinkrail/context/TASK-x.md");
+	useAppStore.getState().requestSpecView("w1", ".pideck/context/TASK-x.md");
 
 	const s = useAppStore.getState();
 	expect(s.changesRequest).toEqual({
@@ -3453,7 +3453,7 @@ test("requestChangesView / requestSpecView pair independent path requests with r
 	});
 	expect(s.specRequest).toEqual({
 		workspaceId: "w1",
-		path: ".thinkrail/context/TASK-x.md",
+		path: ".pideck/context/TASK-x.md",
 		navigation: null,
 	});
 	expect(
@@ -3464,7 +3464,7 @@ test("requestChangesView / requestSpecView pair independent path requests with r
 	]);
 
 	const first = useAppStore.getState().specRequest;
-	useAppStore.getState().requestSpecView("w1", ".thinkrail/context/TASK-x.md");
+	useAppStore.getState().requestSpecView("w1", ".pideck/context/TASK-x.md");
 	expect(useAppStore.getState().specRequest).not.toBe(first);
 	expect(useAppStore.getState().specRequest).toEqual(first);
 });
@@ -3665,7 +3665,7 @@ const specNode = (over: Partial<SpecGraphNode> = {}): SpecGraphNode => ({
 	id: "task-x",
 	type: "task-spec",
 	title: "X",
-	path: ".thinkrail/context/TASK-x.md",
+	path: ".pideck/context/TASK-x.md",
 	dependsOn: [],
 	references: [],
 	implements: [],

@@ -7,6 +7,7 @@ import type {
 	BrowserScope,
 	BrowserTabInfo,
 } from "@thinkrail/contracts";
+import { WORKSPACE_INTERNAL_DIR } from "@thinkrail/shared/paths";
 import { materializeBrowserArtifact, resolveBrowserUpload } from "./artifacts";
 
 interface Claim {
@@ -281,7 +282,7 @@ export class BrowserService {
 				.slice(0, 180);
 			const path =
 				command.outputPath ??
-				`.thinkrail/browser/${filename ? `${id}-${filename}` : `${id}.${extension}`}`;
+				`${WORKSPACE_INTERNAL_DIR}/browser/${filename ? `${id}-${filename}` : `${id}.${extension}`}`;
 			return materializeBrowserArtifact(scope.workspacePath, source, path, signal);
 		})();
 		if (key) {

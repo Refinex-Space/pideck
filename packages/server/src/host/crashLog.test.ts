@@ -11,14 +11,14 @@ test("a record names the fault, the build and the uptime, and keeps the stack", 
 	error.stack = "Error: provider stream died\n    at stream (pi.js:1:1)";
 	const record = formatCrashRecord("uncaughtException", error, AT, 11_523.4, "0.4.1");
 	expect(record).toBe(
-		"[2026-08-16T18:22:03.911Z] uncaughtException (thinkrail 0.4.1, up 11523s)\n" +
+		"[2026-08-16T18:22:03.911Z] uncaughtException (pideck 0.4.1, up 11523s)\n" +
 			"Error: provider stream died\n    at stream (pi.js:1:1)\n\n",
 	);
 });
 
 test("a run from source says so, and a stack-less throw still reports what it was", () => {
 	const record = formatCrashRecord("unhandledRejection", "just a string", AT, 2);
-	expect(record).toContain("unhandledRejection (thinkrail source, up 2s)");
+	expect(record).toContain("unhandledRejection (pideck source, up 2s)");
 	expect(record).toContain("Non-Error thrown: just a string");
 });
 
@@ -91,7 +91,7 @@ test("an uncaught exception is written to the crash log, echoed to stderr, and s
 		`setTimeout(() => { throw new Error("boom from the agent"); }, 0);`,
 	);
 	expect(exitCode).toBe(1);
-	expect(log).toContain("uncaughtException (thinkrail 9.9.9-test");
+	expect(log).toContain("uncaughtException (pideck 9.9.9-test");
 	expect(log).toContain("boom from the agent");
 	expect(stderr).toContain("boom from the agent");
 	expect(stderr).toContain("wrote crash report to");
@@ -102,7 +102,7 @@ test("an unhandled rejection is recorded the same way", async () => {
 		`setTimeout(() => { void Promise.reject(new Error("rejected mid-turn")); }, 0);`,
 	);
 	expect(exitCode).toBe(1);
-	expect(log).toContain("unhandledRejection (thinkrail 9.9.9-test");
+	expect(log).toContain("unhandledRejection (pideck 9.9.9-test");
 	expect(log).toContain("rejected mid-turn");
 });
 

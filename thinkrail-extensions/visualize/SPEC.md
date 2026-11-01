@@ -59,7 +59,7 @@ and after resolving links, with the host read guard's containment rule, so `..dr
 a parent), name a regular file and stay out of `.git`, else the tool result asks the model to write it first
 — the same paths the host's `fs.readFile` then serves, so the card never reports what the tool accepted as
 unreadable. `scratchDir` is
-`.thinkrail/context/mockups/`, inside the host's gitignored scratch dir, so mockups never become
+`.pideck/context/mockups/`, inside the host's gitignored scratch dir, so mockups never become
 project changes.
 
 The host composes this descriptor from the server registry ([[submodule-server-extensions]]); a strict

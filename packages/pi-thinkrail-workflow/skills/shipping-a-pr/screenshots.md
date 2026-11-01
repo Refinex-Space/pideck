@@ -1,7 +1,7 @@
 # screenshots.md — before/after evidence for reviewers
 
 Entry: a PR exists (or was just created) for a UI-visible change. Saves PNGs under
-`.thinkrail/context/pr-shots/` and rewrites the PR body to reference them. Preserve wait mode only
+`.pideck/context/pr-shots/` and rewrites the PR body to reference them. Preserve wait mode only
 when the caller explicitly requested remote completion; otherwise use snapshot mode, including after
 PR creation.
 
@@ -14,7 +14,7 @@ PR creation.
   spec, or a browser-automation session against a running dev host. A capture spec is a throwaway —
   it never ships, and *this* doc owns its cleanup (Next below): creating.md's clean-branch gate has
   already run on every entry path here and will not catch it.
-- Stage the picked shots as `.thinkrail/context/pr-shots/<name>.png` with names a reviewer reads
+- Stage the picked shots as `.pideck/context/pr-shots/<name>.png` with names a reviewer reads
   (`loader-before-gap.png`, `loader-after-working.png`).
 
 ## Attach — review-only assets ref (the default)
@@ -24,7 +24,7 @@ URLs:
 
 ```bash
 TREE_INPUT=""
-for f in .thinkrail/context/pr-shots/*.png; do
+for f in .pideck/context/pr-shots/*.png; do
   sha=$(git hash-object -w "$f")
   TREE_INPUT+=$(printf '100644 blob %s\t%s' "$sha" "$(basename "$f")")$'\n'
 done
@@ -34,11 +34,11 @@ git push -f origin "$COMMIT:refs/heads/assets/<topic>"
 ```
 
 Then update the body — **never rebuild it**: fetch the current one first
-(`gh pr view <n> --json body -q .body > .thinkrail/context/pr-body.md`), add or update a
+(`gh pr view <n> --json body -q .body > .pideck/context/pr-body.md`), add or update a
 `## Screenshots` section in it referencing each image as
 `https://github.com/<owner>/<repo>/blob/<COMMIT>/<name>.png?raw=true` (pinned to the pushed commit
 SHA so later branch pushes never break the images), then
-`gh pr edit <n> --body-file .thinkrail/context/pr-body.md` and delete the file. A body built from
+`gh pr edit <n> --body-file .pideck/context/pr-body.md` and delete the file. A body built from
 scratch here would erase the PR's summary, testing notes, and issue links.
 
 Fallback (the user sometimes prefers it): leave the PNGs staged and hand over their paths — the
@@ -47,7 +47,7 @@ assets ref is the default.
 
 ## Next
 
-Clean up this phase's throwaways once the body edit lands: delete `.thinkrail/context/pr-shots/`
+Clean up this phase's throwaways once the body edit lands: delete `.pideck/context/pr-shots/`
 (unless the user is uploading by hand — then leave it until they confirm) and every capture
 scaffold (specs, throwaway builds). If any scaffolding was committed, the commit that removes it
 is pushed too — a deletion left in the working tree ships nothing. That push does not change the

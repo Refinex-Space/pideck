@@ -265,7 +265,7 @@ to treat lifecycle snapshots as terminal authority.
   root:** `<delegationRoot>/<scope>/<parentSessionId>/<child>.jsonl` via
   `SessionManager.create(cwd, sessionDir)` — verified: pi accepts a custom `sessionDir` on
   `create`/`open`/`list`/`forkFrom` (the last covers the future `fork` axis). ThinkRail binds
-  `~/.thinkrail/delegation` with `scope = workspaceId`; pure pi defaults to
+  `~/.pideck/delegation` with `scope = workspaceId`; pure pi defaults to
   `<piAgentDir>/delegation` with `scope = "default"`. Hidden by construction: session listings
   scan only the default root.
 - **Lineage = the storage layout.** The directory structure *is* the parent edge; the

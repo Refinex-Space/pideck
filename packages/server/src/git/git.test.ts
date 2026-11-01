@@ -926,8 +926,8 @@ test("gitCommitPaths commits EXACTLY the named paths and returns the sha; commit
 	seedWorkspace();
 	writeFileSync(join(repo, "impl.ts"), "export {};\n");
 	writeFileSync(join(repo, "other.ts"), "export const other = 1;\n");
-	mkdirSync(join(repo, ".thinkrail", "context"), { recursive: true });
-	writeFileSync(join(repo, ".thinkrail", "context", "todos.json"), "{}");
+	mkdirSync(join(repo, ".pideck", "context"), { recursive: true });
+	writeFileSync(join(repo, ".pideck", "context", "todos.json"), "{}");
 
 	const before = gitHeadSha("w1");
 	const committed = gitCommitPaths("w1", "feat: step", ["impl.ts"]);
@@ -938,7 +938,7 @@ test("gitCommitPaths commits EXACTLY the named paths and returns the sha; commit
 	expect(unfolded.changes.map((c) => c.path)).toEqual(["impl.ts"]);
 	const status = await gitStatus("w1", { kind: "uncommitted" });
 	expect(status.changes.map((c) => c.path).sort()).toEqual([
-		".thinkrail/context/todos.json",
+		".pideck/context/todos.json",
 		"other.ts",
 	]);
 	expect(stagedPaths()).toEqual([]);
@@ -980,8 +980,8 @@ test("gitCommitPaths treats paths literally — a pathspec-magic filename never 
 	const magic = ":(top)*";
 	writeFileSync(join(repo, magic), "the item's own work\n");
 	writeFileSync(join(repo, "other.ts"), "export const other = 1;\n");
-	mkdirSync(join(repo, ".thinkrail", "context"), { recursive: true });
-	writeFileSync(join(repo, ".thinkrail", "context", "todos.json"), "{}");
+	mkdirSync(join(repo, ".pideck", "context"), { recursive: true });
+	writeFileSync(join(repo, ".pideck", "context", "todos.json"), "{}");
 
 	const committed = gitCommitPaths("w1", "feat: magic name", [magic]);
 	expect(committed).not.toBeNull();
@@ -992,7 +992,7 @@ test("gitCommitPaths treats paths literally — a pathspec-magic filename never 
 	).toEqual([magic]);
 	expect(
 		(await gitStatus("w1", { kind: "uncommitted" })).changes.map((c) => c.path).sort(),
-	).toEqual([".thinkrail/context/todos.json", "other.ts"]);
+	).toEqual([".pideck/context/todos.json", "other.ts"]);
 	expect(stagedPaths()).toEqual([]);
 });
 

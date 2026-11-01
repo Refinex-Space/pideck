@@ -4,8 +4,8 @@ import { AssistantMarkdown, assistantFileTarget, assistantUrlTransform } from ".
 
 describe("assistantFileTarget", () => {
 	test("accepts normalized relative paths and absolute paths inside the workspace", () => {
-		expect(assistantFileTarget(".thinkrail/context/report.md", "/repo")).toBe(
-			".thinkrail/context/report.md",
+		expect(assistantFileTarget(".pideck/context/report.md", "/repo")).toBe(
+			".pideck/context/report.md",
 		);
 		expect(assistantFileTarget("docs/../README.md#usage", "/repo")).toBe("README.md");
 		expect(assistantFileTarget("reports/manual%20report.md", "/repo")).toBe(
@@ -50,7 +50,7 @@ test("assistant Markdown distinguishes workspace files from ordinary anchors", (
 	const html = renderToStaticMarkup(
 		<AssistantMarkdown
 			text={[
-				"[report](<.thinkrail/context/manual report.md>)",
+				"[report](<.pideck/context/manual report.md>)",
 				"[site](https://example.com/report)",
 				"[outside](../report.md)",
 			].join("\n\n")}
@@ -60,8 +60,8 @@ test("assistant Markdown distinguishes workspace files from ordinary anchors", (
 	);
 
 	expect(html).toContain('<button type="button" data-testid="chat-file-link"');
-	expect(html).toContain('data-path=".thinkrail/context/manual report.md"');
-	expect(html).not.toContain('href=".thinkrail/context/manual%20report.md"');
+	expect(html).toContain('data-path=".pideck/context/manual report.md"');
+	expect(html).not.toContain('href=".pideck/context/manual%20report.md"');
 	expect(html.match(/target="_blank"/g)).toHaveLength(2);
 	expect(html).toContain('href="https://example.com/report"');
 	expect(html).toContain('href="../report.md"');
@@ -72,14 +72,14 @@ test("assistant Markdown keeps a written path's backslashes in every block and l
 		<AssistantMarkdown
 			text={[
 				"Done, see below.",
-				"[task](C:\\repo\\.thinkrail\\context\\TASK.md)",
+				"[task](C:\\repo\\.pideck\\context\\TASK.md)",
 				"[relative](src\\_private\\a.ts) and [spaced](<C:\\repo\\my docs\\-notes.md>)",
 			].join("\n\n")}
 			workspaceRoot="C:\\repo"
 			onOpenFile={() => {}}
 		/>,
 	);
-	for (const path of [".thinkrail/context/TASK.md", "src/_private/a.ts", "my docs/-notes.md"]) {
+	for (const path of [".pideck/context/TASK.md", "src/_private/a.ts", "my docs/-notes.md"]) {
 		expect(html).toContain(`data-path="${path}"`);
 	}
 });

@@ -19,7 +19,7 @@ e2e).
 ## Boundary
 
 - **Owns:** the HTTP+WS server, static serving, the WS dispatch registry, server-side feature services
-  (project/workspace/git/fs/terminal + the in-process `AgentSession` manager), and `~/.thinkrail`
+  (project/workspace/git/fs/terminal + the in-process `AgentSession` manager), and `~/.pideck`
   persistence.
 - **Public surface:** `createServer(options) → Promise<RunningServer>`
   (`{ port, startAttributionClaim, stop, shutdown }`) — saved-choice attribution waits for the launcher's

@@ -52,7 +52,7 @@ Required before a package's first publish, and the definition of "works in vanil
   Bun-specific `import.meta`.
 - TUI: `renderCall` and `renderResult` wherever the plain text fallback reads poorly; every UI call behind
   `ctx.hasUI`. A **manual check in a real terminal** (Ghostty/iTerm2, and inside tmux) is part of the bar.
-- No ThinkRail assumptions: no `~/.thinkrail` paths, no host wire, no `@thinkrail/*` imports other than
+- No ThinkRail assumptions: no `~/.pideck` paths, no host wire, no `@thinkrail/*` imports other than
   sibling portable packages.
 - Gate: `bun run check:pi-packages` (`scripts/check-pi-packages.ts`, CI job `pi-packages`, provider-free).
   Packs the package and every pending portable workspace dependency, greps the tarball for Bun-only APIs,

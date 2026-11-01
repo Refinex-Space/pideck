@@ -379,21 +379,21 @@ test("external workspace branch metadata converges on refresh and list", async (
 	).toBe("feature/list-refresh");
 });
 
-test("createWorkspace seeds a self-ignoring .thinkrail/context scratch dir kept out of git", async () => {
+test("createWorkspace seeds a self-ignoring .pideck/context scratch dir kept out of git", async () => {
 	const ws = await createWorkspace("p1");
-	const gitignore = join(ws.worktreePath, ".thinkrail", "context", ".gitignore");
+	const gitignore = join(ws.worktreePath, ".pideck", "context", ".gitignore");
 	expect(existsSync(gitignore)).toBe(true);
 	expect(readFileSync(gitignore, "utf8")).toBe("*\n");
 
-	writeFileSync(join(ws.worktreePath, ".thinkrail", "context", "TASK-x.md"), "scratch\n");
-	expect(gitOut(ws.worktreePath, "check-ignore", ".thinkrail/context/TASK-x.md")).toBe(
-		".thinkrail/context/TASK-x.md",
+	writeFileSync(join(ws.worktreePath, ".pideck", "context", "TASK-x.md"), "scratch\n");
+	expect(gitOut(ws.worktreePath, "check-ignore", ".pideck/context/TASK-x.md")).toBe(
+		".pideck/context/TASK-x.md",
 	);
-	expect(gitOut(ws.worktreePath, "status", "--porcelain")).not.toContain(".thinkrail");
+	expect(gitOut(ws.worktreePath, "status", "--porcelain")).not.toContain(".pideck");
 });
 
 test("ensureWorkspaceScratchDir never clobbers an existing .gitignore (the Default workspace is the user's repo)", async () => {
-	const contextDir = join(repo, ".thinkrail", "context");
+	const contextDir = join(repo, ".pideck", "context");
 	mkdirSync(contextDir, { recursive: true });
 	const gitignore = join(contextDir, ".gitignore");
 	writeFileSync(gitignore, "# mine\n!keep.md\n");
@@ -906,14 +906,14 @@ test.skipIf(!canSymlink)(
 		const outside = join(dataDir, "outside");
 		mkdirSync(outside);
 
-		symlinkSync(outside, join(repo, ".thinkrail"));
+		symlinkSync(outside, join(repo, ".pideck"));
 		expect(() => ensureWorkspaceScratchDir(def)).toThrow("not a real directory");
 		expect(existsSync(join(outside, "context"))).toBe(false);
-		rmSync(join(repo, ".thinkrail"));
+		rmSync(join(repo, ".pideck"));
 
-		mkdirSync(join(repo, ".thinkrail", "context"), { recursive: true });
+		mkdirSync(join(repo, ".pideck", "context"), { recursive: true });
 		const planted = join(outside, "planted");
-		symlinkSync(planted, join(repo, ".thinkrail", "context", ".gitignore"));
+		symlinkSync(planted, join(repo, ".pideck", "context", ".gitignore"));
 		expect(() => ensureWorkspaceScratchDir(def)).not.toThrow();
 		expect(existsSync(planted)).toBe(false);
 	},
@@ -948,12 +948,12 @@ test("ensuring the Default emits created once; listing never writes into the pro
 	await listWorkspaces("p1");
 	expect(events.map((e) => e.kind)).toEqual(["created"]);
 
-	expect(existsSync(join(repo, ".thinkrail"))).toBe(false);
+	expect(existsSync(join(repo, ".pideck"))).toBe(false);
 	const def = (await listWorkspaces("p1"))[0];
 	if (!def) throw new Error("expected the ensured Default workspace");
 	ensureWorkspaceScratchDir(def);
-	expect(readFileSync(join(repo, ".thinkrail", "context", ".gitignore"), "utf8")).toBe("*\n");
-	expect(gitOut(repo, "status", "--porcelain")).not.toContain(".thinkrail");
+	expect(readFileSync(join(repo, ".pideck", "context", ".gitignore"), "utf8")).toBe("*\n");
+	expect(gitOut(repo, "status", "--porcelain")).not.toContain(".pideck");
 });
 
 test("a diff-range execution failure omits only that workspace's badge", async () => {

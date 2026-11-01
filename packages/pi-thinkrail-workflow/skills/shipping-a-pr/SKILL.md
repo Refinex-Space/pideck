@@ -62,7 +62,7 @@ workflow's; route it per choosing-a-workflow first and come back here when it la
 
 ## Working files
 
-Ephemeral files this workflow uses, all under the workspace's gitignored `.thinkrail/context/`:
+Ephemeral files this workflow uses, all under the workspace's gitignored `.pideck/context/`:
 
 - `pr-body.md` — the PR body draft; always passed via `--body-file`, never inline.
 - `pr-shots/` — staged before/after screenshots awaiting attachment.

@@ -1,7 +1,7 @@
 # creating.md — gates, then the PR
 
 Entry: finished work on a branch, no PR yet. Saves the body draft at
-`.thinkrail/context/pr-body.md`. Creating defaults to snapshot mode; an explicit remote-completion ask
+`.pideck/context/pr-body.md`. Creating defaults to snapshot mode; an explicit remote-completion ask
 selects wait mode. Control continues with the selected mode at `screenshots.md` (UI-visible change) or
 `checks.md`.
 
@@ -35,7 +35,7 @@ Red flags — stop, a gate is being rationalized away:
 ## The PR
 
 - **Title**: `scope: imperative summary` — e.g. `feat(web): …`, `fix(website): …`, `ci: …`.
-- **Body** → `.thinkrail/context/pr-body.md`. Read the project's
+- **Body** → `.pideck/context/pr-body.md`. Read the project's
   `.github/PULL_REQUEST_TEMPLATE.md` at the point of drafting and preserve its sections, order, and
   every checklist item; replace prompts with concrete content and tick only checks actually completed.
   Drop a related-issues section only when the PR closes nothing. If the project has no template, use
@@ -54,7 +54,7 @@ Red flags — stop, a gate is being rationalized away:
   push the reviewed, final-change-verified head —
   `gh pr create --head` does **not** push for you: `git push -u origin <branch>`
   (`--force-with-lease` when the remote branch exists and was rebased) — then
-  `gh pr create --base <base> --head <branch> --title "…" --body-file .thinkrail/context/pr-body.md`
+  `gh pr create --base <base> --head <branch> --title "…" --body-file .pideck/context/pr-body.md`
   — add `--repo` when the remote is ambiguous; `--draft` only when the user asked for a draft.
   Never pass the body inline: long inline/heredoc bodies have truncated and failed; the body file
   *is* the recipe. Delete the body file once the PR exists.

@@ -15,8 +15,8 @@ test("a package spanning several files names each row's file; a single-file pack
 		<ReviewPackageComments
 			foldPrefix="p"
 			items={[
-				item(".thinkrail/context/mockups/before.html", "old button"),
-				item(".thinkrail/context/mockups/after.html", "new button"),
+				item(".pideck/context/mockups/before.html", "old button"),
+				item(".pideck/context/mockups/after.html", "new button"),
 			]}
 		/>,
 	);

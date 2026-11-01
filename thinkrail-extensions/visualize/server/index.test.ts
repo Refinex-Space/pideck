@@ -119,18 +119,18 @@ describe("visualize server half", () => {
 
 	test("shows workspace files and rejects missing, directory, and escaping paths", async () => {
 		const cwd = mkdtempSync(join(tmpdir(), "visualize-files-"));
-		mkdirSync(join(cwd, ".thinkrail/context/mockups"), { recursive: true });
-		writeFileSync(join(cwd, ".thinkrail/context/mockups/after.html"), "<p>after</p>");
+		mkdirSync(join(cwd, ".pideck/context/mockups"), { recursive: true });
+		writeFileSync(join(cwd, ".pideck/context/mockups/after.html"), "<p>after</p>");
 		writeFileSync(join(cwd, "before.html"), "<p>before</p>");
 		const tool = loadTool();
 		const run = (params: unknown) => tool.execute("id", params, undefined, undefined, { cwd });
 		await expect(
-			run({ type: "file", path: ".thinkrail/context/mockups/after.html", before: "before.html" }),
+			run({ type: "file", path: ".pideck/context/mockups/after.html", before: "before.html" }),
 		).resolves.toBeDefined();
 		await expect(run({ type: "file", path: "missing.html" })).rejects.toThrow(
 			/cannot show `path` \(missing\.html\): no such file/,
 		);
-		await expect(run({ type: "file", path: ".thinkrail" })).rejects.toThrow(/not a regular file/);
+		await expect(run({ type: "file", path: ".pideck" })).rejects.toThrow(/not a regular file/);
 		await expect(
 			run({ type: "file", path: "before.html", before: "../outside.html" }),
 		).rejects.toThrow(/cannot show `before`[\s\S]*inside it/);
@@ -159,6 +159,6 @@ describe("visualize server half", () => {
 	});
 
 	test("points the mockup guideline at the gitignored scratch directory", () => {
-		expect(loadTool().promptGuidelines?.[0]).toContain("`.thinkrail/context/mockups/`");
+		expect(loadTool().promptGuidelines?.[0]).toContain("`.pideck/context/mockups/`");
 	});
 });

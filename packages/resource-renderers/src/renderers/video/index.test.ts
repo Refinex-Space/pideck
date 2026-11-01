@@ -6,7 +6,7 @@ import { videoRenderer } from ".";
 test("recording artifacts open in a video player; file diffs retain the binary renderer", () => {
 	const dispose = [binaryRenderer, videoRenderer].map(registerResourceRenderer);
 	try {
-		const resource = { workspaceId: "ws", path: ".thinkrail/browser/demo.webm", text: false };
+		const resource = { workspaceId: "ws", path: ".pideck/browser/demo.webm", text: false };
 		expect(
 			resolveRenderers(resource, "view", { mobile: false }).map((renderer) => renderer.id),
 		).toEqual(["thinkrail/video", "thinkrail/binary"]);

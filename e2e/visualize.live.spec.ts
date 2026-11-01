@@ -124,7 +124,7 @@ test("a proposed UI change is shown as a rendered before/after mockup file", {
 	await expect(card).toBeVisible();
 	await expect(card).toHaveAttribute("data-status", "done");
 	const links = card.getByTestId("tool-visualize-file-link");
-	await expect(links.first()).toContainText(".thinkrail/context/mockups/");
+	await expect(links.first()).toContainText(".pideck/context/mockups/");
 	await expect(card.getByTestId("resource-preview-diff")).toBeVisible();
 	await expect(card.getByTestId("resource-preview-diff").locator("iframe")).toHaveCount(2);
 });

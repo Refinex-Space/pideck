@@ -118,7 +118,7 @@ export function createPrettyOptions(destination: PrettyOptions["destination"] = 
 
 export function createPinoRollOptions(directory: string): PinoRollOptions {
 	return {
-		file: join(directory, "thinkrail.jsonl"),
+		file: join(directory, "pideck.jsonl"),
 		frequency: "daily",
 		size: LOG_FILE_SIZE,
 		dateFormat: "yyyy-MM-dd",
@@ -219,7 +219,7 @@ function reportDestinationError(error: unknown): void {
 
 export async function cleanManagedLogs(directory: string): Promise<void> {
 	await removeOldFiles({
-		baseFile: join(directory, "thinkrail"),
+		baseFile: join(directory, "pideck"),
 		count: LOG_TOTAL_FILES,
 		dateFormat: "yyyy-MM-dd",
 		extension: "jsonl",
@@ -266,7 +266,7 @@ async function initializeLogging(
 		log.warn("THINKRAIL_LOG_LEVEL is not a level (debug|info|warn|error); using info");
 	}
 	log.info(
-		`logging initialized (thinkrail ${appVersion ?? "source"}, pid ${process.pid}, level ${currentLevel})`,
+		`logging initialized (pideck ${appVersion ?? "source"}, pid ${process.pid}, level ${currentLevel})`,
 	);
 }
 

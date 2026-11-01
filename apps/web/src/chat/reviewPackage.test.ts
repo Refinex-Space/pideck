@@ -138,14 +138,14 @@ test("a package spanning several files names each row's file by the shortest tai
 	expect(packageFileLabels([item("a.ts"), item("a.ts")])).toEqual(new Map());
 	expect(
 		packageFileLabels([
-			item(".thinkrail/context/mockups/before.html"),
-			item(".thinkrail/context/mockups/after.html"),
+			item(".pideck/context/mockups/before.html"),
+			item(".pideck/context/mockups/after.html"),
 			item(null),
 		]),
 	).toEqual(
 		new Map([
-			[".thinkrail/context/mockups/before.html", "before.html"],
-			[".thinkrail/context/mockups/after.html", "after.html"],
+			[".pideck/context/mockups/before.html", "before.html"],
+			[".pideck/context/mockups/after.html", "after.html"],
 		]),
 	);
 	expect(

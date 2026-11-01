@@ -133,9 +133,10 @@ configuration remains shared by default: set `PI_CODING_AGENT_DIR` or use **Sett
 you want a separate Pi configuration and session directory.
 
 Existing `THINKRAIL_*` environment variables remain supported under their inherited names;
-`THINKRAIL_DATA_DIR` overrides the PiDeck host data directory. Native bridge names, wire identifiers
-and repository-local `.thinkrail/` workflow files also remain unchanged. These are implementation
-contracts, not a dependency on an installed ThinkRail application.
+`THINKRAIL_DATA_DIR` overrides the PiDeck host data directory. Native bridge names and wire identifiers
+also remain unchanged. These are implementation contracts, not a dependency on an installed ThinkRail
+application. Repository-local workflow files (context scratch, recordings) live under `.pideck/`;
+PiDeck does not read the `.thinkrail/` directories ThinkRail left in existing repositories.
 
 ## Builds, updates and privacy
 
@@ -244,6 +245,6 @@ On the desktop host, Pi's `browser` tool operates those same pages: DOM/accessib
 pointer/keyboard input, navigation, dialogs, upload/download and screenshots. Chats claim tabs independently.
 The camera button copies a PNG directly to the system clipboard; saving a file remains in the menu.
 The video button records a WebM, with stop/discard and playback controls. Agents can also record bounded
-action scenarios (up to 90 seconds). Completed artifacts are saved under the workspace's `.thinkrail/browser/`
+action scenarios (up to 90 seconds). Completed artifacts are saved under the workspace's `.pideck/browser/`
 directory; recording results open in the file workbench's video player. Playwright reuses the bundled CEF instance; no second browser instance or agent
 runtime is launched. See [native browser implementation](apps/desktop/src/browser/SPEC.md).

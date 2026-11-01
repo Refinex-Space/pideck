@@ -109,4 +109,4 @@ const { port } = await bootHost({
 	...(staticDir ? { staticDir } : {}),
 	analytics: { channel: "dev", build: "source" },
 });
-console.log(`thinkrail host: http://${host}:${port}`);
+console.log(`pideck host: http://${host}:${port}`);

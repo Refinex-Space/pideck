@@ -424,7 +424,7 @@ creating a terminal can legitimately supersede an in-flight passive restore, whi
 
 Different worktrees may run concurrently. Two complete E2E invocations in one worktree remain sequential;
 the lane ids are deliberately stable across runs so interrupted state is reclaimed rather than leaked.
-No path may fall back to `~/.thinkrail`, the developer's HOME/config trees, or the real pi agent dir. The
+No path may fall back to `~/.pideck`, the developer's HOME/config trees, or the real pi agent dir. The
 explicit agent-mode setup is the narrow exception: it reads one known global Central artifact into the
 lane-owned copy, never runs from or writes to the source, and removes the copy on setup failure or teardown.
 A sandboxed home is handed to every host as **both `HOME` and `USERPROFILE`**: `homedir()` — pi's own home
@@ -503,7 +503,7 @@ clears the stored record in `afterEach` so no later restart-based spec boots wit
 `visualize.live.spec.ts` runs first: with the extension off the agent is never offered `visualize`, and the
 existing diagram/comparison tests that follow re-prove the restored tool in the same chat; a last test
 asks for a before/after UI proposal without naming the tool and expects mockup files under
-`.thinkrail/context/mockups/` shown as a rendered diff, which pins the tool's prompt guideline. MCP tool-card coverage
+`.pideck/context/mockups/` shown as a rendered diff, which pins the tool's prompt guideline. MCP tool-card coverage
 (`mcp-tool-cards.spec.ts`) seeds historical `mcp__*`, resource and `tool_search` results the same way and pins
 the single shared image strip, the collapsed JSON tree, Full output through the real `mcp.readOutput`
 (a recorded file and an expired one), Sign in deep links into Settings › MCP servers or Providers according

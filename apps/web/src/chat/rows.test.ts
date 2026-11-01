@@ -619,7 +619,7 @@ test("turnDivider splits specs from code changes via isSpec, each path on exactl
 });
 
 test("turnDivider counts a gitignored scratch spec as a spec, not as a (never-visible) change", () => {
-	const path = ".thinkrail/context/TASK-todo-linear-groups.md";
+	const path = ".pideck/context/TASK-todo-linear-groups.md";
 	const turns: ChatTurn[] = [
 		user("u1", 0),
 		assistantWithPaths("a1", [

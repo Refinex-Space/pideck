@@ -53,7 +53,7 @@ test("reviewable steps show the reviewed counter, Check it, and the settled Chec
 		"export const retries = 3;\n",
 		"feat(sender): add the retry policy",
 	);
-	const todosDir = join(workspace.worktreePath, ".thinkrail", "context", "todos");
+	const todosDir = join(workspace.worktreePath, ".pideck", "context", "todos");
 	mkdirSync(todosDir, { recursive: true });
 	writeFileSync(
 		join(todosDir, `${sessionId}.json`),
@@ -281,7 +281,7 @@ test("the plan page groups items into a Now block and Done, and adds a task inli
 		.getAttribute("data-session-id");
 	if (!sessionId) throw new Error("chat tab exposes no session id");
 	const iso = "2026-01-01T00:00:00Z";
-	const todosDir = join(workspace.worktreePath, ".thinkrail", "context", "todos");
+	const todosDir = join(workspace.worktreePath, ".pideck", "context", "todos");
 	mkdirSync(todosDir, { recursive: true });
 	writeFileSync(
 		join(todosDir, `${sessionId}.json`),
@@ -382,7 +382,7 @@ test("plan items have no UI remove control, and the add box takes multi-line inp
 		.first()
 		.getAttribute("data-session-id");
 	if (!sessionId) throw new Error("chat tab exposes no session id");
-	const todosDir = join(workspace.worktreePath, ".thinkrail", "context", "todos");
+	const todosDir = join(workspace.worktreePath, ".pideck", "context", "todos");
 	mkdirSync(todosDir, { recursive: true });
 	writeFileSync(
 		join(todosDir, `${sessionId}.json`),
@@ -431,7 +431,7 @@ test("an empty plan's idle line is a click target that opens the add input", asy
 		.first()
 		.getAttribute("data-session-id");
 	if (!sessionId) throw new Error("chat tab exposes no session id");
-	const todosDir = join(workspace.worktreePath, ".thinkrail", "context", "todos");
+	const todosDir = join(workspace.worktreePath, ".pideck", "context", "todos");
 	mkdirSync(todosDir, { recursive: true });
 	writeFileSync(
 		join(todosDir, `${sessionId}.json`),
@@ -459,7 +459,7 @@ test("a completed plan turns the Now block into a chat composer instead of an id
 		.first()
 		.getAttribute("data-session-id");
 	if (!sessionId) throw new Error("chat tab exposes no session id");
-	const todosDir = join(workspace.worktreePath, ".thinkrail", "context", "todos");
+	const todosDir = join(workspace.worktreePath, ".pideck", "context", "todos");
 	mkdirSync(todosDir, { recursive: true });
 	writeFileSync(
 		join(todosDir, `${sessionId}.json`),
@@ -509,7 +509,7 @@ test("a re-opened plan keeps the completion note on the page, marked stale, but 
 
 	// The state a completed plan leaves behind, then re-opened: one step went back to work, so the plan
 	// is no longer all-done, but the stored plan-level note from the last completion is still on disk.
-	const todosDir = join(workspace.worktreePath, ".thinkrail", "context", "todos");
+	const todosDir = join(workspace.worktreePath, ".pideck", "context", "todos");
 	mkdirSync(todosDir, { recursive: true });
 	writeFileSync(
 		join(todosDir, `${sessionId}.json`),

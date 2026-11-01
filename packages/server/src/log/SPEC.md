@@ -24,7 +24,7 @@ Only calls through this module's explicit logger reach durable files; arbitrary 
 - `pino-pretty` renders application logs to stderr only. Durable files stay as Pino's NDJSON rather than
   passing through a human-text formatter.
 - `pino-roll` owns the complete file lifecycle: daily plus 10 MB size rotation, generated suffixes, size
-  accounting, restart continuation, and cleanup. The base is `thinkrail.jsonl`; generated names follow
+  accounting, restart continuation, and cleanup. The base is `pideck.jsonl`; generated names follow
   the installed transport's convention. Fourteen rotated files plus the active file are retained, which
   bounds ordinary diagnostic storage near 150 MB. The adapter invokes the pinned transport's own cleanup
   routine once after opening because `pino-roll@4.0.0` otherwise runs it only after an in-process roll;

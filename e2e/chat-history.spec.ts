@@ -31,14 +31,14 @@ function setMtime(path: string, ms: number): void {
 }
 
 function seedOpenTodo(sessionId: string, title: string): void {
-	const contextDir = join(repoCwd(), ".thinkrail", "context");
+	const contextDir = join(repoCwd(), ".pideck", "context");
 	mkdirSync(contextDir, { recursive: true });
 	writeFileSync(join(contextDir, ".gitignore"), "*\n");
 	new TodoStore(repoCwd(), sessionId).add({ title });
 }
 
 test.afterEach(() => {
-	rmSync(join(E2E_FIXTURE_REPO, ".thinkrail"), { recursive: true, force: true });
+	rmSync(join(E2E_FIXTURE_REPO, ".pideck"), { recursive: true, force: true });
 });
 
 test("a disk chat with unfinished work auto-opens; a finished one stays in local history", async ({

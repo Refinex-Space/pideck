@@ -11,7 +11,7 @@ export async function snapshotWorktree(worktreePath: string): Promise<string | n
 	});
 	if (!indexOut.ok || !indexOut.out) return null;
 	const indexPath = isAbsolute(indexOut.out) ? indexOut.out : resolve(worktreePath, indexOut.out);
-	const scratch = mkdtempSync(join(tmpdir(), "thinkrail-snapshot-"));
+	const scratch = mkdtempSync(join(tmpdir(), "pideck-snapshot-"));
 	const scratchIndex = join(scratch, "index");
 	try {
 		try {

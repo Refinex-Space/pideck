@@ -1913,7 +1913,7 @@ own section. The kebab menu (`plan-menu`, a
   **consumed** (`clearSpecRequest`) once handled: like the Changes link, it opens a center tab, so
   replaying it on a remount or a graph refetch would yank the user's tab back mid-edit. Two intents, two
   effects: a spec chip must never land in the git-derived Changes view, which structurally cannot show a
-  gitignored `.thinkrail/context/` scratch spec — the empty-Changes bug that motivated the split.
+  gitignored `.pideck/context/` scratch spec — the empty-Changes bug that motivated the split.
   Both intents carry **exactly one path**: a round that wrote several artifacts resolves the ambiguity in the
   chat (the chip expands into a list there — see chat/SPEC.md), so no panel ever has to mark a *set*. That is
   deliberate — a second, round-scoped marking vocabulary over these workspace-scoped trees would reintroduce

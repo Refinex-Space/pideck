@@ -30,7 +30,8 @@ PiDeck 是基于 ThinkRail 的独立 fork，以 Pi 为进程内智能体引擎�
 - `refinex/dev` 是开发与集成分支；`refinex/product` 是经过验收的产品基线。
 - 单项任务使用 `refinex/feature-*`，上游升级使用 `refinex/upgrade-*`；不强制为局部任务创建分支或 worktree。
 - 产品名称为 `PiDeck`，CLI 为 `pideck`，桌面标识为 `space.refinex.pideck`，默认宿主数据目录为 `~/.pideck`。
-- 为降低合并成本，保留 `@thinkrail/*` 包名、`THINKRAIL_*` 环境变量、协议/原生桥接标识和项目内 `.thinkrail/` 路径。
+- 项目内目录为 `.pideck/`，宿主数据目录为 `~/.pideck`；新增落盘位置、临时文件和日志命名使用 `pideck`，不再使用 `thinkrail`。
+- 为降低合并成本，保留 `@thinkrail/*` 包名、`THINKRAIL_*` 环境变量和协议/原生桥接标识。
   不做无关的全仓替换；`~/.pi/agent` 仍是 Pi 的默认配置与会话目录。
 - 不把上游签名、公证、遥测 key、更新源或网站部署视为 PiDeck 的基础设施。桌面默认更新地址为空，
   源码发布身份为 `0.0.0-dev`，分析服务 key 为空。新的发布配置需独立授权和验收。

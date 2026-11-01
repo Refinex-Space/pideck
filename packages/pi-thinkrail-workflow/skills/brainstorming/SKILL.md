@@ -27,7 +27,7 @@ description: "Use before implementing a feature, a change in behavior, or a bug 
    change touches whose *why* is not recorded — it becomes a question in step 6.
 2. **Scope check.** If the request bundles independent product decisions or subsystems, separate
    them rather than blending unrelated decisions into one task-spec.
-3. **Open a task-spec.** `spec_create` a `task-spec` at **`.thinkrail/context/TASK-<slug>.md`** (id,
+3. **Open a task-spec.** `spec_create` a `task-spec` at **`.pideck/context/TASK-<slug>.md`** (id,
    title, status: draft, parent: the nearest relevant module). This gitignored file is the one
    temporary design artifact; update it as answers land.
 4. **Bug?** When the request reports something that behaves wrongly, follow `fixing-a-bug.md` now;

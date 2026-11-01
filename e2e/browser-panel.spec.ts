@@ -38,7 +38,7 @@ async function browserFixture(page: Page) {
 					...(command.action === "recordingStop"
 						? {
 								artifact: {
-									path: ".thinkrail/browser/demo.webm",
+									path: ".pideck/browser/demo.webm",
 									mimeType: "video/webm" as const,
 									bytes: 100,
 									width: 640,
@@ -237,7 +237,7 @@ test("screenshot copies directly; recording exposes stop, discard, playback and 
 	await expect(panel.getByRole("spinbutton", { name: "Viewport width" })).toBeEnabled();
 	await expect(panel.getByRole("combobox", { name: "Preview zoom" })).toHaveValue("fit");
 	await panel.getByRole("button", { name: "Play recording", exact: true }).click();
-	await expect(page.getByRole("dialog")).toContainText(".thinkrail/browser/demo.webm");
+	await expect(page.getByRole("dialog")).toContainText(".pideck/browser/demo.webm");
 	await page.screenshot({
 		path: testInfo.outputPath("browser-recording.png"),
 		animations: "disabled",

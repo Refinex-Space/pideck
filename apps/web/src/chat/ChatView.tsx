@@ -54,6 +54,7 @@ import { useModelCatalog } from "./useModelCatalog";
 import { useModelPreferences } from "./useModelPreferences";
 import { usePromptPrediction } from "./usePromptPrediction";
 import { useSessionStats } from "./useSessionStats";
+import { useSkillAutoReload } from "./useSkillAutoReload";
 import "./tools/register";
 import type { ChatAttachment } from "./types";
 import { useHistorySearch } from "./useHistorySearch";
@@ -162,6 +163,7 @@ export default function ChatView({
 		if (isCurrentChat) useAppStore.getState().rememberChatTarget(workspaceId, sessionId);
 	}, [isCurrentChat, sessionId, workspaceId]);
 	const prediction = usePromptPrediction(sessionId, isCurrentChat, draft);
+	useSkillAutoReload(workspaceId, sessionId, isCurrentChat);
 	const composerInsertion = useAppStore((s) => s.sessions[sessionId]?.composerInsertion);
 	useEffect(() => {
 		if (!composerInsertion) return;

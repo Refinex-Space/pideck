@@ -952,6 +952,16 @@ both message orders. *Rejected:* keeping the modal for non-MCP extensions — ev
   (`send-menu`, streaming only) is a second ghost hit area; spacing, not a divider, separates them.
   **Compact mode** needs no special case now that the send is icon-only at every width. Labels use
   `ui.action`.
+- **Automatic skill reload** (`skillAutoReload.ts`, `useSkillAutoReload.ts`, mounted by `ChatView`) — a chat whose
+  skills are older than what is on disk (`selectSkillsStale`) applies them by itself instead of waiting for a click
+  on Reload. `skillAutoReloadReady` is the gate: the chat is the current one, connected, its session exists, and it
+  is idle (`isStreaming` false and `hostState.execution` not `running`), so a turn in flight is never interrupted and
+  the chat catches up the moment the turn ends; a chat in the background catches up when the user returns to it. The
+  hook waits 400 ms (re-armed by every new skill change tick, so a burst of file events costs one reload), then runs
+  the same `reloadSessionResourcesWithSkillBaseline` + `markSkillsSynced` pair the Reload buttons use, so the
+  baseline stays monotonic and a change that lands mid-reload keeps the chat stale and earns a second reload.
+  Success is silent. A failed attempt is swallowed and **not retried until something changes** (no retry loop): the
+  Reload button in the status panel and in Skills settings remains the manual path and reports the error.
 - **Next-message suggestion** (`promptPrediction.ts`, `usePromptPrediction.ts`, `Composer`) — after the run of the
   chat in front succeeds, the composer offers one grey guess at what the user types next. `predictionTarget` is
   the gate (setting on, host at `PREDICTION_PROTOCOL_VERSION`, this chat is the current one, `hostState` idle with

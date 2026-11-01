@@ -2422,7 +2422,9 @@ What each block reads, and what it deliberately does not claim:
   says so instead of drawing a bar. It does **not** break the window down by system prompt, tools, skills or
   memory files: Pi reports no such split, and the host does not estimate one. When the chat's skills are
   older than what is on disk (`selectSkillsStale`) a notice above the bar offers a one-click **Reload**
-  (disabled while the chat streams) — the signal the chat's former Skills button badge carried.
+  (disabled while the chat streams) — the signal the chat's former Skills button badge carried. The chat in
+  front normally reloads by itself as soon as it is idle (`useSkillAutoReload`, [[submodule-web-chat]]), so the
+  notice is a brief state — and the manual path when an automatic attempt failed or the chat is in the background.
 - **Background tasks** is the chat resources' `ResourcesRoster` ([[submodule-web-chat-resources]]): Active
   rows with Stop and Stop all (confirmed), and a folded **Finished** count; a row opens the detail dialog
   (command output or subagent transcript). It reads the chat's shared resources scope, not its own sync.

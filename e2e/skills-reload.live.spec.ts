@@ -9,7 +9,7 @@ import {
 	startNewChat,
 } from "./fixtures/app";
 
-test("skills notice: ignores capped build churn, flags a skill change, and clears per chat", {
+test("skills notice: ignores capped build churn, and a skill change reaches the chat in front and then the one visited later", {
 	tag: "@agent",
 }, async ({ page }) => {
 	test.setTimeout(120_000);
@@ -36,19 +36,16 @@ test("skills notice: ignores capped build churn, flags a skill change, and clear
 	});
 	await expect(stale).toHaveCount(0);
 
+	await startNewChat(page);
+	await expect(page.locator('[data-testid="editor-tab"][data-kind="chat"]')).toHaveCount(2);
+
 	mkdirSync(join(worktree, ".claude", "skills", "demo"), { recursive: true });
 	writeFileSync(
 		join(worktree, ".claude", "skills", "demo", "SKILL.md"),
 		"---\nname: demo\ndescription: e2e demo skill\n---\n\nDemo skill written mid-session by the e2e suite.\n",
 	);
-	await expect(stale).toBeVisible({ timeout: 15_000 });
-
-	await stale.getByTestId("status-skills-reload").click();
-	await expect(stale).toHaveCount(0, { timeout: 15_000 });
-
-	await startNewChat(page);
-	await expect(page.locator('[data-testid="editor-tab"][data-kind="chat"]')).toHaveCount(2);
-	await expect(page.getByTestId("status-skills-stale")).toHaveCount(0);
+	// The chat in front applies the change by itself; the chat left behind catches up once it is visited.
+	await expect(page.getByTestId("status-skills-stale")).toHaveCount(0, { timeout: 15_000 });
 
 	await page
 		.locator('[data-testid="editor-tab"][data-kind="chat"]')
@@ -56,5 +53,5 @@ test("skills notice: ignores capped build churn, flags a skill change, and clear
 		.locator("button")
 		.first()
 		.click();
-	await expect(page.getByTestId("status-skills-stale")).toHaveCount(0);
+	await expect(page.getByTestId("status-skills-stale")).toHaveCount(0, { timeout: 15_000 });
 });

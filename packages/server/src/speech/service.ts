@@ -28,6 +28,8 @@ export interface SpeechServiceDeps {
 	root: () => string;
 	catalog: readonly CatalogModel[];
 	fetch: typeof fetch;
+	/** The proxy to download a catalog URL through, or `undefined` to keep the process route. Never rejects the download. */
+	proxyFor?: (url: string) => Promise<string | undefined>;
 	engine: SpeechEngine;
 }
 
@@ -169,10 +171,13 @@ export class SpeechService {
 	private async runDownload(model: CatalogModel, download: Download): Promise<void> {
 		try {
 			await mkdir(this.deps.root(), { recursive: true });
+			const proxy = await this.deps.proxyFor?.(model.baseUrl).catch(() => undefined);
+			if (proxy) log.info(`speech model ${model.id} downloads through the system proxy`);
 			await downloadModel({
 				model,
 				dir: this.modelDir(model.id),
 				fetch: this.deps.fetch,
+				proxy,
 				signal: download.controller.signal,
 				onProgress: (bytes) => {
 					download.downloadedBytes = bytes;

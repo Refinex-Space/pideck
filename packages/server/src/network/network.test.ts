@@ -1,4 +1,5 @@
 import { expect, test } from "bun:test";
+import type { NetworkProxyRoute } from "@thinkrail/contracts";
 import { createProxyManager } from "./network";
 import { DEFAULT_PROXY_CONFIG } from "./policy";
 
@@ -115,4 +116,86 @@ test("failed persistence rolls back the newly-created secret", async () => {
 		"Could not save",
 	);
 	expect(f.secrets.size).toBe(0);
+});
+
+const HUB = "https://huggingface.co/csukuangfj/model/resolve/abc/file.onnx";
+const macSystem = (patch: Partial<NetworkProxyRoute> = {}): NetworkProxyRoute => ({
+	source: "macos",
+	http: "http://127.0.0.1:7897",
+	https: "http://127.0.0.1:7897",
+	bypass: "127.0.0.1,192.168.0.0/16,10.0.0.0/8,172.16.0.0/12,localhost,*.local,<local>",
+	...patch,
+});
+test("a download uses the OS proxy even when its exception list blocks the route applied at boot", async () => {
+	const f = fixture();
+	const manager = createProxyManager({ ...f.deps, detect: async () => macSystem() });
+	await manager.initialize();
+	expect(manager.route().issue).toBe("bypassUnsupported");
+	expect(f.env.HTTPS_PROXY).toBe("http://127.0.0.1:0");
+	expect(await manager.downloadProxy(HUB)).toBe("http://127.0.0.1:7897/");
+});
+test("a download sees an OS proxy switched on after the host started, and follows its scheme", async () => {
+	const f = fixture();
+	let system = macSystem({ http: "", https: "", bypass: "" });
+	const manager = createProxyManager({ ...f.deps, detect: async () => system });
+	await manager.initialize();
+	expect(await manager.downloadProxy(HUB)).toBeUndefined();
+	system = macSystem({ http: "http://127.0.0.1:7000", https: "http://127.0.0.1:7001", bypass: "" });
+	expect(await manager.downloadProxy(HUB)).toBe("http://127.0.0.1:7001/");
+	expect(await manager.downloadProxy("http://models.test/file")).toBe("http://127.0.0.1:7000/");
+});
+test("a download leaves the route alone when the user or the OS did not give a usable proxy", async () => {
+	const f = fixture();
+	const auto = (patch: Partial<NetworkProxyRoute>) =>
+		createProxyManager({ ...f.deps, detect: async () => macSystem(patch) });
+	expect(await auto({ bypass: "*.huggingface.co" }).downloadProxy(HUB)).toBeUndefined();
+	expect(await auto({ issue: "pacUnsupported" }).downloadProxy(HUB)).toBeUndefined();
+	expect(await auto({ https: "socks5://127.0.0.1:7897" }).downloadProxy(HUB)).toBeUndefined();
+
+	const withEnv = createProxyManager({
+		...f.deps,
+		env: { HTTPS_PROXY: "http://env.test:3128" },
+		detect: async () => macSystem(),
+	});
+	expect(await withEnv.downloadProxy(HUB)).toBeUndefined();
+
+	for (const mode of ["manual", "direct"] as const) {
+		const chosen = fixture();
+		const manager = createProxyManager({ ...chosen.deps, detect: async () => macSystem() });
+		await manager.update({
+			config: mode === "manual" ? manual : { ...DEFAULT_PROXY_CONFIG, mode },
+			password: "secret",
+		});
+		expect(await manager.downloadProxy(HUB)).toBeUndefined();
+	}
+});
+test("Bun sends a request through an explicit proxy even while the environment route is blocked", async () => {
+	const keys = ["HTTP_PROXY", "http_proxy", "HTTPS_PROXY", "https_proxy"] as const;
+	const saved = keys.map((key) => process.env[key]);
+	const seen: string[] = [];
+	const proxy = Bun.serve({
+		port: 0,
+		hostname: "127.0.0.1",
+		fetch: (request) => {
+			seen.push(request.url);
+			return new Response("via-proxy");
+		},
+	});
+	for (const key of keys) process.env[key] = "http://127.0.0.1:0";
+	try {
+		const blocked = await fetch("http://models.invalid/a").catch(() => null);
+		expect(blocked).toBeNull();
+		const response = await fetch("http://models.invalid/b", {
+			proxy: `http://127.0.0.1:${proxy.port}`,
+		});
+		expect(await response.text()).toBe("via-proxy");
+		expect(seen).toEqual(["http://models.invalid/b"]);
+	} finally {
+		keys.forEach((key, index) => {
+			const value = saved[index];
+			if (value === undefined) delete process.env[key];
+			else process.env[key] = value;
+		});
+		await proxy.stop(true);
+	}
 });

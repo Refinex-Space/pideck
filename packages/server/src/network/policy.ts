@@ -40,6 +40,22 @@ export function normalizeBypass(value: string): string {
 	if (entries.includes("*")) return "*";
 	return [...new Set([...LOOPBACK, ...entries])].join(",");
 }
+/** Whether a bypass list exempts one DNS name. IP, CIDR and `<local>` entries cannot name a public host, so they never match. */
+export function bypassesHostname(bypass: string, hostname: string, port: number): boolean {
+	const host = hostname.toLowerCase();
+	return bypass
+		.split(/[,;\s]+/)
+		.filter(Boolean)
+		.some((raw) => {
+			if (raw === "*") return true;
+			const parts = /^(.*?)(?::(\d+))?$/.exec(raw.toLowerCase());
+			if (parts?.[2] && Number(parts[2]) !== port) return false;
+			const name = (parts?.[1] ?? "").replace(/^\*?\./, "");
+			return (
+				/^[a-z0-9_-]+(?:\.[a-z0-9_-]+)*$/.test(name) && (host === name || host.endsWith(`.${name}`))
+			);
+		});
+}
 export function parseProxyConfig(input: unknown): NetworkProxyConfig {
 	if (!input || typeof input !== "object" || Array.isArray(input))
 		throw new Error("Invalid proxy configuration");

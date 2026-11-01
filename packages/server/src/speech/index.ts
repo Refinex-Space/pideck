@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import { downloadProxy } from "../network";
 import { dataDir } from "../persistence";
 import { SPEECH_CATALOG } from "./catalog";
 import { SpeechService } from "./service";
@@ -15,6 +16,7 @@ export function speechService(): SpeechService {
 		root: () => join(dataDir(), "models", "speech"),
 		catalog: SPEECH_CATALOG,
 		fetch,
+		proxyFor: downloadProxy,
 		engine: createSherpaEngine(),
 	});
 	return service;

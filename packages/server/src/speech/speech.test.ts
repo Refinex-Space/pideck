@@ -174,3 +174,56 @@ test("pcm16ToFloat decodes little-endian samples and ignores a dangling byte", (
 test("the sherpa-onnx WASM runtime loads in this process", async () => {
 	expect(await createSherpaEngine().available()).toBe(true);
 });
+
+function recordingFetch(inits: Array<RequestInit & { proxy?: string }>): typeof fetch {
+	return ((input: Request | URL | string, init?: RequestInit) => {
+		inits.push({ ...init });
+		return fakeFetch(input, init);
+	}) as typeof fetch;
+}
+
+function proxiedService(
+	inits: Array<RequestInit & { proxy?: string }>,
+	proxyFor: (url: string) => Promise<string | undefined>,
+): SpeechService {
+	return new SpeechService({
+		root: () => join(root, "models", "speech"),
+		catalog: fakeCatalog(),
+		fetch: recordingFetch(inits),
+		proxyFor,
+		engine: fakeEngine,
+	});
+}
+
+test("every file of a download goes through the proxy chosen for the catalog URL", async () => {
+	const inits: Array<RequestInit & { proxy?: string }> = [];
+	const asked: string[] = [];
+	const service = proxiedService(inits, async (url) => {
+		asked.push(url);
+		return "http://127.0.0.1:7897/";
+	});
+	await service.download("fake-en");
+	expect((await settled(service, "fake-en")).state).toBe("ready");
+	expect(asked).toEqual(["https://fake.invalid/en"]);
+	expect(inits).toHaveLength(2);
+	expect(inits.every((init) => init.proxy === "http://127.0.0.1:7897/")).toBe(true);
+	service.dispose();
+});
+
+test("no proxy choice, or a failing lookup, downloads on the process route instead of failing", async () => {
+	for (const proxyFor of [
+		async () => undefined,
+		async () => {
+			throw new Error("detection failed");
+		},
+	]) {
+		rmSync(join(root, "models"), { recursive: true, force: true });
+		const inits: Array<RequestInit & { proxy?: string }> = [];
+		const service = proxiedService(inits, proxyFor);
+		await service.download("fake-en");
+		expect((await settled(service, "fake-en")).state).toBe("ready");
+		expect(inits.length).toBeGreaterThan(0);
+		expect(inits.every((init) => !("proxy" in init))).toBe(true);
+		service.dispose();
+	}
+});

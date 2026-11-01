@@ -185,7 +185,8 @@ Material Icon Theme 的 [MIT 许可证](apps/web/public/file-icons.LICENSE.txt)�
 在设置 → **网络与代理**中配置宿主的 HTTP/HTTPS 代理。自动模式读取 Windows 当前用户设置、
 macOS 当前网络代理，或 Linux 的 GNOME/KDE 设置；已有代理环境变量优先，无桌面的 Linux 使用
 环境变量。手动模式支持 HTTP、HTTPS 代理监听地址，认证密码保存在操作系统凭据存储中。
-保存后退出并重启宿主，使 Pi OAuth 刷新和模型连接统一使用新配置。
+保存后退出并重启宿主，使 Pi OAuth 刷新和模型连接统一使用新配置。自动模式下，语音模型下载会立即
+使用当前的系统代理（无需重启）：模型站点是公开的，且每个文件都经过校验和验证。
 
 PAC/WPAD、仅 SOCKS 的代理，以及超出域名/IP/主机:端口子集的旁路规则（包括 CIDR、`<local>`
 和 IP 前缀通配符）会显示未支持。遇到这些配置时，可手动填写代理软件的 HTTP/mixed 监听地址及

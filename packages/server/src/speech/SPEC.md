@@ -4,7 +4,7 @@ type: submodule-design
 status: active
 title: speech — host-local voice models and dictation
 parent: module-server
-depends-on: [submodule-server-persistence, submodule-server-log, module-contracts, module-shared]
+depends-on: [submodule-server-persistence, submodule-server-network, submodule-server-log, module-contracts, module-shared]
 references: [submodule-web-speech, module-desktop]
 tags: [speech, voice, models]
 ---
@@ -61,12 +61,23 @@ restarts; the active model is the stored choice when still installed, else the f
 
 ## Download pipeline
 
-`download.ts` fetches each file with the process `fetch` (so the proxy policy from `network` applies),
-streams to `<id>.partial/`, hashes while writing, rejects on size or checksum mismatch, writes `ready.json`,
+`download.ts` fetches each file with the process `fetch`, through the OS proxy when `network` offers one (see
+*Proxy*), streams to `<id>.partial/`, hashes while writing, rejects on size or checksum mismatch, writes `ready.json`,
 then replaces `<id>/` by rename. Any failure or abort removes the partial directory. Failures are the closed
 union `network | integrity | disk`; a user cancel returns to `absent`, anything else to `failed` with the
 reason, retryable. One download per model; progress is pushed on `speech.status` at most every 250 ms.
 There is no resume: files are tens to low hundreds of MB and resume would add range/validator state for little.
+
+### Proxy
+
+The catalog host (Hugging Face) is slow or unreachable from many networks without a proxy, so a download prefers
+the OS proxy. Before the first request the service asks `proxyFor(model.baseUrl)` (production: `network`'s
+`downloadProxy`) and, when it answers, passes that URL as the `proxy` option of every `fetch` for the model. An
+explicit proxy outranks the process proxy environment in Bun (pinned by a test in `network`), which is what lets
+it work when that environment is the blocked route. `undefined`, or a lookup that throws, keeps the process route,
+so the lookup can never fail a download. There is no direct retry after a proxy failure: a dead proxy surfaces as a
+retryable `network` failure rather than a silent change of route. The service logs only that the system proxy was
+used, never its address.
 
 ## Dictation
 
@@ -86,7 +97,8 @@ or a busy host would be better served by a worker; that change stays inside `she
 - Public barrel (`index.ts`): `speechService()`, `setSpeechService()` (test seam), `SpeechService`,
   `SpeechServiceDeps`. `fake.ts` (in-process catalog, fetch and recognizer) is imported only by `dev.ts`
   when `THINKRAIL_E2E_FAKE_SPEECH=1`, never by product code.
-- Allowed deps: `persistence` (`dataDir`), `log`, `contracts`, `shared` (`CodedError`), `sherpa-onnx`.
+- Allowed deps: `persistence` (`dataDir`), `network` (barrel, `downloadProxy` only), `log`, `contracts`, `shared`
+  (`CodedError`), `sherpa-onnx`.
 - Forbidden: `host`, `settings`, `agent`; storing audio; any cloud speech endpoint.
 - `host` composes it: handlers for `speech.*`, publisher for the `speech.status` channel, `dispose()` on
   shutdown.
@@ -108,6 +120,6 @@ or a busy host would be better served by a worker; that change stays inside `she
 
 `speech.test.ts` drives the service with the fake catalog/fetch/engine (download, checksum failure, HTTP
 failure + retry, cancel cleanup, selection persistence, deletion, busy/unknown/missing errors, unavailable
-runtime) and loads the real WASM runtime. A throwaway script ran the real adapter end to end with the 20M
+runtime, the proxy passed to every request, and a missing or failing proxy lookup) and loads the real WASM runtime. A throwaway script ran the real adapter end to end with the 20M
 English model and a 6.6 s sample (correct text). `e2e/speech-dictation.spec.ts` covers the browser path with
 Chromium's fake microphone device and the fake recognizer.

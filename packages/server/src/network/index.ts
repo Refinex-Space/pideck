@@ -5,6 +5,7 @@ import { proxyManager } from "./network";
 export const initializeNetworkProxy = () => proxyManager.initialize();
 export const networkProxyStatus = (refresh = false) => proxyManager.status(refresh);
 export const updateNetworkProxy = (input: NetworkProxyUpdate) => proxyManager.update(input);
+export const downloadProxy = (url: string) => proxyManager.downloadProxy(url);
 let diagnostic: ReturnType<typeof diagnoseConnection> | undefined;
 export async function diagnoseNetwork(provider: "openai" | "anthropic") {
 	await proxyManager.initialize();

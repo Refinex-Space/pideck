@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test";
 import {
 	applyProxyEnvironment,
+	bypassesHostname,
 	DEFAULT_PROXY_CONFIG,
 	normalizeBypass,
 	parseProxyConfig,
@@ -104,4 +105,15 @@ test("rejects credentials in hosts, invalid ports and inconsistent bypass syntax
 	]) {
 		expect(() => parseProxyConfig({ ...manual, ...patch })).toThrow();
 	}
+});
+test("a bypass list exempts a DNS name only by exact, suffix or wildcard entry and port", () => {
+	const list = "127.0.0.1,192.168.0.0/16,10.*,localhost,*.local,.corp.test,cdn.test:8443,<local>";
+	for (const host of ["localhost", "build.local", "git.corp.test", "corp.test"])
+		expect(bypassesHostname(list, host, 443)).toBe(true);
+	expect(bypassesHostname(list, "cdn.test", 8443)).toBe(true);
+	for (const host of ["huggingface.co", "notcorp.test", "10.example.com", "localhost.example.com"])
+		expect(bypassesHostname(list, host, 443)).toBe(false);
+	expect(bypassesHostname(list, "cdn.test", 443)).toBe(false);
+	expect(bypassesHostname("*", "huggingface.co", 443)).toBe(true);
+	expect(bypassesHostname("", "huggingface.co", 443)).toBe(false);
 });

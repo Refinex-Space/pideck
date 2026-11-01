@@ -24,6 +24,8 @@ export interface DownloadModelInput {
 	/** Final directory; bytes are staged in a sibling `.partial` directory and renamed on success. */
 	dir: string;
 	fetch: typeof fetch;
+	/** Proxy URL for every request; it takes precedence over the process proxy environment. */
+	proxy?: string | undefined;
 	signal: AbortSignal;
 	onProgress: (downloadedBytes: number) => void;
 }
@@ -38,7 +40,10 @@ export async function downloadModel(input: DownloadModelInput): Promise<void> {
 		await mkdir(staging, { recursive: true });
 		for (const file of model.files) {
 			const response = await input
-				.fetch(`${model.baseUrl}/${file.name}`, { signal })
+				.fetch(`${model.baseUrl}/${file.name}`, {
+					signal,
+					...(input.proxy && { proxy: input.proxy }),
+				})
 				.catch((error) => {
 					throw networkFailure(error, signal);
 				});

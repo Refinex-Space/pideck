@@ -5,7 +5,7 @@ status: active
 title: Host outbound proxy policy and diagnostics
 parent: module-server
 depends-on: [submodule-server-persistence, submodule-server-subprocess, module-contracts]
-references: [submodule-server-environment, submodule-server-agent, module-desktop, module-cli]
+references: [submodule-server-environment, submodule-server-agent, submodule-server-speech, module-desktop, module-cli]
 tags: [network, proxy]
 ---
 
@@ -20,7 +20,8 @@ status instead of the internal port-zero sentinel. Detection time and action con
 
 ## Boundary
 
-- Public barrel: `initializeNetworkProxy`, `networkProxyStatus`, `updateNetworkProxy`, `diagnoseNetwork`.
+- Public barrel: `initializeNetworkProxy`, `networkProxyStatus`, `updateNetworkProxy`, `diagnoseNetwork`,
+  `downloadProxy`.
 - Owns configuration validation, OS static-proxy discovery, environment normalization, proxy-password
   storage, applied state and credential-free endpoint diagnostics.
 - Uses `persistence` for atomic non-secret records, `subprocess` for bounded hidden platform commands,
@@ -68,6 +69,23 @@ external traffic through a reserved loopback port-zero proxy, while local settin
 There is no silent fallback to direct connectivity. Regression tests verify that Bun rejects that route.
 The UI reports the reason and permits repair. Existing model errors remain Pi's errors.
 
+## Download proxy
+
+`downloadProxy(url)` answers which proxy a public, hash-verified download (today the speech model catalog)
+should use, without touching the process route. It returns the OS proxy read **now** for the URL's scheme,
+judged against that one host: only exact, suffix and wildcard bypass entries (with an optional port) can exempt
+a DNS name, while IP, CIDR and `<local>` entries cannot name it and are ignored. Two gaps in the boot route are
+closed this way: a macOS exception list such as `192.168.0.0/16,<local>` (the default of common proxy tools)
+blocks the boot route as `bypassUnsupported`, yet cannot concern a public hostname; and a proxy switched on
+after launch needs no restart.
+
+It answers `undefined`, leaving whatever the process route does, whenever the route is the user's choice or the
+OS offers nothing usable: the mode is manual or direct, a proxy environment variable exists (environment wins,
+as at boot), detection reports any issue (PAC/WPAD, SOCKS-only, authentication, reversed exceptions, failure),
+the host is bypassed, or the scheme has no proxy. Credentials are not involved: the OS proxy is read without
+its password. The boot route, the blocked sentinel for provider and auth traffic, and "no silent fallback to
+direct" are unchanged; this is an opt-in per call and is not available to Pi or provider requests.
+
 ## Platform detection
 
 - Windows: a direct Bun FFI call to WinHTTP reads `WinHttpGetIEProxyConfigForCurrentUser` and frees
@@ -108,7 +126,10 @@ authorized live acceptance. Diagnosis does not force-refresh rotating tokens or 
 ## Verification
 
 Parser fixtures cover Windows, macOS, GNOME and KDE. Policy/storage tests cover precedence, corruption,
-restart, credential loss, no plaintext fallback and rollback. Local-network tests exercise the installed
+restart, credential loss, no plaintext fallback and rollback. Download-proxy tests cover a boot route
+blocked by CIDR/`<local>` exceptions, a proxy enabled after launch, per-host bypass, and every case that must
+answer `undefined`; one test pins that Bun's explicit `proxy` option outranks a blocked proxy environment.
+Local-network tests exercise the installed
 Pi OAuth CONNECT path, OpenAI Responses SSE, native WebSocket proxying and loopback bypass without real
 accounts. Browser coverage saves/reopens the form and captures its real layout. Run the complete no-agent
 e2e suite and native artifact smoke for delivery. macOS/Linux native acceptance must be reported separately

@@ -9,8 +9,10 @@ import { loadNetworkProxyRecord, saveNetworkProxyRecord } from "../persistence";
 import {
 	applyProxyEnvironment,
 	blockedRoute,
+	bypassesHostname,
 	DEFAULT_PROXY_CONFIG,
 	hasProxyEnvironment,
+	normalizeProxyUrl,
 	parseProxyConfig,
 	proxyEnvironment,
 	redactRoute,
@@ -115,6 +117,33 @@ export function createProxyManager(deps: ProxyDependencies) {
 			environmentOverride: hasProxyEnvironment(ambient),
 		};
 	}
+	/**
+	 * The proxy a public, hash-verified download should use ahead of the route applied at boot: the OS proxy read
+	 * now, judged only against that one host, so a CIDR or `<local>` exception that blocks the boot route cannot
+	 * hide a working proxy and a proxy switched on after launch needs no restart. `undefined` leaves the process
+	 * route untouched, which is also the answer whenever the user chose the route (environment, manual, direct).
+	 */
+	async function downloadProxy(url: string): Promise<string | undefined> {
+		await initialize();
+		let config: NetworkProxyConfig;
+		try {
+			config = read().config;
+		} catch {
+			return undefined;
+		}
+		if (config.mode !== "auto" || hasProxyEnvironment(ambient)) return undefined;
+		const target = new URL(url);
+		const system = await deps.detect();
+		if (system.issue) return undefined;
+		const secure = target.protocol === "https:";
+		const port = Number(target.port) || (secure ? 443 : 80);
+		if (bypassesHostname(system.bypass, target.hostname, port)) return undefined;
+		try {
+			return normalizeProxyUrl(secure ? system.https : system.http) || undefined;
+		} catch {
+			return undefined;
+		}
+	}
 	async function write(input: NetworkProxyUpdate): Promise<NetworkProxyStatus> {
 		await initialize();
 		const config = parseProxyConfig(input.config);
@@ -164,6 +193,7 @@ export function createProxyManager(deps: ProxyDependencies) {
 	return {
 		initialize,
 		status,
+		downloadProxy,
 		update(input: NetworkProxyUpdate) {
 			const task = queue.then(() => write(input));
 			queue = task.then(

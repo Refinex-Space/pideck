@@ -219,7 +219,9 @@ Settings → **Network & proxy** configures the host's HTTP/HTTPS proxy. Automat
 current-user settings, macOS active proxy settings, or GNOME/KDE settings on Linux. Existing proxy
 environment variables take priority; headless Linux uses those variables. Manual mode supports HTTP
 and HTTPS proxy listeners, with optional credentials saved in the OS credential store. Save, quit and
-restart the host to apply the route to Pi OAuth refresh and model connections.
+restart the host to apply the route to Pi OAuth refresh and model connections. Voice model downloads in
+automatic mode additionally use the current system proxy right away, with no restart, because the model host
+is public and every file is checksum-verified.
 
 PAC/WPAD, SOCKS-only proxies and bypass formats outside the supported domain/IP/host:port subset
 (including CIDR, `<local>` and IP-prefix wildcards) are reported as unsupported. Use a manual HTTP/mixed

@@ -56,7 +56,7 @@ export function StatusBlockFrame({
 			aria-labelledby={titleId}
 			className={cn(
 				"group/block relative min-w-0 translate-y-[var(--status-drag-y,0px)] rounded-lg border border-border-muted bg-container-workspace-bg data-[shift=down]:translate-y-[var(--status-shift)] data-[shift=up]:-translate-y-[var(--status-shift)]",
-				"data-[dragging=true]:z-10 data-[dragging=true]:border-border-default data-[dragging=true]:bg-container-elevated-bg data-[dragging=true]:shadow-[var(--shadow-md)]",
+				"data-[dragging=true]:z-10 data-[dragging=true]:border-border-default data-[dragging=true]:bg-container-elevated-bg",
 				stepping && "motion-safe:transition-transform motion-safe:duration-150",
 			)}
 		>

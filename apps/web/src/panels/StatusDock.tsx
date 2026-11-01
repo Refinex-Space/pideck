@@ -48,7 +48,7 @@ export function StatusDock({
 				data-testid="status-dock"
 				data-open={layout.open || undefined}
 				inert={!layout.open}
-				className="w-0 shrink-0 overflow-hidden bg-container-workspace-bg motion-safe:transition-[width] motion-safe:duration-200 data-[open=true]:w-[min(24rem,45%)] @max-[40rem]:data-[open=true]:absolute @max-[40rem]:data-[open=true]:inset-y-0 @max-[40rem]:data-[open=true]:right-0 @max-[40rem]:data-[open=true]:z-20 @max-[40rem]:data-[open=true]:w-[min(24rem,100%)] @max-[40rem]:data-[open=true]:border-border-muted @max-[40rem]:data-[open=true]:border-l @max-[40rem]:data-[open=true]:shadow-[var(--shadow-md)]"
+				className="w-0 shrink-0 overflow-hidden bg-container-workspace-bg motion-safe:transition-[width] motion-safe:duration-200 data-[open=true]:w-[min(24rem,45%)] @max-[40rem]:data-[open=true]:absolute @max-[40rem]:data-[open=true]:inset-y-0 @max-[40rem]:data-[open=true]:right-0 @max-[40rem]:data-[open=true]:z-20 @max-[40rem]:data-[open=true]:w-[min(24rem,100%)] @max-[40rem]:data-[open=true]:border-border-muted @max-[40rem]:data-[open=true]:border-l"
 			>
 				{mounted ? (
 					<QuietScrollArea className="h-full" viewportClassName="p-12">

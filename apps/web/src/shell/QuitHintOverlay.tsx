@@ -31,7 +31,7 @@ export function QuitHintOverlay({ hint }: { hint: NativeQuitHint }) {
 			{lastVisible ? (
 				<div
 					aria-hidden={hidden}
-					className="rounded-lg border border-border-default bg-container-elevated-bg px-24 py-16 text-text-default tr-heading-lg shadow-(--shadow-lg)"
+					className="rounded-lg border border-border-default bg-container-elevated-bg px-24 py-16 text-text-default tr-heading-lg"
 				>
 					{quitHintText(t, lastVisible)}
 				</div>

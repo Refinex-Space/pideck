@@ -71,7 +71,7 @@
 			}
 		},
 		"effects": {
-			"description": "Appearance-level values that are not palette derivations: scrims and shadows.",
+			"description": "Appearance-level values that are not palette derivations: scrims and recessed fills. There are no elevation shadows: floating surfaces are separated by a border, never a shadow.",
 			"type": "object",
 			"propertyNames": {
 				"pattern": "^[a-z][a-z0-9-]*$"

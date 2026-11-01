@@ -42,7 +42,7 @@ function classText(tag: string, src: string): string {
 
 const base = (token: string) => token.split(":").pop() ?? token;
 const SKIN =
-	/^(-?(h|size|min-h|max-h)-|p[trblxyse]?-\S|gap-|rounded|bg-|text-(?!left|right|center|start|end|wrap|nowrap|balance|pretty|ellipsis|clip)|border|tr-|ring|outline|shadow(?!-\[var\(--shadow-)|font-|leading-|tracking-|transition|duration-|cursor-|inline-flex$|items-|justify-(?!self)|whitespace-|select-)/;
+	/^(-?(h|size|min-h|max-h)-|p[trblxyse]?-\S|gap-|rounded|bg-|text-(?!left|right|center|start|end|wrap|nowrap|balance|pretty|ellipsis|clip)|border|tr-|ring|outline|shadow|font-|leading-|tracking-|transition|duration-|cursor-|inline-flex$|items-|justify-(?!self)|whitespace-|select-)/;
 const REVEAL = /^(opacity-0|opacity-100)$/;
 
 describe("button system adoption", () => {

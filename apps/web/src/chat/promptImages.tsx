@@ -333,7 +333,7 @@ export function PromptImageStrip({
 						type="button"
 						aria-label={t("chat.promptImages.remove")}
 						onClick={() => removeImage(img.id)}
-						className="absolute top-2 right-2 flex size-16 items-center justify-center rounded-full bg-container-elevated-bg text-text-muted opacity-0 shadow-[var(--shadow-sm)] outline-none transition-opacity hover:text-text-default focus-visible:opacity-100 focus-visible:ring-1 focus-visible:ring-focus-ring group-hover/thumb:opacity-100 [@media(hover:none)]:opacity-100"
+						className="absolute top-2 right-2 flex size-16 items-center justify-center rounded-full border border-border-default bg-container-elevated-bg text-text-muted opacity-0 outline-none transition-opacity hover:text-text-default focus-visible:opacity-100 focus-visible:ring-1 focus-visible:ring-focus-ring group-hover/thumb:opacity-100 [@media(hover:none)]:opacity-100"
 					>
 						<CloseIcon className="size-12" />
 					</button>

@@ -566,7 +566,7 @@ export const Composer = forwardRef<ComposerHandle, ComposerProps>(function Compo
 				>
 					<div
 						data-testid="chat-input-surface"
-						className="relative col-span-2 col-start-1 row-start-1 flex min-h-0 flex-col overflow-hidden rounded-xl bg-control-bg shadow-[var(--shadow-sm)] ring-1 ring-inset ring-control-border-default transition-shadow duration-[var(--motion-duration-normal)] focus-within:ring-control-border-active tr-text-ui"
+						className="relative col-span-2 col-start-1 row-start-1 flex min-h-0 flex-col overflow-hidden rounded-xl bg-control-bg ring-1 ring-inset ring-control-border-default transition-shadow duration-[var(--motion-duration-normal)] focus-within:ring-control-border-active tr-text-ui"
 					>
 						<PromptImageStrip
 							controller={attachedImages}

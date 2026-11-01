@@ -129,6 +129,25 @@ CDS 时长观察值为 60/120/200/300/450ms，out 曲线为 `cubic-bezier(.165,.
 PiDeck 常规 hover/focus/菜单响应以 120–200ms 为主；较大的弹窗不超过 200ms；避免逐卡片揭示或持续漂浮。
 状态响应应解释发生了什么。`prefers-reduced-motion` 下停止非必要位移/循环，保留状态信息。
 
+## 层级与阴影
+
+**浮层不用阴影**（2026-11-01 起，参考 Codex 桌面的菜单与输入框）。右键菜单、下拉菜单与选择器、popover、tooltip、toast、
+对话框、补全与历史面板、聊天输入框，以及拖拽影像和悬浮按钮，一律靠「细边线 + 圆角 + 表面色」与画布分离，
+不使用任何投影。层叠关系由 z-index、模态遮罩（`overlay`）和 portal 表达，不由影子表达。
+
+- **边线：** 浮层用 `border border-border-default`；聊天输入框外框用 `ring-1 ring-inset ring-control-border-default`，
+  聚焦时换成 `ring-control-border-active`。Toast 的严重级别仍只由 1px 边框与图标色表达。
+- **圆角：** 菜单、popover、对话框 lg，聊天输入外框 xl，tooltip 与小型悬浮控件 md/sm，见上节圆角层级。
+- **表面：** 浮层用 `container-elevated-bg`，对话框用 `container-dialog-bg`。浅色下浮层与画布同为白色，只靠边线区分；
+  深色下由表面色阶差加边线区分。需要更强区分时调表面或边线令牌，不加影子。
+- **允许：** 焦点环（`ring-*`）；选中标记用的 `inset` 条；零模糊的 `0 0 0 Npx` 环；Monaco 的 `--widget-shadow`
+  （粘性滚动与滚动条边缘提示，不是层级）。
+- **禁止：** `shadow-*`、`drop-shadow-*`、带模糊的 `box-shadow`、`text-shadow`、内联 `boxShadow`，以及 `--shadow-*`
+  变量（令牌已从 `colors.json` 删除，不得再加回）。
+
+门禁是 `apps/web/src/styles/elevationUsage.test.ts`，随 `bun run colors:check` 与单元测试运行，扫描 `apps/web/src`、
+`packages/ui`、`packages/resource-renderers/src` 和原生扩展的 `web/` 源码。新增例外要先改本节和该测试，不在组件里绕开。
+
 ## 工作台与导航
 
 - 不设置横跨全应用的独立 Header。左侧是连续导航，主画布顶端是工作区上下文，右侧是按需工具。
@@ -154,7 +173,7 @@ PiDeck 常规 hover/focus/菜单响应以 120–200ms 为主；较大的弹窗�
 
 ## 聊天、输入与工具
 
-输入区浮在主画布底部，外框采用细边线、轻阴影和明确的焦点状态；模型、思考、附件、历史、模板与
+输入区浮在主画布底部，外框采用细边线（无阴影）和明确的焦点状态；模型、思考、附件、历史、模板与
 运行控制按主次排列。输入框与消息正文共用 `--chat-transcript-width` 和左右 gutter，居中并同步跟随正文行宽设置与面板缩放；
 不另设 768px 上限。正文选择超宽横向滚动时，输入区仍限制在可见面板内，保证操作按钮可达。
 历史搜索放大阶段继续使用完整聊天面板的空间。
@@ -192,7 +211,7 @@ PiDeck 常规 hover/focus/菜单响应以 120–200ms 为主；较大的弹窗�
 右栏内容按**分组卡片**组织：分组小标题（14/500）在卡片之外，卡片是 `border-muted` 细边框 + lg 圆角，行与行之间是通栏细分隔线，
 行内左侧标签与说明、右侧控制，行高 `py-12`、内边距 16。自由内容（表单、键值列表）放在带内边距的卡片里；自带表面的内容
 （编辑器、单选卡、通知条、自有边框的列表）不再套卡片，避免边框叠加。组间留白（32）大于行内留白。菜单、popover、tooltip、
-dialog 统一使用共享 UI primitives；保留 Radix 的焦点管理、Escape、嵌套浮层、portal、disabled 和 loading。
+dialog 统一使用共享 UI primitives，且不带阴影（见“层级与阴影”）；保留 Radix 的焦点管理、Escape、嵌套浮层、portal、disabled 和 loading。
 危险操作使用既有确认与危险色，不能因参考应用更简洁就移除确认。
 
 ## 跨平台与可访问性

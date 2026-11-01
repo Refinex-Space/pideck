@@ -14,8 +14,10 @@ The owned shadcn/Radix primitives shared by the app and extension web halves. Pr
 feature state, theme selection, and token generation stay with the app.
 
 PiDeck presentation follows [design-system.md](../../design-system.md): neutral primary controls,
-8px control corners, 12px floating surfaces, 32px comfortable menu rows, restrained shadows and
-visible keyboard focus. These visual roles do not change Radix dismissal, portal or focus behavior.
+8px control corners, 12px floating surfaces, 32px comfortable menu rows, hairline borders instead of shadows and
+visible keyboard focus. Floating surfaces (menu, popover, tooltip, toast, dialog) cast no shadow; the
+`border border-border-default` plus radius separates them from the canvas, enforced by
+`apps/web/src/styles/elevationUsage.test.ts`. These visual roles do not change Radix dismissal, portal or focus behavior.
 Default dialogs retain a 16px viewport margin on each side before their content-width cap applies.
 
 ## Boundary
@@ -141,7 +143,7 @@ moved here from the app when the resource renderers became a package, because bo
   listener, before Radix's document-level layer handling, so one Escape dismisses the tooltip *and* the
   dialog, popover or menu beneath it. Tooltip content stacks at `z-150`, above dialogs and the toast
   viewport (`z-[100]`), so a toast's own close tooltip is never painted under the toast.
-- Context and dropdown menus share menu geometry and token classes: content surface, radius/shadow,
+- Context and dropdown menus share menu geometry and token classes: content surface, radius/border,
   item/icon spacing, separators, semantic action colors, focus rows, and viewport collision behavior.
   Context menus add pointer-position right-click/touch long-press anchoring; features own enabled gestures
   and actions. Dropdowns are vertically bounded by the smaller of 60vh and Radix's available height,

@@ -57,7 +57,7 @@ export function CompletionMenu({
 		<div
 			data-testid={testId}
 			className={cn(
-				"flex max-h-[min(24rem,45vh)] w-[min(30rem,92%)] flex-col overflow-hidden rounded-lg border border-border-default bg-container-elevated-bg shadow-[var(--shadow-md)]",
+				"flex max-h-[min(24rem,45vh)] w-[min(30rem,92%)] flex-col overflow-hidden rounded-lg border border-border-default bg-container-elevated-bg",
 				className,
 			)}
 		>

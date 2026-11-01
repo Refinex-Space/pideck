@@ -717,7 +717,7 @@ const ChatTranscript = forwardRef<
 									chatMessageOrder === "newest-first" ? "scroll-to-top" : "scroll-to-bottom"
 								}
 								onClick={scrollToLatest}
-								className="-translate-x-1/2 absolute bottom-12 left-1/2 shadow-[var(--shadow-md)]"
+								className="-translate-x-1/2 absolute bottom-12 left-1/2"
 							>
 								{scrollButtonLabel ? t(SCROLL_BUTTON_LABELS[scrollButtonLabel]) : null}
 							</Button>

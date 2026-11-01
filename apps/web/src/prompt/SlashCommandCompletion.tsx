@@ -1,7 +1,6 @@
 import type { SlashCommandInfo, TemplateInfo } from "@thinkrail/contracts";
 import { useT } from "@thinkrail/locales/react";
 import { Button } from "@thinkrail/ui/button";
-import { cn } from "@thinkrail/ui/utils";
 import { useState } from "react";
 import type { PromptTrigger } from "./triggers";
 
@@ -199,7 +198,7 @@ export function TemplateSlotHint({
 			size="s"
 			data-testid="slot-hint"
 			onClick={onNext}
-			className={cn("shadow-[var(--shadow-md)]", className)}
+			className={className}
 		>
 			{t("prompt.slotHint.label", { index: activeIndex + 1, count })}
 		</Button>

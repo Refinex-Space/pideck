@@ -239,6 +239,10 @@ themselves.
   `bg-[var(--elevated)]`; and a tint is a token on the four-step alpha scale, not a `/40` modifier.
   `src/styles/COLOR.md` is the system; `src/styles/colorUsage.test.ts` is the adoption guard (Tailwind
   drops an unknown utility silently, so an unpublished token renders as nothing at all).
+- **Floating surfaces cast no shadow** — menus, popovers, tooltips, toasts, dialogs, completion/history panels and the
+  composer are separated from the canvas by `border-border-default` (the composer by its `ring-1` outline) plus a
+  radius, never `shadow-*`. `design-system.md` ("层级与阴影") is the rule; `src/styles/elevationUsage.test.ts`
+  is the guard, run by `colors:check`.
 - **Ordinary radius and rhythm-spacing values come from their scales, never raw pixel lengths** — `rounded-md`
   and `p-8` / `gap-12`, not `rounded-[7px]` or `py-[3px]`. Radius is the project t-shirt family
   (`--radius-xs/sm/md/lg` — a small primitive geometry capped at 8px: `sm` (4px) is the default corner,

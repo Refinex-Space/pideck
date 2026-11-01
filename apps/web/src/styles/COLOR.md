@@ -75,8 +75,11 @@ layer so an explicit semantic text utility on a link-shaped control always wins 
 ## Transparency: one form only
 
 PiDeck's neutral surface hierarchy and restrained overlays follow
-[design-system.md](../../../../design-system.md). Modal overlay and small/medium/large floating
-shadows remain `colors.json` effects, generated once; components must not duplicate their rgba values.
+[design-system.md](../../../../design-system.md). The modal overlay scrim and the recessed fill remain `colors.json` effects, generated once; components must not
+duplicate their rgba values. **There are no elevation shadows**: floating surfaces are separated by a border, so the
+`shadow-sm/md/lg` effects were removed and `src/styles/elevationUsage.test.ts` rejects any `shadow-*` utility,
+`--shadow-*` variable or blurred `box-shadow` in design sources (`--widget-shadow` is a Monaco scroll-edge cue, not
+elevation).
 
 **A tint is a token, mixed `in srgb`, on the alpha scale.**
 

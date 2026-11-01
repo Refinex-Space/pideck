@@ -60,7 +60,7 @@ function DialogContent({
 			<DialogOverlay />
 			<DialogPrimitive.Content
 				className={cn(
-					"-translate-x-1/2 -translate-y-1/2 fixed top-1/2 left-1/2 z-50 flex w-[calc(100%_-_32px)] max-w-[28rem] flex-col gap-16 rounded-lg border border-border-default bg-container-dialog-bg p-16 text-text-default shadow-[var(--shadow-lg)] motion-safe:data-[state=open]:animate-dialog-in",
+					"-translate-x-1/2 -translate-y-1/2 fixed top-1/2 left-1/2 z-50 flex w-[calc(100%_-_32px)] max-w-[28rem] flex-col gap-16 rounded-lg border border-border-default bg-container-dialog-bg p-16 text-text-default motion-safe:data-[state=open]:animate-dialog-in",
 					className,
 				)}
 				{...props}

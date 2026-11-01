@@ -7,12 +7,10 @@
 }
 .monaco-editor .find-widget {
 	border-radius: var(--radius-lg);
-	box-shadow: var(--shadow-md);
 }
 
 .monaco-menu-container.monaco-menu-container {
 	border-radius: var(--radius-lg);
-	box-shadow: var(--shadow-md);
 }
 .monaco-menu.monaco-menu {
 	border-radius: var(--radius-lg);

@@ -94,7 +94,7 @@ export function ActivityBreadcrumbBar({
 		<nav
 			aria-label={t("chat.breadcrumbs.label")}
 			data-testid="activity-breadcrumb-trail"
-			className="pointer-events-auto border-border-default border-b bg-container-header-bg shadow-[var(--shadow-md)]"
+			className="pointer-events-auto border-border-default border-b bg-container-header-bg"
 		>
 			<div
 				className={`${measureClassName} flex h-[34px] items-center overflow-hidden px-chat-gutter tr-text-metadata`}

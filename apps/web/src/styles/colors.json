@@ -334,21 +334,6 @@
 			"dark": "rgba(0, 0, 0, 0.6)",
 			"light": "rgba(0, 0, 0, 0.4)",
 			"publish": true
-		},
-		"shadow-sm": {
-			"dark": "0 1px 4px rgba(0, 0, 0, 0.2)",
-			"light": "0 1px 4px rgba(0, 0, 0, 0.06)",
-			"publish": false
-		},
-		"shadow-md": {
-			"dark": "0 8px 24px rgba(0, 0, 0, 0.32), 0 2px 6px rgba(0, 0, 0, 0.2)",
-			"light": "0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.08)",
-			"publish": false
-		},
-		"shadow-lg": {
-			"dark": "0 16px 48px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.24)",
-			"light": "0 16px 48px rgba(0, 0, 0, 0.14), 0 2px 8px rgba(0, 0, 0, 0.08)",
-			"publish": false
 		}
 	}
 }

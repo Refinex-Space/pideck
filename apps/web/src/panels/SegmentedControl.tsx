@@ -75,7 +75,7 @@ export function SegmentedControl<T extends string>({
 									? cn(
 											"text-text-default",
 											raised
-												? "border-control-border-default bg-control-bg shadow-[var(--shadow-sm)]"
+												? "border-control-border-default bg-control-bg"
 												: "rounded-sm bg-control-bg-selected",
 										)
 									: cn("text-text-muted hover:text-text-default", raised && "border-transparent"),

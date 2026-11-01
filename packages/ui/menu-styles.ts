@@ -1,5 +1,5 @@
 export const menuContentClass =
-	"z-50 min-w-[12rem] overflow-y-auto overflow-x-hidden rounded-lg border border-border-default bg-container-elevated-bg p-4 text-text-default shadow-[var(--shadow-md)] motion-safe:data-[state=open]:animate-reveal";
+	"z-50 min-w-[12rem] overflow-y-auto overflow-x-hidden rounded-lg border border-border-default bg-container-elevated-bg p-4 text-text-default motion-safe:data-[state=open]:animate-reveal";
 
 export const menuItemClass =
 	"relative flex cursor-default select-none min-h-32 items-center gap-8 rounded-sm px-8 py-6 tr-text-ui text-text-default outline-none transition-colors focus:bg-control-bg-selected data-[disabled]:pointer-events-none data-[disabled]:text-control-disabled-text [&_svg]:size-16 [&_svg]:shrink-0 [&_svg]:text-text-muted data-[disabled]:[&_svg]:text-inherit";

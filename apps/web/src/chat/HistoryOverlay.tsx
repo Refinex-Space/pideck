@@ -561,7 +561,7 @@ function HistoryPicker({
 					: "inset-x-0 mx-auto w-full max-w-[var(--chat-transcript-width)] px-chat-gutter",
 			)}
 		>
-			<div className="flex flex-col overflow-hidden rounded-xl border border-border-default bg-container-elevated-bg shadow-[var(--shadow-lg)]">
+			<div className="flex flex-col overflow-hidden rounded-xl border border-border-default bg-container-elevated-bg">
 				<div className="flex items-center gap-8 border-b border-border-default px-12 py-8">
 					<Search className="size-16 shrink-0 text-text-muted" aria-hidden />
 					<input

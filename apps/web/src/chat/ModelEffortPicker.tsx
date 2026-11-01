@@ -200,7 +200,7 @@ function EffortSlider({
 				/>
 				<div
 					aria-hidden
-					className="pointer-events-none absolute top-2 left-[clamp(32px,var(--effort),calc(100%-32px))] flex h-24 min-w-64 -translate-x-1/2 items-center justify-center gap-4 rounded-full border border-control-border-active bg-container-elevated-bg px-8 text-text-default tr-text-label-pill capitalize shadow-[var(--shadow-sm)] transition-[left] duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] peer-focus-visible:ring-1 peer-focus-visible:ring-focus-ring motion-reduce:transition-none"
+					className="pointer-events-none absolute top-2 left-[clamp(32px,var(--effort),calc(100%-32px))] flex h-24 min-w-64 -translate-x-1/2 items-center justify-center gap-4 rounded-full border border-control-border-active bg-container-elevated-bg px-8 text-text-default tr-text-label-pill capitalize transition-[left] duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] peer-focus-visible:ring-1 peer-focus-visible:ring-focus-ring motion-reduce:transition-none"
 				>
 					<Glyph className={cn("size-12 shrink-0", TONE_TEXT[levelTone(level)])} />
 					{t(LEVEL_LABEL[level])}

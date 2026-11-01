@@ -431,7 +431,7 @@ export default function TerminalInstance({ tabKey, workspaceId, initialCommand }
 					data-testid="terminal-start-failure"
 					className="absolute inset-0 z-30 flex items-center justify-center bg-overlay p-24 text-center"
 				>
-					<div className="flex flex-col items-center gap-8 rounded-md border border-border-default bg-container-elevated-bg p-16 shadow-sm">
+					<div className="flex flex-col items-center gap-8 rounded-md border border-border-default bg-container-elevated-bg p-16">
 						<div role="alert" className="flex flex-col items-center gap-4">
 							<p className="tr-title-compact text-text-default">
 								{t("panels.terminalInstance.startFailed")}

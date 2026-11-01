@@ -14,7 +14,7 @@
 		"typography:validate": "bun scripts/validate-typography.ts",
 		"typography:check": "bun scripts/generate-typography.ts --check && bun test src/styles/typographyUsage.test.ts",
 		"colors:generate": "bun scripts/generate-colors.ts",
-		"colors:check": "bun scripts/generate-colors.ts --check && bun test src/styles/colorUsage.test.ts",
+		"colors:check": "bun scripts/generate-colors.ts --check && bun test src/styles/colorUsage.test.ts src/styles/elevationUsage.test.ts",
 		"spacing:generate": "bun scripts/generate-spacing.ts",
 		"spacing:check": "bun scripts/generate-spacing.ts --check && bun test src/styles/spacingUsage.test.ts",
 		"file-icons:generate": "bun scripts/generate-file-icons.ts",

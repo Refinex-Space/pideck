@@ -119,7 +119,7 @@ export function PanZoomView({ svg }: { svg: string }) {
 				onPointerCancel={endDrag}
 				dangerouslySetInnerHTML={{ __html: svg }}
 			/>
-			<div className="absolute right-8 bottom-8 flex items-center gap-4 rounded-sm border border-border-default bg-container-elevated-bg p-4 tr-text-metadata shadow-[var(--shadow-lg)]">
+			<div className="absolute right-8 bottom-8 flex items-center gap-4 rounded-sm border border-border-default bg-container-elevated-bg p-4 tr-text-metadata">
 				<IconButton
 					icon={Minus}
 					label={t("visualize.panZoom.zoomOut")}

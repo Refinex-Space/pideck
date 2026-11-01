@@ -25,6 +25,7 @@ dismissed. Every other toast auto-dismisses.
 
 - Neutral fill: `bg-container-elevated-bg` for every severity. No tinted `bg-feedback-*-subtle` fill and
   no left accent stripe.
+- No shadow: a toast is lifted off the canvas by its border alone (`design-system.md`, "层级与阴影").
 - Severity is shown only by the 1px border (`border-feedback-<severity>-muted`) and the icon colour
   (`text-feedback-<severity>`). Body text stays `text-text-default`.
 - Geometry: `rounded-sm`. Inline notices use `px-12 py-8`, or `px-8 py-4` inside dense side panels

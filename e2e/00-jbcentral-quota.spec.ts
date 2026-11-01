@@ -124,7 +124,7 @@ test("stale quota keeps its value, retries immediately, and preserves both numbe
 
 	await setIntervalSeconds(page, 3600);
 	await page.keyboard.press("Escape");
-	await expect(page.getByTestId("settings-dialog")).toBeHidden();
+	await expect(page.getByTestId("settings-page")).toBeHidden();
 	writeFileSync(E2E_CENTRAL_STATE, "quota-alt");
 	await quota(page).click();
 	await expect(quota(page)).toHaveAttribute("data-state", "available");

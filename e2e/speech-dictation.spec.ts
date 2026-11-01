@@ -67,7 +67,7 @@ test.describe("voice model settings", () => {
 			await expect(english.getByTestId("speech-use")).toBeVisible();
 			mkdirSync(SCREENSHOTS, { recursive: true });
 			await page
-				.getByTestId("settings-dialog")
+				.getByTestId("settings-page")
 				.screenshot({ path: join(SCREENSHOTS, "settings.png") });
 
 			await english.getByTestId("speech-delete").click();

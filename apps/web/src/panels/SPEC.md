@@ -566,9 +566,21 @@ a project picker, the prompt hero, and the reused
   `transport`'s `errorText`) rather than vanishing. The two rejections with **no chat to host a turn** raise a
   `store.toast.error` instead: a failed **`workspace.create`** (keeps the dialog open to retry) and a failed
   **`session.create`** (the dialog has already closed, the workspace exists — the toast is the only place left
-  to report the dropped kick-off). (`gh` status lives in `SettingsDialog`, not the
-  create dialog.) **`SettingsDialog`** is the app-settings surface the shell's topbar gear opens — a
-  **store-driven two-pane shell**: one nav list, rendered once, beside a scrollable content pane. At `md`+
+  to report the dropped kick-off). (`gh` status lives in `SettingsPage`, not the
+  create dialog.) **`SettingsPage`** (`SettingsPage.tsx`, formerly a dialog) is the app-settings surface the
+  shell's gear opens — a **full page laid over the shell**, not a popup: `absolute inset-0 z-30` above the
+  workbench and below native window controls and Radix portals, `role="dialog"` + `aria-modal` so the global
+  shortcut layers (`MODAL_LAYER_SELECTOR`) still treat it as the modal it replaced (a second ⌘, keeps it as is).
+  The shell wraps the app underneath in an `inert` `display: contents` element, so it stays mounted — terminals,
+  drafts and layout are untouched — but unreachable. The left column wears the navigation sidebar's surface
+  (`bg-container-sidebar-bg`, 288px at `md`+, the same 40px drag row with the macOS inset) and starts with the
+  **Back** entry (`settings-back`), then the search field, then the grouped list; the right column is the canvas
+  with a 40px drag row (Windows inset), a centred content column (max 46rem) and a page title
+  (`settings-page-title`, `tr-heading-md`) that names the active section, so a panel does not repeat it. It
+  keeps the dialog's test id contract: root `settings-page`, `settings-nav-<id>`, `settings-search`. Focus moves
+  to the page on open and returns to the opener on close; Escape (one document listener) first clears a
+  non-empty search, then leaves — unless a nested Radix layer already consumed it (`defaultPrevented`) or a
+  draft input is focused. It is **store-driven**: one nav list, rendered once, beside a scrollable content pane. At `md`+
   the list is a rail grouped **Agent** (Models, Providers, MCP servers, Prompt templates, Environment) ·
   **Interface** (Chat, Appearance, Language, Layout, Terminal) · **System** (Workspaces, Integrations, Extensions,
   Notifications, Privacy, Updates). Integrations keeps section id `github`: today it is the GitHub CLI page
@@ -577,14 +589,18 @@ a project picker, the prompt hero, and the reused
   every width, pinned to the rail's bottom at `md`+. The pure nav data — groups, protocol and
   injected-content gating, and resolving a requested section to an available one (a gated or retired id,
   e.g. an old `review` / `line-width` deep link, falls back to Appearance) — lives in `panels/settingsNav.ts`,
-  so the dialog only renders it. `settingsOpen`/`settingsSection` live in the store so the gear AND the
-  Welcome banner can open it deep-linked to a section. Escape closes the dialog except while focus is in an
+  so the page only renders it. `settingsOpen`/`settingsSection` live in the store so the gear AND the
+  Welcome banner can open it deep-linked to a section. Escape leaves the page except while focus is in an
   input carrying `data-settings-draft-input`, where Escape reverts that draft instead.
   **Shared Settings primitives** keep every page one shape:
   `SettingsPageContainer` stacks a page's groups with spacing and a divider drawn only between children
   that actually render (each child keeps its element key, so a conditional group never remounts its
-  siblings); `SettingsGroup` is a titled block of `SettingsRow`s — label, optional description, one
-  control, wrapping the control below the label at narrow widths; `SegmentedControl` is a native-radio
+  siblings); `SettingsGroup` is a small title (omitted when the page title already says it) over a bordered
+  `rounded-lg` card (`SETTINGS_CARD`) of `SettingsRow`s — label, optional description, one control, wrapping
+  the control below the label at narrow widths — whose dividers run edge to edge and whose children pad
+  themselves (`px-16`; a row is `py-12`). Its `layout` picks the body: `rows` (default) for rows, `block` for a
+  padded card around free-form content (forms, key-value lists), `plain` for content that draws its own surface
+  (editors, radio cards, notices, lists with their own borders) so borders never double; `SegmentedControl` is a native-radio
   group with `value: T | null` (`null` selects nothing, for a host value no option names) and per-option
   disabled, in a `flat` (selected option tinted) or `raised` (recessed track — the sidebar surface, a gray
   step in light themes — with the selected option a `control-bg` chip, bordered and carrying the small shadow, so it
@@ -1053,7 +1069,7 @@ a project picker, the prompt hero, and the reused
   fixed Calendar anchor with `Schedule an interview`, `Not now`, and `Never show again` actions. Primary and
   middle-button booking activation open Calendar immediately and record `book`; close, Escape, and backdrop record `postpone`; permanent
   dismissal records `never`. The controlled dialog closes only after the host acks, and reports a rejected
-  action without discarding the still-open choice. `SettingsDialog` receives the optional Update section from the
+  action without discarding the still-open choice. `SettingsPage` receives the optional Update section from the
   shell composition root so no panel reaches sideways into shell, and the `LoginDialog` stays presentational
   (`auth` module).
 

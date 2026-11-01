@@ -30,7 +30,7 @@ function widthControls(page: Page, kind: LineWidthKind) {
 }
 
 async function openLineWidthSettings(page: Page, kind: LineWidthKind) {
-	if (!(await page.getByTestId("settings-dialog").isVisible())) {
+	if (!(await page.getByTestId("settings-page").isVisible())) {
 		await openAppSettings(page);
 	}
 	const nav = page.getByTestId(LINE_WIDTH_NAV[kind]);
@@ -51,16 +51,15 @@ async function saveWidth(input: Locator, value: number): Promise<void> {
 	await expect(input).toHaveValue(String(value));
 }
 
-/** Escape inside a focused width draft only resets that draft, so close the dialog by its button. */
+/** Escape inside a focused width draft only resets that draft, so leave Settings by the Back button. */
 async function closeSettings(page: Page): Promise<void> {
-	const dialog = page.getByTestId("settings-dialog");
-	await dialog.getByRole("button", { name: "Close" }).click();
-	await expect(dialog).toBeHidden();
+	await page.getByTestId("settings-back").click();
+	await expect(page.getByTestId("settings-page")).toBeHidden();
 }
 
 async function restoreLineWidthDefaults(page: Page): Promise<void> {
 	if (page.isClosed()) return;
-	if (await page.getByTestId("settings-dialog").isVisible()) await closeSettings(page);
+	if (await page.getByTestId("settings-page").isVisible()) await closeSettings(page);
 	for (const kind of ["chat", "file"] as const) {
 		const controls = await openLineWidthSettings(page, kind);
 		if ((await controls.input.inputValue()) !== "120") await saveWidth(controls.input, 120);

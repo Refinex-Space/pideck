@@ -669,10 +669,7 @@ test("completed Chinese thinking disclosures stay neutral after expansion and re
 		await page.getByTestId("settings-nav-language").click();
 		await page.getByTestId("language-zh-CN").click();
 		await expect(page.locator("html")).toHaveAttribute("lang", "zh-CN");
-		await page
-			.getByTestId("settings-dialog")
-			.getByRole("button", { name: "关闭", exact: true })
-			.click();
+		await page.getByTestId("settings-back").click();
 		const thinking = page.getByTestId("thinking-group").first();
 		const toggle = thinking.getByTestId("thinking-group-toggle");
 		await expect(page.getByTestId("chat-scroll")).toHaveAttribute("data-streaming", "false");
@@ -687,13 +684,10 @@ test("completed Chinese thinking disclosures stay neutral after expansion and re
 		await expect(toggle).toContainText("思考过程");
 		await expect(toggle).not.toContainText("思考中");
 	} finally {
-		if (!(await page.getByTestId("settings-dialog").isVisible())) await openAppSettings(page);
+		if (!(await page.getByTestId("settings-page").isVisible())) await openAppSettings(page);
 		await page.getByTestId("settings-nav-language").click();
 		await page.getByTestId("language-en").click();
 		await expect(page.locator("html")).toHaveAttribute("lang", "en");
-		await page
-			.getByTestId("settings-dialog")
-			.getByRole("button", { name: "Close", exact: true })
-			.click();
+		await page.getByTestId("settings-back").click();
 	}
 });

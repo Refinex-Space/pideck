@@ -726,7 +726,7 @@ test("Ctrl+R opens the overlay, Escape and outside clicks dismiss it, and pickin
 
 	await openAppSettings(page);
 	await expect(overlay).toBeHidden();
-	await expect(page.getByTestId("settings-dialog")).toBeVisible();
+	await expect(page.getByTestId("settings-page")).toBeVisible();
 });
 
 test("with the scope picker open a press closes only the picker, and a press on empty space hands the caret back to the prompt", async ({

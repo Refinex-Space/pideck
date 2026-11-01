@@ -48,13 +48,9 @@ test("connects and follows external add, replacement, and remove without a host 
 	await expect(anthropicRow).toContainText("JetBrains AI");
 	await expect(anthropicRow).toContainText("Anthropic");
 	await expect(anthropicRow.getByTestId("provider-signout")).toHaveCount(0);
-	await expect(page.getByTestId("settings-dialog")).not.toContainText(
-		"E2E_PROVIDER_SECRET_SENTINEL",
-	);
-	await expect(page.getByTestId("settings-dialog")).not.toContainText(
-		"E2E_PROVIDER_CONFIG_SENTINEL",
-	);
-	await expect(page.getByTestId("settings-dialog")).not.toContainText("E2E_PROVIDER_NAME_SENTINEL");
+	await expect(page.getByTestId("settings-page")).not.toContainText("E2E_PROVIDER_SECRET_SENTINEL");
+	await expect(page.getByTestId("settings-page")).not.toContainText("E2E_PROVIDER_CONFIG_SENTINEL");
+	await expect(page.getByTestId("settings-page")).not.toContainText("E2E_PROVIDER_NAME_SENTINEL");
 	await expect(
 		page.locator('[data-testid="provider-row"][data-provider="e2e-central"]'),
 	).toHaveCount(0);
@@ -134,7 +130,7 @@ test("guides absent, outdated, malformed, and failed Central version states", as
 	writeFileSync(E2E_CENTRAL_STATE, "probe-error");
 	await page.getByTestId("providers-refresh").click();
 	await waitForCentralState(page, "probe-failed");
-	await expect(page.getByTestId("settings-dialog")).not.toContainText("E2E_CENTRAL_CHILD_SENTINEL");
+	await expect(page.getByTestId("settings-page")).not.toContainText("E2E_CENTRAL_CHILD_SENTINEL");
 	assertOnlyReviewedArgv();
 });
 
@@ -150,7 +146,7 @@ test("a Connect failure with credentials intact offers sign-in without exposing 
 
 	await connectCentral(page);
 	await expect(page.getByTestId("jetbrains-signin-guidance")).toBeVisible();
-	await expect(page.getByTestId("settings-dialog")).not.toContainText("E2E_CENTRAL_CHILD_SENTINEL");
+	await expect(page.getByTestId("settings-page")).not.toContainText("E2E_CENTRAL_CHILD_SENTINEL");
 	await page.getByTestId("jetbrains-signin").click();
 	await expect(page.getByTestId("jetbrains-login-launched")).toBeVisible();
 
@@ -168,7 +164,7 @@ test("surfaces missing-artifact and candidate failures as closed UI states, then
 	writeFileSync(E2E_CENTRAL_STATE, "missing-artifact");
 	await connectCentral(page);
 	await expect(page.getByTestId("jetbrains-error")).toContainText("couldn't confirm");
-	await expect(page.getByTestId("settings-dialog")).not.toContainText("E2E_CENTRAL_CHILD_SENTINEL");
+	await expect(page.getByTestId("settings-page")).not.toContainText("E2E_CENTRAL_CHILD_SENTINEL");
 
 	writeFileSync(E2E_CENTRAL_STATE, "candidate-error");
 	await connectCentral(page);
@@ -177,7 +173,7 @@ test("surfaces missing-artifact and candidate failures as closed UI states, then
 	await expect(page.getByTestId("jetbrains-load-failed")).toContainText(
 		"previous runtime remains available",
 	);
-	await expect(page.getByTestId("settings-dialog")).not.toContainText(
+	await expect(page.getByTestId("settings-page")).not.toContainText(
 		"E2E_EXTENSION_DIAGNOSTIC_SENTINEL",
 	);
 
@@ -200,7 +196,7 @@ test("a refused removal and a removal that leaves the artifact are both closed f
 	writeFileSync(E2E_CENTRAL_STATE, "remove-error");
 	await page.getByTestId("jetbrains-disconnect").click();
 	await expect(page.getByTestId("jetbrains-error")).toContainText("couldn't disconnect");
-	await expect(page.getByTestId("settings-dialog")).not.toContainText("E2E_CENTRAL_CHILD_SENTINEL");
+	await expect(page.getByTestId("settings-page")).not.toContainText("E2E_CENTRAL_CHILD_SENTINEL");
 	await waitForCentralState(page, "configured");
 	expect(existsSync(E2E_CENTRAL_ARTIFACT)).toBe(true);
 
@@ -248,7 +244,7 @@ test("disconnect removes Central from new chats while an existing live chat keep
 	await connectCentral(page);
 	await waitForCentralState(page, "configured");
 	await page.keyboard.press("Escape");
-	await expect(page.getByTestId("settings-dialog")).toBeHidden();
+	await expect(page.getByTestId("settings-page")).toBeHidden();
 
 	await createWorkspaceViaDialog(page);
 	await page.getByTestId("model-selector").click();

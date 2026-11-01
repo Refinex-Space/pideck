@@ -8,7 +8,7 @@ test("settings shows the Local GitHub status block and degrades gh gracefully", 
 	await expect(page.getByTestId("connection-status")).toHaveAttribute("data-status", "connected");
 
 	await openAppSettings(page);
-	const dialog = page.getByTestId("settings-dialog");
+	const dialog = page.getByTestId("settings-page");
 	await expect(dialog).toBeVisible();
 
 	await page.getByTestId("settings-nav-github").click();

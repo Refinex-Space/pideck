@@ -149,7 +149,7 @@ export function SpeechSettings() {
 	};
 	return (
 		<SettingsPageContainer testId="settings-speech">
-			<SettingsGroup title={t("speech.title")} description={t("speech.intro")}>
+			<SettingsGroup description={t("speech.intro")}>
 				{status?.engine === "unavailable" ? (
 					<SettingsNotice variant="warning" testId="speech-engine-unavailable" className="my-12">
 						{t("speech.engineUnavailable")}
@@ -171,8 +171,8 @@ export function SpeechSettings() {
 					</p>
 				)}
 			</SettingsGroup>
-			<SettingsGroup title={t("speech.privacyTitle")}>
-				<p className="py-12 tr-text-metadata text-text-muted">{t("speech.privacy")}</p>
+			<SettingsGroup layout="block" title={t("speech.privacyTitle")}>
+				<p className="tr-text-metadata text-text-muted">{t("speech.privacy")}</p>
 			</SettingsGroup>
 		</SettingsPageContainer>
 	);

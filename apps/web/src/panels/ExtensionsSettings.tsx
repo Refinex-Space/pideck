@@ -40,14 +40,14 @@ export function ExtensionsCatalog({
 		);
 	}
 	return (
-		<ul className="flex flex-col divide-y divide-border-default rounded-sm border border-border-default bg-control-bg">
+		<ul className="flex flex-col divide-y divide-border-muted rounded-lg border border-border-muted">
 			{entries.map((entry) => {
 				const enabled = !disabled.includes(entry.name);
 				return (
 					<li
 						key={entry.name}
 						data-testid={`extension-row-${entry.name}`}
-						className="flex items-start justify-between gap-12 px-12 py-8"
+						className="flex items-start justify-between gap-12 px-16 py-12"
 					>
 						<div className="flex min-w-0 flex-col gap-4">
 							<span className="tr-title-compact text-text-default">{entry.title}</span>
@@ -114,10 +114,7 @@ export function ExtensionsSettings() {
 
 	return (
 		<section data-testid="settings-extensions" className="flex flex-col gap-16">
-			<div className="flex flex-col gap-4">
-				<h3 className="tr-title-section text-text-default">{t("settings.extensions.title")}</h3>
-				<p className="text-text-muted tr-text-metadata">{t("settings.extensions.description")}</p>
-			</div>
+			<p className="text-text-muted tr-text-metadata">{t("settings.extensions.description")}</p>
 			<ExtensionsCatalog entries={entries} disabled={disabled} onToggle={toggle} />
 		</section>
 	);

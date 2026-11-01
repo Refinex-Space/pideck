@@ -142,7 +142,7 @@ test("ordinary browsers have a fixed themed header with zero native insets", asy
 	expect(initialColors.actual).toBe(initialColors.expected);
 
 	await openAppSettings(page);
-	await expect(page.getByTestId("settings-dialog")).toBeVisible();
+	await expect(page.getByTestId("settings-page")).toBeVisible();
 	await expect(page.getByTestId("settings-nav-updates")).toHaveCount(0);
 	await page.getByTestId("settings-nav-appearance").click();
 	const originalTheme = await selectOppositeAppearanceTheme(page);
@@ -153,16 +153,16 @@ test("ordinary browsers have a fixed themed header with zero native insets", asy
 	await page.getByTestId(`theme-option-${originalTheme}`).click();
 	await expect(header).toHaveCSS("background-color", initialColors.actual);
 	await page.keyboard.press("Escape");
-	await expect(page.getByTestId("settings-dialog")).toBeHidden();
+	await expect(page.getByTestId("settings-page")).toBeHidden();
 
 	await page.setViewportSize(PHONE_VIEWPORT);
 	if ((await page.getByTestId("tool-rail-projects").getAttribute("aria-pressed")) === "true")
 		await page.getByTestId("tool-rail-projects").click();
 	await expectUsableHeader(page);
 	await openAppSettings(page);
-	await expect(page.getByTestId("settings-dialog")).toBeVisible();
+	await expect(page.getByTestId("settings-page")).toBeVisible();
 	await page.keyboard.press("Escape");
-	await expect(page.getByTestId("settings-dialog")).toBeHidden();
+	await expect(page.getByTestId("settings-page")).toBeHidden();
 });
 
 test("live safe areas on either edge preserve header and workbench geometry", async ({
@@ -280,7 +280,7 @@ test("native updates progress from explicit download through install and restart
 	});
 	await expect(page.getByTestId("update-restart")).toHaveText("Install & Restart");
 	await page.keyboard.press("Escape");
-	await expect(page.getByTestId("settings-dialog")).toBeHidden();
+	await expect(page.getByTestId("settings-page")).toBeHidden();
 	await expect(page.getByTestId("update-ready")).toBeVisible();
 	await page.getByTestId("update-ready").click();
 	await page.getByTestId("update-restart").click();
@@ -326,7 +326,7 @@ test("the action cluster keeps Update, quota Retry and Settings out of the drag 
 	const quota = page.getByTestId("jbcentral-quota");
 	await expect(quota).toHaveAttribute("data-state", "unavailable");
 	await page.keyboard.press("Escape");
-	await expect(page.getByTestId("settings-dialog")).toBeHidden();
+	await expect(page.getByTestId("settings-page")).toBeHidden();
 
 	const buttons = ["update-ready", "jbcentral-quota", "app-menu"];
 	await page.evaluate(() =>
@@ -347,7 +347,7 @@ test("the action cluster keeps Update, quota Retry and Settings out of the drag 
 	await page.getByTestId("update-ready").click();
 	await expect(page.getByTestId("settings-updates")).toBeVisible();
 	await page.keyboard.press("Escape");
-	await expect(page.getByTestId("settings-dialog")).toBeHidden();
+	await expect(page.getByTestId("settings-page")).toBeHidden();
 
 	await openProviders(page);
 	await setQuotaInterval(page, 30);

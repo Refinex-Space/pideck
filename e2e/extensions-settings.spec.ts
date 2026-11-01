@@ -24,7 +24,7 @@ async function openExtensionsSettings(page: Page) {
 }
 
 async function closeSettings(page: Page): Promise<void> {
-	const dialog = page.getByTestId("settings-dialog");
+	const dialog = page.getByTestId("settings-page");
 	if (!(await dialog.isVisible())) return;
 	await page.keyboard.press("Escape");
 	await expect(dialog).toBeHidden();

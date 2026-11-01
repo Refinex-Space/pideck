@@ -63,9 +63,9 @@ test("dialog title and card title share one typography", async ({ page }) => {
 	const card = await typeOf(page.getByTestId("markdown-preview").locator(".tr-title-card"));
 
 	await openAppSettings(page);
-	const dialog = await typeOf(
-		page.getByTestId("settings-dialog").locator(".tr-title-dialog").first(),
-	);
+	await page.getByTestId("settings-nav-providers").click();
+	await page.getByTestId("custom-endpoints-add").click();
+	const dialog = await typeOf(page.getByRole("dialog").last().locator(".tr-title-dialog").first());
 	expect(dialog).toMatchObject({ size: "16px", weight: "600", lineHeight: "20px" });
 
 	expect(card.size).toBe(dialog.size);

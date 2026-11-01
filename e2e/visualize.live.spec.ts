@@ -15,7 +15,7 @@ async function setVisualizeEnabled(page: Page, enabled: boolean): Promise<void> 
 	if ((await toggle.getAttribute("data-active")) !== String(enabled)) await toggle.click();
 	await expect(toggle).toHaveAttribute("data-active", String(enabled));
 	await page.keyboard.press("Escape");
-	await expect(page.getByTestId("settings-dialog")).toBeHidden();
+	await expect(page.getByTestId("settings-page")).toBeHidden();
 }
 
 async function awaitExpandedCard(page: Page, tool: string): Promise<Locator> {

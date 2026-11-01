@@ -17,7 +17,7 @@ const DIR = join(E2E_FIXTURE_REPO, "activity-fixture");
 
 async function closeSettings(page: Page): Promise<void> {
 	await page.keyboard.press("Escape");
-	await expect(page.getByTestId("settings-dialog")).toBeHidden();
+	await expect(page.getByTestId("settings-page")).toBeHidden();
 }
 
 function seedTree(): void {

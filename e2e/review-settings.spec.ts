@@ -8,7 +8,7 @@ test("Review settings: model + effort render and the auto-fix toggle persists ac
 	await expect(page.getByTestId("connection-status")).toHaveAttribute("data-status", "connected");
 
 	await openAppSettings(page);
-	const dialog = page.getByTestId("settings-dialog");
+	const dialog = page.getByTestId("settings-page");
 	await expect(dialog).toBeVisible();
 	await page.getByTestId("settings-nav-models").click();
 	const reviewGroup = page.getByTestId("models-review-group");
@@ -53,7 +53,7 @@ test("Review settings: the agent-review toggle persists across a reload", async 
 	await expect(page.getByTestId("connection-status")).toHaveAttribute("data-status", "connected");
 
 	await openAppSettings(page);
-	const dialog = page.getByTestId("settings-dialog");
+	const dialog = page.getByTestId("settings-page");
 	await expect(dialog).toBeVisible();
 	await page.getByTestId("settings-nav-models").click();
 	await expect(

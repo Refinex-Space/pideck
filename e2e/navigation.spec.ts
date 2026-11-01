@@ -55,7 +55,7 @@ test("navigation aligns labels and keeps the application menu at the foot of its
 	if (!menuBox) throw new Error("Missing application menu");
 	expect(menuBox.y + menuBox.height).toBeLessThanOrEqual(footerBox.y + 8);
 	await page.getByTestId("open-settings").click();
-	await expect(page.getByTestId("settings-dialog")).toBeVisible();
+	await expect(page.getByTestId("settings-page")).toBeVisible();
 	await page.keyboard.press("Escape");
 	await page.getByTestId("tool-rail-projects").click();
 	await expect(page.getByTestId("left-stack")).toHaveCount(0);

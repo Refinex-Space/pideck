@@ -74,7 +74,7 @@ no window state and never enter the store; the hook reports a rejected action or
 than throwing. Windows caption-button conventions (no tooltips, full-height hit targets, a red-tinted close
 hover via `feedback-error-subtle`) are deliberate; macOS keeps AppKit's traffic lights and never sees the
 bridge.
-`SettingsDialog` portals out of the header and is unaffected. Nothing in the shell names or imports the
+`SettingsPage` is not part of the header: it is a full-page layer over the shell ([[submodule-web-panels]]), and Shell makes the app beneath it `inert` while Settings is open. Nothing in the shell names or imports the
 desktop host. `Shell` mounts the optional update hook, injects the version-gated empty host action, and passes
 normalized state into props-driven controls. Its compact status affordance opens the injected Update section;
 without a capability, neither renders. Panels receive optional React content, never launcher or native-runtime

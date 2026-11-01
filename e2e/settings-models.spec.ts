@@ -60,7 +60,7 @@ test("Models settings save host defaults and apply them to a fresh chat", async 
 
 	try {
 		await connectFixtureProvider(page);
-		const dialog = page.getByTestId("settings-dialog");
+		const dialog = page.getByTestId("settings-page");
 		await expect(dialog).toBeVisible();
 		await page.getByTestId("settings-nav-models").click();
 		const section = page.getByTestId("settings-models");

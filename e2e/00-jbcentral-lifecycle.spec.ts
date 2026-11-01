@@ -75,7 +75,7 @@ test("Central is not installed: the card asks for the host install, and Recheck 
 		await expect(guidance).toContainText("central-cli.labs.jb.gg");
 		await expect(page.getByTestId("jetbrains-connect")).toHaveCount(0);
 		await card.scrollIntoViewIfNeeded();
-		await shot(page.getByTestId("settings-dialog"), GROUP, "00-providers-panel");
+		await shot(page.getByTestId("settings-page"), GROUP, "00-providers-panel");
 		await shot(card, GROUP, "01-not-installed");
 	} finally {
 		setCentralInstalled(true);
@@ -103,7 +103,7 @@ test("Central is installed but signed out: the card offers Sign in, never Connec
 	await expect(page.getByTestId("jetbrains-connect")).toHaveCount(0);
 	await expect(page.getByTestId("jetbrains-signin")).toHaveCount(1);
 	await expect(card.getByTestId("jetbrains-copy-cmd")).toHaveCount(0);
-	await expect(page.getByTestId("settings-dialog")).not.toContainText("E2E_CENTRAL_CHILD_SENTINEL");
+	await expect(page.getByTestId("settings-page")).not.toContainText("E2E_CENTRAL_CHILD_SENTINEL");
 	await shot(card, GROUP, "03-signed-out-offers-signin");
 
 	await page.getByTestId("jetbrains-signin").click();
@@ -201,7 +201,7 @@ test("Central is uninstalled while connected: models are withdrawn, the artifact
 	await waitForCentralState(page, "configured");
 
 	await page.keyboard.press("Escape");
-	await expect(page.getByTestId("settings-dialog")).toBeHidden();
+	await expect(page.getByTestId("settings-page")).toBeHidden();
 	expect(await centralModelsOfferedToNewChats(page)).toBe(1);
 
 	setCentralInstalled(false);
@@ -214,7 +214,7 @@ test("Central is uninstalled while connected: models are withdrawn, the artifact
 		await shot(card, GROUP, "07-uninstalled-while-connected");
 
 		await page.keyboard.press("Escape");
-		await expect(page.getByTestId("settings-dialog")).toBeHidden();
+		await expect(page.getByTestId("settings-page")).toBeHidden();
 		expect(await centralModelsOfferedToNewChats(page)).toBe(0);
 	} finally {
 		setCentralInstalled(true);
@@ -227,7 +227,7 @@ test("Central is uninstalled while connected: models are withdrawn, the artifact
 	await shot(card, GROUP, "08-reinstalled-repairs");
 
 	await page.keyboard.press("Escape");
-	await expect(page.getByTestId("settings-dialog")).toBeHidden();
+	await expect(page.getByTestId("settings-page")).toBeHidden();
 	expect(await centralModelsOfferedToNewChats(page)).toBe(1);
 	assertOnlyReviewedArgv();
 });

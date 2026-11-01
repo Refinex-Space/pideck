@@ -248,7 +248,6 @@ function SkillsPanel({
 		<div data-testid="skills-settings" className="flex flex-col gap-12">
 			<div className="flex items-start justify-between gap-12">
 				<div className="flex min-w-0 flex-col gap-2">
-					<h3 className="tr-title-section text-text-default">{t("chat.skills.title")}</h3>
 					<p data-testid="skills-scope" className="tr-text-metadata text-text-muted">
 						{workspace
 							? t("settings.skills.scopeWorkspace", { name: workspace.name })

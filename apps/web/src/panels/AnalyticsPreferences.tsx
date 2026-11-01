@@ -37,13 +37,3 @@ export function AnalyticsSharingSwitch({
 		</div>
 	);
 }
-
-export function AnalyticsPreferences(props: AnalyticsPreferenceProps) {
-	const t = useT();
-	return (
-		<div className="flex flex-col gap-16 tr-text-metadata text-text-muted">
-			<AnalyticsSharingSwitch {...props} description={t("panels.analytics.shareDescription")} />
-			<p>{t("panels.analytics.reportDetails")}</p>
-		</div>
-	);
-}

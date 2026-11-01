@@ -15,7 +15,7 @@ import { interceptAppWire } from "./fixtures/streamReplay";
 
 async function closeSettings(page: Page): Promise<void> {
 	await page.keyboard.press("Escape");
-	await expect(page.getByTestId("settings-dialog")).toBeHidden();
+	await expect(page.getByTestId("settings-page")).toBeHidden();
 }
 
 async function openLspSettings(page: Page): Promise<void> {
@@ -58,7 +58,7 @@ test("language servers are off until switched on, and the choices survive a relo
 		await expect(page.getByTestId("lsp-builtin-typescript")).toBeVisible();
 		await expect(page.getByTestId("lsp-custom-empty")).toBeVisible();
 		await testInfo.attach("lsp-settings-off", {
-			body: await page.getByTestId("settings-dialog").screenshot({
+			body: await page.getByTestId("settings-page").screenshot({
 				path: testInfo.outputPath("lsp-settings-off.png"),
 			}),
 			contentType: "image/png",
@@ -84,7 +84,7 @@ test("language servers are off until switched on, and the choices survive a relo
 		await expect(mine).toContainText(".mine .mine2");
 		await expect(page.getByTestId("lsp-add-name")).toHaveValue("");
 		await testInfo.attach("lsp-settings", {
-			body: await page.getByTestId("settings-dialog").screenshot({
+			body: await page.getByTestId("settings-page").screenshot({
 				path: testInfo.outputPath("lsp-settings.png"),
 			}),
 			contentType: "image/png",

@@ -90,7 +90,7 @@ const mockupHtml = (label: string) =>
 
 async function openAppearance(page: Page): Promise<Locator> {
 	await openAppSettings(page);
-	const dialog = page.getByTestId("settings-dialog");
+	const dialog = page.getByTestId("settings-page");
 	await expect(dialog).toBeVisible();
 	await page.getByTestId("settings-nav-appearance").click();
 	await expect(dialog).toContainText("Theme");

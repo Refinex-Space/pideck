@@ -148,7 +148,7 @@ export function NetworkForm({
 	const [provider, setProvider] = useState<"openai" | "anthropic">("openai");
 	return (
 		<div data-testid="settings-network" className="flex flex-col gap-32">
-			<SettingsGroup title={t("network.title")} description={t("network.description")}>
+			<SettingsGroup layout="block" description={t("network.description")}>
 				<div className="flex flex-col gap-16">
 					{status.environmentOverride ? (
 						<SettingsNotice variant="warning" testId="network-override">
@@ -254,10 +254,10 @@ export function NetworkForm({
 					</form>
 				</div>
 			</SettingsGroup>
-			<SettingsGroup title={t("network.effective")}>
+			<SettingsGroup layout="block" title={t("network.effective")}>
 				<ProxyRoute route={status.effective} applied />
 			</SettingsGroup>
-			<SettingsGroup title={t("network.detected")}>
+			<SettingsGroup layout="block" title={t("network.detected")}>
 				<div className="flex flex-col gap-16" data-testid="network-detected">
 					<ProxyRoute route={status.detected} />
 					<div className="flex flex-wrap items-center justify-between gap-12">
@@ -273,7 +273,11 @@ export function NetworkForm({
 					</div>
 				</div>
 			</SettingsGroup>
-			<SettingsGroup title={t("network.diagnostics")} description={t("network.diagnosticsHint")}>
+			<SettingsGroup
+				layout="block"
+				title={t("network.diagnostics")}
+				description={t("network.diagnosticsHint")}
+			>
 				<div className="flex flex-col gap-16">
 					<div className="flex flex-wrap items-center justify-between gap-12">
 						<SegmentedControl

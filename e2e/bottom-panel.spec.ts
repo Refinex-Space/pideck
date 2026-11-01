@@ -364,7 +364,7 @@ test("Mod+Shift+J works from xterm, preserves its PTY through hide and reload, a
 	await expect(page.getByRole("dialog")).toBeVisible();
 	await pressPlatformShortcut(page, "Shift+j");
 	await expect(page.getByTestId("bottom-panel")).toBeVisible();
-	await page.getByRole("dialog").getByRole("button", { name: "Close" }).click();
+	await page.getByTestId("settings-back").click();
 	await pressPlatformShortcut(page, "Shift+j");
 	await expect(page.getByTestId("bottom-panel")).toHaveCount(0);
 });

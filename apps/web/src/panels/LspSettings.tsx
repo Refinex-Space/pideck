@@ -212,80 +212,84 @@ export function LspSettingsForm({
 	};
 	return (
 		<SettingsPageContainer testId="settings-lsp">
-			<SettingsGroup title={t("settings.lsp.group")}>
-				<SettingsNotice variant="info" testId="lsp-notice" className="mb-12">
+			<div className="flex flex-col gap-12">
+				<SettingsNotice variant="info" testId="lsp-notice">
 					<p>{t("settings.lsp.notice")}</p>
 				</SettingsNotice>
-				<SettingsRow
-					label={t("settings.lsp.enabled")}
-					description={t("settings.lsp.enabledDescription")}
-					control={
-						<SettingsSwitch
-							checked={config.enabled}
-							disabled={busy}
-							label={t("settings.lsp.enabled")}
-							testId="lsp-enabled"
-							onChange={(enabled) => void onUpdate({ enabled })}
-						/>
-					}
-				/>
-				<SettingsRow
-					label={t("settings.lsp.diagnostics")}
-					description={t("settings.lsp.diagnosticsDescription")}
-					control={
-						<SettingsSwitch
-							checked={config.diagnostics}
-							disabled={busy || !config.enabled}
-							label={t("settings.lsp.diagnostics")}
-							testId="lsp-diagnostics"
-							onChange={(diagnostics) => void onUpdate({ diagnostics })}
-						/>
-					}
-				/>
-				<SettingsRow
-					label={t("settings.lsp.tool")}
-					description={t("settings.lsp.toolDescription")}
-					control={
-						<SettingsSwitch
-							checked={config.tool}
-							disabled={busy || !config.enabled}
-							label={t("settings.lsp.tool")}
-							testId="lsp-tool"
-							onChange={(tool) => void onUpdate({ tool })}
-						/>
-					}
-				/>
-				<SettingsRow
-					label={t("settings.lsp.idle")}
-					description={t("settings.lsp.idleDescription")}
-					control={
-						<span className="flex items-center gap-8">
-							<input
-								type="number"
-								data-testid="lsp-idle"
-								aria-label={t("settings.lsp.idle")}
-								className={`${INPUT} w-72 text-right`}
-								min={LSP_IDLE_MINUTES.min}
-								max={LSP_IDLE_MINUTES.max}
-								step={1}
-								disabled={busy || !config.enabled}
-								value={idle ?? String(config.idleMinutes)}
-								onChange={(event) => setIdle(event.currentTarget.value)}
-								onBlur={commitIdle}
-								onKeyDown={(event) => {
-									if (event.key === "Enter") event.currentTarget.blur();
-								}}
+				<SettingsGroup>
+					<SettingsRow
+						label={t("settings.lsp.enabled")}
+						description={t("settings.lsp.enabledDescription")}
+						control={
+							<SettingsSwitch
+								checked={config.enabled}
+								disabled={busy}
+								label={t("settings.lsp.enabled")}
+								testId="lsp-enabled"
+								onChange={(enabled) => void onUpdate({ enabled })}
 							/>
-							<span className="tr-text-metadata text-text-muted">{t("settings.lsp.idleUnit")}</span>
-						</span>
-					}
-				/>
-				{failure?.scope === "general" && !busy ? (
-					<SettingsNotice variant="error" testId="lsp-error" className="mt-12">
-						<p>{failure.message}</p>
-					</SettingsNotice>
-				) : null}
-			</SettingsGroup>
+						}
+					/>
+					<SettingsRow
+						label={t("settings.lsp.diagnostics")}
+						description={t("settings.lsp.diagnosticsDescription")}
+						control={
+							<SettingsSwitch
+								checked={config.diagnostics}
+								disabled={busy || !config.enabled}
+								label={t("settings.lsp.diagnostics")}
+								testId="lsp-diagnostics"
+								onChange={(diagnostics) => void onUpdate({ diagnostics })}
+							/>
+						}
+					/>
+					<SettingsRow
+						label={t("settings.lsp.tool")}
+						description={t("settings.lsp.toolDescription")}
+						control={
+							<SettingsSwitch
+								checked={config.tool}
+								disabled={busy || !config.enabled}
+								label={t("settings.lsp.tool")}
+								testId="lsp-tool"
+								onChange={(tool) => void onUpdate({ tool })}
+							/>
+						}
+					/>
+					<SettingsRow
+						label={t("settings.lsp.idle")}
+						description={t("settings.lsp.idleDescription")}
+						control={
+							<span className="flex items-center gap-8">
+								<input
+									type="number"
+									data-testid="lsp-idle"
+									aria-label={t("settings.lsp.idle")}
+									className={`${INPUT} w-72 text-right`}
+									min={LSP_IDLE_MINUTES.min}
+									max={LSP_IDLE_MINUTES.max}
+									step={1}
+									disabled={busy || !config.enabled}
+									value={idle ?? String(config.idleMinutes)}
+									onChange={(event) => setIdle(event.currentTarget.value)}
+									onBlur={commitIdle}
+									onKeyDown={(event) => {
+										if (event.key === "Enter") event.currentTarget.blur();
+									}}
+								/>
+								<span className="tr-text-metadata text-text-muted">
+									{t("settings.lsp.idleUnit")}
+								</span>
+							</span>
+						}
+					/>
+					{failure?.scope === "general" && !busy ? (
+						<SettingsNotice variant="error" testId="lsp-error" className="mt-12">
+							<p>{failure.message}</p>
+						</SettingsNotice>
+					) : null}
+				</SettingsGroup>
+			</div>
 			<SettingsGroup
 				title={t("settings.lsp.builtin")}
 				description={t("settings.lsp.builtinDescription")}

@@ -84,7 +84,11 @@ export function LineWidthControl({ kind }: { kind: LineWidthKind }) {
 	return (
 		<div
 			data-testid={`${kind}-line-width-control`}
-			className={cn(SETTINGS_ROWS_CONTAINER, "border-border-muted border-b")}
+			className={cn(
+				SETTINGS_ROWS_CONTAINER,
+				// Full-bleed inside the group card, so its rows pad themselves and their dividers run edge to edge.
+				"border-border-muted border-b [&&]:px-0 [&>*]:px-16",
+			)}
 		>
 			<SettingsRow
 				label={t("settings.lineWidth.label")}

@@ -91,7 +91,7 @@ test("feedback settings and the addressed interview prompt preserve the approved
 	await settingsPopup.close();
 	await expect.poll(() => actions).toEqual([]);
 	await page.keyboard.press("Escape");
-	await expect(page.getByTestId("settings-dialog")).toBeHidden();
+	await expect(page.getByTestId("settings-page")).toBeHidden();
 
 	sendInvitation(browserSocket);
 	const dialog = page.getByTestId("interview-prompt-dialog");

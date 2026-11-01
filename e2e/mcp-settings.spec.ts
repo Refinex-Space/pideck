@@ -24,14 +24,14 @@ const PROJECT_CONFIG_DIR = join(E2E_FIXTURE_REPO, ".pi");
 
 async function openMcpSettings(page: Page): Promise<void> {
 	await openAppSettings(page);
-	await expect(page.getByTestId("settings-dialog")).toBeVisible();
+	await expect(page.getByTestId("settings-page")).toBeVisible();
 	await page.getByTestId("settings-nav-mcp").click();
 	await expect(page.getByTestId("settings-mcp")).toBeVisible();
 }
 
 async function closeSettings(page: Page): Promise<void> {
 	await page.keyboard.press("Escape");
-	await expect(page.getByTestId("settings-dialog")).toBeHidden();
+	await expect(page.getByTestId("settings-page")).toBeHidden();
 }
 
 function serverRow(page: Page, name: string) {
@@ -298,7 +298,7 @@ test("a not-running server opens a chat; a failed one reconnects per chat and sh
 		const openChat = row.getByTestId("mcp-server-action");
 		await expect(openChat).toHaveAttribute("data-action", "open-chat");
 		await openChat.click();
-		await expect(page.getByTestId("settings-dialog")).toBeHidden();
+		await expect(page.getByTestId("settings-page")).toBeHidden();
 		await expect(page.locator('[data-testid="editor-tab"][data-kind="chat"]')).toHaveCount(1);
 
 		await openMcpSettings(page);

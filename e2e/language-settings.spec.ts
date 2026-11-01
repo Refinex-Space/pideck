@@ -21,7 +21,7 @@ function removeLocale(name: string): void {
 }
 
 async function openLanguageSettings(page: Page) {
-	if (!(await page.getByTestId("settings-dialog").isVisible())) {
+	if (!(await page.getByTestId("settings-page").isVisible())) {
 		await openAppSettings(page);
 	}
 	await page.getByTestId("settings-nav-language").click();

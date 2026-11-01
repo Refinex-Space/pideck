@@ -6,7 +6,7 @@ test("settings search filters navigation without switching the current section a
 }) => {
 	await openAppFresh(page);
 	await openAppSettings(page);
-	const dialog = page.getByTestId("settings-dialog");
+	const dialog = page.getByTestId("settings-page");
 	const search = dialog.getByTestId("settings-search");
 	await expect(page.getByTestId("settings-providers")).toBeVisible();
 	await search.fill("Templates");
@@ -31,7 +31,7 @@ test("opening a project template as a file clears settings search on the next op
 }) => {
 	await openWorkspaceChat(page);
 	await openAppSettings(page);
-	const dialog = page.getByTestId("settings-dialog");
+	const dialog = page.getByTestId("settings-page");
 	const search = dialog.getByTestId("settings-search");
 	await search.fill("Templates");
 	await dialog.getByTestId("settings-nav-templates").click();

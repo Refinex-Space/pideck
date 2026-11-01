@@ -49,6 +49,7 @@ export function GithubSettings() {
 	return (
 		<div data-testid="settings-github" className="flex flex-col">
 			<SettingsGroup
+				layout="plain"
 				title={t("settings.github.title")}
 				description={t("settings.github.description")}
 			>

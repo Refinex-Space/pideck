@@ -278,6 +278,7 @@ function ApplyGroup() {
 	};
 	return (
 		<SettingsGroup
+			layout="plain"
 			testId="instructions-apply"
 			title={t("instructions.apply.title")}
 			titleAddon={
@@ -314,6 +315,7 @@ function WorkspaceGroup({
 	const workspace = state.workspace;
 	return (
 		<SettingsGroup
+			layout="plain"
 			testId="instructions-workspace"
 			title={t("instructions.workspace.title")}
 			titleAddon={
@@ -411,7 +413,11 @@ export function InstructionsSettings() {
 	}
 	return (
 		<SettingsPageContainer testId="settings-instructions">
-			<SettingsGroup title={t("instructions.agents.title")} titleAddon={<KindHint kind="agents" />}>
+			<SettingsGroup
+				layout="plain"
+				title={t("instructions.agents.title")}
+				titleAddon={<KindHint kind="agents" />}
+			>
 				<div className="py-12">
 					<InstructionEditor
 						key={state.agents.path}
@@ -422,7 +428,11 @@ export function InstructionsSettings() {
 					/>
 				</div>
 			</SettingsGroup>
-			<SettingsGroup title={t("instructions.append.title")} titleAddon={<KindHint kind="append" />}>
+			<SettingsGroup
+				layout="plain"
+				title={t("instructions.append.title")}
+				titleAddon={<KindHint kind="append" />}
+			>
 				<div className="flex flex-col gap-12 py-12">
 					<button
 						type="button"

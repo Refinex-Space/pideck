@@ -70,7 +70,7 @@ test("Settings → Environment validates, saves and asks for a restart", async (
 	);
 	await expect(section.getByTestId("settings-environment-save")).toBeDisabled();
 	mkdirSync(join(E2E_SCREENSHOT_DIR, "environment-settings"), { recursive: true });
-	await page.getByTestId("settings-dialog").screenshot({ path: SCREENSHOT_PATH });
+	await page.getByTestId("settings-page").screenshot({ path: SCREENSHOT_PATH });
 
 	await page.keyboard.press("Escape");
 	await page.reload();

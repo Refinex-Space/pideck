@@ -3,6 +3,10 @@ import type { ReactNode } from "react";
 
 export const SETTINGS_ROWS_CONTAINER = "flex flex-col [&>*:last-child]:border-b-0";
 
+/** The bordered card a block of rows sits in: dividers run edge to edge and each row pads itself inside. */
+export const SETTINGS_CARD =
+	"flex flex-col rounded-lg border border-border-muted [&>*]:px-16 [&>*:last-child]:border-b-0";
+
 export interface SettingsRowProps {
 	label: string;
 	description?: ReactNode;
@@ -24,7 +28,7 @@ export function SettingsRow({
 		<div
 			data-testid={testId}
 			className={cn(
-				"flex flex-wrap items-center justify-between gap-16 py-16",
+				"flex flex-wrap items-center justify-between gap-16 py-12",
 				!noBorder && "border-border-muted border-b",
 				className,
 			)}

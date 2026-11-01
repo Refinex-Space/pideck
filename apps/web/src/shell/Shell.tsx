@@ -5,7 +5,7 @@ import { NotificationPermissionPrompt, useAttentionNotifications } from "../noti
 import { AnalyticsConsentDialog } from "../panels/AnalyticsConsentDialog";
 import { InterviewPromptDialog } from "../panels/InterviewPromptDialog";
 import { preferredSessionTarget } from "../panels/newSessionTarget";
-import { SettingsDialog } from "../panels/SettingsDialog";
+import { SettingsPage } from "../panels/SettingsPage";
 import { Toaster } from "../panels/Toaster";
 import { useBranchStatus } from "../panels/useBranchStatus";
 import {
@@ -68,6 +68,7 @@ export function Shell() {
 			.getState()
 			.openNewSession({ projectId, target: preferredSessionTarget(projectId), prompt: "" });
 	const sessionSwitcherOpen = useAppStore((s) => s.sessionSwitcherOpen);
+	const settingsOpen = useAppStore((s) => s.settingsOpen);
 
 	const homeProjects = useCollapsibleRegion<HTMLDivElement>(PROJECT_HOME_PROJECTS_REGION_ID);
 
@@ -196,24 +197,26 @@ export function Shell() {
 	return (
 		<DropdownMenu>
 			<div data-testid="shell" className="relative flex h-full min-h-0 min-w-0 flex-col">
-				{hasActiveWorkspace && activeWorkspaceId ? (
-					<div data-testid="workspace-shell-layout" className="h-full min-h-0 min-w-0">
-						<WorkspaceWorkbench
-							workspaceId={activeWorkspaceId}
-							workspaceLocation={workspaceLocation}
-							statusEnvironment={statusEnvironment}
+				<div className="contents" inert={settingsOpen}>
+					{hasActiveWorkspace && activeWorkspaceId ? (
+						<div data-testid="workspace-shell-layout" className="h-full min-h-0 min-w-0">
+							<WorkspaceWorkbench
+								workspaceId={activeWorkspaceId}
+								workspaceLocation={workspaceLocation}
+								statusEnvironment={statusEnvironment}
+								navigationActions={navigationActions}
+								navigationFooter={footer(false)}
+							/>
+						</div>
+					) : (
+						<ProjectHome
+							projects={homeProjects}
+							workspaceHeader={workspaceHeader}
 							navigationActions={navigationActions}
 							navigationFooter={footer(false)}
 						/>
-					</div>
-				) : (
-					<ProjectHome
-						projects={homeProjects}
-						workspaceHeader={workspaceHeader}
-						navigationActions={navigationActions}
-						navigationFooter={footer(false)}
-					/>
-				)}
+					)}
+				</div>
 				{windowControls ? (
 					<NativeWindowControls
 						state={windowControls.state}
@@ -222,9 +225,7 @@ export function Shell() {
 						onClose={windowControls.close}
 					/>
 				) : null}
-				<SettingsDialog
-					updateSettings={updates ? <UpdateSettings updates={updates} /> : undefined}
-				/>
+				<SettingsPage updateSettings={updates ? <UpdateSettings updates={updates} /> : undefined} />
 				{analyticsConsentOpen ? <AnalyticsConsentDialog /> : <InterviewPromptDialog />}
 				<SessionSwitcher
 					open={sessionSwitcherOpen}

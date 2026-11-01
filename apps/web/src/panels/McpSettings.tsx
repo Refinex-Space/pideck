@@ -549,7 +549,6 @@ function McpIntro({ projectName }: { projectName: string | undefined }) {
 	const t = useT();
 	return (
 		<div className="flex flex-col gap-4">
-			<h3 className="tr-title-section text-text-default">{t("mcp.settings.title")}</h3>
 			<p className="text-text-muted tr-text-metadata">
 				{projectName === undefined
 					? t("mcp.settings.introThisProject")

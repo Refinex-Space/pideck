@@ -56,7 +56,7 @@ test("the Welcome provider warning only shows when no provider is connected, and
 	} else {
 		await expect(banner).toContainText("No model provider connected");
 		await page.getByTestId("welcome-connect-provider").click();
-		await expect(page.getByTestId("settings-dialog")).toBeVisible();
+		await expect(page.getByTestId("settings-page")).toBeVisible();
 		await expect(page.getByTestId("settings-providers")).toBeVisible();
 	}
 });
@@ -65,7 +65,7 @@ test("Settings → Providers lists in-app auth options", async ({ page }) => {
 	await openAppFresh(page);
 
 	await openAppSettings(page);
-	await expect(page.getByTestId("settings-dialog")).toBeVisible();
+	await expect(page.getByTestId("settings-page")).toBeVisible();
 	await expect(page.getByTestId("settings-providers")).toBeVisible();
 
 	const anyRow = page.getByTestId("provider-row").or(page.getByTestId("provider-signin-row"));

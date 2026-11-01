@@ -6,7 +6,7 @@ import { toast, useAppStore } from "@/store";
 import { getTransport } from "@/transport";
 import { SegmentedControl, type SegmentedControlOption } from "./SegmentedControl";
 import { SettingsRadioCards, type SettingsRadioChoice } from "./SettingsRadioCards";
-import { SETTINGS_ROWS_CONTAINER } from "./SettingsRow";
+import { SETTINGS_CARD, SettingsRow } from "./SettingsRow";
 
 type ScrollbackOption = "0" | "16" | "64" | "256" | "1024";
 
@@ -124,25 +124,21 @@ export function TerminalSettings() {
 		SCROLLBACK_OPTIONS.find((option) => Number(option.id) === replayKb)?.id ?? null;
 
 	return (
-		<div data-testid="settings-terminal" className={SETTINGS_ROWS_CONTAINER}>
-			<div className="flex flex-col gap-12 py-12">
-				<div className="flex flex-col gap-2">
-					<span className="tr-text-ui text-text-default">
-						{t("settings.terminal.scrollback.title")}
-					</span>
-					<span className="tr-text-metadata text-text-muted">
-						{t("settings.terminal.scrollback.description")}
-					</span>
-				</div>
-				<SegmentedControl
-					name="terminal-scrollback"
-					label={t("settings.terminal.scrollback.label")}
-					options={SCROLLBACK_OPTIONS.map((option) => ({ ...option, label: t(option.label) }))}
-					value={scrollbackValue}
-					onSelect={(id) => select(Number(id))}
-					testId="terminal-scrollback-control"
-				/>
-			</div>
+		<div data-testid="settings-terminal" className={SETTINGS_CARD}>
+			<SettingsRow
+				label={t("settings.terminal.scrollback.title")}
+				description={t("settings.terminal.scrollback.description")}
+				control={
+					<SegmentedControl
+						name="terminal-scrollback"
+						label={t("settings.terminal.scrollback.label")}
+						options={SCROLLBACK_OPTIONS.map((option) => ({ ...option, label: t(option.label) }))}
+						value={scrollbackValue}
+						onSelect={(id) => select(Number(id))}
+						testId="terminal-scrollback-control"
+					/>
+				}
+			/>
 
 			<WindowsShellSettings
 				platform={hostPlatform}

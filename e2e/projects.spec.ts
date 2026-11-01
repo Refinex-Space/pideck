@@ -196,7 +196,7 @@ test("manual path from the rail supersedes a picker started from Welcome", async
 	await pickerReply.barrier;
 	expect(pickerReply.staleOpenWasSent()).toBe(false);
 	await page.keyboard.press("Escape");
-	await expect(page.getByTestId("settings-dialog")).toHaveCount(0);
+	await expect(page.getByTestId("settings-page")).toHaveCount(0);
 	await expect(page.getByTestId("welcome-title")).toHaveText("second-project");
 	await expect(
 		page.getByTestId("project-item").filter({ hasText: basename(E2E_FIXTURE_REPO) }),

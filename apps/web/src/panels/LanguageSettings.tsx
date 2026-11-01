@@ -201,19 +201,14 @@ export function LanguagePage({
 
 	return (
 		<SettingsPageContainer testId="settings-language">
-			<SettingsGroup
-				title={t("settings.language.title")}
-				description={t("settings.language.description")}
-			>
-				<div className="py-12">
-					<SettingsRadioCards
-						name="ui-language"
-						label={t("settings.language.title")}
-						choices={choices}
-						value={value}
-						onSelect={onSelect}
-					/>
-				</div>
+			<SettingsGroup layout="plain" description={t("settings.language.description")}>
+				<SettingsRadioCards
+					name="ui-language"
+					label={t("settings.language.title")}
+					choices={choices}
+					value={value}
+					onSelect={onSelect}
+				/>
 			</SettingsGroup>
 			<SettingsGroup title={t("settings.language.add.title")} testId="language-add">
 				<p className="py-12 tr-text-metadata text-text-muted">

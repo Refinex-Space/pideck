@@ -26,7 +26,7 @@ function removeThemes(): void {
 }
 
 async function openThemeList(page: Page) {
-	const dialog = page.getByTestId("settings-dialog");
+	const dialog = page.getByTestId("settings-page");
 	if (!(await dialog.isVisible())) await openAppSettings(page);
 	await page.getByTestId("settings-nav-appearance").click();
 	await expandDisclosure(dialog.getByTestId("theme-toggle"));

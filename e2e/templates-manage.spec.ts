@@ -24,7 +24,7 @@ test.describe("templates management", () => {
 			await expect(nudge).toBeVisible();
 			await nudge.click();
 
-			const settingsDialog = page.getByTestId("settings-dialog");
+			const settingsDialog = page.getByTestId("settings-page");
 			await expect(settingsDialog).toContainText("Prompt templates");
 
 			const globalRows = page.locator('[data-testid="template-row"][data-scope="global"]');
@@ -73,7 +73,7 @@ test.describe("templates management", () => {
 
 		await openAppSettings(page);
 		await page.getByTestId("settings-nav-templates").click();
-		const settingsDialog = page.getByTestId("settings-dialog");
+		const settingsDialog = page.getByTestId("settings-page");
 		await expect(settingsDialog).toContainText("Prompt templates");
 
 		await page.getByTestId("template-new-global").click();
@@ -126,7 +126,7 @@ test.describe("templates management", () => {
 	}) => {
 		await openWorkspaceChat(page);
 		const input = page.getByTestId("chat-input");
-		const settingsDialog = page.getByTestId("settings-dialog");
+		const settingsDialog = page.getByTestId("settings-page");
 		const editor = page.getByTestId("template-editor-dialog");
 
 		await openAppSettings(page);
@@ -211,7 +211,7 @@ test.describe("templates management", () => {
 		);
 		await expect(row).toBeVisible();
 
-		const settingsDialog = page.getByTestId("settings-dialog");
+		const settingsDialog = page.getByTestId("settings-page");
 		await row.getByTestId("template-open-file").click();
 		await expect(settingsDialog).toBeHidden();
 		await expect(

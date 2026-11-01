@@ -90,6 +90,7 @@ export function EnvironmentForm({
 	return (
 		<div data-testid="settings-environment" className="flex flex-col gap-16">
 			<SettingsGroup
+				layout="block"
 				title={t("settings.environment.title")}
 				description={t("settings.environment.description")}
 			>
@@ -154,9 +155,25 @@ export function EnvironmentForm({
 					</div>
 
 					<div className="flex flex-col gap-8">
-						<span className="tr-text-ui text-text-default">
-							{t("settings.environment.vars.label")}
-						</span>
+						<div className="flex items-center justify-between gap-8">
+							<span className="tr-text-ui text-text-default">
+								{t("settings.environment.vars.label")}
+							</span>
+							<Button
+								variant="ghost"
+								size="m"
+								iconLeft={Plus}
+								data-testid="settings-environment-add-var"
+								onClick={() =>
+									onChange({
+										...draft,
+										vars: [...draft.vars, { id: randomId("env"), name: "", value: "" }],
+									})
+								}
+							>
+								{t("settings.environment.vars.add")}
+							</Button>
+						</div>
 						{draft.vars.map((entry) => {
 							const issue = issues.vars[entry.id];
 							const shown = revealed.has(entry.id);
@@ -231,21 +248,6 @@ export function EnvironmentForm({
 								</div>
 							);
 						})}
-						<Button
-							variant="ghost"
-							size="m"
-							iconLeft={Plus}
-							data-testid="settings-environment-add-var"
-							className="self-start"
-							onClick={() =>
-								onChange({
-									...draft,
-									vars: [...draft.vars, { id: randomId("env"), name: "", value: "" }],
-								})
-							}
-						>
-							{t("settings.environment.vars.add")}
-						</Button>
 					</div>
 
 					{saveFailed ? (

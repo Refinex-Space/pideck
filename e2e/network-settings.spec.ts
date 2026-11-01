@@ -27,11 +27,11 @@ test("network settings save privately, require restart, and survive reload", asy
 		const screenshotDir = join(E2E_SCREENSHOT_DIR, "network-settings");
 		mkdirSync(screenshotDir, { recursive: true });
 		await page
-			.getByTestId("settings-dialog")
+			.getByTestId("settings-page")
 			.screenshot({ path: join(screenshotDir, "network.png") });
 		await page.getByTestId("network-detected").scrollIntoViewIfNeeded();
 		await page
-			.getByTestId("settings-dialog")
+			.getByTestId("settings-page")
 			.screenshot({ path: join(screenshotDir, "network-status.png") });
 		await page.setViewportSize({ width: 390, height: 844 });
 		await page.getByTestId("network-detected").scrollIntoViewIfNeeded();
@@ -41,7 +41,7 @@ test("network settings save privately, require restart, and survive reload", asy
 				.evaluate((element) => element.scrollWidth <= element.clientWidth),
 		).toBe(true);
 		await page
-			.getByTestId("settings-dialog")
+			.getByTestId("settings-page")
 			.screenshot({ path: join(screenshotDir, "network-mobile.png") });
 		await page.setViewportSize({ width: 1280, height: 720 });
 		await page.reload();

@@ -1,8 +1,8 @@
 import { useT } from "@thinkrail/locales/react";
 import { selectAnalyticsConsentSupported, toast, useAppStore } from "@/store";
 import { getTransport } from "@/transport";
-import { AnalyticsDescription, AnalyticsPreferences } from "./AnalyticsPreferences";
-import { SETTINGS_ROWS_CONTAINER, SettingsRow } from "./SettingsRow";
+import { SettingsGroup } from "./SettingsGroup";
+import { SETTINGS_CARD, SettingsRow } from "./SettingsRow";
 import { SettingsSwitch } from "./SettingsSwitch";
 import { useAnalyticsConsent } from "./useAnalyticsConsent";
 
@@ -12,7 +12,7 @@ export function PrivacySettings() {
 	const protocolVersion = useAppStore((s) => s.protocolVersion);
 	if (protocolVersion === null) {
 		return (
-			<div data-testid="settings-privacy" className={SETTINGS_ROWS_CONTAINER}>
+			<div data-testid="settings-privacy" className={SETTINGS_CARD}>
 				<div className="flex items-center justify-between gap-12 border-border-muted border-b py-12">
 					<span className="tr-text-ui text-text-default">{t("settings.privacy.title")}</span>
 					<span className="text-text-muted tr-text-metadata">
@@ -31,20 +31,36 @@ function AdditionalAnalyticsSettings() {
 	const { pending, error, save } = useAnalyticsConsent();
 
 	return (
-		<div data-testid="settings-privacy" className={SETTINGS_ROWS_CONTAINER}>
-			<div className="flex flex-col gap-2 pb-8">
-				<h3 className="tr-title-section text-text-default">{t("settings.privacy.title")}</h3>
-				<p className="tr-text-metadata text-text-muted">
-					<AnalyticsDescription />
-				</p>
-			</div>
-			<AnalyticsPreferences enabled={enabled} disabled={pending} onChange={save} />
+		<SettingsGroup
+			testId="settings-privacy"
+			title={t("settings.privacy.title")}
+			description={t("panels.analytics.description")}
+		>
+			<SettingsRow
+				label={t("panels.analytics.shareLabel")}
+				description={t("panels.analytics.shareDescription")}
+				control={
+					<SettingsSwitch
+						checked={enabled}
+						disabled={pending}
+						label={t("panels.analytics.shareLabel")}
+						testId="analytics-toggle"
+						onChange={save}
+					/>
+				}
+			/>
+			<p className="py-12 tr-text-metadata text-text-muted">
+				{t("panels.analytics.reportDetails")}
+			</p>
 			{error && (
-				<p role="alert" className="tr-text-metadata text-feedback-error py-12">
+				<p
+					role="alert"
+					className="border-border-muted border-t py-12 tr-text-metadata text-feedback-error"
+				>
 					{error}
 				</p>
 			)}
-		</div>
+		</SettingsGroup>
 	);
 }
 
@@ -59,13 +75,11 @@ function LegacyPrivacySettings() {
 	};
 
 	return (
-		<div data-testid="settings-privacy" className={SETTINGS_ROWS_CONTAINER}>
-			<div className="flex flex-col gap-2 pb-8">
-				<h3 className="tr-title-section text-text-default">{t("settings.privacy.title")}</h3>
-				<p className="tr-text-metadata text-text-muted">
-					<AnalyticsDescription />
-				</p>
-			</div>
+		<SettingsGroup
+			testId="settings-privacy"
+			title={t("settings.privacy.title")}
+			description={t("panels.analytics.description")}
+		>
 			<SettingsRow
 				label={t("settings.privacy.share")}
 				control={
@@ -77,6 +91,6 @@ function LegacyPrivacySettings() {
 					/>
 				}
 			/>
-		</div>
+		</SettingsGroup>
 	);
 }

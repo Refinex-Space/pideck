@@ -117,7 +117,7 @@ test("a shell start failure explains recovery and retries the same tab", async (
 	await expect(page.getByTestId("settings-terminal")).toBeVisible();
 	await expect(page.getByTestId("settings-nav-terminal")).toHaveAttribute("data-active", "true");
 	await page.keyboard.press("Escape");
-	await expect(page.getByTestId("settings-dialog")).toHaveCount(0);
+	await expect(page.getByTestId("settings-page")).toHaveCount(0);
 
 	const retryButton = terminal.getByTestId("terminal-start-retry");
 	await retryButton.click();

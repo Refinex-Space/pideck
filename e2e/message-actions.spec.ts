@@ -12,7 +12,7 @@ import { seedWorkspaceSession } from "./fixtures/sessions";
 
 async function restoreChatWidthBounded(page: Page): Promise<void> {
 	if (page.isClosed()) return;
-	if (!(await page.getByTestId("settings-dialog").isVisible())) {
+	if (!(await page.getByTestId("settings-page").isVisible())) {
 		await openAppSettings(page);
 	}
 	await page.getByTestId("settings-nav-chat").click();

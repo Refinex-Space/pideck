@@ -481,14 +481,14 @@ Connection Status and the **Status Dock** beside the chat (usage, tasks, connect
 
 ---
 
-# Settings Dialog
+# Settings Page
 
-- **Canonical name:** Settings Dialog.
-- **Implementation:** `panels/SettingsDialog.tsx` → `SettingsDialog` (store-driven; open state in the
+- **Canonical name:** Settings Page (was Settings Dialog).
+- **Implementation:** `panels/SettingsPage.tsx` → `SettingsPage` (store-driven; open state in the
   store so multiple surfaces can open it deep-linked).
-- **Parent:** App Shell (mounted once inside the Top Bar's `<header>`).
-- **Position:** Modal overlay; a two-pane shell (left section rail + scrollable content pane; mobile
-  collapses the rail to a horizontal strip).
+- **Parent:** App Shell (mounted once, over the workbench).
+- **Position:** Full page over the shell; a two-pane layout (left section rail wearing the sidebar surface, with a
+  Back entry on top, + scrollable content column; mobile collapses the rail to a horizontal strip).
 - **Sections (each its own component):**
 
 | Canonical name | Implementation | Responsibility |

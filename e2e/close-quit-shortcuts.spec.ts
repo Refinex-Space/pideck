@@ -262,7 +262,7 @@ test("native open-settings opens Settings, keeps it as is, and opens above the n
 	await installNativeShortcuts(page, "MacIntel");
 	await openFixtureProject(page);
 	await expectSettingsTooltip(page, "Settings (⌘,)");
-	const settings = page.getByTestId("settings-dialog");
+	const settings = page.getByTestId("settings-page");
 
 	await page.locator("body").click();
 	await page.keyboard.press("Meta+Comma");
@@ -293,7 +293,7 @@ test("Windows Ctrl+, opens Settings, from a terminal too; Shift+Comma does not",
 	await openFixtureProject(page);
 	await createWorkspaceViaDialog(page);
 	await expectSettingsTooltip(page, "Settings (Ctrl+,)");
-	const settings = page.getByTestId("settings-dialog");
+	const settings = page.getByTestId("settings-page");
 
 	await revealWorkbenchTerminal(page);
 	await visibleTerminal(page).locator(".xterm-helper-textarea").focus();
@@ -329,5 +329,5 @@ test("the browser binds no Settings shortcut", async ({ page }) => {
 	});
 	expect(prevented).toBe(false);
 	await page.keyboard.press("Control+Comma");
-	await expect(page.getByTestId("settings-dialog")).toHaveCount(0);
+	await expect(page.getByTestId("settings-page")).toHaveCount(0);
 });

@@ -10,7 +10,7 @@ import {
 import { toast, useAppStore } from "@/store";
 import { getTransport } from "@/transport";
 import { SettingsNotice } from "./SettingsNotice";
-import { SETTINGS_ROWS_CONTAINER, SettingsRow } from "./SettingsRow";
+import { SETTINGS_CARD, SettingsRow } from "./SettingsRow";
 import { SettingsSwitch } from "./SettingsSwitch";
 
 function HowToEnableInstructions() {
@@ -85,7 +85,7 @@ export function NotificationsSettings() {
 	const browserPermission = enabled && channelKind === "browser" ? permission : "granted";
 
 	return (
-		<div data-testid="settings-notifications" className={SETTINGS_ROWS_CONTAINER}>
+		<div data-testid="settings-notifications" className={SETTINGS_CARD}>
 			<SettingsRow
 				label={t("settings.notifications.enable")}
 				description={

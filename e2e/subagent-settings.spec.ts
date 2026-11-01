@@ -27,7 +27,7 @@ function controls(page: Page) {
 }
 
 async function closeSettings(page: Page): Promise<void> {
-	const dialog = page.getByTestId("settings-dialog");
+	const dialog = page.getByTestId("settings-page");
 	if (!(await dialog.isVisible())) return;
 	await page.evaluate(() => {
 		if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
@@ -186,7 +186,7 @@ test("global and workspace subagent limits persist, inherit, and converge across
 		await expect(page.getByText("Use 1–16")).toBeVisible();
 		await source.globalLimit.press("Escape");
 		await expect(source.globalLimit).toHaveValue("4");
-		await expect(page.getByTestId("settings-dialog")).toBeVisible();
+		await expect(page.getByTestId("settings-page")).toBeVisible();
 		await source.globalLimit.fill("6");
 		await source.globalLimit.press("Enter");
 		await expect(observer.globalLimit).toHaveValue("6");

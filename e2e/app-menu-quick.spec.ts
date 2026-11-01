@@ -12,7 +12,7 @@ test("the application menu switches theme mode and language without opening sett
 	await page.getByTestId("app-menu-appearance").click();
 	await page.getByTestId("app-menu-theme-dark").click();
 	await expect(html).toHaveAttribute("data-theme", /dark/);
-	await expect(page.getByTestId("settings-dialog")).toHaveCount(0);
+	await expect(page.getByTestId("settings-page")).toHaveCount(0);
 
 	await page.getByTestId("app-menu").click();
 	await page.getByTestId("app-menu-appearance").click();

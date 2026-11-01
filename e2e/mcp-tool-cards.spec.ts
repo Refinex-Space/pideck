@@ -177,7 +177,7 @@ test("MCP results render as cards with structured content, Full output and a sig
 		await expect(signIn.getByTestId("mcp-output")).toHaveAttribute("data-failed", "true");
 		await shot(signIn, "mcp-tool-cards", "sign-in");
 		await signIn.getByTestId("mcp-cli-action").click();
-		await expect(page.getByTestId("settings-dialog")).toBeVisible();
+		await expect(page.getByTestId("settings-page")).toBeVisible();
 		await expect(page.getByTestId("settings-mcp")).toBeVisible();
 		await expect(page.getByTestId("settings-nav-mcp")).toHaveAttribute("data-active", "true");
 	} finally {
@@ -216,7 +216,7 @@ test("provider-backed MCP failures open Providers rather than MCP OAuth", async 
 	await step.getByTestId("mcp-cli-action").click();
 	await expect(page.getByTestId("settings-providers")).toBeVisible();
 	await expect(page.getByTestId("settings-nav-providers")).toHaveAttribute("data-active", "true");
-	await shot(page.getByTestId("settings-dialog"), "mcp-tool-cards", "provider-sign-in-destination");
+	await shot(page.getByTestId("settings-page"), "mcp-tool-cards", "provider-sign-in-destination");
 });
 
 test("resource listings, resource reads and tool_search render as their own cards", async ({

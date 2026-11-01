@@ -11,7 +11,7 @@ test("privacy controls additional data without disabling basics and persists acr
 	await expect(page.getByTestId("connection-status")).toHaveAttribute("data-status", "connected");
 
 	await openAppSettings(page);
-	const dialog = page.getByTestId("settings-dialog");
+	const dialog = page.getByTestId("settings-page");
 	await expect(dialog).toBeVisible();
 	await page.getByTestId("settings-nav-privacy").click();
 	await expect(dialog).toContainText("Usage analytics");

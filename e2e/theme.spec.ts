@@ -21,7 +21,7 @@ interface ThemeOption {
 
 async function openAppearance(page: Page) {
 	await openAppSettings(page);
-	const dialog = page.getByTestId("settings-dialog");
+	const dialog = page.getByTestId("settings-page");
 	await expect(dialog).toBeVisible();
 	await page.getByTestId("settings-nav-appearance").click();
 	await expect(dialog).toContainText("Theme");
@@ -64,7 +64,7 @@ async function restoreSystemPairLight(
 	light: string,
 	fixedAppearance: ThemeOption["appearance"],
 ): Promise<void> {
-	const dialog = page.getByTestId("settings-dialog");
+	const dialog = page.getByTestId("settings-page");
 	if (!(await dialog.isVisible())) await openAppearance(page);
 	await dialog.getByTestId("theme-mode-system").click();
 	const trigger = dialog.getByTestId("system-theme-light-trigger");

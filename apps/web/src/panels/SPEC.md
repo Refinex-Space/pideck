@@ -572,8 +572,8 @@ a project picker, the prompt hero, and the reused
   workbench and below native window controls and Radix portals, `role="dialog"` + `aria-modal` so the global
   shortcut layers (`MODAL_LAYER_SELECTOR`) still treat it as the modal it replaced (a second ⌘, keeps it as is).
   The shell wraps the app underneath in an `inert` `display: contents` element, so it stays mounted — terminals,
-  drafts and layout are untouched — but unreachable. The left column wears the navigation sidebar's surface
-  (`bg-container-sidebar-bg`, 288px at `md`+, the same 40px drag row with the macOS inset) and starts with the
+  drafts and layout are untouched — but unreachable. The left column shares the page surface with the content column
+  (no fill of its own, only a hairline between them; 288px at `md`+, the same 40px drag row with the macOS inset) and starts with the
   **Back** entry (`settings-back`), then the search field, then the grouped list; the right column is the canvas
   with a 40px drag row (Windows inset), a centred content column (max 46rem) and a page title
   (`settings-page-title`, `tr-heading-md`) that names the active section, so a panel does not repeat it. It

@@ -113,7 +113,7 @@ export function ProjectHome({
 						aria-label={t("shell.projectHome.projects")}
 						aria-hidden={collapsed || undefined}
 						inert={collapsed ? true : undefined}
-						className="flex h-full min-h-0 flex-col bg-container-sidebar-bg"
+						className="flex h-full min-h-0 flex-col bg-container-workspace-bg [--quiet-scroll-surface-bg:var(--color-container-workspace-bg)]"
 					>
 						<div
 							data-testid="navigation-chrome"

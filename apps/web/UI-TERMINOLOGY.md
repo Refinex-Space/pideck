@@ -487,7 +487,7 @@ Connection Status and the **Status Dock** beside the chat (usage, tasks, connect
 - **Implementation:** `panels/SettingsPage.tsx` → `SettingsPage` (store-driven; open state in the
   store so multiple surfaces can open it deep-linked).
 - **Parent:** App Shell (mounted once, over the workbench).
-- **Position:** Full page over the shell; a two-pane layout (left section rail wearing the sidebar surface, with a
+- **Position:** Full page over the shell; a two-pane layout (left section rail on the page surface (same as the content column), with a
   Back entry on top, + scrollable content column; mobile collapses the rail to a horizontal strip).
 - **Sections (each its own component):**
 

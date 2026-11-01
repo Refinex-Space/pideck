@@ -149,7 +149,7 @@ function SettingsPageContent({ updateSettings }: { updateSettings?: ReactNode })
 		>
 			<div
 				data-testid="settings-sidebar"
-				className="flex shrink-0 flex-col border-border-muted border-b bg-container-sidebar-bg md:w-288 md:border-r md:border-b-0"
+				className="flex shrink-0 flex-col border-border-muted border-b md:w-288 md:border-r md:border-b-0"
 			>
 				<div className="window-drag flex h-topbar-row shrink-0 items-center px-8">
 					<div aria-hidden="true" className="w-window-chrome-inset-left shrink-0" />
@@ -176,7 +176,7 @@ function SettingsPageContent({ updateSettings }: { updateSettings?: ReactNode })
 						placeholder={t("settings.dialog.search")}
 						value={query}
 						onChange={(event) => setQuery(event.target.value)}
-						className="h-32 w-full rounded-lg bg-control-bg pr-8 pl-32 tr-text-ui text-text-default outline-none placeholder:text-text-muted focus-visible:ring-1 focus-visible:ring-focus-ring"
+						className="h-32 w-full rounded-lg border border-control-border-default bg-control-bg pr-8 pl-32 tr-text-ui text-text-default outline-none placeholder:text-text-muted focus-visible:ring-1 focus-visible:ring-focus-ring"
 					/>
 				</div>
 				<nav

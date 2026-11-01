@@ -1,5 +1,5 @@
 import { expect, type Page, test } from "@playwright/test";
-import { openAppSettings, openFixtureProject } from "./fixtures/app";
+import { openAppSettings, openFixtureProject, openWorkspaceChat } from "./fixtures/app";
 import { shot } from "./fixtures/screenshots";
 
 async function openSettings(page: Page) {
@@ -9,6 +9,40 @@ async function openSettings(page: Page) {
 	await expect(settings).toBeVisible();
 	return settings;
 }
+
+async function surfaceColor(page: Page, utility: string): Promise<string> {
+	return page.evaluate((className) => {
+		const probe = document.createElement("span");
+		probe.className = className;
+		document.body.append(probe);
+		const color = getComputedStyle(probe).backgroundColor;
+		probe.remove();
+		return color;
+	}, utility);
+}
+
+test("the navigation sidebar and the settings sidebar sit on the same surface as the content", async ({
+	page,
+}) => {
+	await openWorkspaceChat(page);
+	const canvas = await surfaceColor(page, "bg-container-workspace-bg");
+	const left = page.getByTestId("left-column");
+	await expect(left).toHaveCSS("background-color", canvas);
+	await shot(left, "settings-page", "navigation-sidebar");
+
+	await openAppSettings(page);
+	const settings = page.getByTestId("settings-page");
+	await expect(settings).toHaveCSS(
+		"background-color",
+		await surfaceColor(page, "bg-container-content-bg"),
+	);
+	// No fill of its own: the sidebar is the page surface, divided from the content by a hairline.
+	await expect(page.getByTestId("settings-sidebar")).toHaveCSS(
+		"background-color",
+		"rgba(0, 0, 0, 0)",
+	);
+	await shot(settings, "settings-page", "sidebar-surface");
+});
 
 test("Settings is a full page: Back and Escape leave it, and the app underneath is inert", async ({
 	page,

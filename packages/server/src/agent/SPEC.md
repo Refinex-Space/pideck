@@ -1289,6 +1289,11 @@ settings or workspaces edge. The owning parent graph records this package depend
 
 ## MCP servers
 
+`listMcpConfiguration(project?)` exposes the existing masked file summaries and diagnostics without
+consulting live sessions, starting a probe, or loading extensions. User-only reads have project trust
+disabled; project reads use the selected project's root path, Pi resource trust, approvals and overrides.
+No raw entries or credentials are returned. `listMcpServers` remains the workspace connection-status path.
+
 pi's built-in MCP is the only MCP engine: connections, OAuth, exposure, resources, result truncation and
 the `/mcp` command stay pi's; ThinkRail owns what a multi-session GUI host owes around it.
 

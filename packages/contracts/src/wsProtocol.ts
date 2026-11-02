@@ -29,6 +29,7 @@ import type {
 	JbcentralQuotaSnapshot,
 	LocalLocalesSnapshot,
 	LoginReply,
+	McpConfigurationResult,
 	McpExposure,
 	McpListResult,
 	McpReadOutputResult,
@@ -129,7 +130,8 @@ export type TemplateReadLocation =
 
 // PiDeck-owned feature versions sit above every thinkrail one (the fork syncs up to 102), so a version number
 // never means two features and upstream's constants keep their numbers when it is merged or cherry-picked.
-export const PROTOCOL_VERSION = 109;
+export const PROTOCOL_VERSION = 110;
+export const MCP_CONFIGURATION_PROTOCOL_VERSION = 110;
 export const PREDICTION_PROTOCOL_VERSION = 109;
 export const INSTRUCTIONS_PROTOCOL_VERSION = 108;
 export const SPEECH_PROTOCOL_VERSION = 107;
@@ -402,6 +404,7 @@ export const WS_METHODS = {
 	templateSave: "template.save",
 	templateDelete: "template.delete",
 	mcpList: "mcp.list",
+	mcpListConfiguration: "mcp.listConfiguration",
 	mcpAdd: "mcp.add",
 	mcpUpdate: "mcp.update",
 	mcpRemove: "mcp.remove",
@@ -1191,6 +1194,7 @@ export interface WsMethodMap {
 		params: { workspaceId?: string; scope: TemplateScope; name: string };
 		result: Ack;
 	};
+	"mcp.listConfiguration": { params: { projectId?: string }; result: McpConfigurationResult };
 	"mcp.list": { params: { workspaceId: string }; result: McpListResult };
 	"mcp.add": {
 		params: {

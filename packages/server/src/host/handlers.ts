@@ -261,6 +261,7 @@ import {
 	mcpAdd,
 	mcpApprove,
 	mcpList,
+	mcpListConfiguration,
 	mcpLogin,
 	mcpLogout,
 	mcpReadLog,
@@ -1199,6 +1200,7 @@ const handlers: WsHandlers = {
 		return { ok: true } as const;
 	},
 	"mcp.list": (params) => mcpList(params),
+	"mcp.listConfiguration": (params) => mcpListConfiguration(params),
 	"mcp.add": (params) => mcpAdd(params),
 	"mcp.update": (params) => mcpUpdate(params),
 	"mcp.remove": (params) => mcpRemove(params),

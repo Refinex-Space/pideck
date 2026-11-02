@@ -26,7 +26,9 @@ it is not a PiDeck release. Signing, notarization and a PiDeck automatic-update 
   review flows. Some flows can create Git commits; review their behavior before using them on valuable
   work. Repository instructions alone do not enforce runtime authorization.
 - **Connect tools through MCP.** Configure servers and review the host's permission prompts. PiDeck
-  retains the upstream engine, extension boundaries and tool behavior.
+  retains the upstream engine, extension boundaries and tool behavior. Settings lists user-level MCP
+  configuration even without a workspace; selecting a trusted project also shows its `.pi/mcp.json`.
+  Workspace management and session connection status remain available after opening a workspace.
 - **Give the agent code intelligence.** Optional, off by default: the host can run the language servers
   already installed on your machine (TypeScript, Java, Python, Go, Rust and more, or your own) in projects you
   have trusted, so the agent can follow definitions and references and sees a file's errors right after

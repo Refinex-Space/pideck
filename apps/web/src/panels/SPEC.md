@@ -611,8 +611,14 @@ a project picker, the prompt hero, and the reused
   Save/Apply button); an invalid draft stays visible with `aria-invalid` and a visible range message and is
   never sent; Escape reverts to the authoritative value; the input carries `data-settings-draft-input`;
   a rejected save toasts and the authoritative value stays in charge. **`McpSettings`** is the **MCP servers** section
-  (hidden below `MCP_PROTOCOL_VERSION`). It describes the active workspace's project
-  (no active workspace → "Open a workspace to manage its MCP servers") and reads `mcp.list` through
+  (hidden below `MCP_PROTOCOL_VERSION`). Without an active workspace, hosts at
+  `MCP_CONFIGURATION_PROTOCOL_VERSION` expose a read-only configuration list through `mcp.listConfiguration`:
+  user servers are always listed, and the selected trusted project's root configuration is added. Untrusted
+  project files stay unread. Reopening, reconnecting, changing project or changing trust remounts/rereads
+  the snapshot; disposed reads cannot install late results. These rows say Configured rather than claiming
+  connection state, preserve invalid/disabled/approval states, allow Details, and disable management actions.
+  File errors and empty lists remain visible. Older hosts keep the workspace-required hint without issuing
+  unsupported requests. With an active workspace, it describes that workspace's project and reads `mcp.list` through
   `transport`'s `watchMcpWorkspace` — on mount, every welcome, a project-trust change, and with bounded
   backoff while a live chat still reports a server `starting`, because the host pushes no connected edge.
   Rows come from the store's `deriveMcpServerRows`. Its row `effective` flag gates name-only Sign in,

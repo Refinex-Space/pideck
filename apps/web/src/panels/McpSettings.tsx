@@ -7,13 +7,16 @@ import {
 	RiShieldCheckLine as ShieldCheck,
 	RiAlertLine as TriangleAlert,
 } from "@remixicon/react";
-import type {
-	McpConfigFileError,
-	McpListResult,
-	McpServerEntryInput,
-	McpServerScope,
-	McpServerSummary,
-	Workspace,
+import {
+	MCP_CONFIGURATION_PROTOCOL_VERSION,
+	type McpConfigFileError,
+	type McpConfigurationResult,
+	type McpListResult,
+	type McpServerEntryInput,
+	type McpServerScope,
+	type McpServerSummary,
+	type Project,
+	type Workspace,
 } from "@thinkrail/contracts";
 import type { MessageKey } from "@thinkrail/locales";
 import { currentTranslator, t as translate, useT } from "@thinkrail/locales/react";
@@ -42,6 +45,7 @@ import {
 	type McpServerRow,
 	selectActiveWorkspace,
 	selectChatTitle,
+	selectContextProject,
 	selectLoginBusy,
 	toast,
 	useAppStore,
@@ -672,19 +676,127 @@ export function McpEmptyState({
 }
 
 export function McpSettings() {
-	const t = useT();
 	const workspace = useAppStore(selectActiveWorkspace);
-	if (!workspace) {
-		return (
-			<section data-testid="settings-mcp" className="flex flex-col gap-16">
-				<McpIntro projectName={undefined} />
-				<p data-testid="mcp-no-workspace" className="text-text-muted tr-text-ui">
-					{t("mcp.settings.noWorkspace")}
+	const project = useAppStore(selectContextProject);
+	const welcome = useAppStore((s) => s.welcomeGeneration);
+	const connected = useAppStore((s) => s.status === "connected");
+	return workspace ? (
+		<McpWorkspaceSettings key={workspace.id} workspace={workspace} />
+	) : (
+		<McpConfigurationSettings
+			key={`${project?.id}:${project?.piResourceTrust}:${welcome}:${connected}`}
+			project={project}
+		/>
+	);
+}
+
+function McpConfigurationSettings({ project }: { project: Project | null }) {
+	const t = useT();
+	const connected = useAppStore((s) => s.status === "connected");
+	const supported = useAppStore(
+		(s) => (s.protocolVersion ?? 0) >= MCP_CONFIGURATION_PROTOCOL_VERSION,
+	);
+	const projectId = project?.id;
+	const [result, setResult] = useState<McpConfigurationResult | null>(null);
+	const [failure, setFailure] = useState<string | null>(null);
+	const [attempt, setAttempt] = useState(0);
+	const [details, setDetails] = useState<string | null>(null);
+	useEffect(() => {
+		if (!connected || !supported) return;
+		let disposed = false;
+		setFailure(null);
+		void getTransport()
+			.request("mcp.listConfiguration", projectId === undefined ? {} : { projectId })
+			.then(
+				(value) => {
+					if (!disposed) setResult(value);
+				},
+				(error: unknown) => {
+					if (!disposed) setFailure(errorText(error));
+				},
+			);
+		return () => {
+			disposed = true;
+		};
+	}, [projectId, connected, supported, attempt]);
+	const rows = deriveMcpServerRows(
+		{
+			servers: result?.servers ?? null,
+			configErrors: result?.configErrors ?? [],
+			handledElsewhere: null,
+			sessions: {},
+		},
+		0,
+	);
+	const detailRow = rows.find((row) => row.key === details);
+	const viewOf = (row: McpServerRow): McpRowView =>
+		row.state === "not-running"
+			? { label: t("mcp.state.configured"), tone: "neutral" }
+			: mcpRowView(t, row, 0);
+	return (
+		<section data-testid="settings-mcp" className="flex flex-col gap-16">
+			{project ? (
+				<McpIntro projectName={project.name} />
+			) : (
+				<p className="text-text-muted tr-text-metadata">{t("mcp.settings.introGlobal")}</p>
+			)}
+			<p data-testid="mcp-no-workspace" className="text-text-muted tr-text-ui">
+				{t(supported ? "mcp.settings.configurationOnly" : "mcp.settings.noWorkspace")}
+			</p>
+			{project && project.piResourceTrust !== "granted" ? (
+				<p data-testid="mcp-untrusted" className="text-text-muted tr-text-metadata">
+					{t("mcp.settings.untrusted")}
 				</p>
-			</section>
-		);
-	}
-	return <McpWorkspaceSettings key={workspace.id} workspace={workspace} />;
+			) : null}
+			<McpConfigFileErrors errors={result?.configErrors ?? []} />
+			{failure ? (
+				<div className="flex flex-col items-start gap-8">
+					<p role="alert" data-testid="mcp-error" className="text-text-muted tr-text-ui">
+						{t("mcp.settings.readFailed", { error: failure })}
+					</p>
+					<Button
+						variant="outline"
+						size="m"
+						data-testid="mcp-retry"
+						onClick={() => setAttempt((value) => value + 1)}
+					>
+						{t("common.retry")}
+					</Button>
+				</div>
+			) : result === null ? (
+				supported ? (
+					<SkeletonRows rows={3} label={t("mcp.settings.loading")} />
+				) : null
+			) : rows.length === 0 ? (
+				<p data-testid="mcp-empty" className="text-text-muted tr-text-ui">
+					{t("mcp.empty.title")}
+				</p>
+			) : (
+				<ul className="flex flex-col gap-4" data-testid="mcp-server-list">
+					{rows.map((row) => (
+						<McpServerRowView
+							key={row.key}
+							row={row}
+							view={viewOf(row)}
+							readOnly
+							busy={false}
+							error={undefined}
+							onCommand={(command) => {
+								if (command.kind === "details") setDetails(row.key);
+							}}
+						/>
+					))}
+				</ul>
+			)}
+			{detailRow ? (
+				<McpDetailsDialog
+					row={detailRow}
+					view={viewOf(detailRow)}
+					onClose={() => setDetails(null)}
+				/>
+			) : null}
+		</section>
+	);
 }
 
 type AddRequest = { tab: McpAddTab; preset?: McpPreset; key: number };

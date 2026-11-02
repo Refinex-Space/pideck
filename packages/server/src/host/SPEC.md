@@ -8,6 +8,13 @@ depends-on: [module-contracts]
 tags: [host, public-surface-checked]
 ---
 
+## MCP configuration browsing
+
+`mcp.listConfiguration` resolves an optional project id against the open-project records, then calls
+agent's `listMcpConfiguration`. No workspace is created or selected. Missing project ids mean user-only
+configuration; unknown ids fail rather than silently falling back. Workspace-bound management stays
+on the existing `mcp.*` handlers.
+
 ## Responsibility
 
 The wire and composition root: `Bun.serve` HTTP+WS, static SPA serving, the WS method→handler registry,

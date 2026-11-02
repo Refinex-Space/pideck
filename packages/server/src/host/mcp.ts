@@ -1,5 +1,6 @@
 import type {
 	LoginFrame,
+	McpConfigurationResult,
 	McpExposure,
 	McpListResult,
 	McpReadOutputResult,
@@ -14,6 +15,7 @@ import { CodedError } from "@thinkrail/shared/codedError";
 import {
 	effectiveMcpServerConfig,
 	getSessionWorkspaceId,
+	listMcpConfiguration,
 	listMcpServers,
 	liveSessionIdsOf,
 	type McpProbeAction,
@@ -164,6 +166,13 @@ function reloadLiveSessions(workspaceIds: readonly string[]): void {
 const projectWorkspaces = (project: Project): string[] =>
 	listWorkspaceRecords(project.id).map((workspace) => workspace.id);
 const allWorkspaces = (): string[] => listAllWorkspaceRecords().map((workspace) => workspace.id);
+
+export function mcpListConfiguration(params: { projectId?: string }): McpConfigurationResult {
+	if (params.projectId === undefined) return listMcpConfiguration();
+	const project = getProjects().find((candidate) => candidate.id === params.projectId);
+	if (!project) throw new Error(`Unknown project: ${params.projectId}`);
+	return listMcpConfiguration(project);
+}
 
 export function mcpList(params: { workspaceId: string }): Promise<McpListResult> {
 	const { workspace, project } = target(params.workspaceId);

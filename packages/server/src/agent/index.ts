@@ -42,6 +42,7 @@ export {
 	writeMcpServerEntry,
 } from "./mcp";
 export {
+	listMcpConfiguration,
 	listMcpServers,
 	mcpOwnershipGuard,
 	readMcpToolOutput,

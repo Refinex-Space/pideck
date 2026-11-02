@@ -660,6 +660,8 @@ export interface McpConfigFileError {
 	message: string;
 }
 
+export type McpConfigurationResult = Pick<McpListResult, "servers" | "configErrors">;
+
 export interface McpListResult {
 	servers: McpServerSummary[];
 	statuses: McpStatusSnapshot[];

@@ -1117,3 +1117,44 @@ test("probes refuse names with no admitted valid config", async () => {
 		}
 	}
 });
+
+test("MCP configuration can be listed without a workspace and is scoped to the selected trusted project", async () => {
+	writeFileSync(
+		join(agentDir, "mcp.json"),
+		JSON.stringify({
+			mcpServers: { global: { command: "must-not-run", args: ["--token=fixture-secret"] } },
+		}),
+	);
+	mkdirSync(join(repo, ".pi"));
+	writeFileSync(
+		join(repo, ".pi", "mcp.json"),
+		JSON.stringify({
+			mcpServers: { local: { command: "must-not-run" } },
+		}),
+	);
+	writeFileSync(join(root, "data", "workspaces.json"), "[]");
+
+	const global = await request("mcp.listConfiguration", {});
+	expect(global.servers.map((server) => server.name)).toEqual(["global"]);
+	expect(JSON.stringify(global)).not.toContain("fixture-secret");
+	expect(global).not.toHaveProperty("statuses");
+
+	const project = await request("mcp.listConfiguration", { projectId: "p1" });
+	expect(project.servers.map((server) => server.name)).toEqual(["global", "local"]);
+	expect(find(project, "project", "local")?.approval?.state).toBe("pending");
+	setProjectTrust("p1", false);
+	expect(
+		(await request("mcp.listConfiguration", { projectId: "p1" })).servers.map(
+			(server) => server.name,
+		),
+	).toEqual(["global"]);
+	await expect(request("mcp.listConfiguration", { projectId: "missing" })).rejects.toThrow();
+});
+
+test("MCP configuration listing reports malformed user configuration without a workspace", async () => {
+	writeFileSync(join(agentDir, "mcp.json"), "{");
+	const result = await request("mcp.listConfiguration", {});
+	expect(result.servers).toEqual([]);
+	expect(result.configErrors).toHaveLength(1);
+	expect(result.configErrors?.[0]?.source).toBe(join(agentDir, "mcp.json"));
+});

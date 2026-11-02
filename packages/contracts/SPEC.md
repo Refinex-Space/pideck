@@ -928,6 +928,14 @@ the pi-level resource grant. A client talking to an older host sends neither.
 
 ## MCP servers
 
+`MCP_CONFIGURATION_PROTOCOL_VERSION` (110) adds `mcp.listConfiguration { projectId? }` →
+`McpConfigurationResult` (`servers`, optional `configErrors`). Without a project it reads only the
+user configuration from Pi's agent directory. A selected, open project contributes its root `.pi/mcp.json`
+only when Pi resource trust is granted, with the existing approval and override policy. Unknown project
+ids fail; callers cannot supply filesystem paths. This is a masked configuration snapshot, not a live
+status read: it starts no session, probe or MCP process and returns no session status. Existing workspace
+reads and mutations keep their contracts. Older hosts receive no configuration-only request.
+
 `MCP_PROTOCOL_VERSION` (83, after the extension catalog at 82) gates the `mcp.*` methods, the `mcp.status` channel and the optional
 `SessionResources.mcpServers` list; a client talking to an older host sends none of them and treats the
 missing list as "no MCP". The engine is pi's built-in MCP ([[submodule-server-agent]]); these DTOs mirror

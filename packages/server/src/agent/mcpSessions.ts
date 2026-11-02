@@ -11,6 +11,7 @@ import { basename, isAbsolute } from "node:path";
 import { getAgentDir, type McpServerConfig } from "@earendil-works/pi-coding-agent";
 import {
 	MCP_PROTOCOL_VERSION,
+	type McpConfigurationResult,
 	type McpListResult,
 	type McpReadOutputResult,
 	type McpServerResourceSummary,
@@ -459,6 +460,21 @@ export async function mcpOwnershipGuard(options: {
 			),
 			enabledInSettings,
 		);
+}
+
+export function listMcpConfiguration(
+	project?: Pick<Project, "path" | "piResourceTrust" | "mcpApprovals" | "mcpOverrides">,
+): McpConfigurationResult {
+	const agentDir = getAgentDir();
+	const files = {
+		agentDir,
+		cwd: project?.path ?? agentDir,
+		projectTrusted: project?.piResourceTrust === "granted",
+	};
+	return {
+		servers: summarizeMcpServers({ ...files, policy: mcpPolicyOf(project) }),
+		configErrors: summarizeMcpConfigErrors(files),
+	};
 }
 
 export async function listMcpServers(options: {

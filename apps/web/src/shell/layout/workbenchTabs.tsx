@@ -633,10 +633,9 @@ export const WorkbenchTab = memo(function WorkbenchTab({
 	};
 	const moveTargets = groups.filter(
 		(group) =>
+			tab.kind !== "terminal" &&
 			group.location.groupId !== location.groupId &&
-			(tab.kind === "terminal" || group.location.area === "center"
-				? tab.kind !== "tool"
-				: tab.kind === "tool"),
+			(group.location.area === "center" ? tab.kind !== "tool" : tab.kind === "tool"),
 	);
 	const currentAuxiliary = location.area === "center" ? null : location.area;
 	const currentAuxiliaryGroupIndex = currentAuxiliary
@@ -874,28 +873,35 @@ export const WorkbenchTab = memo(function WorkbenchTab({
 						{t("workbench.tab.renameChat")}
 					</ContextMenuItem>
 				) : null}
-				<ContextMenuItem
-					disabled={!canFocusAdjacentGroup}
-					onSelect={() => onFocusAdjacentGroup(-1, location.groupId)}
-				>
-					{canFocusAdjacentGroup
-						? t("workbench.tab.focusPreviousGroup")
-						: t("workbench.tab.focusPreviousGroupUnavailable")}
-				</ContextMenuItem>
-				<ContextMenuItem
-					disabled={!canFocusAdjacentGroup}
-					onSelect={() => onFocusAdjacentGroup(1, location.groupId)}
-				>
-					{canFocusAdjacentGroup
-						? t("workbench.tab.focusNextGroup")
-						: t("workbench.tab.focusNextGroupUnavailable")}
-				</ContextMenuItem>
-				{location.area === "center" && !chatTitleChip ? (
+				{tab.kind !== "terminal" ? (
+					<>
+						<ContextMenuItem
+							disabled={!canFocusAdjacentGroup}
+							onSelect={() => onFocusAdjacentGroup(-1, location.groupId)}
+						>
+							{canFocusAdjacentGroup
+								? t("workbench.tab.focusPreviousGroup")
+								: t("workbench.tab.focusPreviousGroupUnavailable")}
+						</ContextMenuItem>
+						<ContextMenuItem
+							disabled={!canFocusAdjacentGroup}
+							onSelect={() => onFocusAdjacentGroup(1, location.groupId)}
+						>
+							{canFocusAdjacentGroup
+								? t("workbench.tab.focusNextGroup")
+								: t("workbench.tab.focusNextGroupUnavailable")}
+						</ContextMenuItem>
+					</>
+				) : null}
+				{location.area === "center" && !chatTitleChip && tab.kind !== "terminal" ? (
 					<ContextMenuItem disabled={!preview} onSelect={() => focusTab(true)}>
 						{preview ? t("workbench.tab.keepPreview") : t("workbench.tab.keepPreviewUnavailable")}
 					</ContextMenuItem>
 				) : null}
-				{chatTitleChip ? null : (
+				{chatTitleChip ||
+				(tab.kind === "terminal" &&
+					previousIndex === undefined &&
+					nextIndex === undefined) ? null : (
 					<>
 						<ContextMenuItem
 							disabled={previousIndex === undefined}
@@ -919,7 +925,7 @@ export const WorkbenchTab = memo(function WorkbenchTab({
 						</ContextMenuItem>
 					</>
 				)}
-				{location.area === "center" ? (
+				{location.area === "center" && tab.kind !== "terminal" ? (
 					<>
 						<ContextMenuSeparator />
 						{(["left", "right", "up", "down"] as const).map((direction) => {
@@ -965,9 +971,7 @@ export const WorkbenchTab = memo(function WorkbenchTab({
 						</ContextMenuItem>
 					);
 				})}
-				{currentAuxiliary &&
-				currentAuxiliaryGroupIndex >= 0 &&
-				(tab.kind === "terminal" || tab.kind === "tool") ? (
+				{currentAuxiliary && currentAuxiliaryGroupIndex >= 0 && tab.kind === "tool" ? (
 					<>
 						<ContextMenuSeparator />
 						{(["before", "after"] as const).map((position) => {
@@ -1023,7 +1027,7 @@ export const WorkbenchTab = memo(function WorkbenchTab({
 						})}
 					</>
 				) : null}
-				{tab.kind === "terminal" || tab.kind === "tool" ? (
+				{tab.kind === "tool" ? (
 					<>
 						<ContextMenuSeparator />
 						{(["left", "right", "bottom"] as const).map((region) => {
@@ -1080,7 +1084,7 @@ export const WorkbenchTab = memo(function WorkbenchTab({
 						})}
 					</>
 				) : null}
-				{location.area !== "center" && missingTools.length > 0 ? (
+				{tab.kind !== "terminal" && location.area !== "center" && missingTools.length > 0 ? (
 					<>
 						<ContextMenuSeparator />
 						{missingTools.map((tool) => (
@@ -1102,20 +1106,22 @@ export const WorkbenchTab = memo(function WorkbenchTab({
 								)}
 					</ContextMenuItem>
 				) : null}
-				<ContextMenuItem
-					disabled={isLayoutUnavailable(groupRemoval)}
-					title={isLayoutUnavailable(groupRemoval) ? groupRemoval.reason : undefined}
-					onSelect={() => {
-						if (!isLayoutUnavailable(groupRemoval)) onApply(groupRemoval);
-					}}
-				>
-					{isLayoutUnavailable(groupRemoval)
-						? t("workbench.menu.unavailable", {
-								label: t("workbench.group.remove"),
-								reason: groupRemoval.reason,
-							})
-						: t("workbench.group.remove")}
-				</ContextMenuItem>
+				{tab.kind !== "terminal" ? (
+					<ContextMenuItem
+						disabled={isLayoutUnavailable(groupRemoval)}
+						title={isLayoutUnavailable(groupRemoval) ? groupRemoval.reason : undefined}
+						onSelect={() => {
+							if (!isLayoutUnavailable(groupRemoval)) onApply(groupRemoval);
+						}}
+					>
+						{isLayoutUnavailable(groupRemoval)
+							? t("workbench.menu.unavailable", {
+									label: t("workbench.group.remove"),
+									reason: groupRemoval.reason,
+								})
+							: t("workbench.group.remove")}
+					</ContextMenuItem>
+				) : null}
 				<ContextMenuItem
 					data-testid="tab-menu-close"
 					onSelect={onClose}

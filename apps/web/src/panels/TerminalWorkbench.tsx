@@ -1,8 +1,6 @@
-import { RiAddLine as Plus } from "@remixicon/react";
 import type { TerminalTabsPush } from "@thinkrail/contracts";
 import { WS_CHANNELS } from "@thinkrail/contracts";
 import { i18n, useT } from "@thinkrail/locales/react";
-import { IconButton } from "@thinkrail/ui/button";
 import { lazy, type ReactNode, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { terminalName } from "../lib";
 import type { TerminalTab } from "../store";
@@ -61,19 +59,9 @@ export function useTerminalCatalog(workspaceId: string | null): boolean {
 	return readyFor === workspaceId;
 }
 
-export function TerminalWorkbenchBody({ tab, onAdd }: { tab: TerminalTab; onAdd: () => void }) {
-	const t = useT();
+export function TerminalWorkbenchBody({ tab }: { tab: TerminalTab }) {
 	return (
 		<div data-testid="terminal-panel" className="relative h-full min-h-0 bg-container-terminal-bg">
-			<IconButton
-				variant="outline"
-				size="s"
-				icon={Plus}
-				label={t("panels.terminalWorkbench.newTerminal")}
-				data-testid="terminal-add"
-				onClick={onAdd}
-				className="absolute top-4 right-4 z-10"
-			/>
 			<Suspense fallback={null}>
 				<TerminalInstance
 					tabKey={tab.tabKey}

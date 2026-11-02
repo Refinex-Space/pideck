@@ -8,6 +8,7 @@ import {
 	ResizablePanelGroup,
 } from "@thinkrail/ui/resizable";
 import { ResourceToolbarProvider } from "@thinkrail/ui/resource-toolbar";
+import { Plus } from "lucide-react";
 import { memo, type ReactNode, useMemo, useRef, useState } from "react";
 import { type LayoutAttention, readLayoutSelection, tupleKey } from "../../lib";
 import {
@@ -87,6 +88,16 @@ export const CenterGroupView = memo(function CenterGroupView({
 			trailing={
 				<>
 					<div className="window-no-drag flex min-w-0 shrink items-center gap-4 self-center overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+						{selected?.kind === "terminal" ? (
+							<IconButton
+								variant="ghost"
+								size="m"
+								icon={Plus}
+								label={t("panels.terminalWorkbench.newTerminal")}
+								data-testid="terminal-add"
+								onClick={() => shared.onNewTerminal(group.id, "center")}
+							/>
+						) : null}
 						{group.tabs.length === 0 ? (
 							<IconButton
 								variant="ghost"

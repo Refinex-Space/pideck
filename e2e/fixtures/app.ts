@@ -590,9 +590,27 @@ export async function revealWorkbenchTerminal(page: Page): Promise<void> {
 	await waitTerminalReady(page);
 }
 
+export async function dragWorkbenchTab(page: Page, tab: Locator, target: Locator): Promise<void> {
+	await tab.scrollIntoViewIfNeeded();
+	const start = await tab.boundingBox();
+	if (!start) throw new Error("Tab has no drag bounds");
+	await page.mouse.move(start.x + start.width / 2, start.y + start.height / 2);
+	await page.mouse.down();
+	await page.mouse.move(start.x + start.width / 2 + 14, start.y + start.height / 2 + 8, {
+		steps: 4,
+	});
+	await expect(target).toBeVisible();
+	const end = await target.boundingBox();
+	if (!end) throw new Error("Tab drop target has no bounds");
+	await page.mouse.move(end.x + end.width - 16, end.y + end.height / 2, { steps: 12 });
+	await page.mouse.up();
+	// dnd-kit keeps its document click suppression for 50 ms after pointer release.
+	await page.waitForTimeout(60);
+}
+
 /**
  * The top bar's terminal entry is the only terminal entry; a terminal that must live in the center
- * is created in the bottom pane and moved with its tab menu.
+ * is created in the bottom pane and dragged into the center tab strip.
  */
 export async function openCenterTerminal(page: Page): Promise<void> {
 	const rail = page
@@ -608,11 +626,7 @@ export async function openCenterTerminal(page: Page): Promise<void> {
 	else await bottom.getByTestId("terminal-add").first().click();
 	const tab = bottom.getByTestId("terminal-tab").last();
 	await expect(bottom.getByTestId("terminal-tab")).toHaveCount(before === 0 ? 1 : before + 1);
-	await tab.click({ button: "right" });
-	await page
-		.getByRole("menuitem", { name: /^Move to center pane/ })
-		.first()
-		.click();
+	await dragWorkbenchTab(page, tab, page.getByTestId("center-tab-strip").first());
 	await expect(page.getByTestId("center-group").getByTestId("terminal-tab").first()).toBeVisible();
 }
 

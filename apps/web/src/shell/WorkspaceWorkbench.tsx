@@ -72,7 +72,6 @@ import { subscribeCloseRequest } from "./closeRequestChannel";
 import {
 	collectAllGroups,
 	findPlacedResource,
-	findTabLocation,
 	isToolShowing,
 	type LayoutCenterTab,
 	type LayoutTab,
@@ -653,7 +652,6 @@ export function WorkspaceWorkbench({
 			}
 			if (tab.kind === "terminal") {
 				const terminal = terminalByKey.get(tab.tabKey);
-				const location = document ? findTabLocation(document, tab.id) : null;
 				return (
 					<ErrorBoundary
 						label={t("shell.workbench.panel.terminal")}
@@ -661,14 +659,7 @@ export function WorkspaceWorkbench({
 						resetKeys={[workspaceId, tab.id]}
 					>
 						{terminal ? (
-							<TerminalWorkbenchBody
-								tab={terminal}
-								onAdd={() =>
-									useAppStore
-										.getState()
-										.addTerminal(workspaceId, undefined, location?.groupId, location?.area)
-								}
-							/>
+							<TerminalWorkbenchBody tab={terminal} />
 						) : (
 							<MissingResource kind="terminal" />
 						)}

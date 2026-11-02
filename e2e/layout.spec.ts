@@ -4,6 +4,7 @@ import {
 	activateDefaultWorkspace,
 	closeTabViaMenu,
 	createWorkspaceViaDialog,
+	dragWorkbenchTab,
 	enterDefaultWorkspace,
 	openCenterTerminal,
 	openFixtureProject,
@@ -499,35 +500,17 @@ test("dragging outer separators hides both sides and preserves their restore sta
 	await waitTerminalReady(page);
 });
 
-test("the side group menu shows tools for its own side and opens a terminal pane below a tool pane", async ({
+test("terminal headers create tabs directly and auxiliary headers have no add-to-group menu", async ({
 	page,
 }) => {
 	await openDefaultWorkbench(page);
-	const specsGroup = sideGroups(page, "right").first();
-	const specsGroupId = await specsGroup.getAttribute("data-group-id");
-	await expect(specsGroup.getByTestId("terminal-tab")).toHaveCount(0);
-
-	await specsGroup.getByRole("button", { name: "Add to this group" }).click();
-	await expect(page.getByTestId("side-new-terminal")).toHaveText("New terminal pane below");
-	await page.getByTestId("side-new-terminal").click();
-	await expect(sideGroups(page, "right")).toHaveCount(3);
-	const terminalPane = sideGroups(page, "right").nth(1);
-	await expect(terminalPane.getByTestId("terminal-tab")).toHaveCount(1);
-	await expect(terminalPane).not.toHaveAttribute("data-group-id", specsGroupId ?? "");
-	await expect(specsGroup.getByTestId("terminal-tab")).toHaveCount(0);
-	await expect(page.getByTestId("center-tab-strip").getByTestId("terminal-tab")).toHaveCount(0);
-	await terminalPane.getByRole("button", { name: "Add to this group" }).click();
-	await expect(page.getByTestId("side-new-terminal")).toHaveText("New terminal");
-	await page.keyboard.press("Escape");
-
-	await page.getByTestId("tab-projects").click({ button: "right" });
-	await page.getByRole("menuitem", { name: "Remove tool from group", exact: true }).click();
-	await page.getByTestId("tab-review").click({ button: "right" });
-	await page.getByRole("menuitem", { name: "Remove tool from group", exact: true }).click();
-
-	await specsGroup.getByRole("button", { name: "Add to this group" }).click();
-	await expect(page.getByTestId("show-tool-review")).toBeVisible();
-	await expect(page.getByTestId("show-tool-projects")).toHaveCount(0);
+	await expect(page.getByTestId("side-group-menu")).toHaveCount(0);
+	const bottom = page.getByTestId("bottom-group").first();
+	await expect(bottom.getByTestId("terminal-add")).toHaveCount(1);
+	await expect(bottom.getByTestId("terminal-panel").getByTestId("terminal-add")).toHaveCount(0);
+	await bottom.getByTestId("terminal-add").click();
+	await expect(bottom.getByTestId("terminal-tab")).toHaveCount(2);
+	await waitTerminalReady(page);
 });
 
 test("a terminal can move to its own side group; resize, fold, and visibility gate its one body", async ({
@@ -568,8 +551,8 @@ test("a terminal can move to its own side group; resize, fold, and visibility ga
 	await page.getByTestId("terminal-tab").click({ button: "right" });
 	await expect(
 		page.getByRole("menuitem", { name: "New left group at bottom", exact: true }),
-	).toBeEnabled();
-	await expect(page.getByRole("menuitem", { name: "New left group at top" })).toBeEnabled();
+	).toHaveCount(0);
+	await expect(page.getByRole("menuitem", { name: "New left group at top" })).toHaveCount(0);
 	await page.keyboard.press("Escape");
 
 	const projectsGroup = sideGroups(page, "left").and(page.locator('[data-tools~="projects"]'));
@@ -1230,8 +1213,11 @@ test("the hidden bottom drop zone wins overlapping terminal targets and reveals 
 	page,
 }) => {
 	await openDefaultWorkbench(page);
-	await page.getByTestId("terminal-tab").click({ button: "right" });
-	await page.getByRole("menuitem", { name: /Move to center pane/ }).click();
+	await dragWorkbenchTab(
+		page,
+		page.getByTestId("terminal-tab"),
+		page.getByTestId("center-tab-strip").first(),
+	);
 	await waitForLayoutSettled(page);
 	const terminal = page.getByTestId("center-group").getByTestId("terminal-tab");
 	await expect(terminal).toBeVisible();

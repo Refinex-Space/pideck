@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { expect, type Locator, type Page, test } from "@playwright/test";
 import {
 	activateDefaultWorkspace,
+	dragWorkbenchTab,
 	enterDefaultWorkspace,
 	openAppSettings,
 	openFixtureProject,
@@ -214,7 +215,7 @@ test("panel-header actions are square IconButton m controls", async ({ page }) =
 	const controls = [
 		page.getByTestId("terminal-rail-group").first(),
 		page.getByTestId("side-group-fold").first(),
-		page.getByTestId("side-group-menu").first(),
+		page.getByTestId("terminal-add").first(),
 		page.getByTestId("bottom-group-fold"),
 	];
 	for (const control of controls) await square(control);
@@ -468,10 +469,14 @@ test("closing a final bottom resource retains its frame groups until explicit re
 	page,
 }) => {
 	await openDefaultWorkbench(page);
-	await page.getByTestId("terminal-tab").click({ button: "right" });
-	await page.getByRole("menuitem", { name: "New bottom group at right", exact: true }).click();
+	await dragWorkbenchTab(
+		page,
+		page.getByTestId("terminal-tab"),
+		page.locator('[data-drop-label="Create bottom group to the right"]'),
+	);
 	await expect(bottomGroups(page)).toHaveCount(2);
 
+	await waitTerminalReady(page);
 	await page.getByTestId("terminal-tab-close").click();
 	await expect(bottomGroups(page)).toHaveCount(2);
 	await expect(page.getByTestId("bottom-new-terminal")).toHaveCount(2);

@@ -49,7 +49,7 @@
 			"publish": true
 		},
 		"container-terminal-bg": {
-			"from": "sidebar",
+			"from": "background",
 			"publish": true
 		},
 		"container-header-bg": {

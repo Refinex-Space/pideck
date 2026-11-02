@@ -1,17 +1,11 @@
 import { useDroppable } from "@dnd-kit/core";
-import { RiAddLine as Plus, RiCloseLine as X } from "@remixicon/react";
+import { RiCloseLine as X } from "@remixicon/react";
 import type { MessageKey } from "@thinkrail/locales";
 import { useT } from "@thinkrail/locales/react";
 import { IconButton } from "@thinkrail/ui/button";
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuSeparator,
-	DropdownMenuTrigger,
-} from "@thinkrail/ui/dropdown-menu";
 import { type ImperativePanelGroupHandle, ResizablePanelGroup } from "@thinkrail/ui/resizable";
 import { cn } from "@thinkrail/ui/utils";
+import { Plus } from "lucide-react";
 import { memo, type ReactNode, useMemo, useRef } from "react";
 import { type LayoutAttention, readLayoutSelection, tupleKey } from "../../lib";
 import { AuxiliaryPaneHeader, AuxiliaryPaneHideButton } from "./AuxiliaryPaneHeader";
@@ -27,17 +21,8 @@ import {
 	layoutTabName,
 	removeLayoutGroup,
 	setSideGroupFolded,
-	toolTab,
-	unplacedToolsForRegion,
 } from "./model";
-import type {
-	LayoutAuxiliaryRegion,
-	LayoutSideGroup,
-	LayoutTab,
-	LayoutTerminalTab,
-	LayoutToolId,
-	WorkspaceLayoutDocument,
-} from "./types";
+import type { LayoutAuxiliaryRegion, LayoutSideGroup, LayoutTab, LayoutTerminalTab } from "./types";
 import type { DropTarget, SharedGroupProps, WorkbenchProps } from "./workbenchShared";
 import {
 	DropZone,
@@ -220,76 +205,6 @@ export const SideGroupView = memo(function SideGroupView({
 });
 SideGroupView.displayName = "SideGroupView";
 
-export function SideGroupMenu({
-	unavailableTools,
-	document,
-	side,
-	group,
-	limit,
-	onNewTerminal,
-	onRevealTool,
-}: {
-	unavailableTools?: readonly LayoutToolId[] | undefined;
-	document: WorkspaceLayoutDocument;
-	side: LayoutAuxiliaryRegion;
-	group: LayoutSideGroup;
-	limit: number;
-	onNewTerminal: WorkbenchProps["onNewTerminal"];
-	onRevealTool: (tool: LayoutToolId) => void;
-}) {
-	const t = useT();
-	const missing = unplacedToolsForRegion(document, side).filter(
-		(tool) => !unavailableTools?.includes(tool),
-	);
-	const toolPane = group.tabs.some((tab) => tab.kind === "tool");
-	const paneBelowAvailable = !toolPane || document[side].groups.length < limit;
-	const newTerminalPaneLabel =
-		side === "bottom"
-			? t("workbench.group.newTerminalPaneRight")
-			: t("workbench.group.newTerminalPaneBelow");
-	return (
-		<DropdownMenu>
-			<DropdownMenuTrigger asChild>
-				<IconButton
-					variant="ghost"
-					size="m"
-					icon={Plus}
-					label={t("workbench.group.addTo")}
-					wrapTrigger
-					data-testid="side-group-menu"
-					className="shrink-0 self-center"
-				/>
-			</DropdownMenuTrigger>
-			<DropdownMenuContent align="end">
-				<DropdownMenuItem
-					data-testid="side-new-terminal"
-					disabled={!paneBelowAvailable}
-					onSelect={() => onNewTerminal(group.id, side, toolPane ? { newPaneBelow: true } : {})}
-				>
-					{toolPane
-						? paneBelowAvailable
-							? newTerminalPaneLabel
-							: t("workbench.menu.unavailable", {
-									label: newTerminalPaneLabel,
-									reason: t("workbench.tab.limitedTo", { limit }),
-								})
-						: t("workbench.group.newTerminal")}
-				</DropdownMenuItem>
-				{missing.length > 0 ? <DropdownMenuSeparator /> : null}
-				{missing.map((tool) => (
-					<DropdownMenuItem
-						key={tool}
-						data-testid={`show-tool-${tool}`}
-						onSelect={() => onRevealTool(tool)}
-					>
-						{t("workbench.tab.showTool", { name: layoutTabName(t, toolTab(tool)) })}
-					</DropdownMenuItem>
-				))}
-			</DropdownMenuContent>
-		</DropdownMenu>
-	);
-}
-
 export function AuxiliaryGroupHeader({
 	region,
 	group,
@@ -322,17 +237,17 @@ export function AuxiliaryGroupHeader({
 	const toolHeader = selected?.kind === "tool" ? shared.renderToolHeader?.(selected.tool) : null;
 	const actions = (
 		<>
-			{!toolHeader && (
-				<SideGroupMenu
-					unavailableTools={shared.unavailableTools}
-					document={shared.document}
-					side={region}
-					group={group}
-					limit={region === "bottom" ? shared.maxBottomGroups : shared.maxSideGroups}
-					onNewTerminal={shared.onNewTerminal}
-					onRevealTool={shared.onRevealTool}
+			{selected?.kind === "terminal" || group.tabs.length === 0 ? (
+				<IconButton
+					variant="ghost"
+					size="m"
+					icon={Plus}
+					label={t("panels.terminalWorkbench.newTerminal")}
+					data-testid="terminal-add"
+					onClick={() => shared.onNewTerminal(group.id, region)}
+					className="shrink-0 self-center"
 				/>
-			)}
+			) : null}
 			{trailing}
 			{group.tabs.length === 0 ? (
 				<IconButton

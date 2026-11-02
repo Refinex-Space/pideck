@@ -273,13 +273,14 @@ resources retain direct close controls.
 
 An external close request arrives through an injected `subscribeCloseRequest` prop; only requests after subscribe count, so a stale request never closes a tab. A focused edge-rail selector is navigation chrome, not an individual resource close target, and yields a no-op before fallback. Internal pure `closeRequestTarget` picks the selected (else first) tab of the DOM-focused group, else of the last-focused center group; a tool tab, folded group, or hidden region yields no target, with no further fallback. The workbench routes it through its normal close path.
 
-Each auxiliary pane header or terminal-session strip trails an add-to-this-pane menu owned by the layout:
-*New terminal* on a terminal or empty pane adds to that pane, while a tool pane offers *New terminal pane
-below*, which creates a tool-free group directly after it and places the terminal there (`onNewTerminal`
-with `newPaneBelow`; the shell no longer injects side-menu actions). The menu also lists unplaced tools
-valid for that region; two rails never offer the same singleton. Center tab menus offer no singleton
-tools. A terminal created from an auxiliary group lands in that workspace's matching group; a vanished
-target reroutes through the current local focus rule. Menus name a pane by its contents — `Move to right
+Terminal-session strips and empty auxiliary panes expose one direct **New terminal** button in their
+header; the add-to-group menu and terminal-body overlay button are removed. A center terminal uses its
+center strip's trailing action. Creation targets that exact group, with the existing stale-target routing.
+Tool panes expose their own feature actions and the existing rails remain their entry points.
+Terminal context menus contain only Focus tab, same-group ordering when siblings exist, Hide panel for
+auxiliary locations, and Close. They do not list tool entry points, adjacent-group focus, cross-pane moves,
+splits or group creation/removal. Existing drag-and-drop placement remains available.
+Menus name a pane by its contents — `Move to right
 pane (Changes, Review)`, at most three names then `+N`, `(empty)` when it has none — never by an id, and
 a tab's menu lists only commands that can ever apply to it: tools carry no center-only items (keep
 preview, the four splits) and auxiliary terminals carry no splits.

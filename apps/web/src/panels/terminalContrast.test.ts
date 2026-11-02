@@ -94,7 +94,7 @@ describe("High Contrast terminal contrast floor", () => {
 	});
 
 	for (const { name, manifest } of HC_THEMES) {
-		const bg = toRgb(manifest.colors.sidebar);
+		const bg = toRgb(manifest.colors.background);
 		const fg = toRgb(manifest.colors.text);
 		const ratio = terminalContrastFloor(true);
 

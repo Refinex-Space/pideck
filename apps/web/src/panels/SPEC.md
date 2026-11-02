@@ -1434,6 +1434,8 @@ own section. The kebab menu (`plan-menu`, a
   share one row without cycles) is the shared change-set row. Live by
   construction, it reads through the same `useChatTodos` hook as the TODO rail (per-mount fetch +
   `pi.event` refetch), so it cannot show a stale snapshot.
+  `TerminalWorkbench` renders no internal New terminal overlay; the owning group header provides that
+  action. Its semantic terminal background and xterm canvas match the workspace background in every theme.
   `TerminalWorkbench` owns one visibility-gated terminal body per semantic terminal identity and
   the host-atomic close flow. A busy close remains one correlated request through confirmation and forced
   retry; dialog auto-close cannot release that request, authoritative catalog removal dismisses stale

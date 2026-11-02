@@ -51,6 +51,7 @@ import {
 } from "./rows";
 import { type StreamStatus, StreamStatusSlot, streamStatus } from "./StreamIndicator";
 import { ChatTurnView } from "./turns";
+import { useChatReadingPosition } from "./useChatReadingPosition";
 import { useChatScroll } from "./useChatScroll";
 import { useTranscriptSync } from "./useTranscriptSync";
 import { useWindowFocused } from "./useWindowFocused";
@@ -342,6 +343,16 @@ const ChatTranscript = forwardRef<
 		rowHeightEstimates,
 		streamingResponseMovement,
 	);
+
+	useChatReadingPosition({
+		workspaceId,
+		sessionId,
+		rows,
+		order: chatMessageOrder,
+		scroller: scrollerElement,
+		followState,
+		revealRow,
+	});
 
 	const readyCompletionId = useAppStore((state) =>
 		selectReadyCompletionAck(state, workspaceId, sessionId),

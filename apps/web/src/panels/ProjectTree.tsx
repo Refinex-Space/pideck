@@ -854,9 +854,10 @@ function WorkspaceRow({
 	const t = useT();
 	const isDefault = isDefaultWorkspace(workspace);
 	const isExternal = isExternalWorkspace(workspace);
-	const { chats, refresh } = useWorkspaceChats(workspace.id);
+	const { chats, refresh, error, loading } = useWorkspaceChats(workspace.id);
 	// Only the project folder trades its row for its chat rows; other workspaces list chats under their row.
-	const headerless = isDefault && workspaceListsChats(workspace, chats.length);
+	const headerless =
+		isDefault && (workspaceListsChats(workspace, chats.length) || loading || !!error);
 	const isSettled = settled !== null;
 	const settleBlocked = isRunning || needsAttention;
 	const Icon = isExternal
@@ -948,7 +949,7 @@ function WorkspaceRow({
 		/>
 	) : null;
 
-	if (isDefault && chats.length === 0) return null;
+	if (isDefault && chats.length === 0 && !loading && !error) return null;
 
 	return (
 		<li
@@ -1125,7 +1126,13 @@ function WorkspaceRow({
 					</span>
 				</fieldset>
 			)}
-			<WorkspaceSessions workspace={workspace} chats={chats} onChanged={refresh} />
+			<WorkspaceSessions
+				workspace={workspace}
+				chats={chats}
+				onChanged={refresh}
+				error={error}
+				loading={loading}
+			/>
 
 			{!isDefault && (
 				<RemoveWorkspaceDialog

@@ -251,3 +251,96 @@ test("a transcript read starts the shared preparation but never waits for watche
 	expect((await creating).syncedTick).toBe(6);
 	expect(order).toEqual(["watchReady", "messages", "fallback", "create"]);
 });
+
+function messageReadHarness() {
+	let generation = 1;
+	const reads: Array<{
+		params: { workspaceId: string; sessionId: string };
+		resolve: (
+			value: Awaited<ReturnType<import("./skillLoad").SkillLoadDependencies["getSessionMessages"]>>,
+		) => void;
+		reject: (error: Error) => void;
+	}> = [];
+	const requests = createSkillLoadRequests({
+		watchReady: async () => ({ startupNudge: false }),
+		noteFsChanged: () => {},
+		workspaceTick: () => 0,
+		readVersion: () => generation,
+		createSession: async () => ({ sessionId: "created", model: null, thinkingLevel: "medium" }),
+		getSessionMessages: (params) =>
+			new Promise((resolve, reject) => reads.push({ params, resolve, reject })),
+		reloadSessionResources: async () => ({ ok: true }),
+	});
+	const finish = (index: number) => {
+		const read = reads[index];
+		if (!read) throw new Error("Missing read");
+		read.resolve({
+			summary: {
+				...read.params,
+				title: "Chat",
+				model: null,
+				thinkingLevel: "medium",
+				isStreaming: false,
+				messageCount: 0,
+				updatedAt: 1,
+				live: false,
+			},
+			messages: [],
+		});
+	};
+	return {
+		requests,
+		reads,
+		finish,
+		reconnect: () => {
+			generation++;
+		},
+	};
+}
+
+test("concurrent transcript consumers share one read; settled results are not cached", async () => {
+	const h = messageReadHarness();
+	const params = { workspaceId: "w", sessionId: "s" };
+	const pending = Array.from({ length: 8 }, () => h.requests.getSessionMessages(params));
+	expect(h.reads).toHaveLength(1);
+	h.finish(0);
+	await Promise.all(pending);
+	const fresh = h.requests.getSessionMessages(params);
+	expect(h.reads).toHaveLength(2);
+	h.finish(1);
+	await fresh;
+});
+
+test("transcript sharing isolates sessions, workspaces, reconnects and resource reloads", async () => {
+	const h = messageReadHarness();
+	const params = { workspaceId: "w", sessionId: "s" };
+	const pending = [
+		h.requests.getSessionMessages(params),
+		h.requests.getSessionMessages({ ...params, sessionId: "other" }),
+		h.requests.getSessionMessages({ ...params, workspaceId: "other" }),
+	];
+	h.reconnect();
+	pending.push(h.requests.getSessionMessages(params));
+	await h.requests.reloadSessionResources("w", { sessionId: "s" });
+	pending.push(h.requests.getSessionMessages(params));
+	expect(h.reads).toHaveLength(5);
+	h.reads.forEach((_, index) => {
+		h.finish(index);
+	});
+	await Promise.all(pending);
+});
+
+test("a rejected shared transcript read releases its slot for retry", async () => {
+	const h = messageReadHarness();
+	const params = { workspaceId: "w", sessionId: "s" };
+	const results = Promise.allSettled([
+		h.requests.getSessionMessages(params),
+		h.requests.getSessionMessages(params),
+	]);
+	h.reads[0]?.reject(new Error("unavailable"));
+	expect((await results).map((result) => result.status)).toEqual(["rejected", "rejected"]);
+	const retry = h.requests.getSessionMessages(params);
+	expect(h.reads).toHaveLength(2);
+	h.finish(1);
+	await retry;
+});

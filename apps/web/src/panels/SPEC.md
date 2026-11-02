@@ -2338,8 +2338,14 @@ context menus and keyboard behavior remain independent of icon identity.
 folder — one `default` workspace holding many chats — is navigable by session rather than as a single row. It
 renders for default/external workspaces and for any workspace with two or more chats; a worktree with a single chat
 keeps its one row. Only the project folder drops its own row while it lists chats (it has no rename, remove or
-settle action to lose); worktree and external rows stay above their chat rows, keeping name, branch and menu. A row activates through `activateWorkspaceFromRoute(workspace, sessionId)`, the same route the
-session switcher uses, and is marked active when it is the workspace's current chat.
+settle action to lose); worktree and external rows stay above their chat rows, keeping name, branch and menu. Cross-workspace rows activate through `activateWorkspaceFromRoute(workspace, sessionId)`, retaining
+its authoritative route validation. Within the already active workspace, `openChatInTab` uses the existing
+tab/runtime/disk escalation directly: cached selection requires no transcript fetch or route-catalog
+validation. A cold click shows a row-local loading indicator and `aria-busy`; repeat clicks while opening
+are ignored, the current transcript remains usable, and failures still use the existing error toast.
+Rows are marked active only when their transcript is selected. Sidebar catalog reads retain existing rows
+while refreshing, expose empty-loading/error-with-Retry states, and re-read on connection generation changes.
+The default workspace does not hide these states merely because its chat count is zero.
 
 ## Interactive file workbench
 

@@ -10,7 +10,7 @@ import {
 	type Workspace,
 } from "@thinkrail/contracts";
 import { useT } from "@thinkrail/locales/react";
-import { IconButton } from "@thinkrail/ui/button";
+import { Button, IconButton } from "@thinkrail/ui/button";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -18,6 +18,7 @@ import {
 	DropdownMenuTrigger,
 } from "@thinkrail/ui/dropdown-menu";
 import { cn } from "@thinkrail/ui/utils";
+import { LoaderCircle } from "lucide-react";
 import { type KeyboardEvent, useEffect, useRef, useState } from "react";
 import { AttentionDot } from "@/components/AttentionDot";
 import { RunningIcon } from "@/components/RunningIcon";
@@ -25,6 +26,7 @@ import { prepareChatTitle } from "../chat/chatTitle";
 import { chatLabel } from "../lib";
 import { type ClosedChat, selectWorkspaceChatTab, toast, useAppStore } from "../store";
 import { errorText, getTransport } from "../transport";
+import { openChatInTab } from "./openChat";
 
 const SESSIONS_SHOWN = 8;
 const NO_CLOSED: ClosedChat[] = [];
@@ -52,7 +54,13 @@ export function workspaceListsChats(
 export function useWorkspaceChats(workspaceId: string): {
 	chats: WorkspaceChat[];
 	refresh: () => void;
+	error: string | null;
+	loading: boolean;
 } {
+	const status = useAppStore((s) => s.status);
+	const generation = useAppStore((s) => s.connectionGeneration);
+	const [error, setError] = useState<string | null>(null);
+	const [loading, setLoading] = useState(false);
 	const tabs = useAppStore((s) => s.tabsByWorkspace[workspaceId]);
 	const closed = useAppStore((s) => s.closedChatsByWorkspace[workspaceId] ?? NO_CLOSED);
 	const deleted = useAppStore((s) => s.deletedSessionsByWorkspace[workspaceId]);
@@ -63,17 +71,25 @@ export function useWorkspaceChats(workspaceId: string): {
 	for (const tab of tabs ?? []) if (tab.kind === "chat") openIds.push(tab.sessionId);
 	const changeKey = `${openIds.join(",")}|${closed.map((chat) => chat.sessionId).join(",")}`;
 	useEffect(() => {
+		if (status !== "connected") return;
 		let cancelled = false;
+		setLoading(true);
+		setError(null);
 		void getTransport()
 			.request("session.list", { workspaceId })
 			.then((rows) => {
 				if (!cancelled) setSummaries(rows);
 			})
-			.catch(() => {});
+			.catch((reason: unknown) => {
+				if (!cancelled) setError(errorText(reason));
+			})
+			.finally(() => {
+				if (!cancelled) setLoading(false);
+			});
 		return () => {
 			cancelled = true;
 		};
-	}, [workspaceId, changeKey, nonce]);
+	}, [workspaceId, changeKey, nonce, status, generation]);
 
 	const closedTitles = new Map(closed.map((chat) => [chat.sessionId, chat.title]));
 	const chats = new Map<string, WorkspaceChat>();
@@ -105,7 +121,12 @@ export function useWorkspaceChats(workspaceId: string): {
 			firstPrompt: chat.firstPrompt,
 		});
 	}
-	return { chats: [...chats.values()], refresh: () => setNonce((value) => value + 1) };
+	return {
+		chats: [...chats.values()],
+		error,
+		loading,
+		refresh: () => setNonce((value) => value + 1),
+	};
 }
 
 /**
@@ -116,7 +137,11 @@ export function WorkspaceSessions({
 	workspace,
 	chats,
 	onChanged,
+	error,
+	loading,
 }: {
+	loading: boolean;
+	error: string | null;
 	workspace: Workspace;
 	chats: WorkspaceChat[];
 	onChanged: () => void;
@@ -129,11 +154,34 @@ export function WorkspaceSessions({
 			? (selectWorkspaceChatTab(s, workspace.id)?.sessionId ?? null)
 			: null,
 	);
-	if (!workspaceListsChats(workspace, chats.length)) return null;
+	if (!workspaceListsChats(workspace, chats.length) && !error && !loading) return null;
 
-	const shown = showAll ? chats : chats.slice(0, SESSIONS_SHOWN);
+	const shown = workspaceListsChats(workspace, chats.length)
+		? showAll
+			? chats
+			: chats.slice(0, SESSIONS_SHOWN)
+		: [];
 	return (
 		<ul data-testid="workspace-sessions" className="mt-2 flex flex-col gap-2">
+			{loading && chats.length === 0 ? (
+				<li
+					role="status"
+					data-testid="workspace-sessions-loading"
+					className="pl-32 tr-text-metadata text-text-muted"
+				>
+					{t("panels.projectTree.loadingSessions")}
+				</li>
+			) : null}
+			{error ? (
+				<li className="flex items-center gap-4 pl-32" data-testid="workspace-sessions-error">
+					<span role="status" className="tr-text-metadata text-text-muted" title={error}>
+						{t("panels.projectTree.sessionsReadFailed")}
+					</span>
+					<Button variant="ghost" size="s" onClick={onChanged}>
+						{t("common.retry")}
+					</Button>
+				</li>
+			) : null}
 			{shown.map((chat) => (
 				<SessionRow
 					key={chat.sessionId}
@@ -174,6 +222,7 @@ function SessionRow({
 	onChanged: () => void;
 }) {
 	const t = useT();
+	const [opening, setOpening] = useState(false);
 	const [menuOpen, setMenuOpen] = useState(false);
 	const [editing, setEditing] = useState(false);
 	const inputRef = useRef<HTMLInputElement>(null);
@@ -191,13 +240,19 @@ function SessionRow({
 		return () => cancelAnimationFrame(frame);
 	}, [editing]);
 
-	const open = () =>
-		useAppStore
-			.getState()
-			.activateWorkspaceFromRoute(
+	const open = () => {
+		const state = useAppStore.getState();
+		if (state.activeWorkspaceId !== workspace.id) {
+			state.activateWorkspaceFromRoute(
 				{ id: workspace.id, projectId: workspace.projectId },
 				chat.sessionId,
 			);
+			return;
+		}
+		if (opening) return;
+		setOpening(true);
+		void openChatInTab(workspace.id, chat.sessionId).finally(() => setOpening(false));
+	};
 	const commitRename = () => {
 		if (cancelBlurRef.current) {
 			cancelBlurRef.current = false;
@@ -241,6 +296,7 @@ function SessionRow({
 				data-session-id={chat.sessionId}
 				data-active={active}
 				data-open={chat.open}
+				aria-busy={opening}
 				data-row
 				className={cn(
 					"group relative flex h-panel-row min-w-0 items-center gap-8 rounded-md pr-4 pl-32 transition-colors",
@@ -277,7 +333,12 @@ function SessionRow({
 						</span>
 					</button>
 				)}
-				{record && isSessionWorking(record.state) ? (
+				{opening ? (
+					<span role="status" data-testid="session-opening">
+						<LoaderCircle aria-hidden="true" className="size-12 motion-safe:animate-spin" />
+						<span className="sr-only">{t("panels.projectTree.loadingSession")}</span>
+					</span>
+				) : record && isSessionWorking(record.state) ? (
 					<RunningIcon className="size-12 shrink-0 text-text-muted" />
 				) : null}
 				{attention ? <AttentionDot /> : null}

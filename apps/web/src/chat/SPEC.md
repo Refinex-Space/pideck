@@ -556,6 +556,15 @@ both message orders. *Rejected:* keeping the modal for non-MCP extensions — ev
   a diff, another chat — is a new scope and re-claims attention for a question still waiting. That is the
   intended read (you returned to the chat that needs you), not just a side effect. It carries no store or
   transport state.
+- **Session reading position** (`useChatReadingPosition.ts`) keeps at most 50 in-memory viewport
+  bookmarks per browser module, keyed by workspace/session. A detached reader records the first visible
+  row id and its viewport offset on unmount; returning to the same cached transcript uses the existing
+  measured row-reveal controller with that offset. Following views still open at the latest edge. Explicit
+  message jumps take priority, changed message order or missing row ids discard the bookmark, and removed
+  workspaces/deleted sessions are not recorded. No transcript text or persistent browser storage is added.
+  `useChatScroll.revealRow` accepts an optional viewport offset (default zero) so history search keeps its
+  existing alignment contract.
+
 - **Hydration** (`hydrate.ts`) — the pure
   `messagesToRuntime(TranscriptMessage[], lastSettlement?, { idScope? })` converter (read-side counterpart
   of the event reducer; a synthesized failure turn carries its `failure` kind and the provider message, worded at render by `errorTurnText`): rebuilds `{ turns, toolResults, toolResponses, turnIdByMessageIndex }` (a

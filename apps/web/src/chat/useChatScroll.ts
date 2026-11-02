@@ -58,6 +58,7 @@ export interface ChatScroll {
 		resolveIndex: () => number,
 		align: "start" | "center" | "end",
 		onComplete: (result: RowRevealResult) => void,
+		offset?: number,
 	) => () => void;
 	prepareFoldChange: (
 		resolveTarget: FoldAnchorResolver,
@@ -1000,6 +1001,7 @@ export function useChatScroll(
 			resolveIndex: () => number,
 			align: "start" | "center" | "end",
 			onComplete: (result: RowRevealResult) => void,
+			offset = 0,
 		) => {
 			cancelRowReveal();
 			readerLeft();
@@ -1030,7 +1032,7 @@ export function useChatScroll(
 				alignedFrames = 0;
 				controller.revealTo(() => {
 					const current = mountedChatRow(scroller, rowId);
-					return current ? rowAlignmentTarget(scroller, current, align) : null;
+					return current ? rowAlignmentTarget(scroller, current, align) - offset : null;
 				}, true);
 			};
 			const materialize = () => {
@@ -1084,7 +1086,7 @@ export function useChatScroll(
 					const bounds = scrollBounds(scroller);
 					const target = Math.min(
 						bounds.maxScrollTop,
-						Math.max(0, rowAlignmentTarget(scroller, row, align)),
+						Math.max(0, rowAlignmentTarget(scroller, row, align) - offset),
 					);
 					if (Math.abs(target - bounds.scrollTop) > 1) startMeasuredReveal();
 					else alignedFrames += 1;

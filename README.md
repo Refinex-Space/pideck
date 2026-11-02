@@ -55,6 +55,9 @@ it is not a PiDeck release. Signing, notarization and a PiDeck automatic-update 
 
 ## A quieter workbench
 
+Within the current window, cached conversation switches reuse their transcript and restore a detached
+reading position. Conversation-list failures show Retry; reconnecting refreshes the list.
+
 The Studio layout gives conversations the main canvas while keeping projects visible and files,
 review and terminals one action away. Neutral light/dark themes, system UI typography, readable code,
 restrained motion and searchable Settings follow a Claude Desktop-inspired visual direction.

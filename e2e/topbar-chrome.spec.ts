@@ -356,7 +356,9 @@ test("the action cluster keeps Update, quota Retry and Settings out of the drag 
 	await waitForCentralState(page, "supported");
 });
 
-test("HTML window controls appear only with the native bridge and drive it", async ({ page }) => {
+test("HTML window controls appear only with the native bridge and drive it", async ({
+	page,
+}, testInfo) => {
 	await page.addInitScript(() => {
 		const actions: string[] = [];
 		const listeners = new Set<(state: NativeWindowState) => void>();
@@ -406,11 +408,20 @@ test("HTML window controls appear only with the native bridge and drive it", asy
 	const headerBox = await bounds(header);
 	const spacerBox = await bounds(spacer);
 	const controlsBox = await bounds(controls);
+	const divider = controls.getByTestId("window-controls-divider");
+	await expect(divider).toHaveAttribute("aria-hidden", "true");
+	await expect(divider).toHaveCSS("pointer-events", "none");
+	const dividerBox = await bounds(divider);
+	expect(dividerBox.width).toBe(1);
+	expect(dividerBox.height).toBe(16);
+	expect(dividerBox.x).toBe(controlsBox.x);
+	expect(dividerBox.y + dividerBox.height / 2).toBe(controlsBox.y + controlsBox.height / 2);
 	expect(controlsBox.right).toBe(page.viewportSize()?.width);
 	expect(controlsBox.y).toBe(headerBox.y);
 	expect(controlsBox.height).toBe(40);
 	expect(controlsBox.x).toBeGreaterThanOrEqual(spacerBox.x);
 	await expectUsableHeader(page, ["app-menu"], "drag");
+	await header.screenshot({ path: testInfo.outputPath("windows-caption-divider.png") });
 
 	const getActions = () => page.evaluate(() => Reflect.get(globalThis, "__TEST_WINDOW_ACTIONS__"));
 

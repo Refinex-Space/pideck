@@ -32,6 +32,11 @@ export function NativeWindowControls({
 			data-testid="window-controls"
 			className="window-no-drag absolute z-40 top-0 right-0 flex h-topbar-row"
 		>
+			<span
+				aria-hidden="true"
+				data-testid="window-controls-divider"
+				className="pointer-events-none absolute top-12 left-0 h-16 w-px bg-border-muted"
+			/>
 			<button
 				type="button"
 				data-testid="window-minimize"

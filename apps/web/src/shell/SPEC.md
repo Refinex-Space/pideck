@@ -69,7 +69,10 @@ mounts `useNativeWindowControls`, which mirrors `updates`' capability hook (read
 subscribe, `null` in a browser; the state carries no revision, so the initial `getState` snapshot is dropped
 once any push has arrived), and renders three props-driven 46×40 caption buttons (minimize,
 maximize-or-restore, close) as a `window-no-drag` overlay pinned to the header's top-right, inside the zone the
-host reserved through the right inset; they disappear while the state says `fullScreen`. The controls own
+host reserved through the right inset; they disappear while the state says `fullScreen`. A decorative,
+pointer-transparent 1px × 16px `border-muted` divider is centered at the control group's left edge,
+separating application actions from caption buttons without changing their 46px hit targets or inset.
+It shares the controls' bridge/fullscreen lifecycle, so browsers and macOS show no separator. The controls own
 no window state and never enter the store; the hook reports a rejected action or snapshot read with `console.warn` rather
 than throwing. Windows caption-button conventions (no tooltips, full-height hit targets, a red-tinted close
 hover via `feedback-error-subtle`) are deliberate; macOS keeps AppKit's traffic lights and never sees the

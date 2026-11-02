@@ -3,6 +3,7 @@ import {
 	enterDefaultWorkspace,
 	openAppSettings,
 	openFixtureProject,
+	openWorkspaceChat,
 	revealWorkbenchTool,
 } from "./fixtures/app";
 
@@ -65,4 +66,49 @@ test("right tools align with the workspace toolbar and share its canvas in both 
 	if (!insetBox || !hideBox) throw new Error("Missing caption safety space");
 	expect(hideBox.x + hideBox.width).toBeLessThanOrEqual(insetBox.x);
 	expect(insetBox.y).toBe(0);
+});
+
+test("pointer tool selection has only a fill and pane close buttons have an edge gutter", async ({
+	page,
+}, testInfo) => {
+	await openWorkspaceChat(page);
+	for (const tool of ["specs", "files", "review", "plan"] as const) {
+		const button = page.getByTestId(`tool-rail-${tool}`);
+		// A focused text field makes native focus-visible inheritance observable on programmatic focus.
+		await page.getByTestId("chat-input").focus();
+		await revealWorkbenchTool(page, tool);
+		await expect(button).toHaveAttribute("aria-pressed", "true");
+		await expect(button).toHaveCSS("outline-style", "none");
+		await expect(button).not.toHaveCSS("box-shadow", /0px 0px 0px [1-9]/);
+		await expect(button).toHaveCSS("border-color", "rgba(0, 0, 0, 0)");
+		const column = page.getByTestId("right-column");
+		const close = column.getByTestId("side-group-fold").first();
+		await close.hover();
+		const [columnBox, closeBox] = await Promise.all([column.boundingBox(), close.boundingBox()]);
+		if (!columnBox || !closeBox) throw new Error("Missing panel controls");
+		expect(columnBox.x + columnBox.width - closeBox.x - closeBox.width).toBeGreaterThanOrEqual(8);
+		if (tool === "files")
+			await column.screenshot({ path: testInfo.outputPath("close-gutter.png") });
+		await close.click();
+	}
+	for (const id of ["open-status-panel", "terminal-rail-group"]) {
+		const button = page.getByTestId(id).first();
+		if ((await button.getAttribute("aria-pressed")) === "true") await button.click();
+		await page.getByTestId("chat-input").focus();
+		await button.click();
+		await expect(button).toHaveAttribute("aria-pressed", "true");
+		await expect(button).toHaveCSS("outline-style", "none");
+		await expect(button).not.toHaveCSS("box-shadow", /0px 0px 0px [1-9]/);
+	}
+
+	const files = page.getByTestId("tool-rail-files");
+	const specs = page.getByTestId("tool-rail-specs");
+	await files.focus();
+	await page.keyboard.press("ArrowLeft");
+	await expect(specs).toBeFocused();
+	await expect(specs).toHaveCSS("outline-style", "solid");
+	await specs.click();
+	await expect(specs).toHaveAttribute("aria-pressed", "true");
+	await expect(specs).toHaveCSS("outline-style", "none");
+	await expect(specs).not.toHaveCSS("box-shadow", /0px 0px 0px [1-9]/);
 });

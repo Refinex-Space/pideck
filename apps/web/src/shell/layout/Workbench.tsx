@@ -1161,12 +1161,18 @@ export function Workbench({
 				ref={workbenchRef}
 				data-testid="workbench"
 				data-navigation-expanded={leftVisible}
-				className="relative flex h-full min-h-0 min-w-0 overflow-hidden"
-				onPointerDownCapture={() => {
+				className="relative flex h-full min-h-0 min-w-0 overflow-hidden [&_[data-icon-only][data-layout-focus-intent=restore]:focus-visible]:outline-none"
+				onPointerDownCapture={(event) => {
 					tabSelectionEpoch.current += 1;
+					const target =
+						event.target instanceof Element
+							? event.target.closest<HTMLElement>("[data-icon-only], [data-rail-entry]")
+							: null;
+					if (target) setLayoutFocusIntent(target, "restore");
 					const active = globalThis.document.activeElement;
 					if (
 						active instanceof HTMLElement &&
+						active !== target &&
 						(active.dataset.layoutFocusIntent || active.hasAttribute("data-layout-tab-id"))
 					)
 						setLayoutFocusIntent(active, "restore");

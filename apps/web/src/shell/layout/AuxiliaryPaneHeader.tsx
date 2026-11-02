@@ -80,7 +80,7 @@ export function AuxiliaryPaneHideButton({
 			aria-controls={controls}
 			aria-expanded="true"
 			onClick={onClick}
-			className="shrink-0 self-center"
+			className="mr-8 shrink-0 self-center"
 		/>
 	);
 }

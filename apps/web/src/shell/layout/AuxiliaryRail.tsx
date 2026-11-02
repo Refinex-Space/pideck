@@ -31,7 +31,7 @@ export const RAIL_ENTRY_FRAME_CLASS =
 
 export const RAIL_ENTRY_BUTTON_CLASS = cn(
 	buttonVariants({ variant: "ghost", size: "m", shape: "icon" }),
-	"data-[layout-focus-intent=keyboard]:focus:ring-1 data-[layout-focus-intent=restore]:focus-visible:ring-0 data-[layout-focus-intent=restore]:focus-visible:outline-none",
+	"ring-focus-ring data-[layout-focus-intent=keyboard]:focus:ring-1 data-[layout-focus-intent=restore]:focus-visible:ring-0 data-[layout-focus-intent=restore]:focus-visible:outline-none",
 );
 
 /**

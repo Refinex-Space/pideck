@@ -32,7 +32,8 @@ dependency is introduced, and saved ratios, tool placement and bottom alignment 
 
 The visible right column has no empty chrome row above its tools. Its first visible pane header (or
 terminal strip) occupies the same 40px row as the center toolbar, with the native right caption inset
-beside the header actions. Subsequent pane headers retain their compact height. Right-column containers
+beside the header actions. Pane hide buttons keep an 8px trailing gutter so their hover fill clears
+the panel edge and the native caption inset. Subsequent pane headers retain their compact height. Right-column containers
 use the workspace canvas; left navigation keeps the sidebar canvas. Pane headers inherit their container
 background. The right column supplies `--quiet-scroll-surface-bg` to keep non-terminal scroll curtains on
 the same canvas without teaching feature panels about placement; terminal curtains retain their own role.
@@ -248,6 +249,8 @@ Pointer is never the sole arrangement path. Keyboard controls and shadcn menus c
 DOM focus handoff distinguishes passive `restore` from explicit `keyboard` intent without adding layout
 state or a global input-modality owner. Automatic workspace/tab restoration still calls `focus()` but
 temporarily marks its target so native `:focus-visible` heuristics cannot paint a misleading focus frame.
+Pointer capture marks the clicked icon control as restore intent before native or drag-library focus
+can inherit keyboard focus-visible styling; restored icon controls show selection fill without an outline.
 The marker clears on blur; pointer input clears a previous keyboard indicator even when the same tab
 retains focus, and actual workbench keyboard input changes it to keyboard intent. Arrow,
 Home/End, Ctrl+F6, rename completion and keyboard close recovery preserve visible navigation feedback.

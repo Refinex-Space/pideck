@@ -55,7 +55,13 @@ test("Settings is a full page: Back and Escape leave it, and the app underneath 
 	expect(box?.height).toBe(viewport?.height);
 	await expect(page.locator("[inert]")).toHaveCount(1);
 	await expect(page.getByTestId("settings-back")).toBeVisible();
-	await shot(settings, "settings-page", "providers");
+	await expect(page.getByTestId("settings-nav-models")).toHaveAttribute("data-active", "true");
+	await expect(page.getByTestId("settings-page-title")).toHaveText("Models");
+	await expect(page.getByTestId("settings-models")).toBeVisible();
+	await shot(settings, "settings-page", "models");
+
+	await page.getByTestId("settings-nav-providers").click();
+	await expect(page.getByTestId("settings-providers")).toBeVisible();
 
 	await page.getByTestId("settings-back").click();
 	await expect(settings).toHaveCount(0);
@@ -63,6 +69,9 @@ test("Settings is a full page: Back and Escape leave it, and the app underneath 
 
 	await openAppSettings(page);
 	await expect(settings).toBeVisible();
+	await expect(page.getByTestId("settings-nav-models")).toHaveAttribute("data-active", "true");
+	await expect(page.getByTestId("settings-page-title")).toHaveText("Models");
+	await expect(page.getByTestId("settings-models")).toBeVisible();
 	await page.keyboard.press("Escape");
 	await expect(settings).toHaveCount(0);
 });

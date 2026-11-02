@@ -6,8 +6,8 @@ import {
 	createWorkspaceViaDialog,
 	goProjectHome,
 	openAppFresh,
-	openAppSettings,
 	openFixtureProject,
+	openSettingsSection,
 	revealWorkbenchTerminal,
 	revealWorkbenchTool,
 	stagePlainFolder,
@@ -64,7 +64,7 @@ test("the Welcome provider warning only shows when no provider is connected, and
 test("Settings → Providers lists in-app auth options", async ({ page }) => {
 	await openAppFresh(page);
 
-	await openAppSettings(page);
+	await openSettingsSection(page, "providers");
 	await expect(page.getByTestId("settings-page")).toBeVisible();
 	await expect(page.getByTestId("settings-providers")).toBeVisible();
 
@@ -77,7 +77,7 @@ test("a real provider's API key round-trips through the login dialog (add in Set
 	tag: "@dev-seam",
 }, async ({ page }) => {
 	await openAppFresh(page);
-	await openAppSettings(page);
+	await openSettingsSection(page, "providers");
 	await expect(page.getByTestId("settings-providers")).toBeVisible();
 
 	const keyBtn = page.getByTestId("provider-apikey").first();
@@ -118,7 +118,7 @@ test("clicking Sign in (Settings) opens the in-app login dialog, and Cancel dism
 	tag: "@dev-seam",
 }, async ({ page }) => {
 	await openAppFresh(page);
-	await openAppSettings(page);
+	await openSettingsSection(page, "providers");
 	await expect(page.getByTestId("settings-providers")).toBeVisible();
 
 	const signIn = page.getByTestId("provider-signin").first();
@@ -136,7 +136,7 @@ test("Settings → Providers offers JetBrains AI with host-authoritative Central
 	page,
 }) => {
 	await openAppFresh(page);
-	await openAppSettings(page);
+	await openSettingsSection(page, "providers");
 	await expect(page.getByTestId("settings-providers")).toBeVisible();
 
 	const card = page.getByTestId("jetbrains-ai-card");

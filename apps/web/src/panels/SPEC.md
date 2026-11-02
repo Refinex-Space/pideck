@@ -590,7 +590,9 @@ a project picker, the prompt hero, and the reused
   injected-content gating, and resolving a requested section to an available one (a gated or retired id,
   e.g. an old `review` / `line-width` deep link, falls back to Appearance) — lives in `panels/settingsNav.ts`,
   so the page only renders it. `settingsOpen`/`settingsSection` live in the store so the gear AND the
-  Welcome banner can open it deep-linked to a section. Escape leaves the page except while focus is in an
+  Welcome banner can open it deep-linked to a section. Opening Settings without an explicit section always
+  selects Models, including after closing another section; provider setup links still select Providers.
+  Escape leaves the page except while focus is in an
   input carrying `data-settings-draft-input`, where Escape reverts that draft instead.
   **Shared Settings primitives** keep every page one shape:
   `SettingsPageContainer` stacks a page's groups with spacing and a divider drawn only between children

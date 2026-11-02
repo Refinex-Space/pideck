@@ -2424,7 +2424,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 	activeLogin: null,
 	loginStarting: false,
 	settingsOpen: false,
-	settingsSection: SettingsSection.Providers,
+	settingsSection: SettingsSection.Models,
 	interviewPromptOpen: false,
 	notificationPromptOpen: false,
 	sessionSwitcherOpen: false,
@@ -4667,7 +4667,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 			return { activeLogin: rest };
 		}),
 	clearLogin: () => set({ activeLogin: null }),
-	openSettings: (section = SettingsSection.Providers) =>
+	openSettings: (section = SettingsSection.Models) =>
 		set({ settingsOpen: true, settingsSection: section }),
 	closeSettings: () => set({ settingsOpen: false }),
 	setSettingsSection: (section) => set({ settingsSection: section }),

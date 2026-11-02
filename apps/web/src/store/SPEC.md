@@ -525,7 +525,8 @@ re-read, not replayed.
   **`settingsSection`** (a const-object enum: `Providers`/`Models`/`Mcp`/`Github`/`Appearance`/`Chat`/`Layout`/`Updates`/`Terminal`/`Workspaces`/`Templates`/`Notifications`/`Privacy`/`Feedback`/`Extensions`;
   the `LineWidth` and `Review` keys are retained so old deep links still type-check but are not navigation
   sections — `panels/settingsNav` resolves them to an available section, and their controls now live in
-  Chat/Appearance and Models) with **`openSettings(section?)`** (deep-links to a section, defaults to Providers) /
+  Chat/Appearance and Models) with **`openSettings(section?)`** (deep-links to a section; every call without
+  a section opens Models, matching the initial selection and first navigation entry) /
   **`closeSettings()`** / **`setSettingsSection()`** — lives here so the top-bar gear, Welcome provider
   warning, and update-ready shell affordance can deep-link without prop-drilling. The optional Update key is navigation only. Native
   updater snapshots/actions remain in `updates`' shell-local hook state; the optional **`hostUpdate`** lifecycle

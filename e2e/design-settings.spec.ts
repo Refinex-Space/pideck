@@ -8,16 +8,16 @@ test("settings search filters navigation without switching the current section a
 	await openAppSettings(page);
 	const dialog = page.getByTestId("settings-page");
 	const search = dialog.getByTestId("settings-search");
-	await expect(page.getByTestId("settings-providers")).toBeVisible();
+	await expect(page.getByTestId("settings-models")).toBeVisible();
 	await search.fill("Templates");
 	await expect(dialog.getByTestId("settings-nav-templates")).toBeVisible();
 	await expect(dialog.getByTestId("settings-nav-providers")).toHaveCount(0);
-	await expect(page.getByTestId("settings-providers")).toBeVisible();
+	await expect(page.getByTestId("settings-models")).toBeVisible();
 	await search.fill("no-such-setting");
 	await expect(
 		dialog.getByRole("status").filter({ hasText: "No matching settings" }),
 	).toBeVisible();
-	await expect(page.getByTestId("settings-providers")).toBeVisible();
+	await expect(page.getByTestId("settings-models")).toBeVisible();
 	await search.press("Escape");
 	await expect(dialog).toBeVisible();
 	await expect(search).toHaveValue("");
@@ -52,6 +52,6 @@ test("opening a project template as a file clears settings search on the next op
 	).toBeVisible();
 	await openAppSettings(page);
 	await expect(search).toHaveValue("");
-	await expect(dialog.getByTestId("settings-nav-providers")).toHaveAttribute("data-active", "true");
-	await expect(dialog.getByTestId("settings-nav-providers")).toBeVisible();
+	await expect(dialog.getByTestId("settings-nav-models")).toHaveAttribute("data-active", "true");
+	await expect(dialog.getByTestId("settings-nav-models")).toBeVisible();
 });

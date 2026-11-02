@@ -178,7 +178,7 @@ beforeEach(() => {
 		workspaceSelectionHistory: [],
 		activeLogin: null,
 		settingsOpen: false,
-		settingsSection: "providers",
+		settingsSection: "models",
 		interviewPromptOpen: false,
 		chatLineWidth: DEFAULT_CONFIG.chatLineWidth,
 		fileLineWidth: DEFAULT_CONFIG.fileLineWidth,
@@ -3795,11 +3795,12 @@ test("clearLoginInput drops the live input; success is terminal; clearLogin dism
 	expect(useAppStore.getState().activeLogin).toBeNull();
 });
 
-test("openSettings deep-links to a section (default providers); closeSettings hides it", () => {
+test("openSettings defaults to models on every open and preserves explicit section links", () => {
 	const s = useAppStore.getState();
+	expect(useAppStore.getInitialState().settingsSection).toBe("models");
 	s.openSettings();
 	expect(useAppStore.getState().settingsOpen).toBe(true);
-	expect(useAppStore.getState().settingsSection).toBe("providers");
+	expect(useAppStore.getState().settingsSection).toBe("models");
 
 	s.openSettings("github");
 	expect(useAppStore.getState().settingsSection).toBe("github");
@@ -3809,6 +3810,13 @@ test("openSettings deep-links to a section (default providers); closeSettings hi
 
 	s.closeSettings();
 	expect(useAppStore.getState().settingsOpen).toBe(false);
+	expect(useAppStore.getState().settingsSection).toBe("providers");
+
+	s.openSettings();
+	expect(useAppStore.getState().settingsOpen).toBe(true);
+	expect(useAppStore.getState().settingsSection).toBe("models");
+
+	s.openSettings("providers");
 	expect(useAppStore.getState().settingsSection).toBe("providers");
 });
 

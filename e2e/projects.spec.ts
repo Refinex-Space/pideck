@@ -6,8 +6,8 @@ import {
 	createWorkspaceViaDialog,
 	enterDefaultWorkspace,
 	openAppFresh,
-	openAppSettings,
 	openFixtureProject,
+	openSettingsSection,
 	stagePlainFolder,
 	worktreeRows,
 } from "./fixtures/app";
@@ -192,7 +192,7 @@ test("manual path from the rail supersedes a picker started from Welcome", async
 	pickerReply.release();
 	await pickerReply.acknowledged;
 	pickerReply.armBarrier();
-	await openAppSettings(page);
+	await openSettingsSection(page, "providers");
 	await pickerReply.barrier;
 	expect(pickerReply.staleOpenWasSent()).toBe(false);
 	await page.keyboard.press("Escape");
